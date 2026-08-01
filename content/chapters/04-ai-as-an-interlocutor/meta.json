@@ -46,7 +46,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
-    "canonicalMarkdownSha256": "ec51728bba7ae63de54fc0a2f7f78f8bb3cae80d50dc04d2bf313d0789e2658e",
+    "canonicalMarkdownSha256": "4b4966a0b0aa2171b507f2c6f65a45c9796651df1e3fc875ebf4364c6c5efe9c",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

@@ -1,7 +1,8 @@
 import { defineConfig } from "astro/config";
 
-const configuredSite = process.env.PUBLIC_SITE_URL?.trim();
-const configuredEditorAuthOrigin = process.env.PUBLIC_EDITOR_AUTH_ORIGIN?.trim();
+const configuredSite = process.env.PUBLIC_SITE_URL?.trim() || "https://ethicsandai.your-digital-life.org";
+const configuredEditorAuthOrigin =
+  process.env.PUBLIC_EDITOR_AUTH_ORIGIN?.trim() || "https://auth.ethicsandai.your-digital-life.org";
 
 function validatedEditorAuthOrigin(value) {
   if (!value) return null;

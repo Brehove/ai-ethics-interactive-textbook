@@ -3,6 +3,12 @@
   "name": "ethicsandai",
   "compatibility_date": "2026-08-01",
   "preview_urls": true,
+  "routes": [
+    {
+      "pattern": "ethicsandai.your-digital-life.org",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "./dist",
     "html_handling": "auto-trailing-slash",

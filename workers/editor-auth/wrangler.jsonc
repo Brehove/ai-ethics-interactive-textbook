@@ -5,6 +5,12 @@
   "compatibility_date": "2026-08-01",
   "workers_dev": false,
   "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "auth.ethicsandai.your-digital-life.org",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": false
   },

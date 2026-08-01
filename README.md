@@ -2,6 +2,8 @@
 
 A public, static, Git-backed interactive edition of the PHIL 123 AI and Ethics textbook.
 
+Production reader: <https://ethicsandai.your-digital-life.org>
+
 The reader treats philosophical interaction as disciplined reading rather than gamification. Every chapter has four route-backed layers:
 
 - **First Read:** the complete canonical chapter.
@@ -60,6 +62,7 @@ CI rejects symlinks, private machine paths, credential-shaped values, missing co
 
 - GitHub is the canonical source and review history.
 - Cloudflare Workers Static Assets serves the public Astro build.
+- The reader and editor auth service use same-site custom hostnames under `your-digital-life.org`; this preserves the editor's Strict session-cookie boundary without adding a new domain cost.
 - Pressbooks remains an independent downstream OER edition and fallback.
 - A Git merge or Cloudflare deployment never publishes to Pressbooks.
 - Canvas remains the durable course discussion, submission, identity, and grading layer.
