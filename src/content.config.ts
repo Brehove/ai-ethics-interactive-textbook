@@ -122,6 +122,11 @@ export const mediaSchema = z.object({
   caption: z.string().nullable(),
   teachingUse: z.string().min(1),
   decorative: z.literal(false),
+  artifactType: z.enum(["manuscript", "title-page", "document", "historical-object", "technical-diagram", "map", "photograph"]).optional(),
+  placements: z.array(z.object({
+    chapterId: publicIdentifier,
+    passageIds: z.array(publicIdentifier).min(1),
+  })).min(1).optional(),
   rightsReview: z.object({
     status: z.enum(["pending", "approved", "rejected"]),
     reviewedAt: z.string().nullable(),
@@ -170,7 +175,8 @@ export const personWikimediaSchema = z.object({
 export const mediaWikimediaSchema = z.object({
   schemaVersion: z.literal(1),
   id: publicIdentifier,
-  personId: publicIdentifier,
+  personId: publicIdentifier.optional(),
+  artifactId: publicIdentifier.optional(),
   commonsTitle: z.string().startsWith("File:"),
   source: z.object({
     provider: z.literal("Wikimedia Commons"),
@@ -183,7 +189,7 @@ export const mediaWikimediaSchema = z.object({
   }),
   original: z.object({
     url: z.url(),
-    mime: z.string().startsWith("image/"),
+    mime: z.string().min(1),
     width: z.number().int().positive(),
     height: z.number().int().positive(),
     bytes: z.number().int().positive(),
@@ -207,10 +213,12 @@ export const mediaWikimediaSchema = z.object({
     artist: z.string().min(1),
     credit: z.string().nullable(),
   }),
+}).refine((record) => Boolean(record.personId) !== Boolean(record.artifactId), {
+  message: "Generated Wikimedia media must name exactly one personId or artifactId",
 });
 
 export const wikimediaManifestSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   language: z.literal("en"),
   people: z.array(z.object({
     id: publicIdentifier,
@@ -221,6 +229,12 @@ export const wikimediaManifestSchema = z.object({
       downloadPath: z.string().regex(/^media\/wikimedia\/[a-z0-9][a-z0-9._-]*\.webp$/),
       width: z.number().int().min(320).max(720),
     }).nullable(),
+  })),
+  artifacts: z.array(z.object({
+    id: publicIdentifier,
+    commonsTitle: z.string().startsWith("File:"),
+    downloadPath: z.string().regex(/^media\/wikimedia\/[a-z0-9][a-z0-9._-]*\.webp$/),
+    width: z.number().int().min(320).max(720),
   })),
 });
 

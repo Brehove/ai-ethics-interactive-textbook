@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch08",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"moral-deskilling-upskilling","title":"Moral Deskilling and Upskilling in a New Machine Age","creator":"Shannon Vallor","authorPersonId":"shannon-vallor","url":"https://scholarcommons.scu.edu/phi/7/","rightsStatus":"Copyright retained; an open institutional repository record provides access. No excerpt is reproduced here.","passageIds":["ch08-p0015","ch08-p0032"],"teachingUse":"Primary scholarly source for asking whether technological mediation weakens or strengthens moral capacities."}
+  ],
   "companionSources": []
 }

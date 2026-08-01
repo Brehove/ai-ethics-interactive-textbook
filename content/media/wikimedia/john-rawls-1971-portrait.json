@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:John Rawls (1971 photo portrait).jpg",
+  "derivative": {
+    "bytes": 116572,
+    "height": 1008,
+    "localPath": "/media/wikimedia/john-rawls-1971-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "b9db1fe6f0add6ec245b53a35f1a8296190e032eebd378c7a45ceea6ef293b2f",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/John_Rawls_%281971_photo_portrait%29.jpg/960px-John_Rawls_%281971_photo_portrait%29.jpg",
+    "width": 720
+  },
+  "id": "john-rawls-1971-portrait",
+  "original": {
+    "bytes": 498874,
+    "height": 1529,
+    "mime": "image/jpeg",
+    "sha1": "52fe8a20b27c7be9249b0c26a59c353794e8e59e",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/John_Rawls_%281971_photo_portrait%29.jpg",
+    "width": 1092
+  },
+  "personId": "john-rawls",
+  "rights": {
+    "artist": "Published by the Belknap Press of Harvard University Press . Photograph taken by Alec Rawls, John's son. The portrait was uncredited on the original dust jacket, but Alec is identified as its photographer on the copyright page of the 1994 German-language first edition of the book John Rawls by Thomas Pogge .",
+    "attributionRequired": false,
+    "credit": "First published (in a version that was also monochromatic but tinted green) as the author portrait on the right flap of the dust jacket of the first hardcover edition of Rawls's 1971 book A Theory of Justice (SBN 674-88010-2). Retouched by uploader.",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "514ba855adeba6c01f9f68afd320dfec809dc7f4aa82536cdcd20198ebb8f251",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 93064337,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:John_Rawls_(1971_photo_portrait).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1118116851,
+    "revisionTimestamp": "2025-11-18T21:35:15Z"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Helen's guest lecture at University of Berkley (cropped).jpg",
+  "description": "American philosopher and information scientist",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1954-04-26T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q30",
+        "label": "United States"
+      }
+    ],
+    "deathDates": [],
+    "deathPlaces": [],
+    "movements": [],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q6386271",
+        "label": "media scholar"
+      }
+    ]
+  },
+  "id": "helen-nissenbaum",
+  "label": "Helen Nissenbaum",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "09d8cfc0a969343e4c26b1cdcb1bfae5b079b48e20ad37287207ae4a3df82831",
+    "entityUrl": "https://www.wikidata.org/wiki/Q13515758",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-27T10:09:56Z",
+    "provider": "Wikidata",
+    "revisionId": 2523337891
+  },
+  "wikidataId": "Q13515758",
+  "wikipedia": {
+    "title": "Helen Nissenbaum",
+    "url": "https://en.wikipedia.org/wiki/Helen_Nissenbaum"
+  }
+}

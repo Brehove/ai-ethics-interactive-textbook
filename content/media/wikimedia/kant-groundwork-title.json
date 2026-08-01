@@ -1,0 +1,41 @@
+{
+  "artifactId": "kant-groundwork-title",
+  "commonsTitle": "File:Kant Groundwork Title.jpg",
+  "derivative": {
+    "bytes": 62138,
+    "height": 1255,
+    "localPath": "/media/wikimedia/kant-groundwork-title.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "e25799d0557a5e25010adb23db45b2d1353fe6f1419a3aa62e8b0e30bcdceafc",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Kant_Groundwork_Title.jpg/960px-Kant_Groundwork_Title.jpg",
+    "width": 720
+  },
+  "id": "kant-groundwork-title",
+  "original": {
+    "bytes": 835298,
+    "height": 3312,
+    "mime": "image/jpeg",
+    "sha1": "ad26624627335618977d43520df9d374c080beab",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Kant_Groundwork_Title.jpg",
+    "width": 1900
+  },
+  "rights": {
+    "artist": "Immanuel Kant",
+    "attributionRequired": false,
+    "credit": "Immanuel Kant, Grundlegung zur Metaphysik der Sitten, 1785",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "c4e4e490cc0948d83fecf5e85148006cd30303f6c890a2792c51f925b27f9ff5",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 76062472,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Kant_Groundwork_Title.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 480260996,
+    "revisionTimestamp": "2020-10-04T06:42:58Z"
+  }
+}

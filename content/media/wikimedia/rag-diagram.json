@@ -1,0 +1,41 @@
+{
+  "artifactId": "rag-diagram",
+  "commonsTitle": "File:RAG diagram.svg",
+  "derivative": {
+    "bytes": 31060,
+    "height": 637,
+    "localPath": "/media/wikimedia/rag-diagram.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "d047e6be4510b8c250fd96caa70ef2bfc8d59fec20c249c2c8d3d29fa59279e5",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/RAG_diagram.svg/960px-RAG_diagram.svg.png",
+    "width": 720
+  },
+  "id": "rag-diagram",
+  "original": {
+    "bytes": 163753,
+    "height": 576,
+    "mime": "image/svg+xml",
+    "sha1": "ad7ee9ed0570f7a0df53b122b93568a0576f8f84",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/14/RAG_diagram.svg",
+    "width": 652
+  },
+  "rights": {
+    "artist": "Turtlecrown",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "b4255f92b780b255a47f571f317ba9c1c09b8847aba9d576e7060737c3bf2b47",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 150390279,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:RAG_diagram.svg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 949142379,
+    "revisionTimestamp": "2024-10-25T14:51:31Z"
+  }
+}

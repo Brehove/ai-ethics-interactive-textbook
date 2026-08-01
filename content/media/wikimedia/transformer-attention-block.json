@@ -1,0 +1,41 @@
+{
+  "artifactId": "transformer-attention-block",
+  "commonsTitle": "File:Transformer, attention block diagram.png",
+  "derivative": {
+    "bytes": 22422,
+    "height": 911,
+    "localPath": "/media/wikimedia/transformer-attention-block.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "2920bc577bc4b9ff1d4d6f56d0821136ee74b1874436b95b00350ee1e5b72872",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Transformer%2C_attention_block_diagram.png",
+    "width": 342
+  },
+  "id": "transformer-attention-block",
+  "original": {
+    "bytes": 42720,
+    "height": 911,
+    "mime": "image/png",
+    "sha1": "7aa5a3417abf932c36ab33602c172fd7c1a4adeb",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Transformer%2C_attention_block_diagram.png",
+    "width": 342
+  },
+  "rights": {
+    "artist": "dvgodoy",
+    "attributionRequired": true,
+    "credit": "https://github.com/dvgodoy/PyTorchStepByStep",
+    "licenseShortName": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "usageTerms": "Creative Commons Attribution 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "48e4ac5fecd19bda47e563b29289c6f6385b634626aeb6c8fcd9871220916721",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 151216701,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Transformer%2C_attention_block_diagram.png",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1151736711,
+    "revisionTimestamp": "2026-01-23T11:08:18Z"
+  }
+}

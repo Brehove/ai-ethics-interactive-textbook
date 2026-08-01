@@ -1,0 +1,41 @@
+{
+  "artifactId": "euthyphro-edition",
+  "commonsTitle": "File:(Platonis) Euthyphro; (IA platoniseuthyphr00platrich).pdf",
+  "derivative": {
+    "bytes": 31824,
+    "height": 783,
+    "localPath": "/media/wikimedia/euthyphro-edition.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "41945cc2aa0e72d59192dd39e637f05087f65c4f81a2c70662545faba8035099",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/%28Platonis%29_Euthyphro%3B_%28IA_platoniseuthyphr00platrich%29.pdf/page1-500px-%28Platonis%29_Euthyphro%3B_%28IA_platoniseuthyphr00platrich%29.pdf.jpg",
+    "width": 500
+  },
+  "id": "euthyphro-edition",
+  "original": {
+    "bytes": 8360544,
+    "height": 1212,
+    "mime": "application/pdf",
+    "sha1": "03d3cc458a8b1c60f720e3d70d69825c538f0fcd",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/71/%28Platonis%29_Euthyphro%3B_%28IA_platoniseuthyphr00platrich%29.pdf",
+    "width": 775
+  },
+  "rights": {
+    "artist": "Plato",
+    "attributionRequired": false,
+    "credit": "Internet Archive identifier : platoniseuthyphr00platrich https://archive.org/download/platoniseuthyphr00platrich/platoniseuthyphr00platrich.pdf",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "a17cd5907bd8ae0b5fe7f8cffa04c45458f9d31140df51d71ab0ee6d861008ee",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 96093784,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:(Platonis)_Euthyphro%3B_(IA_platoniseuthyphr00platrich).pdf",
+    "provider": "Wikimedia Commons",
+    "revisionId": 921071026,
+    "revisionTimestamp": "2024-09-08T11:37:33Z"
+  }
+}

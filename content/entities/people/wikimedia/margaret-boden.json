@@ -1,0 +1,80 @@
+{
+  "aliases": [
+    "Maggie Boden",
+    "Margaret A. Boden",
+    "Margaret Ann Boden"
+  ],
+  "commonsImageClaim": "Margaret Boden 01.JPG",
+  "description": "British academic (1936–2025)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1936-11-26T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q84",
+        "label": "London"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q145",
+        "label": "United Kingdom"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+2025-07-18T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q131491",
+        "label": "Brighton"
+      }
+    ],
+    "movements": [],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q15976092",
+        "label": "artificial intelligence researcher"
+      },
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q212980",
+        "label": "psychologist"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      }
+    ]
+  },
+  "id": "margaret-boden",
+  "label": "Margaret Boden",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "002720683ca29609756e2cd0a2dd57df8332f3e951f323c0318acd3b4e9a4623",
+    "entityUrl": "https://www.wikidata.org/wiki/Q6759197",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-23T01:24:21Z",
+    "provider": "Wikidata",
+    "revisionId": 2521466867
+  },
+  "wikidataId": "Q6759197",
+  "wikipedia": {
+    "title": "Margaret Boden",
+    "url": "https://en.wikipedia.org/wiki/Margaret_Boden"
+  }
+}

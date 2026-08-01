@@ -1,0 +1,41 @@
+{
+  "artifactId": "crispr-cas9-diagram",
+  "commonsTitle": "File:Genome Editing with the CRISPR-Cas9-Method, schematic diagram.svg",
+  "derivative": {
+    "bytes": 56536,
+    "height": 1076,
+    "localPath": "/media/wikimedia/crispr-cas9-diagram.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "b59b3e8ec6a612d60fc60b0a56185c6a766965e65a69af149f74273b454cdb29",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Genome_Editing_with_the_CRISPR-Cas9-Method%2C_schematic_diagram.svg/960px-Genome_Editing_with_the_CRISPR-Cas9-Method%2C_schematic_diagram.svg.png",
+    "width": 720
+  },
+  "id": "crispr-cas9-diagram",
+  "original": {
+    "bytes": 144267,
+    "height": 480,
+    "mime": "image/svg+xml",
+    "sha1": "015dfdf6f5d7da3ff6e1fee6257025876c7b86ab",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Genome_Editing_with_the_CRISPR-Cas9-Method%2C_schematic_diagram.svg",
+    "width": 321
+  },
+  "rights": {
+    "artist": "Bartz/Stockmar - Agrifood Atlas, 2017",
+    "attributionRequired": true,
+    "credit": "Agrifood Atlas https://www.rosalux.de/en/publication/id/14555/agrifood-atlas",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "ef1aaefc7edfe08910ca11cd72aade9074f1ce8d3b95cec9b9ac4a2f7d7c0b43",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 95062129,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Genome_Editing_with_the_CRISPR-Cas9-Method%2C_schematic_diagram.svg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1029229021,
+    "revisionTimestamp": "2025-05-07T13:36:40Z"
+  }
+}

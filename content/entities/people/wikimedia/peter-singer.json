@@ -1,0 +1,91 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Peter Singer 2017 (cropped).jpg",
+  "description": "Australian moral philosopher (born 1946)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1946-07-06T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q3141",
+        "label": "Melbourne"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q408",
+        "label": "Australia"
+      }
+    ],
+    "deathDates": [],
+    "deathPlaces": [],
+    "movements": [
+      {
+        "id": "Q13489381",
+        "label": "effective altruism"
+      },
+      {
+        "id": "Q160590",
+        "label": "utilitarianism"
+      },
+      {
+        "id": "Q629420",
+        "label": "animal rights movement"
+      },
+      {
+        "id": "Q842333",
+        "label": "Western philosophy"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q547344",
+        "label": "Animal Liberation"
+      },
+      {
+        "id": "Q6967851",
+        "label": "The Life You Can Save"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q121594",
+        "label": "professor"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q82955",
+        "label": "politician"
+      }
+    ]
+  },
+  "id": "peter-singer",
+  "label": "Peter Singer",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "90002e0e173731e72d3a6f946712aacad912434612bb1b2a8dd5975a72c5ba8c",
+    "entityUrl": "https://www.wikidata.org/wiki/Q211539",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-06-28T19:48:44Z",
+    "provider": "Wikidata",
+    "revisionId": 2511589549
+  },
+  "wikidataId": "Q211539",
+  "wikipedia": {
+    "title": "Peter Singer",
+    "url": "https://en.wikipedia.org/wiki/Peter_Singer"
+  }
+}

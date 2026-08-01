@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch18",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"nick-bostrom","role":"philosophical defender of transhumanist values and expanded human capacity","featured":true,"passageIds":["ch18-p0027","ch18-p0028","ch18-p0087"]},
+    {"id":"michael-sandel","role":"critic of enhancement as mastery over the gifted character of life","featured":true,"passageIds":["ch18-p0053","ch18-p0055"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch01",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"theory-of-justice-reflective-equilibrium","title":"A Theory of Justice, section 9","creator":"John Rawls","authorPersonId":"john-rawls","url":"https://doi.org/10.4159/9780674042605","locator":"Section 9","rightsStatus":"Copyright retained; linked for citation and inspection without a reproduced excerpt.","passageIds":["ch01-p0015","ch01-p0018"],"teachingUse":"The chapter's primary anchor for considered judgments and reflective equilibrium."}
+  ],
   "companionSources": []
 }

@@ -4,8 +4,11 @@ import ReaderShell from "../../../../components/ReaderShell.astro";
 import LayerIntro from "../../../../components/LayerIntro.astro";
 import ScholarlyDock from "../../../../components/ScholarlyDock.astro";
 import InlineScholarFigures from "../../../../components/InlineScholarFigures.astro";
-import { getChapterSlugs, requireChapter } from "../../../../lib/content";
+import InlineArtifacts from "../../../../components/InlineArtifacts.astro";
+import InlineConceptDiagrams from "../../../../components/InlineConceptDiagrams.astro";
+import { getChapterArtifacts, getChapterSlugs, requireChapter } from "../../../../lib/content";
 import { resolveChapterPeople } from "../../../../lib/scholarly-layer";
+import { getChapterDiagrams } from "../../../../lib/chapter-diagrams";
 
 export async function getStaticPaths() {
   return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
@@ -15,6 +18,8 @@ const chapter = await requireChapter(Astro.params.slug!);
 const { meta, Content, headings, annotations, world, sourceLinks, previous, next } = chapter;
 const annotationItems = Array.isArray(annotations?.items) ? annotations.items : [];
 const chapterPeople = await resolveChapterPeople(world);
+const chapterArtifacts = await getChapterArtifacts(meta.id);
+const chapterDiagrams = getChapterDiagrams(meta.id);
 ---
 
 <SiteLayout title={`Deep Read · ${meta.title}`} description={`Argument, objection, and judgment layer for ${meta.title}.`} chapterNumber={meta.order} canonicalPath={`${meta.path}deep/`}>
@@ -41,6 +46,8 @@ const chapterPeople = await resolveChapterPeople(world);
     )}
     <div class="chapter-prose deep-layer">
       <Content />
+      <InlineConceptDiagrams diagrams={chapterDiagrams} />
+      <InlineArtifacts artifacts={chapterArtifacts} />
       <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
     </div>
     <ScholarlyDock

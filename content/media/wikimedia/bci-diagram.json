@@ -1,0 +1,41 @@
+{
+  "artifactId": "bci-diagram",
+  "commonsTitle": "File:Brain-computer interface diagram.svg",
+  "derivative": {
+    "bytes": 15224,
+    "height": 180,
+    "localPath": "/media/wikimedia/bci-diagram.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "e3ea4d94d33bc2a7b21c35da3e849bc70afe2fff8489e5dfc2f45ec07b17084f",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Brain-computer_interface_diagram.svg/960px-Brain-computer_interface_diagram.svg.png",
+    "width": 720
+  },
+  "id": "bci-diagram",
+  "original": {
+    "bytes": 13865,
+    "height": 128,
+    "mime": "image/svg+xml",
+    "sha1": "23bad9e99b720dcb5ee49dc16557ab6ddb5f29cf",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Brain-computer_interface_diagram.svg",
+    "width": 512
+  },
+  "rights": {
+    "artist": "Laurens R. Krol",
+    "attributionRequired": false,
+    "credit": "Own work",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "82515fc17285b941415b0906604b7fc6badbfea1bc0f573e42fb6e372c4b98c0",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 102119577,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Brain-computer_interface_diagram.svg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 831450003,
+    "revisionTimestamp": "2023-12-17T07:06:14Z"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Shannon Vallor (cropped).jpg",
+  "description": "philosopher of technology",
+  "facts": {
+    "birthDates": [],
+    "birthPlaces": [
+      {
+        "id": "Q30",
+        "label": "United States"
+      }
+    ],
+    "countriesOfCitizenship": [],
+    "deathDates": [],
+    "deathPlaces": [],
+    "movements": [],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q123574267",
+        "label": "AI ethicist"
+      },
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      }
+    ]
+  },
+  "id": "shannon-vallor",
+  "label": "Shannon Vallor",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "445ed6ebc3f234a7106eda1e4c4e878c6877ba9fab2c12ddd2723e6b36db967b",
+    "entityUrl": "https://www.wikidata.org/wiki/Q28911690",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-28T02:24:59Z",
+    "provider": "Wikidata",
+    "revisionId": 2523734368
+  },
+  "wikidataId": "Q28911690",
+  "wikipedia": {
+    "title": "Shannon Vallor",
+    "url": "https://en.wikipedia.org/wiki/Shannon_Vallor"
+  }
+}

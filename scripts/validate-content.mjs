@@ -97,6 +97,23 @@ async function main() {
       for (const annotation of annotations.items) {
         if (!segmentIds.has(annotation.passageId) && !segmentIds.has(annotation.sectionId)) failures.push(`${expected.id}: annotation points outside stable identity graph`);
       }
+      const personIds = new Set();
+      for (const relation of world.people) {
+        if (personIds.has(relation.id)) failures.push(`${expected.id}: duplicate world person ${relation.id}`);
+        personIds.add(relation.id);
+        if (relation.featured && relation.passageIds.length === 0) failures.push(`${expected.id}: featured person ${relation.id} has no passage placement`);
+        for (const passageId of relation.passageIds) {
+          if (!segmentIds.has(passageId)) failures.push(`${expected.id}: person ${relation.id} points outside stable identity graph at ${passageId}`);
+        }
+      }
+      const sourceIds = new Set();
+      for (const source of [...sources.primarySources, ...sources.companionSources]) {
+        if (sourceIds.has(source.id)) failures.push(`${expected.id}: duplicate chapter source ${source.id}`);
+        sourceIds.add(source.id);
+        for (const passageId of source.passageIds) {
+          if (!segmentIds.has(passageId)) failures.push(`${expected.id}: source ${source.id} points outside stable identity graph at ${passageId}`);
+        }
+      }
       totals.asides += occurrences(markdown, /<aside\b/g);
       totals.tables += occurrences(markdown, /<table\b/g);
       totals.explicitIds += occurrences(markdown, /\bid="[^"]+"/g);

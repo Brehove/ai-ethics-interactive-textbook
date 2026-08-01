@@ -1,0 +1,41 @@
+{
+  "artifactId": "domesday-manuscript-page",
+  "commonsTitle": "File:Page from the Domesday book manuscripts (1294847).jpg",
+  "derivative": {
+    "bytes": 155350,
+    "height": 1010,
+    "localPath": "/media/wikimedia/domesday-manuscript-page.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "965e64977ce34e09be8c3426a37132d97659a288f3ac6e5c41a80f5bc471012d",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Page_from_the_Domesday_book_manuscripts_%281294847%29.jpg/960px-Page_from_the_Domesday_book_manuscripts_%281294847%29.jpg",
+    "width": 720
+  },
+  "id": "domesday-manuscript-page",
+  "original": {
+    "bytes": 276537,
+    "height": 1402,
+    "mime": "image/jpeg",
+    "sha1": "24da2d73ddbc26b9739264f6c8f0a185a08ce4f5",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Page_from_the_Domesday_book_manuscripts_%281294847%29.jpg",
+    "width": 1000
+  },
+  "rights": {
+    "artist": "Percy Benzie Abery",
+    "attributionRequired": false,
+    "credit": "This image is available from the National Library of Wales You can view this image in its original context on the NLW Catalogue",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "760fe42e636d5016757d88442617ec4a98a1b051d62117126e3efb70b814585f",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 46938806,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Page_from_the_Domesday_book_manuscripts_(1294847).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 964759041,
+    "revisionTimestamp": "2024-12-02T14:46:37Z"
+  }
+}

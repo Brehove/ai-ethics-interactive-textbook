@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch14",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"carebots-caregivers","title":"Carebots and Caregivers: Sustaining the Ethical Ideal of Care in the Twenty-First Century","creator":"Shannon Vallor","authorPersonId":"shannon-vallor","url":"https://doi.org/10.1007/s13347-011-0015-x","rightsStatus":"Copyright retained; DOI linked without a reproduced excerpt.","passageIds":["ch14-p0045","ch14-p0046"],"teachingUse":"Primary source for distinguishing care as a delivered service from caregiving as a morally formative practice."}
+  ],
   "companionSources": []
 }

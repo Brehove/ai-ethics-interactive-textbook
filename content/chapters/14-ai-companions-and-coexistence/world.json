@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch14",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"shannon-vallor","role":"theorist of carebots, caregiving, and technomoral formation","featured":true,"passageIds":["ch14-p0045","ch14-p0046"]},
+    {"id":"helen-nissenbaum","role":"coauthor of the chapter's autonomy and manipulation account","featured":false,"passageIds":["ch14-p0076","ch14-p0077"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

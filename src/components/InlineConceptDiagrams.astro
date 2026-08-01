@@ -1,0 +1,60 @@
+---
+import type { ChapterDiagram } from "../lib/chapter-diagrams";
+interface Props { diagrams: ChapterDiagram[]; }
+const { diagrams } = Astro.props;
+---
+
+{diagrams.length > 0 && <section class="diagram-gallery" data-diagram-gallery aria-label="Interactive philosophical diagrams">
+  {diagrams.map((diagram) => <figure class="concept-diagram" data-concept-diagram data-passage-ids={diagram.passageIds.join(",")} data-layout={diagram.layout}>
+    <figcaption><p>Philosophical map</p><h3>{diagram.title}</h3><span>{diagram.caption}</span></figcaption>
+    <ol>
+      {diagram.items.map((item, index) => <li>
+        <details>
+          <summary><span class="step-number">{String(index + 1).padStart(2,"0")}</span><strong>{item.label}</strong></summary>
+          <div><p>{item.explanation}</p><p class="diagram-question">{item.question}</p></div>
+        </details>
+      </li>)}
+    </ol>
+  </figure>)}
+</section>}
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-diagram-gallery]").forEach((gallery) => {
+    const prose = gallery.closest<HTMLElement>(".chapter-prose");
+    if (!prose) return;
+    gallery.querySelectorAll<HTMLElement>("[data-concept-diagram]").forEach((diagram) => {
+      const target = diagram.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean)
+        .map((id) => prose.querySelector<HTMLElement>(`#${CSS.escape(id)}`)).find(Boolean);
+      if (!target) return;
+      let insertionPoint: Element = target;
+      while (insertionPoint.nextElementSibling?.matches("[data-inline-artifact][data-inline-placed], [data-inline-scholar-card][data-inline-placed], [data-concept-diagram][data-inline-placed]")) insertionPoint = insertionPoint.nextElementSibling;
+      diagram.dataset.inlinePlaced = "true";
+      insertionPoint.insertAdjacentElement("afterend", diagram);
+    });
+    if (gallery.childElementCount === 0) gallery.remove();
+  });
+</script>
+
+<style>
+  .diagram-gallery { margin: 2.5rem 0; }
+  .diagram-gallery:empty { display:none; }
+  .concept-diagram { margin: 2.5rem 0 3rem; padding: clamp(1.2rem,3vw,2rem); border-block: 2px solid var(--ink); background: var(--paper); break-inside: avoid; }
+  figcaption > p { margin:0; color:var(--rust-dark); font:700 .62rem/1.35 var(--sans); letter-spacing:.13em; text-transform:uppercase; }
+  figcaption h3 { margin:.35rem 0 .5rem; font-size:clamp(1.7rem,3.5vw,2.7rem); font-weight:500; line-height:1.04; letter-spacing:-.03em; }
+  figcaption > span { display:block; max-width:54rem; color:var(--ink-soft); font-size:.95rem; line-height:1.5; }
+  ol { display:grid; grid-template-columns:repeat(var(--diagram-columns,4),minmax(0,1fr)); gap:0; margin:1.6rem 0 0; padding:0; border:1px solid var(--line); list-style:none; }
+  [data-layout="fork"] ol { --diagram-columns:3; }
+  [data-layout="matrix"] ol { --diagram-columns:2; }
+  li { min-width:0; border-right:1px solid var(--line); }
+  li:last-child { border-right:0; }
+  details { height:100%; }
+  summary { display:flex; min-height:5rem; align-items:center; gap:.6rem; padding:.85rem; cursor:pointer; font-family:var(--sans); }
+  summary::marker { color:var(--rust-dark); }
+  .step-number { color:var(--rust-dark); font:700 .6rem/1 var(--sans); letter-spacing:.08em; }
+  summary strong { font-size:.78rem; line-height:1.25; }
+  details > div { padding:0 .9rem 1rem; color:var(--ink-soft); font: .76rem/1.5 var(--sans); }
+  details > div p { margin:0 0 .65rem; }
+  .diagram-question { color:var(--ink); font-style:italic; }
+  @media(max-width:760px){ ol,[data-layout="fork"] ol,[data-layout="matrix"] ol{grid-template-columns:1fr;} li{border-right:0;border-bottom:1px solid var(--line);} li:last-child{border-bottom:0;} summary{min-height:3.7rem;} }
+  @media print { .concept-diagram{background:transparent;} details > div{display:block!important;} }
+</style>

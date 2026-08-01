@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Nick Land October 2025 (1x1 cropped).jpg",
+  "derivative": {
+    "bytes": 18744,
+    "height": 710,
+    "localPath": "/media/wikimedia/nick-land-2025-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "a305fb1fbbfde7f80fc09cdfb738acd24f5cae9164ddef47c061a51b35504321",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Nick_Land_October_2025_%281x1_cropped%29.jpg/960px-Nick_Land_October_2025_%281x1_cropped%29.jpg",
+    "width": 720
+  },
+  "id": "nick-land-2025-portrait",
+  "original": {
+    "bytes": 154839,
+    "height": 1072,
+    "mime": "image/jpeg",
+    "sha1": "b2c77ccf8236900d9bf5acb1831adf0f140380bb",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Nick_Land_October_2025_%281x1_cropped%29.jpg",
+    "width": 1087
+  },
+  "personId": "nick-land",
+  "rights": {
+    "artist": "Koolisid",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "a1ab30821d296ba1f764e7d81e6b94559f9fdd90a9fe2cc5d37ca6715009a97c",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 193109080,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Nick_Land_October_2025_(1x1_cropped).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1223219709,
+    "revisionTimestamp": "2026-05-31T02:40:40Z"
+  }
+}

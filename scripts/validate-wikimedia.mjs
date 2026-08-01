@@ -95,11 +95,12 @@ function assertWikidataSource(record, manifestEntry) {
   assertNoHumanAuthoredFields(record, MACHINE_ONLY_PERSON_FIELDS, label);
 }
 
-function assertCommonsSource(record, manifestEntry) {
-  const portrait = manifestEntry.portrait;
+function assertCommonsSource(record, manifestEntry, mediaKey = "portrait") {
+  const portrait = mediaKey === "portrait" ? manifestEntry.portrait : manifestEntry;
   const label = `Generated media ${portrait.id}`;
   expect(record.schemaVersion === 1, `${label}: unsupported schemaVersion`);
-  expect(record.id === portrait.id && record.personId === manifestEntry.id, `${label}: person or media id mismatch`);
+  if (mediaKey === "portrait") expect(record.id === portrait.id && record.personId === manifestEntry.id && !record.artifactId, `${label}: person or media id mismatch`);
+  else expect(record.id === portrait.id && record.artifactId === manifestEntry.id && !record.personId, `${label}: artifact or media id mismatch`);
   expect(record.commonsTitle === portrait.commonsTitle, `${label}: Commons title mismatch`);
   expect(record.source?.provider === "Wikimedia Commons", `${label}: provider must be Wikimedia Commons`);
   expect(Number.isInteger(record.source?.revisionId) && record.source.revisionId > 0, `${label}: source revision is missing`);
@@ -160,6 +161,7 @@ async function assertChapterSourceRelationships(projectRoot, people) {
   for (const directory of directories) {
     const filePath = path.join(chapterRoot, directory, "source-links.json");
     const record = await readJson(filePath);
+    const world = await readJson(path.join(chapterRoot, directory, "world.json"));
     for (const source of [...(record.primarySources ?? []), ...(record.companionSources ?? [])]) {
       expect(!sources.has(source.id), `Duplicate chapter source id ${source.id}`);
       sources.set(source.id, source);
@@ -171,6 +173,16 @@ async function assertChapterSourceRelationships(projectRoot, people) {
           `Source ${source.id}: ${source.authorPersonId} does not declare this primarySourceId`,
         );
       }
+    }
+    for (const relation of world.people ?? []) {
+      const person = people.get(relation.id)?.record;
+      expect(person, `${world.chapterId}: unknown person ${relation.id}`);
+      if (!relation.featured) continue;
+      expect(person.portraitId, `${world.chapterId}: featured person ${relation.id} must have a reviewed portrait`);
+      expect(
+        [...(record.primarySources ?? []), ...(record.companionSources ?? [])].some((source) => source.authorPersonId === relation.id),
+        `${world.chapterId}: featured person ${relation.id} must have a reviewed chapter source`,
+      );
     }
   }
 
@@ -191,7 +203,10 @@ export async function validateWikimediaLayer({ projectRoot = DEFAULT_PROJECT_ROO
   const media = await jsonRecords(path.join(projectRoot, "content", "media", "records"), "Curated media");
   const generatedMedia = await jsonRecords(path.join(projectRoot, "content", "media", "wikimedia"), "Generated media");
   const manifestPeople = new Set(manifest.people.map((entry) => entry.id));
-  const manifestMedia = new Set(manifest.people.flatMap((entry) => entry.portrait ? [entry.portrait.id] : []));
+  const manifestMedia = new Set([
+    ...manifest.people.flatMap((entry) => entry.portrait ? [entry.portrait.id] : []),
+    ...manifest.artifacts.map((entry) => entry.id),
+  ]);
 
   for (const id of people.keys()) expect(manifestPeople.has(id), `Curated person ${id} is absent from the Wikimedia manifest`);
   for (const id of generatedPeople.keys()) expect(manifestPeople.has(id), `Generated person ${id} is absent from the Wikimedia manifest`);
@@ -237,6 +252,34 @@ export async function validateWikimediaLayer({ projectRoot = DEFAULT_PROJECT_ROO
     expectedAssets.add(path.resolve(assetPath));
   }
 
+  for (const entry of manifest.artifacts) {
+    const curatedMedia = media.get(entry.id);
+    const machineMedia = generatedMedia.get(entry.id);
+    expect(curatedMedia, `Manifest artifact ${entry.id} has no curated media record`);
+    expect(machineMedia, `Manifest artifact ${entry.id} has no generated Commons record; run npm run wikimedia:refresh`);
+    expect(curatedMedia.record.placements?.length > 0, `Curated artifact ${entry.id}: at least one chapter placement is required`);
+    for (const placement of curatedMedia.record.placements ?? []) {
+      expect(placement.chapterId && placement.passageIds?.length > 0, `Curated artifact ${entry.id}: every placement needs a chapterId and passageIds`);
+    }
+    assertCommonsSource(machineMedia.record, entry, "artifact");
+    assertHumanReview(curatedMedia.record, machineMedia.record);
+    await expectStableGeneratedJson(machineMedia, projectRoot);
+
+    const assetPath = path.join(projectRoot, "public", entry.downloadPath);
+    const asset = await readFile(assetPath).catch((error) => {
+      if (error.code === "ENOENT") throw new Error(`Vendored artifact is missing: ${path.relative(projectRoot, assetPath)}`);
+      throw error;
+    });
+    expect(asset.length === machineMedia.record.derivative.bytes, `${entry.id}: vendored artifact byte count drifted`);
+    expect(sha256(asset) === machineMedia.record.derivative.sha256, `${entry.id}: vendored artifact checksum drifted`);
+    const image = await sharp(asset).metadata();
+    expect(image.format === "webp", `${entry.id}: vendored artifact bytes are not WebP`);
+    expect(image.width === machineMedia.record.derivative.width, `${entry.id}: recorded width does not match artifact bytes`);
+    expect(image.height === machineMedia.record.derivative.height, `${entry.id}: recorded height does not match artifact bytes`);
+    expect(!image.pages || image.pages === 1, `${entry.id}: animated or multipage artifacts are not allowed`);
+    expectedAssets.add(path.resolve(assetPath));
+  }
+
   const assetDirectory = path.join(projectRoot, "public", "media", "wikimedia");
   for (const filePath of await listAssetFiles(assetDirectory)) {
     expect(expectedAssets.has(path.resolve(filePath)), `${path.relative(projectRoot, filePath)} is not declared in the Wikimedia manifest`);
@@ -246,6 +289,7 @@ export async function validateWikimediaLayer({ projectRoot = DEFAULT_PROJECT_ROO
 
   return {
     people: manifest.people.length,
+    artifacts: manifest.artifacts.length,
     media: manifestMedia.size,
     assets: expectedAssets.size,
   };

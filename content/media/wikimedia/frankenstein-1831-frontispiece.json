@@ -1,0 +1,41 @@
+{
+  "artifactId": "frankenstein-1831-frontispiece",
+  "commonsTitle": "File:Frontispiece to Frankenstein 1831.jpg",
+  "derivative": {
+    "bytes": 230068,
+    "height": 723,
+    "localPath": "/media/wikimedia/frankenstein-1831-frontispiece.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 560px wide, and encoded as WebP quality 82",
+    "sha256": "33bc476b04de87d3cc1c1974409afced9dad243bdbc1d54f4ca3d05d04793c1e",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Frontispiece_to_Frankenstein_1831.jpg/960px-Frontispiece_to_Frankenstein_1831.jpg",
+    "width": 560
+  },
+  "id": "frankenstein-1831-frontispiece",
+  "original": {
+    "bytes": 11659150,
+    "height": 3636,
+    "mime": "image/jpeg",
+    "sha1": "b63e0843f855fe8bd153fad90dc733f92345d72a",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Frontispiece_to_Frankenstein_1831.jpg",
+    "width": 2816
+  },
+  "rights": {
+    "artist": "Theodor von Holst",
+    "attributionRequired": false,
+    "credit": "Tate Britain. Private collection, Bath.",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "0cb01598c09fa41420f2cef84e30a1ba7c784acc56e15a0b2421db1b1e32b617",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 4940182,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Frontispiece_to_Frankenstein_1831.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 974564034,
+    "revisionTimestamp": "2024-12-23T17:22:18Z"
+  }
+}

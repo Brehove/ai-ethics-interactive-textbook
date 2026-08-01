@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Shannon Vallor (cropped).jpg",
+  "derivative": {
+    "bytes": 30000,
+    "height": 720,
+    "localPath": "/media/wikimedia/shannon-vallor-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "d6d0050abcd261d3c778ec904d908a116ccaa38f91937fab0116049acb73b924",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/9/99/Shannon_Vallor_%28cropped%29.jpg",
+    "width": 720
+  },
+  "id": "shannon-vallor-portrait",
+  "original": {
+    "bytes": 117268,
+    "height": 828,
+    "mime": "image/jpeg",
+    "sha1": "f9ea08bc084abedb5b9db73b846f67495b1aeb8b",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Shannon_Vallor_%28cropped%29.jpg",
+    "width": 828
+  },
+  "personId": "shannon-vallor",
+  "rights": {
+    "artist": "Ainali",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "41913411ce94688ce8b92864d2d8088af70f02e86cc1b45f4cdd9d8aed6a4b72",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 90631151,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Shannon_Vallor_(cropped).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 808900106,
+    "revisionTimestamp": "2023-10-05T14:14:10Z"
+  }
+}

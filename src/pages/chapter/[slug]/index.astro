@@ -3,8 +3,11 @@ import SiteLayout from "../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../components/ReaderShell.astro";
 import ScholarlyDock from "../../../components/ScholarlyDock.astro";
 import InlineScholarFigures from "../../../components/InlineScholarFigures.astro";
-import { getChapterSlugs, requireChapter } from "../../../lib/content";
+import InlineArtifacts from "../../../components/InlineArtifacts.astro";
+import InlineConceptDiagrams from "../../../components/InlineConceptDiagrams.astro";
+import { getChapterArtifacts, getChapterSlugs, requireChapter } from "../../../lib/content";
 import { resolveChapterPeople } from "../../../lib/scholarly-layer";
+import { getChapterDiagrams } from "../../../lib/chapter-diagrams";
 
 export async function getStaticPaths() {
   return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
@@ -13,6 +16,8 @@ export async function getStaticPaths() {
 const chapter = await requireChapter(Astro.params.slug!);
 const { meta, Content, headings, world, sourceLinks, previous, next } = chapter;
 const chapterPeople = await resolveChapterPeople(world);
+const chapterArtifacts = await getChapterArtifacts(meta.id);
+const chapterDiagrams = getChapterDiagrams(meta.id);
 ---
 
 <SiteLayout title={meta.title} description={meta.description} chapterNumber={meta.order} canonicalPath={meta.path}>
@@ -30,6 +35,8 @@ const chapterPeople = await resolveChapterPeople(world);
   >
     <div class="chapter-prose first-read">
       <Content />
+      <InlineConceptDiagrams diagrams={chapterDiagrams} />
+      <InlineArtifacts artifacts={chapterArtifacts} />
       <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
     </div>
     <ScholarlyDock

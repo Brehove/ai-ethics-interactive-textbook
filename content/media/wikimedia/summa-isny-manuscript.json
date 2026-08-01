@@ -1,0 +1,41 @@
+{
+  "artifactId": "summa-isny-manuscript",
+  "commonsTitle": "File:Thomas von Aquin Summa Ms (Isny).jpg",
+  "derivative": {
+    "bytes": 186994,
+    "height": 968,
+    "localPath": "/media/wikimedia/summa-isny-manuscript.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "9b0d2f33b0187c8c03d0339c1ea496050d2b357ecb10f76f9ab257d754f0942e",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Thomas_von_Aquin_Summa_Ms_%28Isny%29.jpg/960px-Thomas_von_Aquin_Summa_Ms_%28Isny%29.jpg",
+    "width": 720
+  },
+  "id": "summa-isny-manuscript",
+  "original": {
+    "bytes": 4935151,
+    "height": 4039,
+    "mime": "image/jpeg",
+    "sha1": "c7b00744842eaaf5badef416d8d665e8ec495433",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/00/Thomas_von_Aquin_Summa_Ms_%28Isny%29.jpg",
+    "width": 3006
+  },
+  "rights": {
+    "artist": "Anonymous Unknown author",
+    "attributionRequired": false,
+    "credit": "Helmut Schmid: „ain liebrey zu den büchern“. Die mittelalterliche Predigerbücherei der Nikolaikirche zu Isny (Kleinode; Bd. 7). Ravensburg 2000 ( DNB )",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "3e1c3bae74731d2b6ba5eb1ff321753980b9dcc5d449dd0480cfb46cb1f4a5d9",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 20847917,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Thomas_von_Aquin_Summa_Ms_(Isny).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1042024895,
+    "revisionTimestamp": "2025-06-09T15:20:05Z"
+  }
+}

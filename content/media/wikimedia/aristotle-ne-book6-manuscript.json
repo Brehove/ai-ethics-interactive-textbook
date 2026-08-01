@@ -1,0 +1,41 @@
+{
+  "artifactId": "aristotle-ne-book6-manuscript",
+  "commonsTitle": "File:Aristotle, Nicomachean Ethics, Book 6.jpg",
+  "derivative": {
+    "bytes": 223118,
+    "height": 945,
+    "localPath": "/media/wikimedia/aristotle-ne-book6-manuscript.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 640px wide, and encoded as WebP quality 82",
+    "sha256": "30e2441214ced6cd0ff051a585f8620327a7c1b07ca29ad6c11c52c0a4811e3d",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Aristotle%2C_Nicomachean_Ethics%2C_Book_6.jpg/960px-Aristotle%2C_Nicomachean_Ethics%2C_Book_6.jpg",
+    "width": 640
+  },
+  "id": "aristotle-ne-book6-manuscript",
+  "original": {
+    "bytes": 5177104,
+    "height": 3487,
+    "mime": "image/jpeg",
+    "sha1": "d6433870fa39ee8c60d7d4639f3c947c4bd77375",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Aristotle%2C_Nicomachean_Ethics%2C_Book_6.jpg",
+    "width": 2363
+  },
+  "rights": {
+    "artist": "Aristotle",
+    "attributionRequired": false,
+    "credit": "2d copy",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "8ae94eba83a2bd3cd022cd0d215ffe8158d254a6e13c0c0ea8e3c726d1dd014d",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 72659930,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Aristotle%2C_Nicomachean_Ethics%2C_Book_6.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1221326971,
+    "revisionTimestamp": "2026-05-27T20:04:39Z"
+  }
+}

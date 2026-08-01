@@ -21,11 +21,13 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
           class="inline-scholar-card"
           data-inline-scholar-card
           data-person-path={person.path}
+          data-passage-ids={relation.passageIds.join(",")}
           aria-labelledby={`inline-scholar-${person.id}`}
         >
           <div class="inline-scholar-card__portrait">
             <PersonPortrait person={person} variant="card" showCredit={false} />
             {person.portrait && (
+              <>
               <details class="image-credit">
                 <summary>Image credit</summary>
                 <p>
@@ -36,6 +38,10 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
                   }. Modified: {person.portrait.derivative.modification}. <a href={person.portrait.source.pageUrl} rel="noreferrer">Commons record</a>, reviewed revision {person.portrait.source.revisionId}.
                 </p>
               </details>
+              <p class="print-image-credit">
+                Image: <cite>{person.portrait.title}</cite> · {person.portrait.rights.artist}. {person.portrait.rights.licenseShortName}. Source: {person.portrait.source.pageUrl}.
+              </p>
+              </>
             )}
           </div>
 
@@ -51,7 +57,7 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
                 <summary>Biography</summary>
                 <div class="disclosure-body">
                   <p>{person.biography}</p>
-                  <a href={person.path}>Open permanent biography <span aria-hidden="true">→</span></a>
+                  <a href={person.path} data-scholar-permanent>Open permanent biography <span aria-hidden="true">→</span></a>
                 </div>
               </details>
 
@@ -93,7 +99,9 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
         if (!path) return;
         const introduction = [...prose.querySelectorAll<HTMLAnchorElement>(`a[href="${path}"]`)]
           .find((link) => !link.closest("[data-inline-scholar-card]"));
-        const paragraph = introduction?.closest("p");
+        const passage = card.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean)
+          .map((id) => prose.querySelector<HTMLElement>(`#${CSS.escape(id)}`)).find(Boolean);
+        const paragraph = introduction?.closest("p") ?? passage;
         if (!paragraph) return;
 
         let insertionPoint: Element = paragraph;
@@ -209,6 +217,7 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
   .image-credit { margin-top: 0.5rem; }
   .image-credit summary { min-height: 2rem; font-size: 0.58rem; }
   .image-credit p { margin: 0; padding: 0.15rem 0 0.4rem; color: var(--ink-soft); font: 0.58rem/1.45 var(--sans); overflow-wrap: anywhere; }
+  .print-image-credit { display: none; }
   @media (max-width: 620px) {
     .inline-scholar-card { grid-template-columns: 1fr; margin-block: 2.2rem; }
     .inline-scholar-card__portrait { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -228,5 +237,6 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
   @media print {
     .inline-scholar-card { box-shadow: none; }
     .scholar-disclosures, .image-credit { display: none; }
+    .print-image-credit { display: block; margin: 0.5rem 0 0; font: 0.58rem/1.4 var(--sans); overflow-wrap: anywhere; }
   }
 </style>

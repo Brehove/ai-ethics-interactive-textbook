@@ -1,0 +1,64 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Derek Parfit at Harvard-April 21, 2015-Effective Altruism (cropped).jpg",
+  "description": "British philosopher (1942–2017)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1942-12-11T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q30002",
+        "label": "Chengdu"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q145",
+        "label": "United Kingdom"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+2017-01-01T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q205817",
+        "label": "London Borough of Islington"
+      }
+    ],
+    "movements": [],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      }
+    ]
+  },
+  "id": "derek-parfit",
+  "label": "Derek Parfit",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "f3027eb94b8efc8eb450a30f5eed56b190f9a61fc5e511579d278aca1d1251c2",
+    "entityUrl": "https://www.wikidata.org/wiki/Q962160",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-23T00:47:59Z",
+    "provider": "Wikidata",
+    "revisionId": 2521456164
+  },
+  "wikidataId": "Q962160",
+  "wikipedia": {
+    "title": "Derek Parfit",
+    "url": "https://en.wikipedia.org/wiki/Derek_Parfit"
+  }
+}

@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch11",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"privacy-contextual-integrity","title":"Privacy as Contextual Integrity","creator":"Helen Nissenbaum","authorPersonId":"helen-nissenbaum","url":"https://digitalcommons.law.uw.edu/wlr/vol79/iss1/10/","rightsStatus":"Copyright retained; linked through the University of Washington Law Review repository. No excerpt is reproduced here.","passageIds":["ch11-p0066","ch11-p0067"],"teachingUse":"Primary source for evaluating whether a data flow violates the purposes, roles, or expectations of its original context."}
+  ],
   "companionSources": []
 }

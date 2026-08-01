@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Margaret Boden 01.JPG",
+  "derivative": {
+    "bytes": 38886,
+    "height": 730,
+    "localPath": "/media/wikimedia/margaret-boden-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "fd5a37c7cb7aab1e38eb4ab28f94b2b7cb1cec700f52dbb35f0e5101104b28ab",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Margaret_Boden_01.JPG/960px-Margaret_Boden_01.JPG",
+    "width": 720
+  },
+  "id": "margaret-boden-portrait",
+  "original": {
+    "bytes": 2300832,
+    "height": 3246,
+    "mime": "image/jpeg",
+    "sha1": "28326849dbbee93cb92cde904a832c085dcb6905",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/03/Margaret_Boden_01.JPG",
+    "width": 3201
+  },
+  "personId": "margaret-boden",
+  "rights": {
+    "artist": "Bengt Oberger",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "59a22bd0f1914cad0d07252f1b08ed8bb3674fb4b0445d922a383ddfef81dcda",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 45570269,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Margaret_Boden_01.JPG",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1207550985,
+    "revisionTimestamp": "2026-05-03T06:02:17Z"
+  }
+}

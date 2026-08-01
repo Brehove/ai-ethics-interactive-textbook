@@ -1,0 +1,41 @@
+{
+  "artifactId": "jacquard-loom",
+  "commonsTitle": "File:Jacquard loom.jpg",
+  "derivative": {
+    "bytes": 149518,
+    "height": 1118,
+    "localPath": "/media/wikimedia/jacquard-loom.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "aff003a81605b3b70d41f330bccf8916bcd351ba2c2f59ac8f095f8c7045cd97",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Jacquard_loom.jpg/960px-Jacquard_loom.jpg",
+    "width": 720
+  },
+  "id": "jacquard-loom",
+  "original": {
+    "bytes": 1931632,
+    "height": 1916,
+    "mime": "image/jpeg",
+    "sha1": "c6d82a6e4174a0207a6bbf8291ae62b15c1b7c3e",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/65/Jacquard_loom.jpg",
+    "width": 1234
+  },
+  "rights": {
+    "artist": "Mahlum",
+    "attributionRequired": false,
+    "credit": "Own work",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "70f1f368e11367d4092f32c1f87eb9b3534e90031abdfa234058e081526c3b79",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 5524228,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Jacquard_loom.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1175667175,
+    "revisionTimestamp": "2026-03-04T08:11:55Z"
+  }
+}

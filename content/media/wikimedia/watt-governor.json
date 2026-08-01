@@ -1,0 +1,41 @@
+{
+  "artifactId": "watt-governor",
+  "commonsTitle": "File:Regulateur watt.svg",
+  "derivative": {
+    "bytes": 43032,
+    "height": 415,
+    "localPath": "/media/wikimedia/watt-governor.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "3e78023e7455fa557f8118a3de30e65542cb79f52e6b7a572fe091d60f7d4c2a",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Regulateur_watt.svg/960px-Regulateur_watt.svg.png",
+    "width": 720
+  },
+  "id": "watt-governor",
+  "original": {
+    "bytes": 4192,
+    "height": 420,
+    "mime": "image/svg+xml",
+    "sha1": "aa520c7b957fd948d6d0cc5db238a7f2dd270709",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/Regulateur_watt.svg",
+    "width": 730
+  },
+  "rights": {
+    "artist": "Ruizo at French Wikipedia",
+    "attributionRequired": false,
+    "credit": "Regulateur watt.jpg",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "0ed3c56a9dd9774afd3b5fbafe793ac13a9ddd1f52da39f3fc61e6d5648d85b5",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 181742441,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Regulateur_watt.svg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1148737335,
+    "revisionTimestamp": "2026-01-17T09:21:23Z"
+  }
+}

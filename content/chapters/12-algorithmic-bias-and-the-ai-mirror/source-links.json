@@ -2,6 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch12",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"ai-mirror","title":"The AI Mirror","creator":"Shannon Vallor","authorPersonId":"shannon-vallor","url":"https://academic.oup.com/book/56292","rightsStatus":"Copyright retained; publisher record linked without a reproduced excerpt.","passageIds":["ch12-p0016","ch12-p0017","ch12-p0019"],"teachingUse":"Primary source for the mirror metaphor and its warning that AI reflects partial records of human and institutional behavior."},
+    {"id":"bias-computer-systems","title":"Bias in Computer Systems","creator":"Batya Friedman and Helen Nissenbaum","authorPersonId":"helen-nissenbaum","url":"https://doi.org/10.1145/230538.230561","rightsStatus":"Copyright retained; DOI linked without a reproduced excerpt.","passageIds":["ch12-p0039"],"teachingUse":"Primary source for distinguishing preexisting, technical, and emergent bias."}
+  ],
   "companionSources": []
 }

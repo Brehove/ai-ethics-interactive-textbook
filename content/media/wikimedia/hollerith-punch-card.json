@@ -1,0 +1,41 @@
+{
+  "artifactId": "hollerith-punch-card",
+  "commonsTitle": "File:Hollerith Punched Card.jpg",
+  "derivative": {
+    "bytes": 58930,
+    "height": 323,
+    "localPath": "/media/wikimedia/hollerith-punch-card.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "5a74aa0a4c3112a3dcae03fa46df3fbefd8a7e7e52ba4d043465531301f25ce7",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Hollerith_Punched_Card.jpg/960px-Hollerith_Punched_Card.jpg",
+    "width": 720
+  },
+  "id": "hollerith-punch-card",
+  "original": {
+    "bytes": 126878,
+    "height": 538,
+    "mime": "image/jpeg",
+    "sha1": "1afb2b5e29af931da417a5b26b007ee6d071b3c6",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Hollerith_Punched_Card.jpg",
+    "width": 1200
+  },
+  "rights": {
+    "artist": "Unknown author Unknown author",
+    "attributionRequired": false,
+    "credit": "Library of Congress https://www.loc.gov/resource/mcc.023/?sp=8",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "dc8466a9894472903d1a24235f33ff4b2dd9df7cd7d5d1b712dbd15f8b6bc902",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 30538485,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Hollerith_Punched_Card.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1108739532,
+    "revisionTimestamp": "2025-11-04T01:20:44Z"
+  }
+}

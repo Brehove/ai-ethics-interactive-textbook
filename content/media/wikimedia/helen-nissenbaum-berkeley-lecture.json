@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Helen's guest lecture at University of Berkley.jpg",
+  "derivative": {
+    "bytes": 76794,
+    "height": 960,
+    "localPath": "/media/wikimedia/helen-nissenbaum-berkeley-lecture.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "6f3bacbdf7b4370f2fdf8b4ebfb1f38bb6eb8041203551fd11c0942df12a6fb5",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Helen%27s_guest_lecture_at_University_of_Berkley.jpg/960px-Helen%27s_guest_lecture_at_University_of_Berkley.jpg",
+    "width": 720
+  },
+  "id": "helen-nissenbaum-berkeley-lecture",
+  "original": {
+    "bytes": 2957259,
+    "height": 3488,
+    "mime": "image/jpeg",
+    "sha1": "ed10c9d15d2b156f5f5235a058cf4a0c8bd8d48c",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Helen%27s_guest_lecture_at_University_of_Berkley.jpg",
+    "width": 2616
+  },
+  "personId": "helen-nissenbaum",
+  "rights": {
+    "artist": "Joe Hall",
+    "attributionRequired": true,
+    "credit": "https://www.flickr.com/photos/joebeone/2385347407/",
+    "licenseShortName": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "usageTerms": "Creative Commons Attribution 2.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "a524335128cc63a5d54b700f00cee6477644f96f57380023955fa330f7af20b9",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 95037657,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Helen's_guest_lecture_at_University_of_Berkley.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 950438968,
+    "revisionTimestamp": "2024-10-28T23:49:03Z"
+  }
+}

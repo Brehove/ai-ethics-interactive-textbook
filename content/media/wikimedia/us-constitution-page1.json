@@ -1,0 +1,41 @@
+{
+  "artifactId": "us-constitution-page1",
+  "commonsTitle": "File:Constitution of the United States, page 1.jpg",
+  "derivative": {
+    "bytes": 162132,
+    "height": 872,
+    "localPath": "/media/wikimedia/us-constitution-page1.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "f4133a77c44f214c40a1c91715ffeddfdf43d9b06b12a4e392cb6f625ccaec00",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Constitution_of_the_United_States_-_DPLA_-_9ca804144bd5965e992ae3528bc3c6a3_%28page_1%29.jpg/960px-Constitution_of_the_United_States_-_DPLA_-_9ca804144bd5965e992ae3528bc3c6a3_%28page_1%29.jpg",
+    "width": 720
+  },
+  "id": "us-constitution-page1",
+  "original": {
+    "bytes": 62296842,
+    "height": 8785,
+    "mime": "image/jpeg",
+    "sha1": "b25eb41a295a208dd8cd0a915497e83e2c010722",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Constitution_of_the_United_States_-_DPLA_-_9ca804144bd5965e992ae3528bc3c6a3_%28page_1%29.jpg",
+    "width": 7258
+  },
+  "rights": {
+    "artist": "Constitutional Convention",
+    "attributionRequired": false,
+    "credit": null,
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "7fcb52ee726ecf92278e7252da405139ecb704d0ef34f45181877e5b0ed52ee8",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 195035925,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Constitution_of_the_United_States%2C_page_1.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1242843848,
+    "revisionTimestamp": "2026-07-03T03:45:11Z"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Prof Nick Bostrom 324-1.jpg",
+  "derivative": {
+    "bytes": 28488,
+    "height": 937,
+    "localPath": "/media/wikimedia/nick-bostrom-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "8293c9d032f800b84bb2a5a1273bc8167b8d1609effc3321b4ba394899001817",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Prof_Nick_Bostrom_324-1.jpg/960px-Prof_Nick_Bostrom_324-1.jpg",
+    "width": 720
+  },
+  "id": "nick-bostrom-portrait",
+  "original": {
+    "bytes": 336214,
+    "height": 2084,
+    "mime": "image/jpeg",
+    "sha1": "e7e4e3d96ad139cafb69f307496d43bc1054488a",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Prof_Nick_Bostrom_324-1.jpg",
+    "width": 1602
+  },
+  "personId": "nick-bostrom",
+  "rights": {
+    "artist": "Future of Humanity Institute",
+    "attributionRequired": true,
+    "credit": "https://www.fhi.ox.ac.uk/press/images/ Immediate source: https://www.fhi.ox.ac.uk/wp-content/uploads/Prof_Nick_Bostrom_324-1.jpg",
+    "licenseShortName": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "usageTerms": "Creative Commons Attribution 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "98ab681b0738f490ed0f33af0692859fa5f672967245121c7d13af230de189c3",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 106590442,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Prof_Nick_Bostrom_324-1.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1222500954,
+    "revisionTimestamp": "2026-05-29T22:16:58Z"
+  }
+}

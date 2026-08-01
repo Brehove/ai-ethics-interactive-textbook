@@ -2,6 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch16",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"famine-affluence-morality","title":"Famine, Affluence, and Morality","creator":"Peter Singer","authorPersonId":"peter-singer","url":"https://www.jstor.org/stable/2265052","locator":"Philosophy & Public Affairs 1, no. 3 (1972)","rightsStatus":"Copyright retained; stable journal record linked without a reproduced excerpt.","passageIds":["ch16-p0031","ch16-p0033","ch16-p0039"],"teachingUse":"Primary source for the rescue argument and the claim that distance does not erase a reason to prevent severe suffering."},
+    {"id":"reasons-and-persons-future-generations","title":"Reasons and Persons","creator":"Derek Parfit","authorPersonId":"derek-parfit","url":"https://global.oup.com/academic/product/reasons-and-persons-9780198249085","locator":"Part IV","rightsStatus":"Copyright retained; publisher record linked without a reproduced excerpt.","passageIds":["ch16-p0064","ch16-p0066","ch16-p0072"],"teachingUse":"Primary source for the nonidentity problem and population-ethics pressures on simple future-welfare calculations."},
+    {"id":"existential-risks","title":"Existential Risks: Analyzing Human Extinction Scenarios and Related Hazards","creator":"Nick Bostrom","authorPersonId":"nick-bostrom","url":"https://nickbostrom.com/papers/existential-risks/","locator":"Journal of Evolution and Technology 9 (2002)","rightsStatus":"Author-hosted public text; copyright retained. No excerpt is reproduced here.","passageIds":["ch16-p0077","ch16-p0079"],"teachingUse":"Primary source for the definition and moral scale of existential risk."}
+  ],
   "companionSources": []
 }

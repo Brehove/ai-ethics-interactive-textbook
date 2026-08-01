@@ -2,6 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch18",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"transhumanist-values","title":"Transhumanist Values","creator":"Nick Bostrom","authorPersonId":"nick-bostrom","url":"https://nickbostrom.com/ethics/values","rightsStatus":"Author-hosted public text; copyright retained. No excerpt is reproduced here.","passageIds":["ch18-p0027","ch18-p0028","ch18-p0087"],"teachingUse":"Primary source for posthuman value, morphological freedom, wide access, and the transhumanist case for expanding capacity."},
+    {"id":"case-against-perfection","title":"The Case Against Perfection","creator":"Michael Sandel","authorPersonId":"michael-sandel","url":"https://sandel.scholars.harvard.edu/publications/case-against-perfection-ethics-age-genetic-engineering","rightsStatus":"Copyright retained; author profile and publication record linked without a reproduced excerpt.","passageIds":["ch18-p0053","ch18-p0055"],"teachingUse":"Primary source for the giftedness and mastery objection to genetic enhancement."}
+  ],
   "companionSources": []
 }

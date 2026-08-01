@@ -2,7 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch11",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"helen-nissenbaum","role":"theorist of contextual integrity and appropriate information flow","featured":true,"passageIds":["ch11-p0066","ch11-p0067"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

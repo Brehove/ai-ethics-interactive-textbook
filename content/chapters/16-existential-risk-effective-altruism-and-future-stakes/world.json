@@ -2,7 +2,11 @@
   "schemaVersion": 1,
   "chapterId": "ch16",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"peter-singer","role":"philosopher of impartial rescue and effective giving","featured":true,"passageIds":["ch16-p0031","ch16-p0033","ch16-p0039"]},
+    {"id":"derek-parfit","role":"philosopher of future persons, nonidentity, and population ethics","featured":true,"passageIds":["ch16-p0064","ch16-p0066","ch16-p0072"]},
+    {"id":"nick-bostrom","role":"theorist of existential risk and misaligned optimization","featured":true,"passageIds":["ch16-p0077","ch16-p0079","ch16-p0085"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []
