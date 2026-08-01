@@ -18,6 +18,13 @@
     "EDITOR_REPO_OWNER": "Brehove",
     "EDITOR_REPO_NAME": "ai-ethics-interactive-textbook",
     "EDITOR_DEFAULT_BRANCH": "main",
+    "EDITOR_ALLOWED_ORIGINS": "https://ethicsandai.your-digital-life.org",
+    "EDITOR_AUTH_BASE_URL": "https://auth.ethicsandai.your-digital-life.org",
+    "EDITOR_ADMIN_URL": "https://ethicsandai.your-digital-life.org/admin/",
+    "EDITOR_ALLOWED_GITHUB_USER_IDS": "6131690",
+    "GITHUB_APP_ID": "4457994",
+    "GITHUB_APP_CLIENT_ID": "Iv23lixEZCSxiMYDjI8r",
+    "GITHUB_APP_INSTALLATION_ID": "150592311",
     "EDITOR_STATE_TTL_SECONDS": "600",
     "EDITOR_SESSION_TTL_SECONDS": "3600"
   }
