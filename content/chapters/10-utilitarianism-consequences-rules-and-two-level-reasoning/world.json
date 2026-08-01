@@ -2,7 +2,11 @@
   "schemaVersion": 1,
   "chapterId": "ch10",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"jeremy-bentham","role":"utilitarian reformer","featured":true,"passageIds":["ch10-p0007","ch10-p0028","ch10-p0029"]},
+    {"id":"john-stuart-mill","role":"utilitarian reviser","featured":true,"passageIds":["ch10-p0009","ch10-p0030","ch10-p0031"]},
+    {"id":"immanuel-kant","role":"framework comparison","featured":false,"passageIds":["ch10-p0004","ch10-p0039"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

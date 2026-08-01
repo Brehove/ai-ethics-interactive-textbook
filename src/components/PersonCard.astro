@@ -1,0 +1,55 @@
+---
+import type { ResolvedChapterPerson } from "../lib/scholarly-layer";
+import PersonPortrait from "./PersonPortrait.astro";
+
+interface Props {
+  entry: ResolvedChapterPerson;
+  headingLevel?: 2 | 3;
+}
+
+const { entry, headingLevel = 2 } = Astro.props;
+const { person, relation } = entry;
+const Heading = `h${headingLevel}` as "h2" | "h3";
+const chapterRole = relation.role || person.teaching.whyThisPerson;
+---
+
+<article class="person-card" data-person-card={person.id}>
+  <a class="portrait-link" href={person.path} data-scholar-link data-scholar-id={person.id} aria-label={`Open biography for ${person.displayName}`}>
+    <PersonPortrait person={person} showCredit={false} />
+  </a>
+  <div class="person-card__body">
+    {relation.featured && <p class="eyebrow">Featured thinker</p>}
+    <Heading>
+      <a href={person.path} data-scholar-link data-scholar-id={person.id}>{person.displayName}</a>
+    </Heading>
+    <p>{chapterRole}</p>
+    <a class="record-link" href={person.path}>Permanent biography <span aria-hidden="true">→</span></a>
+  </div>
+</article>
+
+<style>
+  .person-card {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 0.72fr) minmax(0, 1.28fr);
+    min-height: 15rem;
+    border: 1px solid var(--line);
+    background: var(--wash);
+  }
+  .portrait-link { display: block; min-width: 0; border-right: 1px solid var(--line); }
+  .portrait-link :global(figure),
+  .portrait-link :global(.portrait-placeholder) { height: 100%; }
+  .portrait-link :global(img),
+  .portrait-link :global(.portrait-placeholder) { height: 100%; min-height: 15rem; border: 0; }
+  .person-card__body { align-self: center; padding: 1.25rem; }
+  h2, h3 { margin: 0.35rem 0 0.55rem; font-size: 1.45rem; font-weight: 500; line-height: 1.08; }
+  h2 a, h3 a { text-decoration-thickness: 1px; }
+  p:not(.eyebrow) { margin: 0 0 1rem; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.55; }
+  .record-link { color: var(--rust-dark); font: 700 0.65rem/1.35 var(--sans); letter-spacing: 0.05em; text-transform: uppercase; }
+  @media (max-width: 620px) {
+    .person-card { grid-template-columns: 7rem minmax(0, 1fr); min-height: 12rem; }
+    .portrait-link :global(img),
+    .portrait-link :global(.portrait-placeholder) { min-height: 12rem; }
+    .person-card__body { padding: 1rem; }
+    h2, h3 { font-size: 1.25rem; }
+  }
+</style>

@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Plato Silanion Musei Capitolini MC1377.jpg",
+  "derivative": {
+    "bytes": 96162,
+    "height": 1080,
+    "localPath": "/media/wikimedia/plato-silanion-musei-capitolini.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "1de9133ab2d4b778cff7a3f2b3c56d9df85dc9ca602e8acca1403c3f7bff1ea4",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Plato_Silanion_Musei_Capitolini_MC1377.jpg/960px-Plato_Silanion_Musei_Capitolini_MC1377.jpg",
+    "width": 720
+  },
+  "id": "plato-silanion-portrait",
+  "original": {
+    "bytes": 5148315,
+    "height": 3600,
+    "mime": "image/jpeg",
+    "sha1": "037043ef657cff14cbfe749d87b80e7d4c9983b5",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Plato_Silanion_Musei_Capitolini_MC1377.jpg",
+    "width": 2400
+  },
+  "personId": "plato",
+  "rights": {
+    "artist": "Marie-Lan Nguyen",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+    "usageTerms": "Creative Commons Attribution 2.5"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "1207f2e1805e829651fb5f57c02c785f6903b9bdcab0ae61e2606a504a163653",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 7831217,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Plato_Silanion_Musei_Capitolini_MC1377.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1212431714,
+    "revisionTimestamp": "2026-05-11T19:15:33Z"
+  }
+}

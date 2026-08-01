@@ -1,0 +1,142 @@
+{
+  "aliases": [
+    "Gamaliel Smith",
+    "Philip Beauchamp"
+  ],
+  "commonsImageClaim": "Jeremy Bentham by Henry William Pickersgill detail.jpg",
+  "description": "British philosopher, jurist, and social reformer (1748–1832)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 9,
+        "time": "+1748-00-00T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1748-02-15T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1749-02-15T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q5913262",
+        "label": "Houndsditch"
+      },
+      {
+        "id": "Q84",
+        "label": "London"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q142",
+        "label": "France"
+      },
+      {
+        "id": "Q161885",
+        "label": "Kingdom of Great Britain"
+      },
+      {
+        "id": "Q174193",
+        "label": "United Kingdom of Great Britain and Ireland"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1832-06-06T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q84",
+        "label": "London"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q160590",
+        "label": "utilitarianism"
+      }
+    ],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q11966252",
+        "label": "animal rights advocate"
+      },
+      {
+        "id": "Q1238570",
+        "label": "political scientist"
+      },
+      {
+        "id": "Q124985058",
+        "label": "reformer"
+      },
+      {
+        "id": "Q1476215",
+        "label": "human rights defender"
+      },
+      {
+        "id": "Q15994177",
+        "label": "political theorist"
+      },
+      {
+        "id": "Q185351",
+        "label": "jurist"
+      },
+      {
+        "id": "Q188094",
+        "label": "economist"
+      },
+      {
+        "id": "Q215536",
+        "label": "merchant"
+      },
+      {
+        "id": "Q27532437",
+        "label": "suffragist"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q40348",
+        "label": "lawyer"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q763779",
+        "label": "Protestant reformer"
+      }
+    ]
+  },
+  "id": "jeremy-bentham",
+  "label": "Jeremy Bentham",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "ce5f1c58f69cd9c4c9233179f12a6b35260aa20bcc9f50ceea0d93d7c3cfee1f",
+    "entityUrl": "https://www.wikidata.org/wiki/Q60887",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-19T11:20:57Z",
+    "provider": "Wikidata",
+    "revisionId": 2519624935
+  },
+  "wikidataId": "Q60887",
+  "wikipedia": {
+    "title": "Jeremy Bentham",
+    "url": "https://en.wikipedia.org/wiki/Jeremy_Bentham"
+  }
+}

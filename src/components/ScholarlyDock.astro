@@ -1,0 +1,408 @@
+---
+import type { ChapterSourceLinks } from "../lib/content";
+import {
+  orderChapterPeople,
+  type ResolvedChapterPerson,
+} from "../lib/scholarly-layer";
+import "../styles/scholarly-layer.css";
+import PersonPortrait from "./PersonPortrait.astro";
+import PrivacyNote from "./PrivacyNote.astro";
+
+type ReaderMode = "first" | "deep" | "sources" | "world";
+
+interface SourceRecord {
+  id: string;
+  title: string;
+  authorPersonId: string | null;
+  creator: string | null;
+  locator: string | null;
+  excerpt: string | null;
+  translation: string | null;
+  url: string | null;
+  rightsRecordId: string | null;
+  rightsStatus: string | null;
+  note: string | null;
+}
+
+interface Props {
+  slug: string;
+  active: ReaderMode;
+  people: ResolvedChapterPerson[];
+  primarySources?: ChapterSourceLinks["primarySources"];
+  pressbooksUrl: string;
+}
+
+function stringField(record: Record<string, unknown>, key: string): string | null {
+  return typeof record[key] === "string" && record[key].length > 0 ? record[key] : null;
+}
+
+function normalizeSource(value: unknown, index: number): SourceRecord | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const title = stringField(record, "title");
+  if (!title) return null;
+  return {
+    id: stringField(record, "id") ?? `source-${index + 1}`,
+    title,
+    authorPersonId: stringField(record, "authorPersonId"),
+    creator: stringField(record, "creator"),
+    locator: stringField(record, "locator"),
+    excerpt: stringField(record, "excerpt"),
+    translation: stringField(record, "translation"),
+    url: stringField(record, "url"),
+    rightsRecordId: stringField(record, "rightsRecordId"),
+    rightsStatus: stringField(record, "rightsStatus"),
+    note: stringField(record, "note") ?? stringField(record, "teachingUse"),
+  };
+}
+
+function readableId(id: string): string {
+  return id.split("-").map((part) => part ? part[0].toLocaleUpperCase("en") + part.slice(1) : part).join(" ");
+}
+
+const {
+  slug,
+  active,
+  people,
+  primarySources = [],
+  pressbooksUrl,
+} = Astro.props;
+const orderedPeople = orderChapterPeople(people);
+const defaultEntry = orderedPeople[0];
+const sources = primarySources
+  .map(normalizeSource)
+  .filter((source): source is SourceRecord => source !== null);
+const modeDescription = active === "first"
+  ? "Keep the people and texts behind the chapter close while you read."
+  : active === "deep"
+    ? "Use the people and source records to test the chapter's argumentative choices."
+    : active === "sources"
+      ? "Move between a source record, its author, and the chapter's interpretation."
+      : "Follow the people, texts, and intellectual connections surrounding this chapter.";
+---
+
+<div
+  class="scholarly-layer source-dock-wrapper interactive-only"
+  data-scholarly-layer
+  data-default-person={defaultEntry?.person.id}
+>
+  <aside class="source-dock scholarly-dock" aria-labelledby={`scholarly-dock-${slug}`}>
+    <header class="scholarly-dock__intro">
+      <p class="eyebrow">Scholarly layer</p>
+      <h2 id={`scholarly-dock-${slug}`}>People beside the reading</h2>
+      <p>{modeDescription}</p>
+    </header>
+
+    {orderedPeople.length > 0 ? (
+      <>
+        {orderedPeople.length > 1 && (
+          <nav class="scholar-selector" aria-label="People connected to this chapter">
+            <ol>
+              {orderedPeople.map(({ person }, index) => (
+                <li>
+                  <a
+                    href={person.path}
+                    data-scholar-link
+                    data-scholar-select
+                    data-scholar-id={person.id}
+                    aria-current={index === 0 ? "true" : undefined}
+                  >{person.displayName}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
+        <div class="scholar-panels">
+          {orderedPeople.map((entry, index) => {
+            const { person, relation } = entry;
+            const source = sources.find((item) =>
+              item.authorPersonId === person.id
+              || person.teaching.primarySourceIds.includes(item.id)
+              || (!item.authorPersonId && item.creator?.toLocaleLowerCase("en") === person.displayName.toLocaleLowerCase("en"))
+            ) ?? null;
+            const relationNote = relation.role || person.teaching.whyThisPerson;
+            const otherPeople = orderedPeople.filter((candidate) => candidate.person.id !== person.id);
+            const notesId = `scholar-${slug}-${person.id}-notes`;
+            const sourceId = `scholar-${slug}-${person.id}-source`;
+            const connectionsId = `scholar-${slug}-${person.id}-connections`;
+            return (
+              <section
+                class="scholar-panel"
+                data-scholar-panel={person.id}
+                aria-labelledby={`scholar-${slug}-${person.id}-name`}
+                hidden={index !== 0}
+              >
+                <div class="scholar-figure">
+                  <PersonPortrait person={person} variant="dock" />
+                </div>
+                <header class="scholar-person-head">
+                  <p class="eyebrow">{relation.featured ? "Featured thinker" : "Connected thinker"}</p>
+                  <h2 id={`scholar-${slug}-${person.id}-name`} data-person-heading tabindex="-1">{person.displayName}</h2>
+                  <p>{relationNote}</p>
+                  <a class="permanent-record" href={person.path}>Open permanent biography <span aria-hidden="true">↗</span></a>
+                </header>
+
+                <nav class="scholar-tabs" aria-label={`Views for ${person.displayName}`}>
+                  <a href={`#${notesId}`} data-scholar-view="notes">Notes</a>
+                  <a href={`#${sourceId}`} data-scholar-view="source">Source</a>
+                  <a href={`#${connectionsId}`} data-scholar-view="connections">Connections</a>
+                </nav>
+
+                <div class="scholar-view-panels">
+                  <section class="scholar-view" id={notesId} data-scholar-view-panel="notes">
+                    <h3>Why this person matters here</h3>
+                    <p>{relationNote}</p>
+                    {relation.role && relation.role !== person.teaching.whyThisPerson && <p>{person.teaching.whyThisPerson}</p>}
+                    {relation.passageIds.length > 0 && (
+                      <p class="passage-records">
+                        Passage records: {relation.passageIds.map((passageId, passageIndex) => (
+                          <><code>{passageId}</code>{passageIndex < relation.passageIds.length - 1 ? ", " : ""}</>
+                        ))}
+                      </p>
+                    )}
+                  </section>
+
+                  <section class="scholar-view" id={sourceId} data-scholar-view-panel="source">
+                    <h3>{source?.title ?? "Linked source record"}</h3>
+                    {source ? (
+                      <>
+                        {(source.creator || source.locator || source.translation) && (
+                          <dl class="source-metadata">
+                            {source.creator && <><dt>Author</dt><dd>{source.creator}</dd></>}
+                            {source.locator && <><dt>Locator</dt><dd>{source.locator}</dd></>}
+                            {source.translation && <><dt>Edition or translation</dt><dd>{source.translation}</dd></>}
+                          </dl>
+                        )}
+                        {source.excerpt && <blockquote>{source.excerpt}</blockquote>}
+                        {source.note && <p>{source.note}</p>}
+                        {source.rightsStatus && <p class="record-note">Text rights: {source.rightsStatus}</p>}
+                        {source.rightsRecordId && <p class="record-note">Rights record: {source.rightsRecordId}</p>}
+                        {source.url
+                          ? <a class="source-record-link" href={source.url} rel="noreferrer">Open the linked source <span aria-hidden="true">↗</span></a>
+                          : <p class="record-note">This reviewed record does not yet include a public source URL.</p>}
+                      </>
+                    ) : (
+                      <>
+                        <p>No reviewed primary-source record in this chapter is currently attributed to {person.displayName}.</p>
+                        <a class="source-record-link" href={pressbooksUrl}>Consult the canonical chapter in Pressbooks <span aria-hidden="true">↗</span></a>
+                      </>
+                    )}
+                  </section>
+
+                  <section class="scholar-view" id={connectionsId} data-scholar-view-panel="connections">
+                    <h3>Read across the chapter</h3>
+                    {person.teaching.traditionIds.length > 0 && (
+                      <div class="connection-group">
+                        <h4>Traditions</h4>
+                        <ul>{person.teaching.traditionIds.map((id) => <li><a href={`/chapter/${slug}/world/#tradition-${id}`}>{readableId(id)}</a></li>)}</ul>
+                      </div>
+                    )}
+                    {person.teaching.conceptIds.length > 0 && (
+                      <div class="connection-group">
+                        <h4>Concepts</h4>
+                        <ul>{person.teaching.conceptIds.map((id) => <li><a href={`/chapter/${slug}/world/#concept-${id}`}>{readableId(id)}</a></li>)}</ul>
+                      </div>
+                    )}
+                    {otherPeople.length > 0 && (
+                      <div class="connection-group">
+                        <h4>Other people in this chapter</h4>
+                        <ul>{otherPeople.map(({ person: other }) => <li><a href={other.path} data-scholar-link data-scholar-id={other.id}>{other.displayName}</a></li>)}</ul>
+                      </div>
+                    )}
+                    {person.teaching.traditionIds.length + person.teaching.conceptIds.length + otherPeople.length === 0 && (
+                      <p>Additional reviewed connections have not yet been added to this chapter.</p>
+                    )}
+                  </section>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </>
+    ) : (
+      <section class="scholarly-empty">
+        <h3>Reviewed records are still being assembled</h3>
+        <p>This chapter remains complete without the enhancement. People, portraits, and source connections appear here only after editorial and rights review.</p>
+      </section>
+    )}
+
+    <footer class="scholarly-dock__footer">
+      <a class="pressbooks-link" href={pressbooksUrl}>Open this chapter in Pressbooks <span aria-hidden="true">↗</span></a>
+      <PrivacyNote />
+    </footer>
+  </aside>
+
+  {defaultEntry && (
+    <button class="scholar-launch" type="button" data-scholar-launch aria-haspopup="dialog">
+      <span class="scholar-launch__label">People &amp; sources</span>
+      <span aria-hidden="true">↑</span>
+    </button>
+  )}
+
+  <dialog class="scholar-dialog" data-scholar-dialog aria-labelledby={`scholar-dialog-title-${slug}`}>
+    <header class="scholar-dialog__head">
+      <div>
+        <p class="eyebrow">Scholarly layer</p>
+        <h2 id={`scholar-dialog-title-${slug}`} data-scholar-dialog-title>Person record</h2>
+      </div>
+      <button type="button" class="scholar-dialog__close" data-scholar-dialog-close>Close</button>
+    </header>
+    <div class="scholar-dialog__body" data-scholar-dialog-body></div>
+  </dialog>
+</div>
+
+<script>
+  type ViewName = "notes" | "source" | "connections";
+
+  function configureViewTabs(scope: ParentNode, prefix: string): void {
+    const tabs = Array.from(scope.querySelectorAll<HTMLAnchorElement>("[data-scholar-view]"));
+    const panels = Array.from(scope.querySelectorAll<HTMLElement>("[data-scholar-view-panel]"));
+    if (tabs.length === 0 || panels.length === 0) return;
+
+    const tablist = tabs[0].parentElement;
+    tablist?.setAttribute("role", "tablist");
+
+    const activate = (name: ViewName, moveFocus = false): void => {
+      tabs.forEach((tab) => {
+        const selected = tab.dataset.scholarView === name;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected && moveFocus) tab.focus();
+      });
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.scholarViewPanel !== name;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      const name = tab.dataset.scholarView as ViewName;
+      const panel = panels.find((candidate) => candidate.dataset.scholarViewPanel === name);
+      if (!panel) return;
+      const tabId = `${prefix}-tab-${name}`;
+      const panelId = `${prefix}-panel-${name}`;
+      tab.id = tabId;
+      tab.href = `#${panelId}`;
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-controls", panelId);
+      panel.id = panelId;
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", tabId);
+      panel.tabIndex = 0;
+      tab.addEventListener("click", (event) => {
+        event.preventDefault();
+        activate(name);
+      });
+      tab.addEventListener("keydown", (event) => {
+        let targetIndex: number | null = null;
+        if (event.key === "ArrowRight") targetIndex = (index + 1) % tabs.length;
+        if (event.key === "ArrowLeft") targetIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === "Home") targetIndex = 0;
+        if (event.key === "End") targetIndex = tabs.length - 1;
+        if (targetIndex === null) return;
+        event.preventDefault();
+        const targetName = tabs[targetIndex].dataset.scholarView as ViewName;
+        activate(targetName, true);
+      });
+    });
+
+    activate("notes");
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-scholarly-layer]").forEach((root, rootIndex) => {
+    const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-scholar-panel]"));
+    if (panels.length === 0) return;
+
+    const dialog = root.querySelector<HTMLDialogElement>("[data-scholar-dialog]");
+    const dialogBody = root.querySelector<HTMLElement>("[data-scholar-dialog-body]");
+    const dialogTitle = root.querySelector<HTMLElement>("[data-scholar-dialog-title]");
+    const closeButton = root.querySelector<HTMLButtonElement>("[data-scholar-dialog-close]");
+    const launchButton = root.querySelector<HTMLButtonElement>("[data-scholar-launch]");
+    const mobile = window.matchMedia("(max-width: 820px)");
+    let activeId = root.dataset.defaultPerson ?? panels[0].dataset.scholarPanel ?? "";
+    let returnFocus: HTMLElement | null = null;
+
+    panels.forEach((panel, panelIndex) => configureViewTabs(panel, `scholar-${rootIndex}-${panelIndex}`));
+
+    const panelFor = (id: string): HTMLElement | undefined => panels.find((panel) => panel.dataset.scholarPanel === id);
+
+    const updateSelection = (id: string, focusHeading = false): HTMLElement | undefined => {
+      const selectedPanel = panelFor(id);
+      if (!selectedPanel) return undefined;
+      activeId = id;
+      panels.forEach((panel) => { panel.hidden = panel !== selectedPanel; });
+      root.querySelectorAll<HTMLElement>("[data-scholar-select]").forEach((link) => {
+        if (link.dataset.scholarId === id) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
+      const heading = selectedPanel.querySelector<HTMLElement>("[data-person-heading]");
+      if (focusHeading) heading?.focus({ preventScroll: true });
+      return selectedPanel;
+    };
+
+    const openDialog = (id: string, trigger: HTMLElement): void => {
+      if (!dialog || !dialogBody || !dialogTitle || typeof dialog.showModal !== "function") return;
+      const selectedPanel = updateSelection(id);
+      if (!selectedPanel) return;
+      if (!dialog.open) returnFocus = trigger;
+
+      const clone = selectedPanel.cloneNode(true) as HTMLElement;
+      clone.hidden = false;
+      clone.removeAttribute("data-scholar-panel");
+      clone.removeAttribute("aria-labelledby");
+      clone.querySelectorAll<HTMLElement>("[id]").forEach((element) => element.removeAttribute("id"));
+      const clonedHeading = clone.querySelector<HTMLElement>("[data-person-heading]");
+      dialogTitle.textContent = clonedHeading?.textContent?.trim() || "Person record";
+      clonedHeading?.remove();
+      dialogBody.replaceChildren(clone);
+      configureViewTabs(clone, `scholar-dialog-${rootIndex}-${id}`);
+      if (!dialog.open) dialog.showModal();
+      closeButton?.focus();
+    };
+
+    const idFromLink = (link: HTMLAnchorElement): string | null => {
+      if (link.dataset.scholarId) return link.dataset.scholarId;
+      try {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return null;
+        const match = url.pathname.match(/^\/people\/([^/]+)\/?$/);
+        return match?.[1] ? decodeURIComponent(match[1]) : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const linkHandler = (event: MouseEvent): void => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[data-scholar-link], .chapter-prose a[href*='/people/']") : null;
+      if (!target || target.target === "_blank" || target.hasAttribute("download")) return;
+      const id = idFromLink(target);
+      if (!id || !panelFor(id)) return;
+      event.preventDefault();
+      if (mobile.matches) openDialog(id, target);
+      else updateSelection(id, true);
+    };
+
+    document.addEventListener("click", linkHandler);
+    launchButton?.addEventListener("click", () => openDialog(activeId, launchButton));
+    closeButton?.addEventListener("click", () => dialog?.close());
+    dialog?.addEventListener("close", () => {
+      returnFocus?.focus({ preventScroll: true });
+      returnFocus = null;
+    });
+    dialog?.addEventListener("click", (event) => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+    });
+    mobile.addEventListener("change", () => {
+      if (!mobile.matches && dialog?.open) {
+        dialog.close();
+        updateSelection(activeId, true);
+      }
+    });
+
+    updateSelection(activeId);
+    if (dialog && typeof dialog.showModal === "function") root.dataset.enhanced = "true";
+  });
+</script>

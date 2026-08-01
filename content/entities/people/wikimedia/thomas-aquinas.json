@@ -1,0 +1,203 @@
+{
+  "aliases": [
+    "Angelic Doctor",
+    "Aquinas",
+    "Dumb Ox",
+    "Saint Thomas",
+    "Saint Thomas Aquinas",
+    "St Thomas Aquinas",
+    "St. Thomas Aquinas",
+    "Thomas of Aquino",
+    "Tommaso d'Aquino"
+  ],
+  "commonsImageClaim": "St-thomas-aquinasFXD.jpg",
+  "description": "Italian Dominican friar, philosopher, Catholic priest, and Doctor of the Church (1225–1274)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 9,
+        "time": "+1225-01-01T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "+1225-01-25T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "+1225-02-01T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q106766784",
+        "label": "castle of the counts of Aquino"
+      }
+    ],
+    "countriesOfCitizenship": [],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 9,
+        "time": "+1274-01-01T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "+1274-03-07T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "+1274-03-14T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q1775258",
+        "label": "Fossanova Abbey"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q328945",
+        "label": "Thomism"
+      },
+      {
+        "id": "Q41679",
+        "label": "scholasticism"
+      },
+      {
+        "id": "Q847198",
+        "label": "just war theory"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q106583055",
+        "label": "De unitate intellectus contra averroistas"
+      },
+      {
+        "id": "Q109285937",
+        "label": "Expositio super librum de causis"
+      },
+      {
+        "id": "Q113665534",
+        "label": "Commentary on Aristotle's Metaphysics"
+      },
+      {
+        "id": "Q1192931",
+        "label": "Quinque viae"
+      },
+      {
+        "id": "Q131961777",
+        "label": "Quaestio disputata De anima"
+      },
+      {
+        "id": "Q136745633",
+        "label": "Postilla super Psalmos"
+      },
+      {
+        "id": "Q136749417",
+        "label": "Super Boetium De Trinitate"
+      },
+      {
+        "id": "Q136749501",
+        "label": "Sententia super Meteora"
+      },
+      {
+        "id": "Q136749645",
+        "label": "De emptione et venditione"
+      },
+      {
+        "id": "Q136749660",
+        "label": "Commentarium super Job"
+      },
+      {
+        "id": "Q136749664",
+        "label": "Scriptum super libros Sententiarum"
+      },
+      {
+        "id": "Q136749669",
+        "label": "De ente et essentia"
+      },
+      {
+        "id": "Q2990401",
+        "label": "Compendium theologiae"
+      },
+      {
+        "id": "Q331046",
+        "label": "De regimine principum"
+      },
+      {
+        "id": "Q604274",
+        "label": "Summa contra Gentiles"
+      },
+      {
+        "id": "Q653871",
+        "label": "Summa Theologica"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q1234713",
+        "label": "theologian"
+      },
+      {
+        "id": "Q127327158",
+        "label": "theology teacher"
+      },
+      {
+        "id": "Q1469535",
+        "label": "Latin Catholic priest"
+      },
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q26973007",
+        "label": "professor of philosophy"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q548320",
+        "label": "friar"
+      },
+      {
+        "id": "Q733786",
+        "label": "monk"
+      },
+      {
+        "id": "Q98833890",
+        "label": "Catholic theologian"
+      }
+    ]
+  },
+  "id": "thomas-aquinas",
+  "label": "Thomas Aquinas",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "aedec4fb3a3d6c4e0e3168770bc57e0602d71ed3fd9872250b1f7a1988613ce4",
+    "entityUrl": "https://www.wikidata.org/wiki/Q9438",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-30T12:19:17Z",
+    "provider": "Wikidata",
+    "revisionId": 2524804824
+  },
+  "wikidataId": "Q9438",
+  "wikipedia": {
+    "title": "Thomas Aquinas",
+    "url": "https://en.wikipedia.org/wiki/Thomas_Aquinas"
+  }
+}

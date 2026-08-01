@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Jeremy Bentham MET 268348.jpg",
+  "derivative": {
+    "bytes": 56274,
+    "height": 680,
+    "localPath": "/media/wikimedia/jeremy-bentham-met-268348.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "213b32cf828d6a9efeeaf4c393d020ff99cce14cb788f62b8d7b441b9da44076",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Jeremy_Bentham_MET_268348.jpg/960px-Jeremy_Bentham_MET_268348.jpg",
+    "width": 720
+  },
+  "id": "jeremy-bentham",
+  "original": {
+    "bytes": 293996,
+    "height": 1420,
+    "mime": "image/jpeg",
+    "sha1": "472ddd3abcda850ff5bf42ef7fc38d9953fcb50b",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Jeremy_Bentham_MET_268348.jpg",
+    "width": 1504
+  },
+  "personId": "jeremy-bentham",
+  "rights": {
+    "artist": "David d'Angers / Eck et Durand",
+    "attributionRequired": false,
+    "credit": "This file was donated to Wikimedia Commons as part of a project by the Metropolitan Museum of Art . See the Image and Data Resources Open Access Policy",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "8cd2c7799824504a3307cb4f2f2a34ee29cc5cbdd0b76a7ed0e3538cf9c131de",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 60190091,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Jeremy_Bentham_MET_268348.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1163195363,
+    "revisionTimestamp": "2026-02-10T15:38:25Z"
+  }
+}

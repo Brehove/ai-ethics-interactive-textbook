@@ -1,0 +1,189 @@
+{
+  "aliases": [
+    "the Stagirite"
+  ],
+  "commonsImageClaim": "Aristotle Altemps Inv8575.jpg",
+  "description": "4th-century BCE Classical Greek philosopher and polymath",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 9,
+        "time": "-0383-00-00T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 9,
+        "time": "-0384-00-00T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q846127",
+        "label": "Stageira"
+      }
+    ],
+    "countriesOfCitizenship": [],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 9,
+        "time": "-0322-00-00T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "-0322-03-07T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q21235810",
+        "label": "Chalcis"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q194414",
+        "label": "peripatetic school"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q1051198",
+        "label": "Physics"
+      },
+      {
+        "id": "Q1771260",
+        "label": "eudaimonia"
+      },
+      {
+        "id": "Q264714",
+        "label": "Poetics"
+      },
+      {
+        "id": "Q2741164",
+        "label": "Meteorology"
+      },
+      {
+        "id": "Q382282",
+        "label": "Constitution of the Athenians"
+      },
+      {
+        "id": "Q474537",
+        "label": "Nicomachean Ethics"
+      },
+      {
+        "id": "Q500930",
+        "label": "Organon"
+      },
+      {
+        "id": "Q661655",
+        "label": "Metaphysics"
+      },
+      {
+        "id": "Q69539",
+        "label": "Politics"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q11063",
+        "label": "astronomer"
+      },
+      {
+        "id": "Q1234713",
+        "label": "theologian"
+      },
+      {
+        "id": "Q14565331",
+        "label": "logician"
+      },
+      {
+        "id": "Q15632482",
+        "label": "epistemologist"
+      },
+      {
+        "id": "Q16743936",
+        "label": "ontologist"
+      },
+      {
+        "id": "Q170790",
+        "label": "mathematician"
+      },
+      {
+        "id": "Q18930007",
+        "label": "political philosopher"
+      },
+      {
+        "id": "Q18930236",
+        "label": "philosopher of language"
+      },
+      {
+        "id": "Q212980",
+        "label": "psychologist"
+      },
+      {
+        "id": "Q270141",
+        "label": "polymath"
+      },
+      {
+        "id": "Q2998308",
+        "label": "cosmologist"
+      },
+      {
+        "id": "Q350979",
+        "label": "zoologist"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q37226",
+        "label": "teacher"
+      },
+      {
+        "id": "Q4263842",
+        "label": "literary critic"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q5403434",
+        "label": "ethicist"
+      },
+      {
+        "id": "Q864503",
+        "label": "biologist"
+      },
+      {
+        "id": "Q901222",
+        "label": "tutor"
+      },
+      {
+        "id": "Q901402",
+        "label": "geographer"
+      }
+    ]
+  },
+  "id": "aristotle",
+  "label": "Aristotle",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "54dfa35c2e53096b9083de03e5a35a81c14c638a781b7ab5668a79ad89998ed6",
+    "entityUrl": "https://www.wikidata.org/wiki/Q868",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-27T13:01:31Z",
+    "provider": "Wikidata",
+    "revisionId": 2523413484
+  },
+  "wikidataId": "Q868",
+  "wikipedia": {
+    "title": "Aristotle",
+    "url": "https://en.wikipedia.org/wiki/Aristotle"
+  }
+}

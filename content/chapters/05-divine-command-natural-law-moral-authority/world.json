@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch05",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"thomas-aquinas","role":"natural-law theorist","featured":true,"passageIds":["ch05-p0030","ch05-p0031","ch05-p0034"]},
+    {"id":"plato","role":"author of Euthyphro","featured":false,"passageIds":["ch05-p0008","ch05-p0013"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

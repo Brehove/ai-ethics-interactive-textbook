@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:St-thomas-aquinasFXD.jpg",
+  "derivative": {
+    "bytes": 243748,
+    "height": 1079,
+    "localPath": "/media/wikimedia/st-thomas-aquinas-fxd.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "22c51a7d46253bca61c486018d005987092e976a70a822fbb6fefafbac206233",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/St-thomas-aquinasFXD.jpg/960px-St-thomas-aquinasFXD.jpg",
+    "width": 720
+  },
+  "id": "thomas-aquinas-crivelli-portrait",
+  "original": {
+    "bytes": 6174271,
+    "height": 6000,
+    "mime": "image/jpeg",
+    "sha1": "ecac489db89972d0e60ac2354374778efb878fa2",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/St-thomas-aquinasFXD.jpg",
+    "width": 4004
+  },
+  "personId": "thomas-aquinas",
+  "rights": {
+    "artist": "Carlo Crivelli",
+    "attributionRequired": false,
+    "credit": "This file was derived from: St-thomas-aquinas.jpg :",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "efbaa5f71963e0fdd3020205754bb8473a88b17a980d1598b3c4d29dc80f66e4",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 106093737,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:St-thomas-aquinasFXD.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1176467112,
+    "revisionTimestamp": "2026-03-05T23:55:20Z"
+  }
+}

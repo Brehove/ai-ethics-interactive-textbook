@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "language": "en",
+  "people": [
+    {"id":"aristotle","wikidataId":"Q868","portrait":{"id":"aristotle-altemps-portrait","commonsTitle":"File:Aristotle Altemps Inv8575.jpg","downloadPath":"media/wikimedia/aristotle-altemps-inv8575.webp","width":720}},
+    {"id":"thomas-aquinas","wikidataId":"Q9438","portrait":{"id":"thomas-aquinas-crivelli-portrait","commonsTitle":"File:St-thomas-aquinasFXD.jpg","downloadPath":"media/wikimedia/st-thomas-aquinas-fxd.webp","width":720}},
+    {"id":"plato","wikidataId":"Q859","portrait":{"id":"plato-silanion-portrait","commonsTitle":"File:Plato Silanion Musei Capitolini MC1377.jpg","downloadPath":"media/wikimedia/plato-silanion-musei-capitolini.webp","width":720}},
+    {"id":"immanuel-kant","wikidataId":"Q9312","portrait":{"id":"immanuel-kant-becker-portrait","commonsTitle":"File:Immanuel Kant - Gemaelde 2.jpg","downloadPath":"media/wikimedia/immanuel-kant-gemaelde-2.webp","width":720}},
+    {"id":"jeremy-bentham","wikidataId":"Q60887","portrait":{"id":"jeremy-bentham","commonsTitle":"File:Jeremy Bentham MET 268348.jpg","downloadPath":"media/wikimedia/jeremy-bentham-met-268348.webp","width":720}},
+    {"id":"john-stuart-mill","wikidataId":"Q50020","portrait":{"id":"john-stuart-mill-stereoscopic-portrait","commonsTitle":"File:John Stuart Mill by London Stereoscopic Company, c1870.jpg","downloadPath":"media/wikimedia/john-stuart-mill-stereoscopic-c1870.webp","width":720}}
+  ]
+}

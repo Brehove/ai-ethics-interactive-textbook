@@ -1,14 +1,17 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../components/ReaderShell.astro";
+import ScholarlyDock from "../../../components/ScholarlyDock.astro";
 import { getChapterSlugs, requireChapter } from "../../../lib/content";
+import { resolveChapterPeople } from "../../../lib/scholarly-layer";
 
 export async function getStaticPaths() {
   return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
 }
 
 const chapter = await requireChapter(Astro.params.slug!);
-const { meta, Content, headings, previous, next } = chapter;
+const { meta, Content, headings, world, sourceLinks, previous, next } = chapter;
+const chapterPeople = await resolveChapterPeople(world);
 ---
 
 <SiteLayout title={meta.title} description={meta.description} chapterNumber={meta.order} canonicalPath={meta.path}>
@@ -27,6 +30,14 @@ const { meta, Content, headings, previous, next } = chapter;
     <div class="chapter-prose first-read">
       <Content />
     </div>
+    <ScholarlyDock
+      slot="scholarly-dock"
+      slug={meta.slug}
+      active="first"
+      people={chapterPeople}
+      primarySources={sourceLinks.primarySources}
+      pressbooksUrl={meta.pressbooksUrl}
+    />
   </ReaderShell>
 </SiteLayout>
 

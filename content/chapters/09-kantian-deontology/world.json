@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch09",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"immanuel-kant","role":"deontological theorist","featured":true,"passageIds":["ch09-p0005","ch09-p0012","ch09-p0023"]},
+    {"id":"thomas-aquinas","role":"framework comparison","featured":false,"passageIds":["ch09-p0004","ch09-p0008"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []
