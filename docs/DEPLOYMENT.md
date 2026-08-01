@@ -37,7 +37,7 @@ Deploy it with:
 npx wrangler deploy --config workers/editor-auth/wrangler.jsonc
 ```
 
-The GitHub App must be private to the owner, installed only on `Brehove/ai-ethics-interactive-textbook`, and limited to Contents and Pull requests read/write permissions. Webhooks are disabled. The callback is exactly `https://auth.ethicsandai.your-digital-life.org/auth/callback`.
+The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `Brehove/ai-ethics-interactive-textbook` and limited to Contents and Pull requests read/write permissions; Metadata read is GitHub's mandatory baseline. Webhooks are disabled. The callback is exactly `https://auth.ethicsandai.your-digital-life.org/auth/callback`.
 
 ## Publication boundary
 
