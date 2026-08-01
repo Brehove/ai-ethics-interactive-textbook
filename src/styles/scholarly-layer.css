@@ -80,6 +80,15 @@
   padding: 1.1rem 1.4rem 0;
 }
 
+.scholar-panel--inline-featured .scholar-figure { padding-bottom: 0.25rem; }
+.scholar-panel--inline-featured .scholar-figure .person-portrait { max-width: 8rem; }
+.scholar-panel--inline-featured .scholar-figure .person-portrait img {
+  aspect-ratio: 1;
+  max-height: 8rem;
+  object-fit: cover;
+  object-position: center 18%;
+}
+
 .scholar-figure figure,
 .scholar-figure .portrait-placeholder {
   max-width: 17rem;

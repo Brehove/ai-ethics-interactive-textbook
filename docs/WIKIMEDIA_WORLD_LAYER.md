@@ -133,6 +133,27 @@ assets. Remove a confirmed stale file in the same reviewed change.
 Chapter person resolution is fail-fast: a world relation that names an unknown
 person prevents the build instead of silently dropping the card.
 
+## Inline chapter figures
+
+First Read and Deep Read render every relation marked `"featured": true` as an
+inline scholarly figure. The enhancement locates the first durable
+`/people/<id>/` link in the chapter prose and places the figure directly after
+that introductory paragraph. The figure includes the vendored portrait, the
+chapter-specific role, the curated teaching rationale, native biography and
+primary-text disclosures, a permanent record link, and complete image credit.
+
+This keeps placement under editorial control without inserting generated HTML
+into the canonical Markdown. To move a figure, move the first durable person
+link to the paragraph where the visual intervention belongs. To keep a person
+in the side layer without an inline figure, set `"featured": false`. If
+JavaScript is unavailable, the same figures remain visible as an accessible
+end-of-chapter gallery. No disclosure state is stored.
+
+On narrow screens, the existing People & sources launcher yields while an
+inline figure is visible so it cannot cover the figure's controls. It returns
+when the reader scrolls away. Sources and World retain their purpose-built
+layouts rather than duplicating the inline figures.
+
 ## Failure modes
 
 - **429, maxlag, or transient gateway errors:** the client obeys `Retry-After`
