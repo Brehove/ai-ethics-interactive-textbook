@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch06",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"summa-theologiae-natural-law","title":"Summa Theologiae, Treatise on Law","creator":"Thomas Aquinas","authorPersonId":"thomas-aquinas","url":"https://www.newadvent.org/summa/2094.htm","locator":"First Part of the Second Part, Question 94","translation":"Fathers of the English Dominican Province (1911)","rightsStatus":"Public-domain English translation in the United States.","passageIds":["ch06-p0019","ch06-p0021"],"teachingUse":"Primary text for comparing natural-law reasoning about human goods with the authority and content of an AI constitution."}
+  ],
   "companionSources": []
 }

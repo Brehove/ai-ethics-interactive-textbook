@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "language": "en",
   "people": [
     {"id":"aristotle","wikidataId":"Q868","portrait":{"id":"aristotle-altemps-portrait","commonsTitle":"File:Aristotle Altemps Inv8575.jpg","downloadPath":"media/wikimedia/aristotle-altemps-inv8575.webp","width":720}},
@@ -7,6 +7,39 @@
     {"id":"plato","wikidataId":"Q859","portrait":{"id":"plato-silanion-portrait","commonsTitle":"File:Plato Silanion Musei Capitolini MC1377.jpg","downloadPath":"media/wikimedia/plato-silanion-musei-capitolini.webp","width":720}},
     {"id":"immanuel-kant","wikidataId":"Q9312","portrait":{"id":"immanuel-kant-becker-portrait","commonsTitle":"File:Immanuel Kant - Gemaelde 2.jpg","downloadPath":"media/wikimedia/immanuel-kant-gemaelde-2.webp","width":720}},
     {"id":"jeremy-bentham","wikidataId":"Q60887","portrait":{"id":"jeremy-bentham","commonsTitle":"File:Jeremy Bentham MET 268348.jpg","downloadPath":"media/wikimedia/jeremy-bentham-met-268348.webp","width":720}},
-    {"id":"john-stuart-mill","wikidataId":"Q50020","portrait":{"id":"john-stuart-mill-stereoscopic-portrait","commonsTitle":"File:John Stuart Mill by London Stereoscopic Company, c1870.jpg","downloadPath":"media/wikimedia/john-stuart-mill-stereoscopic-c1870.webp","width":720}}
+    {"id":"john-stuart-mill","wikidataId":"Q50020","portrait":{"id":"john-stuart-mill-stereoscopic-portrait","commonsTitle":"File:John Stuart Mill by London Stereoscopic Company, c1870.jpg","downloadPath":"media/wikimedia/john-stuart-mill-stereoscopic-c1870.webp","width":720}},
+    {"id":"john-rawls","wikidataId":"Q172544","portrait":{"id":"john-rawls-1971-portrait","commonsTitle":"File:John Rawls (1971 photo portrait).jpg","downloadPath":"media/wikimedia/john-rawls-1971-portrait.webp","width":720}},
+    {"id":"shannon-vallor","wikidataId":"Q28911690","portrait":{"id":"shannon-vallor-portrait","commonsTitle":"File:Shannon Vallor (cropped).jpg","downloadPath":"media/wikimedia/shannon-vallor-portrait.webp","width":720}},
+    {"id":"helen-nissenbaum","wikidataId":"Q13515758","portrait":{"id":"helen-nissenbaum-berkeley-lecture","commonsTitle":"File:Helen's guest lecture at University of Berkley.jpg","downloadPath":"media/wikimedia/helen-nissenbaum-berkeley-lecture.webp","width":720}},
+    {"id":"margaret-boden","wikidataId":"Q6759197","portrait":{"id":"margaret-boden-portrait","commonsTitle":"File:Margaret Boden 01.JPG","downloadPath":"media/wikimedia/margaret-boden-portrait.webp","width":720}},
+    {"id":"peter-singer","wikidataId":"Q211539","portrait":{"id":"peter-singer-2017-portrait","commonsTitle":"File:Peter Singer 2017 (cropped).jpg","downloadPath":"media/wikimedia/peter-singer-2017-portrait.webp","width":720}},
+    {"id":"derek-parfit","wikidataId":"Q962160","portrait":{"id":"derek-parfit-harvard-2015","commonsTitle":"File:Derek Parfit at Harvard-April 21, 2015-Effective Altruism (cropped).jpg","downloadPath":"media/wikimedia/derek-parfit-harvard-2015.webp","width":720}},
+    {"id":"nick-bostrom","wikidataId":"Q460475","portrait":{"id":"nick-bostrom-portrait","commonsTitle":"File:Prof Nick Bostrom 324-1.jpg","downloadPath":"media/wikimedia/nick-bostrom-portrait.webp","width":720}},
+    {"id":"nick-land","wikidataId":"Q7027450","portrait":{"id":"nick-land-2025-portrait","commonsTitle":"File:Nick Land October 2025 (1x1 cropped).jpg","downloadPath":"media/wikimedia/nick-land-2025-portrait.webp","width":720}},
+    {"id":"michael-sandel","wikidataId":"Q381044","portrait":{"id":"michael-sandel-2023-portrait","commonsTitle":"File:Michael Sandel Frontiers of Thought 2023 (3x4cropped).jpg","downloadPath":"media/wikimedia/michael-sandel-2023-portrait.webp","width":720}}
+  ],
+  "artifacts": [
+    {"id":"aristotle-ne-book6-manuscript","commonsTitle":"File:Aristotle, Nicomachean Ethics, Book 6.jpg","downloadPath":"media/wikimedia/aristotle-ne-book6-manuscript.webp","width":720},
+    {"id":"transformer-attention-block","commonsTitle":"File:Transformer, attention block diagram.png","downloadPath":"media/wikimedia/transformer-attention-block.webp","width":720},
+    {"id":"llm-training-workflow","commonsTitle":"File:Three-stage large language model training workflow.svg","downloadPath":"media/wikimedia/llm-training-workflow.webp","width":720},
+    {"id":"rag-diagram","commonsTitle":"File:RAG diagram.svg","downloadPath":"media/wikimedia/rag-diagram.webp","width":720},
+    {"id":"euthyphro-edition","commonsTitle":"File:(Platonis) Euthyphro; (IA platoniseuthyphr00platrich).pdf","downloadPath":"media/wikimedia/euthyphro-edition.webp","width":720},
+    {"id":"summa-isny-manuscript","commonsTitle":"File:Thomas von Aquin Summa Ms (Isny).jpg","downloadPath":"media/wikimedia/summa-isny-manuscript.webp","width":720},
+    {"id":"us-constitution-page1","commonsTitle":"File:Constitution of the United States, page 1.jpg","downloadPath":"media/wikimedia/us-constitution-page1.webp","width":720},
+    {"id":"aristotle-ethics-rosselli","commonsTitle":"File:Francesco rosselli (ill.), etica di aristotele, firenze 1480 ca. (bnf) 01.jpg","downloadPath":"media/wikimedia/aristotle-ethics-rosselli.webp","width":720},
+    {"id":"kant-groundwork-title","commonsTitle":"File:Kant Groundwork Title.jpg","downloadPath":"media/wikimedia/kant-groundwork-title.webp","width":720},
+    {"id":"mill-utilitarianism-1863","commonsTitle":"File:Utilitarianism - Mill - 1863.djvu","downloadPath":"media/wikimedia/mill-utilitarianism-1863.webp","width":720},
+    {"id":"on-liberty-title-page","commonsTitle":"File:On Liberty (first edition title page via facsimile).jpg","downloadPath":"media/wikimedia/on-liberty-title-page.webp","width":720},
+    {"id":"inca-quipu","commonsTitle":"File:Inca. Quipu.jpg","downloadPath":"media/wikimedia/inca-quipu.webp","width":720},
+    {"id":"domesday-manuscript-page","commonsTitle":"File:Page from the Domesday book manuscripts (1294847).jpg","downloadPath":"media/wikimedia/domesday-manuscript-page.webp","width":720},
+    {"id":"bertillon-record","commonsTitle":"File:Bertillon, Alphonse, fiche anthropométrique recto-verso.jpg","downloadPath":"media/wikimedia/bertillon-record.webp","width":720},
+    {"id":"hollerith-punch-card","commonsTitle":"File:Hollerith Punched Card.jpg","downloadPath":"media/wikimedia/hollerith-punch-card.webp","width":720},
+    {"id":"talos-vase","commonsTitle":"File:Vaso di Talos.JPG","downloadPath":"media/wikimedia/talos-vase.webp","width":720},
+    {"id":"jacquard-loom","commonsTitle":"File:Jacquard loom.jpg","downloadPath":"media/wikimedia/jacquard-loom.webp","width":720},
+    {"id":"alphafold-protein-structure","commonsTitle":"File:Whole Protein Structure.png","downloadPath":"media/wikimedia/alphafold-protein-structure.webp","width":720},
+    {"id":"frankenstein-1831-frontispiece","commonsTitle":"File:Frontispiece to Frankenstein 1831.jpg","downloadPath":"media/wikimedia/frankenstein-1831-frontispiece.webp","width":720},
+    {"id":"watt-governor","commonsTitle":"File:Regulateur watt.svg","downloadPath":"media/wikimedia/watt-governor.webp","width":720},
+    {"id":"bci-diagram","commonsTitle":"File:Brain-computer interface diagram.svg","downloadPath":"media/wikimedia/bci-diagram.webp","width":720},
+    {"id":"crispr-cas9-diagram","commonsTitle":"File:Genome Editing with the CRISPR-Cas9-Method, schematic diagram.svg","downloadPath":"media/wikimedia/crispr-cas9-diagram.webp","width":720}
   ]
 }

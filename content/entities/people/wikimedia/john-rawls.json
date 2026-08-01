@@ -1,0 +1,94 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "John Rawls (1971 photo portrait).jpg",
+  "description": "American political philosopher (1921–2002)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1921-02-21T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q5092",
+        "label": "Baltimore"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q30",
+        "label": "United States"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+2002-11-24T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q929667",
+        "label": "Lexington"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q183216",
+        "label": "analytic philosophy"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q277406",
+        "label": "Political Liberalism"
+      },
+      {
+        "id": "Q300588",
+        "label": "A Theory of Justice"
+      },
+      {
+        "id": "Q718573",
+        "label": "The Law of Peoples"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q1231865",
+        "label": "pedagogue"
+      },
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q82955",
+        "label": "politician"
+      }
+    ]
+  },
+  "id": "john-rawls",
+  "label": "John Rawls",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "c21c64fc01d5d61ff63b96d000bc8db72ac216f9cb57f6294b46dbf2e942edda",
+    "entityUrl": "https://www.wikidata.org/wiki/Q172544",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-30T12:16:40Z",
+    "provider": "Wikidata",
+    "revisionId": 2524804065
+  },
+  "wikidataId": "Q172544",
+  "wikipedia": {
+    "title": "John Rawls",
+    "url": "https://en.wikipedia.org/wiki/John_Rawls"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Peter Singer 2017 (cropped).jpg",
+  "derivative": {
+    "bytes": 65578,
+    "height": 995,
+    "localPath": "/media/wikimedia/peter-singer-2017-portrait.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "02f39f51cc0a5cf116aeb896a551848b905e7aa3271a0b3b4ce61b5639ad2bf5",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Peter_Singer_2017_%28cropped%29.jpg/960px-Peter_Singer_2017_%28cropped%29.jpg",
+    "width": 720
+  },
+  "id": "peter-singer-2017-portrait",
+  "original": {
+    "bytes": 1442784,
+    "height": 1878,
+    "mime": "image/jpeg",
+    "sha1": "8046999fa8225418e11e21206ff2fd6e11f08497",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Peter_Singer_2017_%28cropped%29.jpg",
+    "width": 1359
+  },
+  "personId": "peter-singer",
+  "rights": {
+    "artist": "Ula Zarosa",
+    "attributionRequired": true,
+    "credit": "IMG_5658",
+    "licenseShortName": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "usageTerms": "Creative Commons Attribution 2.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "695116708b63234001cf7194e5a3862b7a281f1ec1c23d641430bbb426dbfcb6",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 106327653,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Peter_Singer_2017_(cropped).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1059049905,
+    "revisionTimestamp": "2025-07-18T09:15:15Z"
+  }
+}

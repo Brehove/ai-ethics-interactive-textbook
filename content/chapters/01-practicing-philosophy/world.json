@@ -2,7 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch01",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"john-rawls","role":"theorist of reflective equilibrium and considered judgment","featured":true,"passageIds":["ch01-p0015","ch01-p0018"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

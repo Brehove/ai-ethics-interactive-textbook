@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch08",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"shannon-vallor","role":"philosopher of technomoral wisdom and moral skill","featured":true,"passageIds":["ch08-p0015","ch08-p0032","ch08-p0055"]},
+    {"id":"aristotle","role":"source of the practical-wisdom tradition","featured":false,"passageIds":["ch08-p0007","ch08-p0010"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

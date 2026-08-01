@@ -95,6 +95,8 @@ img, svg { max-width: 100%; }
   line-height: 0.98;
   letter-spacing: -0.045em;
   text-wrap: balance;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .chapter-prose h2 {
@@ -115,6 +117,13 @@ img, svg { max-width: 100%; }
 
 .chapter-prose p { margin: 0 0 1.15em; }
 .chapter-prose li { margin-bottom: 0.45em; }
+.chapter-prose pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chapter-prose code { overflow-wrap: anywhere; }
 .chapter-prose blockquote {
   margin: 1.7rem 0;
   padding: 0.1rem 0 0.1rem 1.35rem;

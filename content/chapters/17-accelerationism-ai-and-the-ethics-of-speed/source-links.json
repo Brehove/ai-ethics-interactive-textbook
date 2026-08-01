@@ -2,6 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch17",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"meltdown-land","title":"Meltdown","creator":"Nick Land","authorPersonId":"nick-land","url":"https://www.urbanomic.com/chapter/fanged-noumena-meltdown/","rightsStatus":"Copyright retained; publisher-hosted chapter page linked without a reproduced excerpt.","passageIds":["ch17-p0040","ch17-p0042","ch17-p0047"],"teachingUse":"Primary source for Land's account of techno-capital as an inhuman positive-feedback process."},
+    {"id":"vulnerable-world-hypothesis","title":"The Vulnerable World Hypothesis","creator":"Nick Bostrom","authorPersonId":"nick-bostrom","url":"https://nickbostrom.com/papers/vulnerable.pdf","locator":"Global Policy 10, no. 4 (2019)","rightsStatus":"Author-hosted public PDF; copyright retained. No excerpt is reproduced here.","passageIds":["ch17-p0093","ch17-p0094"],"teachingUse":"Primary source for differential technological development: slowing dangerous capacities while accelerating protective ones."}
+  ],
   "companionSources": []
 }

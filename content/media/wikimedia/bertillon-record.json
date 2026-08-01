@@ -1,0 +1,41 @@
+{
+  "artifactId": "bertillon-record",
+  "commonsTitle": "File:Bertillon, Alphonse, fiche anthropométrique recto-verso.jpg",
+  "derivative": {
+    "bytes": 49560,
+    "height": 368,
+    "localPath": "/media/wikimedia/bertillon-record.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "87ce0b6f877e202e6771756837fcb4db935c0b72eb19c0afb87c7e20121e1819",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Bertillon%2C_Alphonse%2C_fiche_anthropom%C3%A9trique_recto-verso.jpg/960px-Bertillon%2C_Alphonse%2C_fiche_anthropom%C3%A9trique_recto-verso.jpg",
+    "width": 720
+  },
+  "id": "bertillon-record",
+  "original": {
+    "bytes": 5208755,
+    "height": 1816,
+    "mime": "image/jpeg",
+    "sha1": "ac1e3f343d00da821514a02367b4448b71e53754",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Bertillon%2C_Alphonse%2C_fiche_anthropom%C3%A9trique_recto-verso.jpg",
+    "width": 3548
+  },
+  "rights": {
+    "artist": "Jebulon",
+    "attributionRequired": false,
+    "credit": "Own work , stitching of archives of Service Regional d'Identité Judiciaire, Préfecture de Police, Paris.",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "593a0d1b488422a36030797efd485f349981e25e0d11532b33606bd73bc85e44",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 37546591,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Bertillon%2C_Alphonse%2C_fiche_anthropom%C3%A9trique_recto-verso.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1231760338,
+    "revisionTimestamp": "2026-06-15T10:55:41Z"
+  }
+}

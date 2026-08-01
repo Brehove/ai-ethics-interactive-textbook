@@ -2,7 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch15",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"margaret-boden","role":"theorist of combinational, exploratory, and transformational creativity","featured":true,"passageIds":["ch15-p0032","ch15-p0033","ch15-p0034"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

@@ -1,0 +1,59 @@
+{
+  "aliases": [
+    "Nick Boström"
+  ],
+  "commonsImageClaim": "Prof Nick Bostrom 324-1.jpg",
+  "description": "philosopher and writer (born 1973)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1973-03-10T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q25411",
+        "label": "Helsingborg"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q34",
+        "label": "Sweden"
+      }
+    ],
+    "deathDates": [],
+    "deathPlaces": [],
+    "movements": [],
+    "notableWorks": [],
+    "occupations": [
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      }
+    ]
+  },
+  "id": "nick-bostrom",
+  "label": "Nick Bostrom",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "be115920d63aa92045088fdae52de2ce74417fcf1d029f41819e46dfb44bef7a",
+    "entityUrl": "https://www.wikidata.org/wiki/Q460475",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-14T20:22:08Z",
+    "provider": "Wikidata",
+    "revisionId": 2517501779
+  },
+  "wikidataId": "Q460475",
+  "wikipedia": {
+    "title": "Nick Bostrom",
+    "url": "https://en.wikipedia.org/wiki/Nick_Bostrom"
+  }
+}

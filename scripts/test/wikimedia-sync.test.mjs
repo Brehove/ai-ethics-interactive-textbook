@@ -101,7 +101,7 @@ function createFetch({ downloadUrl } = {}) {
 
 async function writeFixture(projectRoot) {
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     language: "en",
     people: [{
       id: "test-philosopher",
@@ -113,6 +113,7 @@ async function writeFixture(projectRoot) {
         width: 640,
       },
     }],
+    artifacts: [],
   };
   const humanPerson = {
     schemaVersion: 1,
@@ -155,6 +156,15 @@ async function writeFixture(projectRoot) {
       license: "CC0-1.0",
       primarySources: [],
       companionSources: [],
+    })],
+    ["content/chapters/test/world.json", stableJson({
+      schemaVersion: 1,
+      chapterId: "test",
+      license: "CC0-1.0",
+      people: [],
+      concepts: [],
+      traditions: [],
+      places: [],
     })],
   ]);
   for (const [relativePath, contents] of files) {
@@ -241,7 +251,7 @@ test("refresh writes only machine-owned files, validates offline, and check dete
   for (const [relativePath, contents] of before) {
     assert.deepEqual(await readFile(path.join(projectRoot, relativePath)), contents, `${relativePath} was overwritten`);
   }
-  assert.deepEqual(await validateWikimediaLayer({ projectRoot }), { people: 1, media: 1, assets: 1 });
+  assert.deepEqual(await validateWikimediaLayer({ projectRoot }), { people: 1, artifacts: 0, media: 1, assets: 1 });
   const sourceLinksPath = path.join(projectRoot, "content/chapters/test/source-links.json");
   await writeFile(sourceLinksPath, stableJson({
     schemaVersion: 1,

@@ -1,0 +1,41 @@
+{
+  "artifactId": "llm-training-workflow",
+  "commonsTitle": "File:Three-stage large language model training workflow.svg",
+  "derivative": {
+    "bytes": 68454,
+    "height": 1718,
+    "localPath": "/media/wikimedia/llm-training-workflow.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "fbb8b74a22870d1009b425fc8eae32f3a91c93301f74c260db2bcd0590ae6254",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Three-stage_large_language_model_training_workflow.svg/960px-Three-stage_large_language_model_training_workflow.svg.png",
+    "width": 720
+  },
+  "id": "llm-training-workflow",
+  "original": {
+    "bytes": 235217,
+    "height": 1873,
+    "mime": "image/svg+xml",
+    "sha1": "35706a311dda079ebbdba5c58c8666bf8161d989",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Three-stage_large_language_model_training_workflow.svg",
+    "width": 785
+  },
+  "rights": {
+    "artist": "Kjerish",
+    "attributionRequired": false,
+    "credit": "Own work",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "872acd31bbcad4b6aad30238e3e214f420b2e99b4e03e2f3cafa7dfd35223ff7",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 170778113,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Three-stage_large_language_model_training_workflow.svg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1062032321,
+    "revisionTimestamp": "2025-07-28T06:05:56Z"
+  }
+}

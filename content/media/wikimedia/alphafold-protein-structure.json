@@ -1,0 +1,41 @@
+{
+  "artifactId": "alphafold-protein-structure",
+  "commonsTitle": "File:Whole Protein Structure.png",
+  "derivative": {
+    "bytes": 7728,
+    "height": 237,
+    "localPath": "/media/wikimedia/alphafold-protein-structure.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "82d16aa4c405a17db1fd369e5fcc0ce9467d24fd5b1e2e96a48f4f19eecb34c5",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Whole_Protein_Structure.png",
+    "width": 512
+  },
+  "id": "alphafold-protein-structure",
+  "original": {
+    "bytes": 29284,
+    "height": 237,
+    "mime": "image/png",
+    "sha1": "09ccfe15564affd753d002adaf14bf6fae8d734b",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Whole_Protein_Structure.png",
+    "width": 512
+  },
+  "rights": {
+    "artist": "Mtranowski",
+    "attributionRequired": false,
+    "credit": "Own work",
+    "licenseShortName": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "usageTerms": "Creative Commons Zero, Public Domain Dedication"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "b3ed886330effd3788807ec2a34a47c07163c378dfafd45d0f8a890319b7ad21",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 179731430,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Whole_Protein_Structure.png",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1210569483,
+    "revisionTimestamp": "2026-05-08T12:55:08Z"
+  }
+}

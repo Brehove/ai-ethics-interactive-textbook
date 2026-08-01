@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch13",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"accountability-computerized-society","title":"Accountability in a Computerized Society","creator":"Helen Nissenbaum","authorPersonId":"helen-nissenbaum","url":"https://nissenbaum.tech.cornell.edu/papers/accountability.pdf","rightsStatus":"Copyright retained; author-hosted paper linked without a reproduced excerpt.","passageIds":["ch13-p0079","ch13-p0080"],"teachingUse":"Primary source for tracing responsibility across the many hands involved in computerized systems."}
+  ],
   "companionSources": []
 }

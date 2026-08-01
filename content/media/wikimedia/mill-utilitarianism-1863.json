@@ -1,0 +1,41 @@
+{
+  "artifactId": "mill-utilitarianism-1863",
+  "commonsTitle": "File:Utilitarianism - Mill - 1863.djvu",
+  "derivative": {
+    "bytes": 95216,
+    "height": 1175,
+    "localPath": "/media/wikimedia/mill-utilitarianism-1863.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "651a08c667f5b63ce9f33137363c2e4068510d9b74210685dab283193ccd7a62",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Utilitarianism_-_Mill_-_1863.djvu/page1-960px-Utilitarianism_-_Mill_-_1863.djvu.jpg",
+    "width": 720
+  },
+  "id": "mill-utilitarianism-1863",
+  "original": {
+    "bytes": 3963127,
+    "height": 4380,
+    "mime": "image/vnd.djvu",
+    "sha1": "cc1997065c3ba6b4298d438c231768a7255600f1",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Utilitarianism_-_Mill_-_1863.djvu",
+    "width": 2684
+  },
+  "rights": {
+    "artist": "John Stuart Mill",
+    "attributionRequired": false,
+    "credit": "Internet Archive identifier : a592840000milluoft",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "5e3c547cb974ff1d85ae0b1a231e6413bc49ee661928bc95262929c6be9759e6",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 20055496,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Utilitarianism_-_Mill_-_1863.djvu",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1097093391,
+    "revisionTimestamp": "2025-10-09T07:24:57Z"
+  }
+}

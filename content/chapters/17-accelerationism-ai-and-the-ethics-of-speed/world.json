@@ -2,7 +2,11 @@
   "schemaVersion": 1,
   "chapterId": "ch17",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"nick-land","role":"representative of the inhuman techno-capital strand of accelerationism","featured":true,"passageIds":["ch17-p0040","ch17-p0042","ch17-p0047"]},
+    {"id":"nick-bostrom","role":"advocate of differential technological development","featured":false,"passageIds":["ch17-p0093","ch17-p0094"]},
+    {"id":"shannon-vallor","role":"virtue-ethics critic of technologically accelerated habit formation","featured":false,"passageIds":["ch17-p0081"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

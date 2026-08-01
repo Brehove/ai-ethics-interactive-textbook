@@ -1,0 +1,41 @@
+{
+  "artifactId": "on-liberty-title-page",
+  "commonsTitle": "File:On Liberty (first edition title page via facsimile).jpg",
+  "derivative": {
+    "bytes": 27540,
+    "height": 1195,
+    "localPath": "/media/wikimedia/on-liberty-title-page.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "19dce7c9ab70e193fb7ca49dacc5cee6fbc1fa2485f54189d8a55d3d0048c7db",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/On_Liberty_%28first_edition_title_page_via_facsimile%29.jpg/960px-On_Liberty_%28first_edition_title_page_via_facsimile%29.jpg",
+    "width": 720
+  },
+  "id": "on-liberty-title-page",
+  "original": {
+    "bytes": 432966,
+    "height": 2888,
+    "mime": "image/jpeg",
+    "sha1": "9ad335a1394a07e94980da16ecc9b5dc7ce32a45",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/On_Liberty_%28first_edition_title_page_via_facsimile%29.jpg",
+    "width": 1740
+  },
+  "rights": {
+    "artist": "John Stuart Mill (author), John W. Parker and Son (publisher)",
+    "attributionRequired": false,
+    "credit": "Archive.org",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "3edc94197812e46f15e1b4b90b57999e4489d3a7740d7b265e8b713e27771012",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 45342982,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:On_Liberty_(first_edition_title_page_via_facsimile).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 967335699,
+    "revisionTimestamp": "2024-12-07T21:38:10Z"
+  }
+}

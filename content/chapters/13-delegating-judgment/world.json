@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch13",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"helen-nissenbaum","role":"theorist of accountability in computerized systems","featured":true,"passageIds":["ch13-p0079","ch13-p0080"]},
+    {"id":"shannon-vallor","role":"theorist of moral deskilling and upskilling","featured":false,"passageIds":["ch13-p0050","ch13-p0051"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

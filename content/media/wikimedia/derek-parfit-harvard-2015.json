@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Derek Parfit at Harvard-April 21, 2015-Effective Altruism (cropped).jpg",
+  "derivative": {
+    "bytes": 25206,
+    "height": 652,
+    "localPath": "/media/wikimedia/derek-parfit-harvard-2015.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "0956d9c6b93cb59eda0493ef33780779dabac8c1982d4a80ddc6179157b2a2e9",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Derek_Parfit_at_Harvard-April_21%2C_2015-Effective_Altruism_%28cropped%29.jpg",
+    "width": 480
+  },
+  "id": "derek-parfit-harvard-2015",
+  "original": {
+    "bytes": 223427,
+    "height": 652,
+    "mime": "image/jpeg",
+    "sha1": "6130a7567202cd1911404f63e2bb621df3363643",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Derek_Parfit_at_Harvard-April_21%2C_2015-Effective_Altruism_%28cropped%29.jpg",
+    "width": 480
+  },
+  "personId": "derek-parfit",
+  "rights": {
+    "artist": "Anna Riedl",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "db29bd46fce59486a0a1a53377d7a5cad8e480ff10e81cd222001e6675c8a4a0",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 54706268,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Derek_Parfit_at_Harvard-April_21%2C_2015-Effective_Altruism_(cropped).jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1201574881,
+    "revisionTimestamp": "2026-04-22T07:45:23Z"
+  }
+}

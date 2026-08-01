@@ -1,0 +1,41 @@
+{
+  "artifactId": "talos-vase",
+  "commonsTitle": "File:Vaso di Talos.JPG",
+  "derivative": {
+    "bytes": 128556,
+    "height": 965,
+    "localPath": "/media/wikimedia/talos-vase.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "83ad5becb11b50fedb48c985c592b98ba026e0431887690053a58add1e3bf0aa",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Vaso_di_Talos.JPG/960px-Vaso_di_Talos.JPG",
+    "width": 720
+  },
+  "id": "talos-vase",
+  "original": {
+    "bytes": 7036696,
+    "height": 4148,
+    "mime": "image/jpeg",
+    "sha1": "ec6f4c6b79e5a35bbfd0cf221dc46cd69385b394",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Vaso_di_Talos.JPG",
+    "width": 3096
+  },
+  "rights": {
+    "artist": "Forzaruvo94",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 3.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "f16f672a6504c44665f4bf5f2888b12becc13364bb575e5ff3b280de0adde970",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 22906518,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Vaso_di_Talos.JPG",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1224219620,
+    "revisionTimestamp": "2026-06-01T18:31:51Z"
+  }
+}

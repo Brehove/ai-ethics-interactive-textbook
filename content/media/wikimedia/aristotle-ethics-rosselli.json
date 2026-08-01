@@ -1,0 +1,41 @@
+{
+  "artifactId": "aristotle-ethics-rosselli",
+  "commonsTitle": "File:Francesco rosselli (ill.), etica di aristotele, firenze 1480 ca. (bnf) 01.jpg",
+  "derivative": {
+    "bytes": 65300,
+    "height": 879,
+    "localPath": "/media/wikimedia/aristotle-ethics-rosselli.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "879d014ab34d17ab299745aade09d3b092401b2f14ca87ef1b18dbe1119f0246",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Francesco_rosselli_%28ill.%29%2C_etica_di_aristotele%2C_firenze_1480_ca._%28bnf%29_01.jpg/960px-Francesco_rosselli_%28ill.%29%2C_etica_di_aristotele%2C_firenze_1480_ca._%28bnf%29_01.jpg",
+    "width": 720
+  },
+  "id": "aristotle-ethics-rosselli",
+  "original": {
+    "bytes": 4782700,
+    "height": 3800,
+    "mime": "image/jpeg",
+    "sha1": "d6755464367b827bcca80c37a0f2b3526198a17c",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/66/Francesco_rosselli_%28ill.%29%2C_etica_di_aristotele%2C_firenze_1480_ca._%28bnf%29_01.jpg",
+    "width": 3112
+  },
+  "rights": {
+    "artist": "Francesco Bini",
+    "attributionRequired": true,
+    "credit": "Own work",
+    "licenseShortName": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "usageTerms": "Creative Commons Attribution-Share Alike 4.0"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "a629d54a8a9af78b9c813d413097d0317102f2059ba81436092a913d3cb7822e",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 194580581,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Francesco_rosselli_(ill.)%2C_etica_di_aristotele%2C_firenze_1480_ca._(bnf)_01.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1252178344,
+    "revisionTimestamp": "2026-07-26T05:23:08Z"
+  }
+}

@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch12",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"shannon-vallor","role":"theorist of AI as a partial and distorting mirror","featured":true,"passageIds":["ch12-p0016","ch12-p0017","ch12-p0019"]},
+    {"id":"helen-nissenbaum","role":"coauthor of the preexisting, technical, and emergent bias framework","featured":false,"passageIds":["ch12-p0039"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

@@ -2,7 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch06",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"thomas-aquinas","role":"natural-law interlocutor for constitutional AI","featured":true,"passageIds":["ch06-p0019","ch06-p0021"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

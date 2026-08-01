@@ -1,4 +1,6 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
+import remarkPhilPassageIds from "./scripts/remark-phil-passage-ids.mjs";
 
 const configuredSite = process.env.PUBLIC_SITE_URL?.trim() || "https://ethicsandai.your-digital-life.org";
 const configuredEditorAuthOrigin =
@@ -21,6 +23,7 @@ export default defineConfig({
   trailingSlash: "always",
   markdown: {
     syntaxHighlight: "prism",
+    processor: unified({ remarkPlugins: [remarkPhilPassageIds] }),
   },
   build: {
     format: "directory",

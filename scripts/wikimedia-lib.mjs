@@ -374,13 +374,13 @@ export async function optimizePortrait(input, requestedWidth) {
   );
 }
 
-export function normalizeCommonsRecord(entry, page, downloaded, optimized) {
-  const portrait = entry.portrait;
-  if (!portrait) throw new Error(`${entry.id}: no portrait manifest entry`);
-  if (!page || page.missing) throw new Error(`${entry.id}: Commons file ${portrait.commonsTitle} is missing`);
+export function normalizeCommonsRecord(entry, page, downloaded, optimized, mediaKey = "portrait") {
+  const media = mediaKey === "portrait" ? entry.portrait : entry;
+  if (!media) throw new Error(`${entry.id}: no ${mediaKey} manifest entry`);
+  if (!page || page.missing) throw new Error(`${entry.id}: Commons file ${media.commonsTitle} is missing`);
   const info = page.imageinfo?.[0];
   const revision = page.revisions?.[0];
-  if (!info) throw new Error(`${entry.id}: Commons imageinfo is missing for ${portrait.commonsTitle}`);
+  if (!info) throw new Error(`${entry.id}: Commons imageinfo is missing for ${media.commonsTitle}`);
   if (!Number.isInteger(page.lastrevid) || !revision?.timestamp) throw new Error(`${entry.id}: Commons revision metadata is missing`);
   const licenseShortName = plainMetadata(metadataValue(info, "LicenseShortName"));
   const usageTerms = plainMetadata(metadataValue(info, "UsageTerms"));
@@ -394,8 +394,8 @@ export function normalizeCommonsRecord(entry, page, downloaded, optimized) {
   if (!downloadedMime?.startsWith("image/")) throw new Error(`${entry.id}: downloaded Commons derivative is not an image`);
   return {
     schemaVersion: 1,
-    id: portrait.id,
-    personId: entry.id,
+    id: media.id,
+    ...(mediaKey === "portrait" ? { personId: entry.id } : { artifactId: entry.id }),
     commonsTitle: page.title,
     source: {
       provider: "Wikimedia Commons",
@@ -415,7 +415,7 @@ export function normalizeCommonsRecord(entry, page, downloaded, optimized) {
       sha1: info.sha1,
     },
     derivative: {
-      localPath: `/${portrait.downloadPath}`,
+      localPath: `/${media.downloadPath}`,
       sourceUrl,
       mime: optimized.mime,
       width: optimized.width,
@@ -435,15 +435,15 @@ export function normalizeCommonsRecord(entry, page, downloaded, optimized) {
   };
 }
 
-async function fetchCommonsEntry(entry, client) {
-  const portrait = entry.portrait;
-  if (!portrait) return null;
+async function fetchCommonsEntry(entry, client, mediaKey = "portrait") {
+  const media = mediaKey === "portrait" ? entry.portrait : entry;
+  if (!media) return null;
   const url = apiUrl(COMMONS_ENDPOINT, {
     action: "query",
     prop: "info|imageinfo|revisions",
-    titles: portrait.commonsTitle,
+    titles: media.commonsTitle,
     iiprop: "url|mime|size|sha1|timestamp|user|extmetadata",
-    iiurlwidth: portrait.width,
+    iiurlwidth: media.width,
     rvprop: "ids|timestamp",
     rvlimit: 1,
     format: "json",
@@ -455,13 +455,13 @@ async function fetchCommonsEntry(entry, client) {
   const downloadUrl = externalUrl(page?.imageinfo?.[0]?.thumburl ?? page?.imageinfo?.[0]?.url);
   if (!downloadUrl) throw new Error(`${entry.id}: Commons download URL is missing`);
   const downloaded = await client.requestBuffer(assertCommonsDownloadUrl(downloadUrl, entry.id));
-  const optimized = await optimizePortrait(downloaded.body, portrait.width);
-  return { record: normalizeCommonsRecord(entry, page, downloaded, optimized), body: optimized.body, downloadPath: portrait.downloadPath };
+  const optimized = await optimizePortrait(downloaded.body, media.width);
+  return { record: normalizeCommonsRecord(entry, page, downloaded, optimized, mediaKey), body: optimized.body, downloadPath: media.downloadPath };
 }
 
 export function validateWikimediaManifest(manifest) {
-  if (manifest.schemaVersion !== 1 || manifest.language !== "en" || !Array.isArray(manifest.people)) {
-    throw new Error("Wikimedia manifest must use schemaVersion 1, language en, and a people array");
+  if (manifest.schemaVersion !== 2 || manifest.language !== "en" || !Array.isArray(manifest.people) || !Array.isArray(manifest.artifacts)) {
+    throw new Error("Wikimedia manifest must use schemaVersion 2, language en, and people/artifacts arrays");
   }
   const ids = new Set();
   const wikidataIds = new Set();
@@ -485,6 +485,18 @@ export function validateWikimediaManifest(manifest) {
       portraitIds.add(portrait.id);
       downloadPaths.add(portrait.downloadPath);
     }
+  }
+  const artifactIds = new Set();
+  for (const artifact of manifest.artifacts) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(artifact.id)) throw new Error(`Invalid artifact id ${artifact.id}`);
+    if (!String(artifact.commonsTitle).startsWith("File:")) throw new Error(`${artifact.id}: commonsTitle must begin File:`);
+    if (!/^media\/wikimedia\/[a-z0-9][a-z0-9._-]*\.webp$/.test(artifact.downloadPath) || artifact.downloadPath.includes("..")) {
+      throw new Error(`${artifact.id}: artifact downloadPath must be a safe .webp path under media/wikimedia/`);
+    }
+    if (!Number.isInteger(artifact.width) || artifact.width < 320 || artifact.width > MAX_PORTRAIT_WIDTH) throw new Error(`${artifact.id}: artifact width must be 320–${MAX_PORTRAIT_WIDTH}`);
+    if (artifactIds.has(artifact.id) || portraitIds.has(artifact.id) || downloadPaths.has(artifact.downloadPath)) throw new Error(`${artifact.id}: duplicate artifact/media id or download path`);
+    artifactIds.add(artifact.id);
+    downloadPaths.add(artifact.downloadPath);
   }
   return manifest;
 }
@@ -533,7 +545,9 @@ export async function syncWikimedia({
   const manifest = validateWikimediaManifest(JSON.parse(await readFile(manifestPath, "utf8")));
   const client = createWikimediaClient({ fetchImpl, sleepImpl, userAgent });
   const peopleRecords = await fetchWikidataEntries(manifest, client);
-  const commons = await mapWithConcurrency(manifest.people, concurrency, (entry) => fetchCommonsEntry(entry, client));
+  const portraits = await mapWithConcurrency(manifest.people, concurrency, (entry) => fetchCommonsEntry(entry, client, "portrait"));
+  const artifacts = await mapWithConcurrency(manifest.artifacts, concurrency, (entry) => fetchCommonsEntry(entry, client, "artifact"));
+  const commons = [...portraits, ...artifacts];
   const expected = new Map();
   for (const record of peopleRecords) {
     expected.set(path.join(projectRoot, "content", "entities", "people", "wikimedia", `${record.id}.json`), Buffer.from(stableJson(record)));
@@ -571,6 +585,7 @@ export async function syncWikimedia({
   return {
     people: peopleRecords.length,
     media: commons.filter(Boolean).length,
+    artifacts: artifacts.filter(Boolean).length,
     changed: differences,
     userAgent: client.userAgent,
   };

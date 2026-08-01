@@ -89,6 +89,16 @@ export type Person = CollectionEntry<"people">["data"];
 export type PersonWikimedia = CollectionEntry<"peopleWikimedia">["data"];
 export type PersonMedia = CollectionEntry<"media">["data"];
 export type PersonMediaWikimedia = CollectionEntry<"mediaWikimedia">["data"];
+export type ChapterArtifact = PersonMedia & {
+  placement: NonNullable<PersonMedia["placements"]>[number];
+  localPath: string;
+  width: number;
+  height: number;
+  mime: string;
+  source: PersonMediaWikimedia["source"];
+  derivative: PersonMediaWikimedia["derivative"];
+  rights: PersonMediaWikimedia["rights"];
+};
 type RenderedChapter = Awaited<ReturnType<typeof render>>;
 
 export type PersonPortrait = PersonMedia & {
@@ -315,4 +325,27 @@ export async function requirePerson(id: string): Promise<PersonBundle> {
   const person = await getPerson(id);
   if (!person) throw new Error(`Unknown person id: ${id}`);
   return person;
+}
+
+export async function getChapterArtifacts(chapterId: string): Promise<ChapterArtifact[]> {
+  const index = await loadContentIndex();
+  return index.media.flatMap((entry) => {
+    const placement = entry.data.placements?.find((candidate) => candidate.chapterId === chapterId);
+    if (!placement) return [];
+    const generated = index.mediaWikimedia.find((candidate) => candidate.data.id === entry.data.id)?.data;
+    if (!generated || generated.artifactId !== entry.data.id) {
+      throw new Error(`Expected one generated Wikimedia artifact for ${entry.data.id}`);
+    }
+    return [{
+      ...entry.data,
+      placement,
+      localPath: generated.derivative.localPath,
+      width: generated.derivative.width,
+      height: generated.derivative.height,
+      mime: generated.derivative.mime,
+      source: generated.source,
+      derivative: generated.derivative,
+      rights: generated.rights,
+    }];
+  });
 }

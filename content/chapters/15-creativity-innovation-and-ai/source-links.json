@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch15",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"creative-mind-boden","title":"Creativity and Artificial Intelligence","creator":"Margaret Boden","authorPersonId":"margaret-boden","url":"https://doi.org/10.1016/S0004-3702(98)00055-1","rightsStatus":"Copyright retained; DOI linked without a reproduced excerpt.","passageIds":["ch15-p0032","ch15-p0033","ch15-p0034"],"teachingUse":"Primary scholarly source for distinguishing combinational, exploratory, and transformational creativity."}
+  ],
   "companionSources": []
 }

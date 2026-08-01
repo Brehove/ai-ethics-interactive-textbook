@@ -1,0 +1,41 @@
+{
+  "artifactId": "inca-quipu",
+  "commonsTitle": "File:Inca. Quipu.jpg",
+  "derivative": {
+    "bytes": 65658,
+    "height": 540,
+    "localPath": "/media/wikimedia/inca-quipu.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "bf06eeadc3a1d332da539e8f417486227017ecb2d4295c18a14cc888aeb9d8bc",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Inca._Quipu.jpg/960px-Inca._Quipu.jpg",
+    "width": 720
+  },
+  "id": "inca-quipu",
+  "original": {
+    "bytes": 290619,
+    "height": 1152,
+    "mime": "image/jpeg",
+    "sha1": "a7dd1013ec28389a162c23dcf38f5fd6c8246ae5",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Inca._Quipu.jpg",
+    "width": 1536
+  },
+  "rights": {
+    "artist": "Unknown maker",
+    "attributionRequired": false,
+    "credit": "Brooklyn Museum",
+    "licenseShortName": "No restrictions",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Inca._Quipu.jpg",
+    "usageTerms": "No known copyright restrictions"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "28735d65a0cfe2e925900387b1608850bba765d6ac36728a57f80ab1388ebdf5",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 48815751,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Inca._Quipu.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 228867289,
+    "revisionTimestamp": "2017-01-06T21:12:28Z"
+  }
+}
