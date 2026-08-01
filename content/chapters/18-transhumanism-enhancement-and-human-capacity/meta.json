@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch18",
+  "contentKey": "18-transhumanism-enhancement-and-human-capacity",
+  "slug": "transhumanism-enhancement-and-human-capacity",
+  "title": "Transhumanism, Enhancement, and the Ethics of Human Capacity",
+  "subtitle": null,
+  "description": "In early 2024, Noland Arbaugh became the first publicly identified human participant with a Neuralink brain-computer interface implant. Arbaugh had paralysis below the shoulders after a diving accident. In a public…",
+  "order": 18,
+  "part": {
+    "id": "part-06",
+    "order": 6,
+    "chapterOrder": 3,
+    "title": "Future Stakes and Technological Movements",
+    "slug": "future-stakes-and-technological-movements"
+  },
+  "path": "/chapter/transhumanism-enhancement-and-human-capacity/",
+  "wordCount": 10251,
+  "readingMinutes": 46,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/transhumanism-enhancement-and-human-capacity/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 61,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "8fd2bc61d24924780bc2498f7eaf9c936f827453f4a7fcb145f788b7638fd8ac",
+      "deploymentSha256": "98b442bb36a696eddf7cedb290caee542eb396fc8ae454be601f1888e4a4e258",
+      "publishedAt": "2026-07-17T15:46:30-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "b762f6b2009209fd7e15a88420fc916a9a38b1c7c58a54f879306f6606e73221",
+    "canonicalMarkdownSha256": "f52efa11375f9a203a93c13b5280acec5fea0fd94cc340cf91d927d6a5013a3b",
+    "reconciliationTransformations": [],
+    "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization."
+  }
+}

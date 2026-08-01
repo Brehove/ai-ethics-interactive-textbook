@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "id": "phil-123-ai-ethics",
+  "title": "PHIL 123: AI and Ethics",
+  "subtitle": "An interactive open textbook for philosophical judgment",
+  "language": "en",
+  "edition": "Website baseline (2026)",
+  "chapterCount": 18,
+  "licensePolicy": "policies/licenses.json",
+  "privacy": {
+    "studentAccounts": false,
+    "studentDataStored": false
+  },
+  "parts": [
+    {
+      "id": "part-01",
+      "order": 1,
+      "title": "Philosophical Practice and AI",
+      "slug": "philosophical-practice-and-ai",
+      "chapters": [
+        {
+          "id": "ch01",
+          "slug": "practicing-philosophy",
+          "title": "Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility",
+          "order": 1,
+          "chapterOrder": 1,
+          "path": "/chapter/practicing-philosophy/"
+        },
+        {
+          "id": "ch02",
+          "slug": "testing-moral-arguments",
+          "title": "Testing Moral Arguments: Premises, Inferences, Objections, and Revision",
+          "order": 2,
+          "chapterOrder": 2,
+          "path": "/chapter/testing-moral-arguments/"
+        },
+        {
+          "id": "ch03",
+          "slug": "how-generative-ai-produces-answers",
+          "title": "How Generative AI Produces Answers: Prediction, Post-Training, and the Source Trail",
+          "order": 3,
+          "chapterOrder": 3,
+          "path": "/chapter/how-generative-ai-produces-answers/"
+        },
+        {
+          "id": "ch04",
+          "slug": "ai-as-an-interlocutor",
+          "title": "AI as an Interlocutor in Philosophical Work",
+          "order": 4,
+          "chapterOrder": 4,
+          "path": "/chapter/ai-as-an-interlocutor/"
+        }
+      ]
+    },
+    {
+      "id": "part-02",
+      "order": 2,
+      "title": "Moral Authority, Character, and Practical Wisdom",
+      "slug": "moral-authority-character-and-practical-wisdom",
+      "chapters": [
+        {
+          "id": "ch05",
+          "slug": "divine-command-natural-law-moral-authority",
+          "title": "Is It Good Because God Commands It? Divine Command, Natural Law, and Moral Authority",
+          "order": 5,
+          "chapterOrder": 1,
+          "path": "/chapter/divine-command-natural-law-moral-authority/"
+        },
+        {
+          "id": "ch06",
+          "slug": "commands-constitutions-and-alignment",
+          "title": "Commands, Constitutions, and Alignment: Natural Law in the AI Alignment Conversation",
+          "order": 6,
+          "chapterOrder": 2,
+          "path": "/chapter/commands-constitutions-and-alignment/"
+        },
+        {
+          "id": "ch07",
+          "slug": "aristotle-character-and-ai-assisted-life",
+          "title": "What Are You Becoming? Aristotle, Character, and AI-Assisted Life",
+          "order": 7,
+          "chapterOrder": 3,
+          "path": "/chapter/aristotle-character-and-ai-assisted-life/"
+        },
+        {
+          "id": "ch08",
+          "slug": "practical-wisdom-after-aristotle",
+          "title": "Practical Wisdom After Aristotle: Vallor, Askell, and the Problem of Machine Judgment",
+          "order": 8,
+          "chapterOrder": 4,
+          "path": "/chapter/practical-wisdom-after-aristotle/"
+        }
+      ]
+    },
+    {
+      "id": "part-03",
+      "order": 3,
+      "title": "Duty, Consequences, and Moral Choice",
+      "slug": "duty-consequences-and-moral-choice",
+      "chapters": [
+        {
+          "id": "ch09",
+          "slug": "kantian-deontology",
+          "title": "Kantian Deontology",
+          "order": 9,
+          "chapterOrder": 1,
+          "path": "/chapter/kantian-deontology/"
+        },
+        {
+          "id": "ch10",
+          "slug": "utilitarianism-consequences-rules-and-two-level-reasoning",
+          "title": "Utilitarianism: Consequences, Rules, and Two-Level Reasoning",
+          "order": 10,
+          "chapterOrder": 2,
+          "path": "/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/"
+        }
+      ]
+    },
+    {
+      "id": "part-04",
+      "order": 4,
+      "title": "Data, Bias, and Delegated Judgment",
+      "slug": "data-bias-and-delegated-judgment",
+      "chapters": [
+        {
+          "id": "ch11",
+          "slug": "from-data-trails-to-ai-systems",
+          "title": "From Data Trails to AI Systems: How Human Activity Becomes Prediction, Automation, and Generation",
+          "order": 11,
+          "chapterOrder": 1,
+          "path": "/chapter/from-data-trails-to-ai-systems/"
+        },
+        {
+          "id": "ch12",
+          "slug": "algorithmic-bias-and-the-ai-mirror",
+          "title": "Algorithmic Bias and the AI Mirror: When Prediction Becomes an Opportunity Gate",
+          "order": 12,
+          "chapterOrder": 2,
+          "path": "/chapter/algorithmic-bias-and-the-ai-mirror/"
+        },
+        {
+          "id": "ch13",
+          "slug": "delegating-judgment",
+          "title": "Delegating Judgment: Automation, Robotics, Skill, and Answerable Control",
+          "order": 13,
+          "chapterOrder": 3,
+          "path": "/chapter/delegating-judgment/"
+        }
+      ]
+    },
+    {
+      "id": "part-05",
+      "order": 5,
+      "title": "Relationships, Creativity, and Co-Existence",
+      "slug": "relationships-creativity-and-coexistence",
+      "chapters": [
+        {
+          "id": "ch14",
+          "slug": "ai-companions-and-coexistence",
+          "title": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status",
+          "order": 14,
+          "chapterOrder": 1,
+          "path": "/chapter/ai-companions-and-coexistence/"
+        },
+        {
+          "id": "ch15",
+          "slug": "creativity-innovation-and-ai",
+          "title": "Creativity, Innovation, and AI: Authorship, Judgment, and the Ethics of Generated Work",
+          "order": 15,
+          "chapterOrder": 2,
+          "path": "/chapter/creativity-innovation-and-ai/"
+        }
+      ]
+    },
+    {
+      "id": "part-06",
+      "order": 6,
+      "title": "Future Stakes and Technological Movements",
+      "slug": "future-stakes-and-technological-movements",
+      "chapters": [
+        {
+          "id": "ch16",
+          "slug": "existential-risk-effective-altruism-and-future-stakes",
+          "title": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes",
+          "order": 16,
+          "chapterOrder": 1,
+          "path": "/chapter/existential-risk-effective-altruism-and-future-stakes/"
+        },
+        {
+          "id": "ch17",
+          "slug": "accelerationism-ai-and-the-ethics-of-speed",
+          "title": "Accelerationism, AI, and the Ethics of Speed",
+          "order": 17,
+          "chapterOrder": 2,
+          "path": "/chapter/accelerationism-ai-and-the-ethics-of-speed/"
+        },
+        {
+          "id": "ch18",
+          "slug": "transhumanism-enhancement-and-human-capacity",
+          "title": "Transhumanism, Enhancement, and the Ethics of Human Capacity",
+          "order": 18,
+          "chapterOrder": 3,
+          "path": "/chapter/transhumanism-enhancement-and-human-capacity/"
+        }
+      ]
+    }
+  ]
+}

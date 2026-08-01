@@ -1,0 +1,97 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+import PrivacyNote from "../components/PrivacyNote.astro";
+import { getChapterSummaries } from "../lib/content";
+
+const chapters = await getChapterSummaries();
+const featured = chapters.slice(0, 3);
+---
+
+<SiteLayout title="Interactive textbook" description="A free, open, interactive textbook for PHIL 123: AI and Ethics.">
+  <main id="main-content">
+    <section class="hero site-width">
+      <div>
+        <p class="eyebrow">PHIL 123 · Open interactive textbook</p>
+        <h1>Ethics is not a list of answers. It is a practice of judgment.</h1>
+        <p class="hero-copy">Read sustained philosophical arguments, inspect how they work, enter their primary sources and traditions, and keep track of the judgment that remains yours.</p>
+        <div class="hero-actions">
+          <a class="primary" href={chapters[0]?.path ?? "/contents/"}>Begin with Chapter 1</a>
+          <a class="secondary" href="/contents/">View all {chapters.length} chapters</a>
+        </div>
+      </div>
+      <aside class="mode-card">
+        <p class="eyebrow">Four reading layers</p>
+        <ol>
+          <li><span>01</span><b>First Read</b><small>The complete chapter</small></li>
+          <li><span>02</span><b>Deep Read</b><small>Arguments and objections</small></li>
+          <li><span>03</span><b>Sources</b><small>Texts and evidence</small></li>
+          <li><span>04</span><b>World</b><small>People and traditions</small></li>
+        </ol>
+      </aside>
+    </section>
+
+    <section class="featured site-width" aria-labelledby="featured-title">
+      <div class="section-head">
+        <p class="eyebrow">The opening movement</p>
+        <h2 id="featured-title">Learn to see the argument before asking AI to improve it.</h2>
+      </div>
+      <div class="chapter-cards">
+        {featured.map((chapter) => (
+          <article>
+            <p class="card-number">{String(chapter.order).padStart(2, "0")}</p>
+            <p class="eyebrow">{chapter.part.title}</p>
+            <h3><a href={chapter.path}>{chapter.title}</a></h3>
+            <p>{chapter.description}</p>
+            <p class="meta">{chapter.readingMinutes} min · {chapter.wordCount.toLocaleString()} words</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="contract">
+      <div class="site-width contract-inner">
+        <div>
+          <p class="eyebrow">Keep a copy</p>
+          <h2>Print it. Save it as PDF. Download the chapter.</h2>
+          <p>Required readings do not depend on a proprietary app or a permanent internet connection. Every chapter has a paper-friendly view and a self-contained offline HTML copy.</p>
+        </div>
+        <PrivacyNote />
+      </div>
+    </section>
+  </main>
+</SiteLayout>
+
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.75fr); gap: clamp(2rem, 7vw, 7rem); align-items: end; padding-block: clamp(4rem, 10vw, 9rem); }
+  h1 { max-width: 15ch; margin: 0.65rem 0 1.2rem; font-size: clamp(3rem, 7vw, 6.2rem); font-weight: 500; line-height: 0.94; letter-spacing: -0.055em; text-wrap: balance; }
+  .hero-copy { max-width: 46rem; color: var(--ink-soft); font-size: 1.2rem; line-height: 1.5; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 2rem; }
+  .hero-actions a { display: inline-flex; min-height: 3rem; align-items: center; padding: 0.75rem 1rem; font: 700 0.72rem/1 var(--sans); letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; }
+  .primary { background: var(--ink); color: white; border: 1px solid var(--ink); }
+  .primary:hover { color: white; background: var(--rust-dark); }
+  .secondary { border: 1px solid var(--line-dark); }
+  .mode-card { padding: 1.5rem; border: 1px solid var(--line); background: var(--wash); box-shadow: var(--shadow); }
+  .mode-card ol { list-style: none; margin: 1.1rem 0 0; padding: 0; }
+  .mode-card li { display: grid; grid-template-columns: 2.2rem 1fr; padding: 0.8rem 0; border-top: 1px solid var(--line); }
+  .mode-card li span { color: var(--rust-dark); font: 700 0.7rem/1.4 var(--sans); }
+  .mode-card b { font-size: 1rem; font-weight: 500; }
+  .mode-card small { grid-column: 2; color: var(--ink-soft); font: 0.7rem/1.4 var(--sans); }
+  .featured { padding-bottom: clamp(4rem, 9vw, 8rem); }
+  .section-head { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start; border-top: 1px solid var(--ink); padding-top: 1.4rem; }
+  .section-head h2 { max-width: 25ch; margin: 0; font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 500; line-height: 1.05; letter-spacing: -0.035em; }
+  .chapter-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 3rem; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .chapter-cards article { position: relative; min-height: 22rem; padding: 1.5rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper-light); }
+  .card-number { position: absolute; right: 1.2rem; top: 0.9rem; margin: 0; color: var(--line-dark); font: 700 0.72rem/1 var(--sans); }
+  .chapter-cards h3 { margin: 1.2rem 0 0.75rem; font-size: 1.55rem; font-weight: 500; line-height: 1.15; }
+  .chapter-cards h3 a { text-decoration: none; }
+  .chapter-cards article > p:not(.eyebrow):not(.card-number):not(.meta) { color: var(--ink-soft); font-size: 0.9rem; }
+  .meta { position: absolute; left: 1.5rem; right: 1.5rem; bottom: 1rem; margin: 0; color: var(--rust-dark); font: 700 0.65rem/1 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
+  .contract { padding-block: 4rem; border-top: 1px solid var(--line); background: var(--wash); }
+  .contract-inner { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(2rem, 8vw, 8rem); align-items: center; }
+  .contract h2 { max-width: 20ch; margin: 0.5rem 0; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 500; line-height: 1.05; }
+  @media (max-width: 820px) {
+    .hero, .section-head, .contract-inner { grid-template-columns: 1fr; }
+    .chapter-cards { grid-template-columns: 1fr; }
+    .chapter-cards article { min-height: 18rem; }
+  }
+</style>

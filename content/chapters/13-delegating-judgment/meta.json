@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "ch13",
+  "contentKey": "13-delegating-judgment",
+  "slug": "delegating-judgment",
+  "title": "Delegating Judgment: Automation, Robotics, Skill, and Answerable Control",
+  "subtitle": null,
+  "description": "A driver turns on Tesla's Full Self-Driving system, the version Tesla currently labels Full Self-Driving (Supervised). The car follows a route, changes lanes, slows for traffic, and handles turns. From the passenger…",
+  "order": 13,
+  "part": {
+    "id": "part-04",
+    "order": 4,
+    "chapterOrder": 3,
+    "title": "Data, Bias, and Delegated Judgment",
+    "slug": "data-bias-and-delegated-judgment"
+  },
+  "path": "/chapter/delegating-judgment/",
+  "wordCount": 10604,
+  "readingMinutes": 48,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/delegating-judgment/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 49,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
+      "deploymentSha256": "3f504d251e8860df5433cde4dce269480520535b698bb9a5ccc2ed3739973304",
+      "publishedAt": "2026-07-17T15:46:17-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
+    "canonicalMarkdownSha256": "560ad649f2afa02e390e7f9f50aeb3dad99e360a0ed244e0aba295ee502320cc",
+    "reconciliationTransformations": [
+      {
+        "kind": "replace-exact",
+        "reason": "Replace two obsolete Aristotle chapter links with the current public chapter URL.",
+        "expectedOccurrences": 2
+      }
+    ],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

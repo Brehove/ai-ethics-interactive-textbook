@@ -1,0 +1,34 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Rights and attribution" description="Licenses and attribution boundaries for the AI Ethics interactive textbook.">
+  <main id="main-content" class="rights site-width">
+    <p class="eyebrow">Rights and attribution</p>
+    <h1>Open does not mean ownerless.</h1>
+    <p class="intro">This edition separates the licenses for original prose, software, metadata, and third-party materials so a broad site license never silently relicenses someone else's work.</p>
+
+    <div class="license-grid">
+      <section><p class="eyebrow">Textbook prose</p><h2>CC BY 4.0</h2><p>Unless a chapter or item says otherwise, original textbook prose may be shared and adapted with attribution.</p></section>
+      <section><p class="eyebrow">Website code</p><h2>MIT</h2><p>The Astro reader, validation tools, and editor code are available under the MIT License.</p></section>
+      <section><p class="eyebrow">Original metadata</p><h2>CC0 1.0</h2><p>Original structured records are dedicated to the public domain where legally possible.</p></section>
+    </div>
+
+    <section class="exceptions">
+      <h2>Item-level exceptions</h2>
+      <p>Primary-source excerpts, modern translations, Wikipedia-derived prose, Wikimedia Commons images, museum images, and other third-party materials retain the license or use basis recorded on the item. The structured rights registry is generated from the repository's reviewed source records.</p>
+      <p>Until an item has a verified creator, source, license or public-domain basis, required credit, and stable version, it does not enter the public asset set.</p>
+    </section>
+  </main>
+</SiteLayout>
+
+<style>
+  .rights { padding-block: clamp(3rem, 8vw, 7rem); }
+  h1 { max-width: 13ch; margin: 0.5rem 0 1rem; font-size: clamp(3rem, 8vw, 6rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.05em; }
+  .intro { max-width: 50rem; color: var(--ink-soft); font-size: 1.15rem; }
+  .license-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 4rem; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .license-grid section { min-height: 15rem; padding: 1.4rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper-light); }
+  h2 { margin: 0.7rem 0; font-size: 1.7rem; font-weight: 500; }
+  .exceptions { max-width: 55rem; margin-top: 4rem; padding-top: 1.5rem; border-top: 2px solid var(--ink); }
+  @media (max-width: 760px) { .license-grid { grid-template-columns: 1fr; } }
+</style>

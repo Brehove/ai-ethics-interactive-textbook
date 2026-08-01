@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "adapt-cwi101-generative-ai",
+      "kind": "oer-adaptation",
+      "chapterId": "ch03",
+      "source": {
+        "title": "What Generative AI Is: How LLMs Produce Fluent Answers That Still Need Checking",
+        "creator": "Joel Gladd",
+        "book": "CWI 101 Pathways",
+        "publisher": "College of Western Idaho",
+        "url": "https://cwi.pressbooks.pub/cwi101/chapter/what-generative-ai-is-how-llms-produce-fluent-answers-that-still-need-checking/",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "reuse": {
+        "status": "adapted-in-part",
+        "summary": "Substantially reorganized and rewritten for PHIL 123, with a philosophy-course argumentation case, a revised account of pretraining and post-training, and expanded source-grounding and warranted-trust material.",
+        "visibleAttributionRequired": true,
+        "chapterLicenseExceptionRequired": false
+      }
+    }
+  ]
+}

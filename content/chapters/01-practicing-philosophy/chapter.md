@@ -1,0 +1,128 @@
+# Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility
+
+<!-- phil-passage-id: ch01-p0001 -->
+A college student, Ashley, meets with three classmates to plan a group presentation. She worries that she will miss a deadline or forget who agreed to handle each task. The meeting app offers an AI assistant that can record the conversation, produce a transcript, identify action items, and generate a summary.
+
+<!-- phil-passage-id: ch01-p0002 -->
+Under [Idaho Code section 18-6702](https://legislature.idaho.gov/statutesrules/idstat/Title18/T18CH67/SECT18-6702/), a participant in a conversation may generally record it when one party has given prior consent. Because Ashley is participating, she can supply that consent herself. The statute generally permits the recording, although it doesn't settle whether recording is ethically justified in this instance.
+
+<!-- phil-passage-id: ch01-p0003 -->
+Ashley has several good reasons to use the assistant. A transcript could help the group recover an overlooked detail, verify a deadline, or make the meeting easier to follow for someone who processes spoken information differently. Yet her classmates might speak differently if they knew they were being recorded. The recording and transcript may be stored somewhere they do not control. If Ashley lets the assistant select and organize everything, she will no longer practice those parts of note-taking herself.
+
+<!-- phil-passage-id: ch01-p0004 -->
+Should she turn it on without asking, ask the group first, or take her own notes and use the transcript only as a backup? Legal permission has removed one obstacle, but Ashley still has to decide which choice she can defend.
+
+<!-- phil-section-id: ch01-s001 -->
+## How This Chapter Fits the Course
+
+<!-- phil-passage-id: ch01-p0005 -->
+PHIL 123 begins here because every ethical framework in the course asks you to make and defend judgments. This chapter introduces the shared practices you will use throughout the semester: identify what matters in a dilemma, make your reasons visible, test them against objections and competing perspectives, and notice when your own judgment changes.
+
+<!-- phil-passage-id: ch01-p0006 -->
+In the first half of the course, you will apply these practices through several ethical frameworks. In the second half, you will use them to investigate AI-related problems and explain the decisions shaping your final project. Philosophical argument gives the class a common way to examine different views without assuming that everyone begins from the same principles.
+
+<!-- phil-section-id: ch01-s002 -->
+## Moral Reasoning
+
+<!-- phil-passage-id: ch01-p0007 -->
+After providing a foundation in argumentation, the first half of PHIL 123 introduces several ethical frameworks. These frameworks organize moral reasoning around different accounts of what has fundamental importance. Divine-command approaches ask how moral obligation relates to divine authority, while natural-law approaches connect moral judgment with a rational order of human goods. Virtue ethics asks what a practice does to character and whether it supports human flourishing. Kantian ethics emphasizes duty, autonomy, universal principles, and respect for rational persons. Utilitarianism evaluates actions and rules through consequences, welfare, and impartial consideration of those affected. Each framework can supply a different moral principle and direct attention toward different features of the case. It may also change what counts as a strong objection.
+
+<!-- phil-passage-id: ch01-p0008 -->
+In Ashley's case, one argument may emphasize a duty to respect her classmates' ability to decide whether they are recorded. Another may compare the assistant's benefits for accuracy and accessibility with its effects on privacy, trust, and learning. Virtue ethics may ask what honesty, attentiveness, and practical wisdom require from a responsible classmate. These various approaches to what counts in an ethical dilemma help develop a practice known as **moral reasoning**. Moral reasoning is a kind of **practical reasoning**, reasoning directed toward deciding what should be done. The [philosophical account of moral reasoning](https://plato.stanford.edu/entries/reasoning-moral/) includes tasks that formal validity cannot perform by itself.
+
+<!-- phil-passage-id: ch01-p0009 -->
+A reasoner must identify which features of a case matter morally and how strongly they count. A feature is morally relevant when changing it could alter the force of a reason or what a principle recommends. The color of Ashley's phone probably has no bearing on the decision. Whether her classmates know about the recording might. So might the assistant's storage rules, who can open the transcript, whether someone in the group needs a transcript for accessibility, and whether the generated action items are accurate. The case changes again if Ashley uses the transcript to check her own notes rather than treating the AI summary as a substitute for listening and organizing the meeting herself. These variations reveal morally relevant features without assigning them a final rank. Ashley, like any moral reasoner, must decide how the features should be interpreted and weighed.
+
+<!-- phil-passage-id: ch01-p0010 -->
+For example, how should Ashley reason about the recording's impact on her learning? She might find related evidence, e.g., a widely discussed study by [Pam Mueller and Daniel Oppenheimer](https://doi.org/10.1177/0956797614524581) found that students taking laptop notes recorded more verbatim material and performed worse on conceptual questions than students taking longhand notes, and later [direct replication and mini meta-analyses by Heather Urry and her colleagues](https://doi.org/10.1177/0956797620965541) did not find a clear immediate learning advantage for longhand notes. The studies leave the relative advantage of typing and handwriting unsettled while directing attention toward active processing. Is Ashley selecting, organizing, and checking the important ideas, or is she allowing a transcript and summary to stand in for understanding? Evidence can help support part of her reasons for deciding for or against the recording, but it cannot tell her how highly to *rank* that evidence.
+
+<!-- phil-passage-id: ch01-p0011 -->
+Aristotle refers to this form of judgment as practical wisdom, or *phronesis*. In [Book VI of the *Nicomachean Ethics*](https://classics.mit.edu/Aristotle/nicomachaen.6.vi.html), practical wisdom concerns deliberation and action in variable circumstances. Action concerns particulars. A general principle such as `use tools that improve accuracy` cannot determine whether Ashley should record secretly, what the group should know, how long the transcript should exist, or which parts of the intellectual work she should still perform herself. The same principle can support using the assistant as a bounded backup in one case and rejecting it in another because the relevant particulars have changed.
+
+<!-- phil-passage-id: ch01-p0012 -->
+On the other hand, [Kantian ethics](https://cwi.pressbooks.pub/ethicsandai/chapter/kantian-deontology/) might place pressure on secret recording when classmates are treated as sources of data rather than people capable of deciding how they participate. [Utilitarianism](https://cwi.pressbooks.pub/ethicsandai/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/) might compare gains in accuracy and accessibility with possible losses of privacy, trust, and active learning. These ethical frameworks can overlap in a recommendation while reaching it through entirely different reasons. Or they can also disagree sharply. Argumentation allows students to identify whether the disagreement concerns the governing principle, the case description, the inference, or the relative importance of competing considerations. A shared argument form therefore creates a common practice for dialogue without erasing philosophical difference.
+
+<!-- phil-passage-id: ch01-p0013 -->
+Ashley's dilemma also contains several competing values. Accuracy supports a reliable record of decisions. Learning requires students to process, organize, and remember what they are doing. Privacy and autonomy protect the conditions under which classmates choose to speak. Accessibility may give some students a stronger reason to use a transcript. Responsibility requires someone to verify the assistant's summary rather than treating generated action items as authoritative. Trust is relevant because a group project depends on more than efficient information capture.
+
+<!-- phil-passage-id: ch01-p0014 -->
+**Value pluralism** is the position that several genuine goods may resist reduction to a single master value. The [philosophical literature on value pluralism](https://plato.stanford.edu/entries/value-pluralism/) identifies Isaiah Berlin as a central defender of this view. In [*Two Concepts of Liberty*](https://doi.org/10.1093/019924989X.003.0004), Berlin rejects the expectation that every legitimate human end will fit into a perfectly harmonious order. This does not make moral judgment arbitrary. Evidence and consistency still constrain a choice, as do proportionality and attention to consequences. A justified choice may protect one genuine value while leaving another partly unsatisfied. For that reason, `privacy is one of my values` merely begins the dialogue. The frameworks help us formulate ethical questions and identify facts that would otherwise remain hidden.
+
+<!-- phil-section-id: ch01-s003 -->
+## Pressure-Testing Your Judgments
+
+<!-- phil-passage-id: ch01-p0015 -->
+Moral reasoning isn't about justifying your natural opinions or beliefs, although your intuitions can provide provisional starting points. The goal in this course is to develop a *considered* judgment. This movement between a provisional judgment and serious alternatives has a philosophical precedent in something called **reflective equilibrium**. In [section 9 of *A Theory of Justice*](https://doi.org/10.4159/9780674042605), John Rawls begins with **considered judgments**, judgments made under comparatively favorable conditions for reflection. Rawls's considered judgments are not identical to whatever a person happens to feel first. Rawls asks whether particular judgments fit principles the reasoner can defend, while allowing both the judgments and principles to be revised. The process becomes wider when it includes rival principles and relevant background knowledge. The [current philosophical overview of reflective equilibrium](https://plato.stanford.edu/entries/reflective-equilibrium/) maps this reciprocal process and the disputes surrounding it.
+
+<!-- phil-passage-id: ch01-p0016 -->
+Ashley's first judgment gives her a reason to formulate a principle: students should use recording tools when those tools reduce mistakes. The privacy objection then pressures that principle. Suppose the app stores every recording indefinitely, uses the conversation to improve its models, and gives no one in the group a practical way to delete it. The tool's accuracy leaves control and meaningful choice unaddressed.
+
+<!-- phil-passage-id: ch01-p0017 -->
+Ashley might revise the principle: students should use a meeting assistant only when the group knows how it works, agrees to the recording, can control the resulting files, and keeps responsibility for checking the output. That revision pushes back on her original choice. It may support a limited use in which Ashley takes selective notes herself, uses the transcript to verify details, corrects the generated action items, and deletes the recording after the project. A classmate's accessibility need may strengthen the case for that arrangement. An app with unclear storage rules may weaken it.
+
+<!-- phil-passage-id: ch01-p0018 -->
+Judgment can change principle, while a revised principle can reshape the judgment. New evidence may change the case to which both are being applied. Reflective equilibrium refers to this back-and-forth effort to bring the parts into a relationship the reasoner can defend. This kind of pressure-testing, in search of a reflective equilibrium and considered judgment, will remain a key practice throughout the course. Changing *every* position may show deference to confidence or authority, while *never* changing may protect a prior belief from evidence or better reasoning. Our measure will be whether the reasoner (you) can identify the point under pressure, evaluate the challenge, and explain the result.
+
+<!-- phil-passage-id: ch01-p0019 -->
+<aside class="textbox shaded textbox--framework-map" role="note" aria-labelledby="pressure-testing-map">
+<h3 id="pressure-testing-map">Framework Map: Pressure-Testing A Moral Judgment</h3>
+<ol>
+  <li>State a provisional judgment and the reasons supporting it.</li>
+  <li>Make the governing principle, relevant facts, and important assumptions visible.</li>
+  <li>Consider a serious objection, rival framework, changed fact, or affected perspective.</li>
+  <li>Decide whether the pressure succeeds and identify exactly what it challenges.</li>
+  <li>Retain, revise, qualify, or suspend the judgment, and explain why.</li>
+</ol>
+</aside>
+
+<!-- phil-section-id: ch01-s004 -->
+## Reflection and Metacognition
+
+<!-- phil-passage-id: ch01-p0020 -->
+Pressure-testing can improve a judgment only if you *notice* when the pressure happens. Foundational work by [Thomas Nelson and Louis Narens](https://doi.org/10.1016/S0079-7421%2808%2960053-5) distinguishes **monitoring**, noticing or representing what is happening in one's cognition, from **control**, regulating what happens next. We can apply this to moral reasoning: it's about noticing which belief, premise, or confidence level has changed, and then deciding what that change requires. This course will encourage you to record these shifts in your moral reasoning.
+
+<!-- phil-passage-id: ch01-p0021 -->
+A useful metacognitive record identifies a visible change or a visible decision not to change. Ashley might say that her confidence in using a transcript as a backup increased after the group agreed and a classmate explained why the transcript would help. Her confidence in letting the assistant replace her own attention and note-making did not increase, because agreement did not establish that outsourcing those activities would support learning. The same information changed one part of the judgment while leaving another uncertain. Separating those two confidence levels makes her reasoning available for examination.
+
+<!-- phil-passage-id: ch01-p0022 -->
+Changing your mind is not automatically evidence of good judgment and retaining a position is not automatically stubbornness, and reflection can preserve errors. A person may organize biased, self-serving, or inherited judgments into an internally consistent outlook. Ashley could make the automation argument coherent by counting every captured detail as a benefit while discounting privacy, trust, and the work of learning. She could make the no-recording argument coherent by treating privacy as absolute while discounting accessibility and the group's interest in an accurate record. Internal consistency would not reveal that the inconvenient evidence had been weakened or excluded.
+
+<!-- phil-passage-id: ch01-p0023 -->
+Thomas Kelly and Sarah McGrath develop this **initial-credibility problem** in [*Is Reflective Equilibrium Enough?*](https://doi.org/10.1111/j.1520-8583.2010.00195.x). If the credibility of every input comes only from fitting the final system, coherence may show how the pieces connect without showing why the system deserves belief. Defenders of wide reflective equilibrium reply that the process can include independently supported background knowledge, rival arguments, and evidence capable of revising every part of the view. Reflective equilibrium therefore remains vulnerable when the inputs receive credibility only because they fit together.
+
+<!-- phil-passage-id: ch01-p0024 -->
+Corrective inquiry therefore looks outward as well as inward. This is why we sharpen our judgments with the help of our peers. Elizabeth Anderson's [*Moral Bias and Corrective Practices*](https://www.jstor.org/stable/43661501) treats empirical checking and exposure to differently positioned people as parts of moral inquiry. Continuous dialogue can help challenge a convenient description or show that evidence favoring one position received less scrutiny. Your classmates are here to help with these corrective practices.
+
+<!-- phil-passage-id: ch01-p0025 -->
+<aside class="textbox shaded textbox--caution" role="note" aria-labelledby="changing-mind-not-goal">
+<h3 id="changing-mind-not-goal">Caution: Changing Your Mind Is Not The Goal</h3>
+<p>The goal is to make your response to pressure visible. Identify what was challenged, whether the challenge succeeded, and why you retained, revised, qualified, or suspended the judgment. A position that survives serious pressure may become more defensible. A position that changes for a clear reason may become more precise.</p>
+
+</aside>
+
+<!-- phil-passage-id: ch01-p0026 -->
+Use these practices throughout PHIL 123. [*Testing Moral Arguments*](https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/) supplies the detailed tools for examining premises, inferences, objections, and repairs. The framework chapters ask what matters morally and which reasons can justify action. When AI enters the dialogue, [*AI as an Interlocutor in Philosophical Work*](https://cwi.pressbooks.pub/ethicsandai/chapter/ai-as-an-interlocutor/) explains how to preserve the student's role in the judgment. Across those contexts, the course asks you to show your reasoning and take responsibility for the judgment you finally defend.
+
+<!-- phil-passage-id: ch01-p0027 -->
+<aside class="textbox exercises textbox--judgment-practice" aria-labelledby="judgment-practice">
+<h3 id="judgment-practice">Practice: Make One Judgment Visible</h3>
+<p>Choose a moral judgment you currently hold. State the strongest reason supporting it, then name one objection or changed fact that could place that reason under pressure. Decide whether you would retain, revise, qualify, or suspend the judgment, and explain the point in your reasoning that determined your response.</p>
+
+</aside>
+
+<!-- phil-section-id: ch01-s005 -->
+## References
+
+<!-- phil-passage-id: ch01-p0028 -->
+- Anderson, Elizabeth. [*Moral Bias and Corrective Practices: A Pragmatist Perspective*](https://www.jstor.org/stable/43661501). *Proceedings and Addresses of the American Philosophical Association* 89 (2015): 21-47. Used for empirical and social corrective practices in moral inquiry.
+- Aristotle. [*Nicomachean Ethics*, Book VI](https://classics.mit.edu/Aristotle/nicomachaen.6.vi.html), translated by W. D. Ross. Used for practical wisdom and judgment concerning particulars; the later virtue-ethics chapter provides the fuller treatment.
+- Berlin, Isaiah. [*Two Concepts of Liberty*](https://doi.org/10.1093/019924989X.003.0004). In *Liberty*, edited by Henry Hardy. Oxford University Press, 2002, 166-217. Used for the value-pluralist claim that genuine human ends may conflict.
+- Kelly, Thomas, and Sarah McGrath. [*Is Reflective Equilibrium Enough?*](https://doi.org/10.1111/j.1520-8583.2010.00195.x). *Philosophical Perspectives* 24.1 (2010): 325-359. Used for the initial-credibility objection to reflective equilibrium.
+- Knight, Carl. [*Reflective Equilibrium*](https://plato.stanford.edu/entries/reflective-equilibrium/). *Stanford Encyclopedia of Philosophy*. First published 2023. Used as the reference-layer account of reflective equilibrium and its objections.
+- Mason, Elinor. [*Value Pluralism*](https://plato.stanford.edu/entries/value-pluralism/). *Stanford Encyclopedia of Philosophy*. First published 2006; substantive revision 2023. Used as a reference-layer account of plural values and conflicts among genuine goods.
+- Mueller, Pam A., and Daniel M. Oppenheimer. [*The Pen Is Mightier Than the Keyboard: Advantages of Longhand Over Laptop Note Taking*](https://doi.org/10.1177/0956797614524581). *Psychological Science* 25.6 (2014): 1159-1168. Used for the original finding that verbatim laptop transcription can reduce generative processing; paired with the later replication rather than treated as a settled medium effect.
+- Nelson, Thomas O., and Louis Narens. [*Metamemory: A Theoretical Framework and New Findings*](https://doi.org/10.1016/S0079-7421%2808%2960053-5). *Psychology of Learning and Motivation* 26 (1990): 125-173. Used for the monitoring/control distinction; PHIL 123 transfers the model from metamemory to philosophical reasoning.
+- Rawls, John. [*A Theory of Justice*](https://doi.org/10.4159/9780674042605), section 9. Harvard University Press, 1971. Used for considered judgments and reflective equilibrium.
+- Richardson, Henry S. [*Moral Reasoning*](https://plato.stanford.edu/entries/reasoning-moral/). *Stanford Encyclopedia of Philosophy*. First published 2003; substantive revision 2018. Used for moral reasoning as practical reasoning and for the role of morally relevant considerations.
+- State of Idaho. [*Idaho Code section 18-6702*](https://legislature.idaho.gov/statutesrules/idstat/Title18/T18CH67/SECT18-6702/). Used for the bounded legal claim that a participant may generally record a conversation when one party has given prior consent; legal permission is not treated as an ethical conclusion.
+- Urry, Heather L., et al. [*Don't Ditch the Laptop Just Yet*](https://doi.org/10.1177/0956797620965541). *Psychological Science* 32.3 (2021): 326-339. Used for the direct replication and mini meta-analyses that did not find a clear immediate learning advantage for longhand notes.

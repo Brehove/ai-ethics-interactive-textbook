@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "chapterCount": 18,
+  "rawHtml": {
+    "asides": 122,
+    "tables": 16,
+    "explicitIds": 123,
+    "ariaLabelledby": 122
+  },
+  "markdownTables": 1,
+  "identity": {
+    "sections": 268,
+    "passages": 1939
+  },
+  "boundedRepairs": {
+    "testingMoralArgumentsApprovedH1": 1,
+    "obsoleteAristotleLinks": 0,
+    "currentAristotleLinksInDelegatingJudgment": 2
+  }
+}

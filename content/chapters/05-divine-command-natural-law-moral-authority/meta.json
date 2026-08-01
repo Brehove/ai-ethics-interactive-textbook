@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch05",
+  "contentKey": "05-divine-command-natural-law-moral-authority",
+  "slug": "divine-command-natural-law-moral-authority",
+  "title": "Is It Good Because God Commands It? Divine Command, Natural Law, and Moral Authority",
+  "subtitle": null,
+  "description": "Imagine a student who is behind in the semester and considering something the syllabus explicitly forbids. The assignment is a short written response, and the instructions say the response must be completed without…",
+  "order": 5,
+  "part": {
+    "id": "part-02",
+    "order": 2,
+    "chapterOrder": 1,
+    "title": "Moral Authority, Character, and Practical Wisdom",
+    "slug": "moral-authority-character-and-practical-wisdom"
+  },
+  "path": "/chapter/divine-command-natural-law-moral-authority/",
+  "wordCount": 7006,
+  "readingMinutes": 32,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/divine-command-natural-law-moral-authority/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 31,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "ee247cdffa3c204cf68ac1ffcdff8c385074c0bc478694b6310b03e65e674791",
+      "deploymentSha256": "197289a5fa1fbb434aba87a82777c709c7f34972502b92a42593e2d786933575",
+      "publishedAt": "2026-07-17T15:45:56-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "ee247cdffa3c204cf68ac1ffcdff8c385074c0bc478694b6310b03e65e674791",
+    "canonicalMarkdownSha256": "0e1ef966f0e58b0ca79dcfba6528ace30cb6ec45a7a5af31376ba67a3504f3e5",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch14",
+  "contentKey": "14-ai-companions-and-coexistence",
+  "slug": "ai-companions-and-coexistence",
+  "title": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status",
+  "subtitle": null,
+  "description": "Ken Liu's story \"The Perfect Match\" follows a man named Sai in a world where an intelligent assistant called Tilly has become the normal interface for daily life. Tilly recommends what to eat, where to go, what to…",
+  "order": 14,
+  "part": {
+    "id": "part-05",
+    "order": 5,
+    "chapterOrder": 1,
+    "title": "Relationships, Creativity, and Co-Existence",
+    "slug": "relationships-creativity-and-coexistence"
+  },
+  "path": "/chapter/ai-companions-and-coexistence/",
+  "wordCount": 10570,
+  "readingMinutes": 47,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/ai-companions-and-coexistence/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 52,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
+      "deploymentSha256": "7440ff73146aeae2dbe97f005b876389d4b0c8743afdc64beb84c0ff3d128d90",
+      "publishedAt": "2026-07-17T15:46:19-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
+    "canonicalMarkdownSha256": "98584b65c8a7dae342e6b0bca9daeaea848471278c9a3991a25cb7a45dad541e",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

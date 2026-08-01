@@ -1,0 +1,19 @@
+AI Ethics Interactive Textbook uses separate licenses for separate classes of work.
+
+1. Original textbook prose in content/chapters/**/chapter.md is licensed under
+   Creative Commons Attribution 4.0 International (CC BY 4.0), except where an
+   item-level rights record states otherwise.
+
+2. Software, including src/, scripts/, workers/, tests, configuration, and
+   GitHub workflow code, is licensed under the MIT License.
+
+3. Original structured metadata in JSON, YAML, and equivalent records is
+   dedicated under Creative Commons CC0 1.0 Universal, except where the record
+   identifies third-party content or another license.
+
+4. Third-party excerpts, translations, images, and other media retain the
+   rights stated in their item-level records. Nothing in this repository-level
+   notice relicenses those works.
+
+The applicable notices are in LICENSES/. The machine-readable rights registry
+is content/rights/registry.json.

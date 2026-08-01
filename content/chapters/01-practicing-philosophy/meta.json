@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch01",
+  "contentKey": "01-practicing-philosophy",
+  "slug": "practicing-philosophy",
+  "title": "Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility",
+  "subtitle": null,
+  "description": "A college student, Ashley, meets with three classmates to plan a group presentation. She worries that she will miss a deadline or forget who agreed to handle each task. The meeting app offers an AI assistant that can…",
+  "order": 1,
+  "part": {
+    "id": "part-01",
+    "order": 1,
+    "chapterOrder": 1,
+    "title": "Philosophical Practice and AI",
+    "slug": "philosophical-practice-and-ai"
+  },
+  "path": "/chapter/practicing-philosophy/",
+  "wordCount": 2686,
+  "readingMinutes": 12,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/practicing-philosophy/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 5,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "6b626dfebd8a007326cd853def51175c091afc287cbd22c3d7b7639315966886",
+      "deploymentSha256": "ef765cbb1de306476d20fb95837d47312038e71244bfc5bf6b66662ad557e840",
+      "publishedAt": "2026-07-22T08:54:33-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "6b626dfebd8a007326cd853def51175c091afc287cbd22c3d7b7639315966886",
+    "canonicalMarkdownSha256": "6e6b303d4bbdef886e3c80e8ea4431754190aef7b39f2abf829bb700370f303a",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

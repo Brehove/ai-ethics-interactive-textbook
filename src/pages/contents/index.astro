@@ -1,0 +1,63 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { getBook, getChapterSummaries } from "../../lib/content";
+
+const book = await getBook();
+const chapters = await getChapterSummaries();
+---
+
+<SiteLayout title="Contents" description="All 18 chapters of the PHIL 123 AI and Ethics interactive textbook.">
+  <main id="main-content" class="contents site-width">
+    <header>
+      <p class="eyebrow">Six movements · 18 chapters</p>
+      <h1>Contents</h1>
+      <p>Move from philosophical practice and ethical theory into applied questions about data, delegation, relationships, creativity, future stakes, acceleration, and human capacity.</p>
+    </header>
+
+    {book.parts.map((part: any) => {
+      const partChapters = chapters.filter((chapter) => chapter.part.id === part.id);
+      return (
+        <section class="part" aria-labelledby={`part-${part.id}`}>
+          <div class="part-head">
+            <p>{String(part.order).padStart(2, "0")}</p>
+            <h2 id={`part-${part.id}`}>{part.title}</h2>
+          </div>
+          <ol>
+            {partChapters.map((chapter) => (
+              <li>
+                <span>{String(chapter.order).padStart(2, "0")}</span>
+                <div>
+                  <h3><a href={chapter.path}>{chapter.title}</a></h3>
+                  <p>{chapter.description}</p>
+                </div>
+                <small>{chapter.readingMinutes} min</small>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+    })}
+  </main>
+</SiteLayout>
+
+<style>
+  .contents { padding-block: clamp(3rem, 8vw, 7rem); }
+  header { max-width: 55rem; margin-bottom: 5rem; }
+  h1 { margin: 0.3rem 0 0.7rem; font-size: clamp(3.5rem, 9vw, 7rem); font-weight: 500; line-height: 0.95; letter-spacing: -0.055em; }
+  header > p:last-child { max-width: 48rem; color: var(--ink-soft); font-size: 1.15rem; }
+  .part { display: grid; grid-template-columns: minmax(12rem, 0.7fr) 2fr; gap: clamp(1.5rem, 6vw, 6rem); margin: 0 0 4rem; padding-top: 1rem; border-top: 1px solid var(--ink); }
+  .part-head p { margin: 0; color: var(--rust-dark); font: 700 0.7rem/1 var(--sans); }
+  .part-head h2 { max-width: 14ch; margin: 0.5rem 0 0; font-size: 1.7rem; font-weight: 500; line-height: 1.15; }
+  ol { list-style: none; margin: 0; padding: 0; }
+  li { display: grid; grid-template-columns: 2.5rem 1fr auto; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+  li > span, li small { padding-top: 0.3rem; color: var(--ink-soft); font: 700 0.66rem/1.2 var(--sans); }
+  h3 { margin: 0; font-size: 1.25rem; font-weight: 500; line-height: 1.2; }
+  h3 a { text-decoration: none; }
+  li p { margin: 0.4rem 0 0; color: var(--ink-soft); font-size: 0.84rem; line-height: 1.45; }
+  @media (max-width: 720px) {
+    .part { grid-template-columns: 1fr; gap: 1rem; }
+    .part-head h2 { max-width: none; }
+    li { grid-template-columns: 2rem 1fr; }
+    li small { grid-column: 2; }
+  }
+</style>

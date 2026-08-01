@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch10",
+  "contentKey": "10-utilitarianism-consequences-rules-and-two-level-reasoning",
+  "slug": "utilitarianism-consequences-rules-and-two-level-reasoning",
+  "title": "Utilitarianism: Consequences, Rules, and Two-Level Reasoning",
+  "subtitle": null,
+  "description": "Consider a fictional case with stipulated evidence. A community college like yours is deciding what to do about the AI tutor its Academic Affairs office piloted last term. The pilot went well by most obvious…",
+  "order": 10,
+  "part": {
+    "id": "part-03",
+    "order": 3,
+    "chapterOrder": 2,
+    "title": "Duty, Consequences, and Moral Choice",
+    "slug": "duty-consequences-and-moral-choice"
+  },
+  "path": "/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
+  "wordCount": 7371,
+  "readingMinutes": 33,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 42,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",
+      "deploymentSha256": "42b82e8a10f27fea4a3bdd0318e0f06ef6eb4bd8406223841d0615ac7814c926",
+      "publishedAt": "2026-07-17T15:46:09-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",
+    "canonicalMarkdownSha256": "07fb1af0a772921bc4bfb8943d41f69be5822168c292d229d8929aeef858ae39",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

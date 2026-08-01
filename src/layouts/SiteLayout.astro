@@ -1,0 +1,39 @@
+---
+import SiteHeader from "../components/SiteHeader.astro";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  chapterNumber?: number;
+  canonicalPath?: string;
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = "An interactive, open textbook for PHIL 123: AI and Ethics.",
+  chapterNumber,
+  canonicalPath = Astro.url.pathname,
+  noindex = false,
+} = Astro.props;
+const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#102b4a" />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <title>{title} · PHIL 123 AI &amp; Ethics</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <SiteHeader chapterNumber={chapterNumber} />
+    <slot />
+  </body>
+</html>

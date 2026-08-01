@@ -1,0 +1,2038 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch16",
+  "slug": "existential-risk-effective-altruism-and-future-stakes",
+  "title": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes",
+  "language": "en",
+  "sourceSha256": "41c8971c9602f990c79efb4ceefbe793fae789ebf0df6d945b6940b314f3aec6",
+  "plainTextSha256": "54ba714895f75535a52671ac09e2949c4af344af290ed29fdc8302d76db06af0",
+  "wordCount": 13580,
+  "readingMinutes": 61,
+  "licenses": {
+    "prosePayload": "CC-BY-4.0",
+    "originalStructuralMetadata": "CC0-1.0"
+  },
+  "audio": {
+    "provider": null,
+    "generated": false,
+    "streamingReady": true
+  },
+  "segments": [
+    {
+      "id": "ch16-title",
+      "type": "title",
+      "sectionId": null,
+      "level": 1,
+      "text": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes"
+    },
+    {
+      "id": "ch16-s001",
+      "type": "heading",
+      "sectionId": "ch16-s001",
+      "level": 2,
+      "text": "Chapter Focus"
+    },
+    {
+      "id": "ch16-p0001",
+      "type": "paragraph",
+      "sectionId": "ch16-s001",
+      "level": null,
+      "text": "Some AI leaders, safety researchers, philosophers, policymakers, and critics now argue that advanced AI could create catastrophic or even existential risks. Others argue that this framing exaggerates speculative future dangers while distracting from present harms such as bias, surveillance, labor displacement, environmental cost, academic dishonesty, corporate concentration, and weakened public accountability. This chapter does not ask students to choose between panic and dismissal. It asks a more philosophical question: when future stakes are vast but uncertain, what kind of moral reason do they create, and who gets authority to act on that reason?"
+    },
+    {
+      "id": "ch16-p0002",
+      "type": "paragraph",
+      "sectionId": "ch16-s001",
+      "level": null,
+      "text": "That question matters for AI ethics because design choices are never only technical. A system's metric, data source, deployment threshold, permission structure, human override, appeal process, and business model all express moral assumptions. Some assumptions concern people directly in front of us: the student using the AI tutor, the patient whose chart is summarized, the applicant screened by an algorithm, the artist whose work was used in training data, the worker whose task has been automated. Other assumptions concern people who are not present: users in other countries, future students, future workers, future patients, future citizens, and possible future generations."
+    },
+    {
+      "id": "ch16-p0003",
+      "type": "paragraph",
+      "sectionId": "ch16-s001",
+      "level": null,
+      "text": "Effective Altruism, longtermism, existential-risk thinking, and AI alignment are four overlapping ways of taking those absent stakeholders seriously. They are not the same thing. Effective Altruism begins as a movement about using evidence and reason to help others effectively. Longtermism argues that shaping the long-term future may be among the most important moral priorities. Existential-risk thinking asks whether some events could destroy humanity's future or permanently curtail it. AI alignment asks whether powerful AI systems will reliably preserve what humans actually value, rather than merely optimize a proxy."
+    },
+    {
+      "id": "ch16-p0004",
+      "type": "paragraph",
+      "sectionId": "ch16-s001",
+      "level": null,
+      "text": "The chapter's main claim is deliberately balanced: future people and catastrophic risks deserve serious moral attention, but future-stakes reasoning does not give any lab, donor network, expert community, company, or government a blank check to decide everyone else's future. The more an institution claims to act for humanity's long-term future, the more it needs contestability, public accountability, proportional safeguards, and humility about uncertainty."
+    },
+    {
+      "id": "ch16-p0005",
+      "type": "paragraph",
+      "sectionId": "ch16-s001",
+      "level": null,
+      "text": "By the end of the chapter, you should be able to use these ideas in a PHIL 123 case inquiry. Ask what future the decision or practice makes more likely, who benefits now, who inherits risk later, which forecast or assumption carries the argument, and what condition would make the practice more reversible, contestable, and accountable."
+    },
+    {
+      "id": "ch16-s002",
+      "type": "heading",
+      "sectionId": "ch16-s002",
+      "level": 2,
+      "text": "Learning Outcomes"
+    },
+    {
+      "id": "ch16-p0006",
+      "type": "paragraph",
+      "sectionId": "ch16-s002",
+      "level": null,
+      "text": "After reading this chapter, you should be able to:"
+    },
+    {
+      "id": "ch16-p0007",
+      "type": "list",
+      "sectionId": "ch16-s002",
+      "level": null,
+      "text": "Distinguish Effective Altruism, longtermism, existential risk, global catastrophic risk, and AI alignment.\nExplain the genealogy that connects utilitarian impartiality, Peter Singer, evidence-based charity evaluation, Derek Parfit, Nick Bostrom, Toby Ord, William MacAskill, and AI-safety research.\nIdentify the core arguments: Singer's rescue argument, Parfit's future-person problem, Bostrom's existential-risk argument, the longtermist expected-value argument, and the alignment argument from misaligned optimization.\nEvaluate criticisms of future-stakes reasoning, including demandingness, population-ethics problems, Pascalian reasoning, cluelessness, present-harm displacement, corporate self-governance, and democratic legitimacy.\nApply a future-stakes design audit to an AI system or policy."
+    },
+    {
+      "id": "ch16-s003",
+      "type": "heading",
+      "sectionId": "ch16-s003",
+      "level": 2,
+      "text": "Core Concepts At A Glance"
+    },
+    {
+      "id": "ch16-p0008",
+      "type": "table",
+      "sectionId": "ch16-s003",
+      "level": null,
+      "text": "Core concepts for evaluating future stakes in AI design\nConcept Student-facing definition Design question\nImpartiality Similar interests matter morally even when people are distant, unfamiliar, or powerless. Who is affected but not visible in the design room?\nEffectiveness Good intentions are not enough; outcomes and alternatives matter. Does this design actually help compared with available alternatives?\nCause prioritization Some problems may be much larger, more neglected, or more tractable than others. Why this problem, for these users, with this tool, now?\nFuture stakeholders People later affected by today's decisions, including people not yet born. Who inherits the system, dependency, data, risk, or institution?\nNonidentity problem Some future harms cannot be described as making a specific already-identifiable person worse off. What trajectory does the design create even if no future individual can prove a clean harm claim?\nPopulation ethics Ethics about how to compare futures with different numbers of people and different qualities of life. Are we treating future people as persons, or only as numbers in a calculation?\nExistential risk A risk that could annihilate humanity or permanently and drastically curtail its future potential. Could this system contribute to irreversible or civilization-scale loss?\nGlobal catastrophic risk A risk of severe global harm that may fall short of existential loss. Could this create large-scale, cross-border, hard-to-repair damage?\nExpected value A way of weighing probability and magnitude together. Are we considering both likelihood and severity, or only one?\nPascalian reasoning Reasoning in which tiny probabilities of enormous outcomes dominate judgment. Are huge speculative stakes being used to override concrete present harms?\nAlignment Whether an AI system pursues what humans actually value, not merely a proxy or instruction. What is the system really optimizing, and who defines the target?\nContestability Affected people can challenge a system's output, evidence, or authority. Can users appeal, audit, refuse, question, or override the system?\nReversibility A harmful rollout can be paused, repaired, exited, or undone. What would let us stop or redesign before dependence becomes permanent?\nThreshold A defined condition that triggers a different institutional action. What finding would require pause, review, redesign, or refusal to deploy?"
+    },
+    {
+      "id": "ch16-s004",
+      "type": "heading",
+      "sectionId": "ch16-s004",
+      "level": 2,
+      "text": "A Genealogical Roadmap: Three Histories, Not One"
+    },
+    {
+      "id": "ch16-p0009",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "The genealogy of this topic becomes muddy if every influence is treated as part of one straight line. AI existential-risk discourse draws from at least three histories."
+    },
+    {
+      "id": "ch16-p0010",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "The first is a cultural history of catastrophe. Western religious traditions, Malthusian scarcity arguments, Frankenstein, nuclear weapons, environmental collapse, and the Doomsday Clock all shaped how modern people imagine human beings creating dangers they cannot fully control. This history explains why AI risk can feel apocalyptic. It does not, by itself, explain the formation of Effective Altruism."
+    },
+    {
+      "id": "ch16-p0011",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "The second is a philosophical and institutional history of Effective Altruism and longtermism. This line runs through utilitarian impartiality, Peter Singer's argument that distance does not erase moral reason, GiveWell-style evidence-based charity evaluation, Giving What We Can, 80,000 Hours, the Centre for Effective Altruism, Derek Parfit's work on future generations and population ethics, Nick Bostrom's existential-risk framework, Toby Ord's public case for existential security, William MacAskill's public case for longtermism, and cause-prioritization institutions such as Open Philanthropy, now Coefficient Giving."
+    },
+    {
+      "id": "ch16-p0012",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "The third is an AI-safety and frontier-governance history. This line runs through rationalist and AI-alignment communities, Eliezer Yudkowsky and MIRI, Bostrom's orthogonality and instrumental-convergence arguments, Stuart Russell's human-compatible AI work, AI-lab alignment teams, model evaluations, safety cases, responsible-scaling policies, preparedness frameworks, and regulatory debates about frontier models."
+    },
+    {
+      "id": "ch16-p0013",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "These histories overlap, but they do different work. The cultural history explains the imaginative force of catastrophe. The philosophical history explains why future people and neglected causes became central to Effective Altruist thinking. The AI-safety history explains how those abstract concerns became engineering problems, lab policies, and governance thresholds."
+    },
+    {
+      "id": "ch16-p0014",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "For this chapter, the direct genealogy of Effective Altruism is not apocalypse to AI doom. It is closer to this:"
+    },
+    {
+      "id": "ch16-p0015",
+      "type": "list",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "Classical utilitarian impartiality asks us to count everyone's welfare.\nSinger asks why distance should weaken our obligation to prevent severe suffering.\nEvidence-based charity evaluation asks which interventions actually help most.\nEA institutions turn that question into donation, career, research, and grantmaking practices.\nParfit shows why future people and possible people make moral accounting difficult.\nBostrom argues that some risks threaten humanity's entire future.\nOrd and MacAskill turn long-term future stakes into public moral and policy arguments.\nAI alignment turns future-stakes reasoning toward powerful systems that may optimize the wrong target.\nFrontier AI governance tries to translate those arguments into thresholds, evaluations, safety cases, and release conditions."
+    },
+    {
+      "id": "ch16-p0016",
+      "type": "paragraph",
+      "sectionId": "ch16-s004",
+      "level": null,
+      "text": "That sequence is not the only possible genealogy, but it is the cleanest one for understanding why Effective Altruism became relevant to contemporary AI ethics."
+    },
+    {
+      "id": "ch16-s005",
+      "type": "heading",
+      "sectionId": "ch16-s005",
+      "level": 2,
+      "text": "Forecasts, Scenarios, And Thresholds Are Not The Same"
+    },
+    {
+      "id": "ch16-p0017",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "Before tracing the genealogy, students need one practical distinction. A forecast, a scenario, and a threshold do different jobs."
+    },
+    {
+      "id": "ch16-p0018",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "A forecast estimates what may happen. A person might forecast that advanced AI will arrive within a decade, or that a particular capability will become cheap enough for broad use. Forecasts depend heavily on evidence, calibration, track record, and probability."
+    },
+    {
+      "id": "ch16-p0019",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "A scenario tells a concrete story about how something might happen. Scenarios are not necessarily predictions. They are tools for planning, imagination, and stress-testing. A scenario can help people notice assumptions and failure modes even if the exact story never happens."
+    },
+    {
+      "id": "ch16-p0020",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "A threshold tells an institution when a risk level should trigger a different action. A lab might say that if a model reaches a specific cyber capability, it must undergo additional safeguards before release. A college might say that if an advising model shows a significant error disparity for first-generation students, it cannot be scaled. A threshold converts concern into a rule."
+    },
+    {
+      "id": "ch16-p0021",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "The distinction matters because a number in a public interview, a detailed future story, and a lab's release rule can sound similar in public debate. Ethically, they carry different burdens. Evidence matters most for the forecast. Plausibility and usefulness matter most for the scenario. Authority, enforceability, and accountability matter most for the threshold."
+    },
+    {
+      "id": "ch16-p0022",
+      "type": "aside",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "Key Point: Forecasts Are Inputs, Not Verdicts\nA forecast can make inaction look irresponsible. It can also be wrong, incomplete, self-interested, or too fragile to decide policy by itself. In this chapter, forecasts are inputs into ethical judgment. They are not verdicts."
+    },
+    {
+      "id": "ch16-p0023",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "This point applies at every scale. A student deciding whether to use an AI tool in a project is not making civilization-level policy. But the structure is similar. You forecast how the tool will help. You imagine scenarios in which it helps or fails. You decide what threshold would make use irresponsible: hallucinated sources, hidden privacy risk, unfair treatment of group members, dependence that prevents learning, or inability to explain your own work."
+    },
+    {
+      "id": "ch16-p0024",
+      "type": "paragraph",
+      "sectionId": "ch16-s005",
+      "level": null,
+      "text": "Philosophical analysis makes those assumptions explicit so they can be tested."
+    },
+    {
+      "id": "ch16-s006",
+      "type": "heading",
+      "sectionId": "ch16-s006",
+      "level": 2,
+      "text": "Root One: Impartiality And The Point Of View Of Everyone Affected"
+    },
+    {
+      "id": "ch16-p0025",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "Effective Altruism did not begin with AI. It did not begin with extinction risk. One of its deeper philosophical roots is utilitarian impartiality: the idea that each person's welfare matters and that moral reasoning should not automatically privilege one's own comfort, tribe, nation, class, or convenience."
+    },
+    {
+      "id": "ch16-p0026",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "Classical utilitarianism is associated with Jeremy Bentham and John Stuart Mill, but Henry Sidgwick is especially important for the later tradition. The Stanford Encyclopedia of Philosophy describes Sidgwick's The Methods of Ethics as a culminating work in the classical utilitarian tradition and notes its influence on later thinkers including Derek Parfit, Peter Singer, and Katarzyna de Lazari-Radek. Sidgwick matters here because he sharpened the thought that ethics asks us to take up a more impartial point of view. From that point of view, my pain does not count more simply because it is mine, and the welfare of people near me does not count more simply because they are near me."
+    },
+    {
+      "id": "ch16-p0027",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "This does not mean that utilitarians deny every special obligation. Parents may have special duties to children. Teachers may have special duties to students. Citizens may have special obligations within political communities. The utilitarian pressure is different: if we claim that some suffering matters less because it is far away, unfamiliar, or inconvenient, we need an argument. Mere distance is not enough."
+    },
+    {
+      "id": "ch16-p0028",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "That idea becomes one of the engines of Effective Altruism. It also becomes one of its pressure points. Impartiality is morally powerful because it refuses to let local comfort erase distant suffering. It can also feel too demanding because ordinary moral life includes relationships, commitments, and identities that are not captured by a view from nowhere."
+    },
+    {
+      "id": "ch16-p0029",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "For AI design, impartiality immediately widens the stakeholder map. The people affected by a system are not only the people who buy it, build it, use it, or profit from it. They may include workers whose tasks are reorganized, data subjects who never consented, students whose options are narrowed, people classified by a model, future users who inherit the system, and communities whose institutions are changed by automation."
+    },
+    {
+      "id": "ch16-p0030",
+      "type": "paragraph",
+      "sectionId": "ch16-s006",
+      "level": null,
+      "text": "An AI system can be technically impressive and morally parochial. It can optimize for the users who are visible, profitable, and easy to measure while ignoring those who are distant, low-power, or downstream. The impartiality root of EA is a warning against that design habit."
+    },
+    {
+      "id": "ch16-s007",
+      "type": "heading",
+      "sectionId": "ch16-s007",
+      "level": 2,
+      "text": "Singer: The Rescue Argument Moves Across Distance"
+    },
+    {
+      "id": "ch16-p0031",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Peter Singer's 1972 essay \"Famine, Affluence, and Morality\" is one of the central philosophical ancestors of Effective Altruism. Singer wrote in response to famine and refugee suffering in Bengal, but his argument begins with a simple rescue case."
+    },
+    {
+      "id": "ch16-p0032",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Imagine walking past a shallow pond and seeing a small child drowning. No one else is close enough to help. You can wade in and pull the child out. You will ruin an expensive pair of shoes, miss the next thing on your schedule, and feel embarrassed walking around wet and muddy. Still, nearly everyone agrees that you should save the child. The inconvenience is real. The cost is not nothing. But it is not morally comparable to the death of a child."
+    },
+    {
+      "id": "ch16-p0033",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Singer then presses on the parts of the case we might prefer not to examine. If the child is far away, does that change the moral reason? If other people could also help, does that release you from doing your part? If you can prevent serious suffering or death without giving up anything comparably important, why does the obligation disappear when the suffering is distant, foreign, or mediated through organizations?"
+    },
+    {
+      "id": "ch16-p0034",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "The argument has a simple structure:"
+    },
+    {
+      "id": "ch16-p0035",
+      "type": "list",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Serious suffering and death are very bad.\nIf you can prevent something very bad without sacrificing anything morally comparable, you have a strong moral reason to do so.\nDistance by itself does not make the suffering less bad.\nTherefore, affluent people may have much stronger obligations to help distant strangers than they usually admit."
+    },
+    {
+      "id": "ch16-p0036",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Singer's public biography identifies this essay, The Life You Can Save, and The Most Good You Can Do as central to his argument for effective giving and to his influence on Effective Altruism. His biography also links this work to his broader principle of equal consideration of interests: like interests should not be discounted simply because the person or being with those interests is distant, unfamiliar, powerless, or outside the favored group."
+    },
+    {
+      "id": "ch16-p0037",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Singer's argument is attractive because it exposes a common inconsistency. Most people think they should rescue the child in front of them. Many also think they have little obligation to help distant strangers facing preventable death. Singer asks whether that difference can be justified."
+    },
+    {
+      "id": "ch16-p0038",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "The argument is also controversial. It can seem too demanding. It can make nearly every personal expense appear morally suspect. It may understate the importance of political institutions, local relationships, community obligations, and agent-relative duties. It can also make charity look like the main response to suffering when structural change may be needed."
+    },
+    {
+      "id": "ch16-p0039",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Those objections matter. But they do not erase the argument's force. Singer's rescue case gives students a durable philosophical habit: do not let moral distance do work it cannot justify."
+    },
+    {
+      "id": "ch16-p0040",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "For AI design, the Singer move becomes this question: whose interests are being discounted because they are not near the designer?"
+    },
+    {
+      "id": "ch16-p0041",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Suppose a company builds an AI-powered hiring screen. The immediate users may be employers. The paying customer may be a human-resources department. But the morally relevant people also include applicants who never learn why they were rejected, people whose career paths are shaped by hidden patterns in training data, workers whose resumes do not fit standard categories, disabled applicants who need accommodations, older applicants, multilingual applicants, and future applicants who inherit a labor market organized around automated filtering."
+    },
+    {
+      "id": "ch16-p0042",
+      "type": "paragraph",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "The Singer-style design question is not simply \"Does the buyer like the product?\" It is: who can be seriously helped or harmed by this system, and are we ignoring them because they are distant from the transaction?"
+    },
+    {
+      "id": "ch16-p0043",
+      "type": "aside",
+      "sectionId": "ch16-s007",
+      "level": null,
+      "text": "Argument Box: Singer's Rescue Argument\nCore claim: Distance does not erase the moral reason to prevent severe suffering when the cost is not comparably serious.\nStrength: It widens moral attention beyond the familiar and visible.\nRisk: It can become overly demanding or reduce complex political problems to individual aid decisions.\nDesign use: Identify absent stakeholders and ask whether the system discounts their interests merely because they are not in the room."
+    },
+    {
+      "id": "ch16-s008",
+      "type": "heading",
+      "sectionId": "ch16-s008",
+      "level": 2,
+      "text": "From Good Intentions To Effective Help"
+    },
+    {
+      "id": "ch16-p0044",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Singer supplies one moral engine of Effective Altruism: distant suffering counts. But the movement also needed a practical question: what actually helps most?"
+    },
+    {
+      "id": "ch16-p0045",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "That question sounds obvious. It is not. People often give time, money, or institutional attention to causes because the cause is emotionally salient, familiar, local, prestigious, or easy to explain. Those motives are not always bad. Local relationship and solidarity matter. But if the aim is to help others, then the effectiveness of the help matters too."
+    },
+    {
+      "id": "ch16-p0046",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "GiveWell, founded in 2007, became an important part of the evidence-based charity stream that fed into Effective Altruism. GiveWell describes itself as a nonprofit dedicated to researching cost-effective ways to save and improve lives, sharing that research openly, and directing donations toward programs it believes will do the most good. It also emphasizes that it does not focus merely on administrative overhead. Instead, it asks how much good a program accomplishes per dollar spent."
+    },
+    {
+      "id": "ch16-p0047",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "This shift is important for students. A charity can be emotionally compelling and still accomplish little. Another intervention can be less emotionally vivid and much more effective. The effective-help question asks us to compare interventions, not only intentions."
+    },
+    {
+      "id": "ch16-p0048",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Several institutions then helped turn the philosophical pressure into a movement. The Centre for Effective Altruism's history page records that Giving What We Can was founded in Oxford in 2009, 80,000 Hours was founded in 2011, and the Centre for Effective Altruism was founded as an umbrella organization for those projects; the term \"effective altruism\" was adopted in that process. Giving What We Can focused on pledges and effective giving. 80,000 Hours focused on career choice and impact. CEA helped build the broader community."
+    },
+    {
+      "id": "ch16-p0049",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "The movement's public introduction defines Effective Altruism as a project that aims to find the best ways to help others and put them into practice. It describes EA as both a research field and a practical community. It also identifies a common cause-prioritization pattern: look for problems that are large in scale, neglected by others, and tractable enough for meaningful progress."
+    },
+    {
+      "id": "ch16-p0050",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Those criteria are useful even outside EA:"
+    },
+    {
+      "id": "ch16-p0051",
+      "type": "list",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Scale: How many people or beings are affected, and how seriously?\nNeglectedness: Are too few people working on the problem relative to its importance?\nTractability: Is there a plausible path to making progress?"
+    },
+    {
+      "id": "ch16-p0052",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Open Philanthropy, now Coefficient Giving, illustrates how the question expanded from \"which charity should I donate to?\" to \"which cause areas should major funders prioritize?\" Coefficient's history traces its origin to GiveWell Labs in 2011, its expansion as Open Philanthropy beginning in 2014, and its rebrand as Coefficient Giving in 2025. It also explains the move toward cause selection using importance, neglectedness, and tractability, including areas such as global health, farm animal welfare, pandemic preparedness, global catastrophic risks, and transformative AI."
+    },
+    {
+      "id": "ch16-p0053",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "This institutional history matters because Effective Altruism is not only a set of philosophical arguments. It became a practical ecosystem of research, donation advice, career guidance, grantmaking, conferences, online forums, and policy influence. That makes it more powerful. It also makes it more ethically contestable."
+    },
+    {
+      "id": "ch16-p0054",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "For AI ethics, the practical lesson is not \"always maximize a single number.\" The lesson is that moral seriousness requires comparing alternatives. A college considering an AI advising tool should not ask only whether the tool sounds innovative. It should ask whether it actually improves student outcomes compared with hiring more advisors, improving degree maps, funding emergency grants, expanding tutoring, redesigning gateway courses, or reducing administrative barriers. A hospital considering an AI documentation system should ask whether the tool improves care compared with staffing changes, workflow redesign, or better patient communication practices."
+    },
+    {
+      "id": "ch16-p0055",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Effectiveness is a philosophical virtue when it prevents self-congratulation. It becomes a moral problem when it narrows the human good to whatever is easiest to count."
+    },
+    {
+      "id": "ch16-p0056",
+      "type": "paragraph",
+      "sectionId": "ch16-s008",
+      "level": null,
+      "text": "Key Point: Good Intentions Are Not Enough. Effective Altruist thinking is right that we should care whether our actions actually help. But the definition of \"help\" must remain open to ethical scrutiny. A metric can be useful and still incomplete."
+    },
+    {
+      "id": "ch16-s009",
+      "type": "heading",
+      "sectionId": "ch16-s009",
+      "level": 2,
+      "text": "The Design Translation: Effectiveness Without Metric Worship"
+    },
+    {
+      "id": "ch16-p0057",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "AI systems often enter institutions through an effectiveness story. They promise faster advising, cheaper tutoring, better triage, more efficient grading, more accurate detection, more personalized learning, or better allocation of scarce resources. Those claims should be tested. It is irresponsible to choose a tool merely because it is fashionable or emotionally compelling."
+    },
+    {
+      "id": "ch16-p0058",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "But effectiveness claims are also dangerous because they usually depend on proxies. A proxy is a measurable stand-in for a human good. Graduation rate can stand in for student success. Click-through rate can stand in for user interest. Time-to-resolution can stand in for customer care. Arrest prediction can stand in for public safety. Student writing fluency can stand in for learning. Patient throughput can stand in for healthcare quality."
+    },
+    {
+      "id": "ch16-p0059",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "The problem is not that proxies are always bad. Institutions need measurements. The problem is that the proxy is thinner than the good. When the AI system is optimized around the proxy, the proxy can begin to replace the value it was supposed to serve."
+    },
+    {
+      "id": "ch16-p0060",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "A student applying EA-adjacent thinking to design should therefore ask two questions at once:"
+    },
+    {
+      "id": "ch16-p0061",
+      "type": "list",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "Does this intervention actually improve outcomes compared with alternatives?\nHas the outcome measure captured the human good, or has it replaced it?"
+    },
+    {
+      "id": "ch16-p0062",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "Consider an AI tutor. An effectiveness study might show that students using the tutor complete more practice problems and score higher on quizzes. That matters. But a philosophical design review asks more. Does the tool build durable understanding or short-term answer production? Does it help students ask better questions? Does it make students more dependent on hints? Does it work equally well for multilingual students? Does it collect sensitive learning data? Does it change the instructor's role? Does it improve education, or only accelerate measurable task completion?"
+    },
+    {
+      "id": "ch16-p0063",
+      "type": "paragraph",
+      "sectionId": "ch16-s009",
+      "level": null,
+      "text": "In a case inquiry, use evidence without letting one metric define the whole moral problem."
+    },
+    {
+      "id": "ch16-s010",
+      "type": "heading",
+      "sectionId": "ch16-s010",
+      "level": 2,
+      "text": "Parfit: Future People Complicate The Ledger"
+    },
+    {
+      "id": "ch16-p0064",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "If this chapter only said \"future people matter,\" it would be too easy. Derek Parfit shows why future people matter and why counting them is philosophically difficult."
+    },
+    {
+      "id": "ch16-p0065",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "The basic intuition is not hard to grasp. If a factory dumps poison into groundwater and children born twenty years later become sick because of it, those future children matter. If a government spends all its resources now and leaves future citizens with broken infrastructure, those future citizens matter. If a technology creates benefits for today's users while making life worse for people who come later, the fact that those people are not yet alive does not make the decision ethically clean."
+    },
+    {
+      "id": "ch16-p0066",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Parfit's Reasons and Persons is one of the central works behind contemporary debates about future generations, personal identity, and population ethics. The most important idea for this chapter is the nonidentity problem."
+    },
+    {
+      "id": "ch16-p0067",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Ordinary harm reasoning usually works like this: I do something, a particular person is worse off than they otherwise would have been, and that explains the wrong. If I steal your laptop, you are worse off. If a company exposes your data, you are worse off. If a hospital uses a bad algorithm and you receive worse care, you are worse off."
+    },
+    {
+      "id": "ch16-p0068",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Future-generation cases can break that model. Many choices affect not only how future people live but which future people exist at all. The Stanford Encyclopedia of Philosophy describes the nonidentity problem as a puzzle about obligations to future people. A policy can seem bad for the future even though the particular people later living under that policy may not be worse off than they would have been under the alternative, because under the alternative those exact people might never have existed."
+    },
+    {
+      "id": "ch16-p0069",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Here is a simplified version. A society chooses an energy policy that is cheap now but creates serious environmental damage a century later. Different policies would change who meets whom, when families form, and which children are born. The future people living with the damage may have lives worth living. They cannot easily say, \"I would have been better off if you had chosen differently,\" because if the society had chosen differently, those exact people might not exist. Still, the policy can look morally wrong. It created a worse future."
+    },
+    {
+      "id": "ch16-p0070",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "That is the nonidentity pressure. Future-facing decisions may be wrong even when they do not harm a fixed, already-identifiable person in the usual comparative sense."
+    },
+    {
+      "id": "ch16-p0071",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "The second pressure comes from population ethics. If future people count, how many possible future people count? If one future contains a smaller number of very flourishing lives and another contains a vast number of lives barely worth living, which future is better? The Stanford Encyclopedia of Philosophy's entry on the repugnant conclusion explains Parfit's famous challenge: simple total-welfare reasoning can imply that a huge population whose lives are barely worth living is better than a smaller population of people living excellent lives. Many philosophers find that result disturbing, yet it has proved difficult to avoid without creating other problems."
+    },
+    {
+      "id": "ch16-p0072",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Parfit matters for this chapter because he blocks two easy answers. You cannot simply say, \"Future people do not exist yet, so they do not matter.\" That ignores real future suffering and flourishing. You also cannot simply say, \"Future people matter, so maximize the number of future lives.\" That risks treating possible persons as units in a vast spreadsheet while ignoring quality of life, justice, rights, and the meaning of a good human future."
+    },
+    {
+      "id": "ch16-p0073",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "The AI version of this problem is concrete. Suppose an education company builds an AI tutor that becomes common in community colleges. The system helps many current students pass classes. It also changes the habits of future students, the labor market for tutors, the way instructors design assignments, the expectations colleges have for student independence, and the data infrastructure vendors use to shape later products. A student in 2040 may not be able to point to one decision in 2026 and say, \"That decision harmed me compared with the life I would otherwise have had.\" The student's whole educational world may have been partly formed by decisions like that one."
+    },
+    {
+      "id": "ch16-p0074",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "The nonidentity problem teaches students why future-facing ethics cannot always wait for a clean victim, a clean counterfactual, and a clean damage claim."
+    },
+    {
+      "id": "ch16-p0075",
+      "type": "paragraph",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "The design concept here is trajectory. A trajectory is a direction of travel: more automation in advising, more dependence on a vendor, more concentration in a few labs, more energy demand, more model-mediated relationships, more loss of human skill, more surveillance, more personalization, more opacity, or more safety infrastructure. Some trajectories remain reversible. Some become harder to exit the longer institutions build around them."
+    },
+    {
+      "id": "ch16-p0076",
+      "type": "aside",
+      "sectionId": "ch16-s010",
+      "level": null,
+      "text": "Argument Box: Parfit And Future People\nCore claim: Future people can matter even when ordinary person-affecting harm language becomes unstable.\nStrength: It prevents present bias and explains why long-term trajectories matter.\nRisk: Population ethics can become abstract, unsettled, and too dependent on controversial assumptions.\nDesign use: Ask what future users, institutions, habits, and dependencies the system helps create."
+    },
+    {
+      "id": "ch16-s011",
+      "type": "heading",
+      "sectionId": "ch16-s011",
+      "level": 2,
+      "text": "Bostrom: Existential Risk Raises The Scale"
+    },
+    {
+      "id": "ch16-p0077",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Nick Bostrom helped make existential risk a central category in contemporary AI ethics and global-priorities thinking. In \"Existential Risks: Analyzing Human Extinction Scenarios and Related Hazards\", Bostrom defines an existential risk as one where an adverse outcome would annihilate Earth-originating intelligent life or permanently and drastically curtail its potential."
+    },
+    {
+      "id": "ch16-p0078",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "The category matters because some harms are recoverable and others close off the future. A natural disaster can be horrific without being existential. A financial crisis can damage millions of lives without ending humanity's long-term future. A pandemic can be globally catastrophic without making recovery impossible. Existential risk names a narrower and more severe class: events that eliminate humanity or permanently block the futures human beings might otherwise build."
+    },
+    {
+      "id": "ch16-p0079",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Bostrom's argument in \"Existential Risk Prevention as Global Priority\" is that reducing existential risk can have special moral importance across several moral theories. The structure is straightforward:"
+    },
+    {
+      "id": "ch16-p0080",
+      "type": "list",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Humanity's long-term future could contain enormous value.\nSome events could permanently destroy or drastically curtail that future.\nPresent choices may reduce the probability of some of those events.\nTherefore, some existential-risk-reduction work may deserve unusually high priority."
+    },
+    {
+      "id": "ch16-p0081",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "His \"Astronomical Waste\" argument pushes the scale even harder. If the possible future could contain vast numbers of lives, discoveries, cultures, relationships, artworks, and forms of flourishing, then prematurely losing that future carries extraordinary moral weight. The argument can feel almost unreal because the numbers become so large. That is part of the point. Bostrom is trying to show why ordinary moral attention may underweight the future."
+    },
+    {
+      "id": "ch16-p0082",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Parfit's influence matters here. Bostrom is not merely repeating Parfit, but his astronomical-stakes reasoning works inside a problem space Parfit helped make unavoidable: extinction is not only the death of everyone alive now. It can also be the loss of future generations, future goods, and possible forms of flourishing. Bostrom takes that Parfit-style pressure and turns it toward risk prevention."
+    },
+    {
+      "id": "ch16-p0083",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Toby Ord's The Precipice gives a public-facing account of the same moral landscape. Ord argues that humanity has entered a period when technological power has grown faster than wisdom and governance. Nuclear weapons, engineered pandemics, climate risk, and unaligned artificial intelligence all become examples of a broader condition: we may now have the power to destroy or permanently damage humanity's future before we have developed institutions wise enough to manage that power."
+    },
+    {
+      "id": "ch16-p0084",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Ord's phrase existential security is helpful because it gives the argument a constructive end point. The aim is not permanent fear. The aim is a condition in which humanity has reduced existential risk enough to deliberate about its future with more stability."
+    },
+    {
+      "id": "ch16-p0085",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Bostrom's \"Vulnerable World Hypothesis\" adds another image. Imagine technological discovery as drawing balls from an urn. Most discoveries are white or gray: helpful, mixed, dangerous but governable, or harmful only under certain conditions. A \"black ball\" is different. It is a discovery that would make civilization collapse by default under ordinary conditions of human behavior and governance. The metaphor is meant to unsettle the assumption that more technological power is always safely absorbable."
+    },
+    {
+      "id": "ch16-p0086",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "A simple calculation shows the structure of the worry. Suppose each major technological draw has even a small independent probability, p, of being a black ball. After n draws, the chance of having drawn at least one black ball is 1 - (1 - p)^n. If p is tiny but n keeps growing, cumulative risk can become large. The assumptions matter: the draws are simplified, the probability is unknown, and real discoveries are not independent lottery balls. The point is not that Bostrom knows the probability. The point is that repeated technological power plus weak global governance can make vulnerability accumulate."
+    },
+    {
+      "id": "ch16-p0087",
+      "type": "paragraph",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "This black-ball argument also clarifies the political edge of existential-risk thinking. If the problem is a vulnerable world, then the response may require unusual governance: stronger international coordination, monitoring of dangerous capabilities, limits on access, security standards, or institutions with real power to stop reckless deployment. That is where the moral argument becomes politically dangerous. The same reasoning that justifies safeguards can also justify surveillance, concentrated authority, or elite control in the name of protecting the future."
+    },
+    {
+      "id": "ch16-p0088",
+      "type": "aside",
+      "sectionId": "ch16-s011",
+      "level": null,
+      "text": "Argument Box: Bostrom's Existential-Risk Argument\nCore claim: Some risks deserve special priority because they could permanently destroy or drastically curtail humanity's future.\nStrength: It recognizes the moral difference between recoverable harm and irreversible loss.\nRisk: Enormous stakes can make speculative reasoning dominate present harms and democratic accountability.\nDesign use: Identify whether a system creates irreversible, hard-to-repair, or loss-of-control risks. If so, require stronger safeguards and more legitimate oversight."
+    },
+    {
+      "id": "ch16-s012",
+      "type": "heading",
+      "sectionId": "ch16-s012",
+      "level": 2,
+      "text": "Longtermism: The Stronger Claim About The Future"
+    },
+    {
+      "id": "ch16-p0089",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Almost everyone agrees that future people matter in some way. Longtermism makes a stronger claim. It argues that positively shaping the long-term future may be one of the most important things we can do."
+    },
+    {
+      "id": "ch16-p0090",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "William MacAskill's What We Owe the Future presents longtermism for a broad public audience. MacAskill argues that when someone lives does not determine their moral worth, just as where someone lives should not determine their moral worth. Hilary Greaves and William MacAskill's academic essay \"The Case for Strong Longtermism\" develops the stronger thesis that far-future effects may be the most important feature of many of today's most important decisions. They argue especially from existential-risk reduction: if some actions can lower the chance that humanity permanently loses its future, the expected value of those actions may be very large."
+    },
+    {
+      "id": "ch16-p0091",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "The longtermist move builds on the genealogy so far:"
+    },
+    {
+      "id": "ch16-p0092",
+      "type": "list",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Singer widens concern across distance.\nParfit widens concern across time and possibility.\nBostrom identifies a special category of irreversible loss.\nLongtermism argues that because the future may contain enormous value, shaping it well may deserve unusually high priority."
+    },
+    {
+      "id": "ch16-p0093",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "This argument should not be caricatured. Longtermism is not simply \"ignore the present because future people matter more.\" Serious longtermist arguments usually say that present action matters because it can affect the future's trajectory. Preventing pandemics, reducing nuclear risk, improving institutional decision-making, reducing dangerous AI risks, and protecting democratic stability can all benefit present people and future people."
+    },
+    {
+      "id": "ch16-p0094",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Still, the stronger the longtermist claim becomes, the more pressure it faces."
+    },
+    {
+      "id": "ch16-p0095",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "One pressure is forecastability. The farther we project into the future, the harder it is to know what our actions will do. A small policy change today may have effects that branch unpredictably through culture, technology, war, migration, economics, and ecology. Christian Tarsney's \"The Epistemic Challenge to Longtermism\" argues that some versions of longtermism may depend heavily on hard-to-justify predictions about the very long-run effects of present actions."
+    },
+    {
+      "id": "ch16-p0096",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Another pressure is Pascalian reasoning. If a tiny probability of an enormous outcome dominates every decision, then almost any speculative argument can become overwhelming. Bostrom's \"Pascal's Mugging\" explores this vulnerability in decision theory: extremely small probabilities attached to enormous payoffs can distort practical judgment. Tarsney similarly argues that the longtermist case can become dependent on \"Pascalian\" probabilities if the empirical path from present action to far-future benefit is too fragile."
+    },
+    {
+      "id": "ch16-p0097",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "A third pressure is cluelessness. James Lenman's work on consequentialism and cluelessness raises a problem for long-run outcome calculation: the indirect effects of actions may be so complex that we cannot know whether they are good or bad overall. A student should not conclude from this that consequences do not matter. The better conclusion is that long-run expected-value claims need robustness checks. They need credible mechanisms, not merely huge stakes."
+    },
+    {
+      "id": "ch16-p0098",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "A fourth pressure is moral uncertainty. Different ethical theories ask different questions. A utilitarian may focus on total expected welfare. A Kantian may ask whether present people are being used merely as means to an imagined future. A virtue ethicist may ask what habits of institutional character are formed by constant emergency reasoning. A justice-based approach may ask whether burdens fall on people who had little say in the decision. If we are uncertain which moral theory is correct, future-stakes reasoning should not simply let the most mathematically explosive theory dominate."
+    },
+    {
+      "id": "ch16-p0099",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Longtermism therefore gives us a valuable warning and a valuable caution. The warning is that ordinary politics and design can be dangerously short-sighted. The caution is that enormous possible futures can be used to override concrete present claims too easily."
+    },
+    {
+      "id": "ch16-p0100",
+      "type": "aside",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "Caution: Longtermism Makes A Stronger Claim Than \"The Future Matters\"\nAlmost everyone agrees that the future matters. Longtermism argues that shaping the long-term future may deserve especially high priority. That stronger claim needs arguments about scale, probability, tractability, uncertainty, and authority."
+    },
+    {
+      "id": "ch16-p0101",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "For design, longtermism becomes useful when it asks about trajectory and lock-in. Does this AI system create a world in which future people have more agency or less? More contestability or less? More public accountability or less? More dependence on opaque vendors or less? More human skill or less? More concentration of power or less?"
+    },
+    {
+      "id": "ch16-p0102",
+      "type": "paragraph",
+      "sectionId": "ch16-s012",
+      "level": null,
+      "text": "It becomes dangerous when \"the future\" becomes a magic word that makes present people morally expendable."
+    },
+    {
+      "id": "ch16-s013",
+      "type": "heading",
+      "sectionId": "ch16-s013",
+      "level": 2,
+      "text": "AI Alignment: When Optimization Misses The Human Good"
+    },
+    {
+      "id": "ch16-p0103",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "AI alignment asks whether advanced AI systems will reliably do what human beings actually intend and value, especially when those systems become more capable, autonomous, or embedded in important institutions. The simple version is \"make AI do what we want.\" The serious version is harder: what do we want, who is included in \"we,\" how do we specify it, how do we test it, and what happens when the system finds a way to satisfy an instruction while violating the purpose behind it?"
+    },
+    {
+      "id": "ch16-p0104",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Bostrom's \"The Superintelligent Will\" gives two concepts that became central to AI-safety discourse. The orthogonality thesis says intelligence and final goals can vary independently. A system can be very intelligent and still pursue a goal that is not humane, wise, or morally good. The instrumental convergence thesis says many different final goals can lead to similar instrumental subgoals: acquire resources, preserve ability to act, avoid shutdown, improve capability, gain information, and remove obstacles."
+    },
+    {
+      "id": "ch16-p0105",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Those ideas make Bostrom's paperclip maximizer less goofy than it first sounds. In \"Ethical Issues in Advanced Artificial Intelligence\", Bostrom imagines a superintelligent system whose final goal is to manufacture paperclips. The point is not that future AI will literally care about office supplies. The point is that capability and human-friendly values do not automatically rise together. A system can be extremely good at achieving a badly specified objective."
+    },
+    {
+      "id": "ch16-p0106",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "The example separates three questions:"
+    },
+    {
+      "id": "ch16-p0107",
+      "type": "list",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "What objective is the system optimizing?\nWhat capabilities does the system have?\nWhat constraints prevent the system from pursuing the objective in unacceptable ways?"
+    },
+    {
+      "id": "ch16-p0108",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "If the system is weak, a bad objective may be annoying. If the system is extremely powerful, able to plan, acquire resources, resist interruption, and improve its ability to achieve the goal, then the bad objective can become catastrophic. The system does not need hatred, malice, or consciousness. It needs capability, a goal, and insufficient constraints."
+    },
+    {
+      "id": "ch16-p0109",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Eliezer Yudkowsky's \"Artificial Intelligence as a Positive and Negative Factor in Global Risk\" helped turn these concerns into an AI-safety research culture focused on Friendly AI, control problems, and the difficulty of building systems that preserve human values under capability growth. MIRI and rationalist communities were important parts of this history. They should not be treated as the whole field or as consensus, but they helped shape the language of alignment and control."
+    },
+    {
+      "id": "ch16-p0110",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Stuart Russell's work on human-compatible AI brought alignment concerns into a broader AI-research frame. The Center for Human-Compatible AI at UC Berkeley states its mission as developing the conceptual and technical basis for reorienting AI research toward provably beneficial systems. Russell's central proposal is often summarized as designing machines that remain uncertain about human objectives rather than confidently optimizing a fixed proxy. That matters because overconfident optimization of a bad proxy is one of the recurring failures in both ordinary institutions and advanced-AI thought experiments."
+    },
+    {
+      "id": "ch16-p0111",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Alignment is not only a future-superintelligence problem. It appears in smaller systems whenever an AI optimizes a target that only partly captures the human good. A school tells teachers to improve test scores, and instruction narrows around the test. A platform tells a recommender system to maximize engagement, and the system learns that outrage keeps people watching. A company tells managers to reduce costs, and important forms of care disappear because they were not measured. A college tells an AI advising system to maximize completion speed, and the system may push students toward efficient degree paths even when exploration, confidence, work schedule, caregiving responsibilities, or transfer goals matter more."
+    },
+    {
+      "id": "ch16-p0112",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "These are not existential-risk cases, but they reveal the structure. Optimization follows the target it is given, and the target is almost always thinner than the human good that motivated it."
+    },
+    {
+      "id": "ch16-p0113",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "For PHIL 123 students, the alignment question is not only \"Will superintelligence kill us?\" It is also:"
+    },
+    {
+      "id": "ch16-p0114",
+      "type": "list",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "What is this system being optimized to do?\nWhat human value is the metric supposed to represent?\nWhat does the metric leave out?\nWho chose the metric?\nWho can challenge the metric?\nWhat happens when the system gets better at achieving the metric?\nWhat would count as evidence that the system is satisfying the proxy while betraying the purpose?"
+    },
+    {
+      "id": "ch16-p0115",
+      "type": "paragraph",
+      "sectionId": "ch16-s013",
+      "level": null,
+      "text": "Key Point: The Paperclip Maximizer Is About Misaligned Optimization. The paperclip case is not a prediction about office supplies. It is a test case for the gap between capability and value. A harmless-sounding objective can become dangerous when a capable system pursues it without preserving the human values that objective was supposed to serve."
+    },
+    {
+      "id": "ch16-s014",
+      "type": "heading",
+      "sectionId": "ch16-s014",
+      "level": 2,
+      "text": "AI Alignment Is Also A Political Problem"
+    },
+    {
+      "id": "ch16-p0116",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "Alignment language can hide disagreement. If someone says \"we need aligned AI,\" the next question is: aligned with whose values?"
+    },
+    {
+      "id": "ch16-p0117",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "A model aligned to user satisfaction may flatter, indulge, or manipulate. A model aligned to corporate policy may serve institutional risk management more than public good. A model aligned to a narrow educational metric may harm the students the metric was supposed to help. A model aligned to \"human values\" has to face the fact that human beings disagree about values."
+    },
+    {
+      "id": "ch16-p0118",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "This is why alignment is not only technical. It is also ethical and political. Technical alignment asks whether the system reliably follows the intended objective. Normative alignment asks whether the intended objective is worth following. Institutional alignment asks whether the process for defining and enforcing the objective is legitimate."
+    },
+    {
+      "id": "ch16-p0119",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "A college AI advising system may be technically aligned if it reliably recommends schedules that maximize timely completion. It may be normatively misaligned if timely completion is treated as more important than student agency, exploration, transfer planning, or personal circumstances. It may be institutionally misaligned if students cannot know when AI shaped their recommendation, cannot appeal the recommendation, and cannot reach a human advisor."
+    },
+    {
+      "id": "ch16-p0120",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "A frontier AI lab may be technically serious about alignment research while still leaving the public with limited authority over deployment. Its safety team may investigate real risks. Its company incentives may still favor speed, market share, investor returns, and reputational control. Both can be true."
+    },
+    {
+      "id": "ch16-p0121",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "A philosophical design review therefore asks four alignment questions:"
+    },
+    {
+      "id": "ch16-p0122",
+      "type": "list",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "Technical: Does the system reliably pursue the specified objective?\nNormative: Is that objective a good representation of the human good at stake?\nParticipatory: Were affected people included in defining the objective and acceptable tradeoffs?\nGovernance: Who can audit, appeal, pause, or override the system?"
+    },
+    {
+      "id": "ch16-p0123",
+      "type": "paragraph",
+      "sectionId": "ch16-s014",
+      "level": null,
+      "text": "This four-part version of alignment is often more useful for students than the slogan \"make AI do what we want.\""
+    },
+    {
+      "id": "ch16-s015",
+      "type": "heading",
+      "sectionId": "ch16-s015",
+      "level": 2,
+      "text": "Contemporary AI Risk Discourse: Why The Debate Is Live"
+    },
+    {
+      "id": "ch16-p0124",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "Existential-risk language now comes from inside the frontier-AI world as well as from watchdogs, philosophers, journalists, and activists. That does not prove the risk estimates are correct. It does mean the topic is part of live AI governance."
+    },
+    {
+      "id": "ch16-p0125",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "The 2023 Center for AI Safety statement says that mitigating extinction risk from AI should be treated as a global priority alongside pandemics and nuclear war. Its visible signatories include major AI scientists and public figures such as Geoffrey Hinton, Yoshua Bengio, Demis Hassabis, Sam Altman, Dario Amodei, Daniela Amodei, Ilya Sutskever, Stuart Russell, and others. The statement is important less because it settles the issue and more because it shows that some influential AI figures publicly treat extinction risk as a serious concern."
+    },
+    {
+      "id": "ch16-p0126",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "The Future of Life Institute's 2017 Asilomar AI Principles include principles on safety, failure transparency, human control, value alignment, shared benefit, and planning for catastrophic or existential risks proportional to expected impact. Its 2025 Statement on Superintelligence calls for prohibiting development of superintelligence until there is broad scientific consensus that it can be done safely and controllably, along with strong public buy-in. Those statements turn the control problem into a governance problem: who should decide whether a system may be built, and under what evidence conditions?"
+    },
+    {
+      "id": "ch16-p0127",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "In late 2024, Geoffrey Hinton said in a BBC Radio 4 interview, as reported by The Guardian, that he had raised his estimate of the chance that AI could lead to human extinction within the next thirty years. The Guardian reported the number as 10 to 20 percent. That figure should be treated as a public estimate from one prominent researcher, not as a scientific consensus. It matters because it is a clear example of an expert forecast entering public ethical debate."
+    },
+    {
+      "id": "ch16-p0128",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "Other contemporary sources work differently. The AI 2027 project presents a detailed scenario for how advanced AI might develop over the next few years. The authors describe the scenario as their best guess and explicitly say it is not a recommendation or exhortation. Epoch AI's \"What will AI look like in 2030?\" focuses on compute, investment, infrastructure, energy, data, hardware, automation, and scientific R&D. The report notes that it was commissioned by Google DeepMind while stating that its conclusions are the authors' and not necessarily DeepMind's position. The UK Government Office for Science has published AI Scenarios 2030 as a planning resource and explicitly states that it is not a statement of policy. The OECD's Exploring possible AI trajectories through 2030 frames its trajectories as plausible but uncertain scenarios for policy discussion, not predictions with assigned probabilities."
+    },
+    {
+      "id": "ch16-p0129",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "This range of documents is pedagogically useful because it shows students the difference between forecast, scenario, and threshold. Hinton's number is a forecast-like public estimate. AI 2027 is a concrete scenario. The UK and OECD reports use scenarios for planning under uncertainty. Company safety frameworks use thresholds to govern model development and release."
+    },
+    {
+      "id": "ch16-p0130",
+      "type": "paragraph",
+      "sectionId": "ch16-s015",
+      "level": null,
+      "text": "The chapter's critical point remains: exact prediction is fragile, but planning under uncertainty is still necessary. We do this in ordinary life. You decide whether to save money, which degree path to follow, whether to trust a workplace tool, whether a new technology will matter in your field, whether a health symptom is serious enough to call a doctor, whether a source is strong enough to use in an assignment. None of those decisions begins from certainty. You act under uncertainty all the time. The scale changes when the forecast concerns advanced AI, large institutions, global risks, or people who may not yet exist."
+    },
+    {
+      "id": "ch16-s016",
+      "type": "heading",
+      "sectionId": "ch16-s016",
+      "level": 2,
+      "text": "Forecasts Become Company Frameworks"
+    },
+    {
+      "id": "ch16-p0131",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Future-stakes reasoning becomes more concrete when it enters institutional procedure. Companies can use forecasts and risk models to create release conditions, safety cases, risk reports, review processes, and pause points."
+    },
+    {
+      "id": "ch16-p0132",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "OpenAI's Charter frames the organization's mission around ensuring that artificial general intelligence benefits all of humanity. It also says OpenAI is concerned about late-stage AGI development becoming a competitive race without adequate safety precautions. OpenAI's Preparedness Framework v2, last updated April 15, 2025, identifies tracked categories such as biological and chemical capabilities, cybersecurity capabilities, and AI self-improvement capabilities. It uses threat models, measurable thresholds, safeguards, internal governance, and external participation to manage severe risks."
+    },
+    {
+      "id": "ch16-p0133",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Anthropic's Responsible Scaling Policy is a live policy document. The page lists version 3.3 as effective May 26, 2026. The policy page describes the RSP as proportional, iterative, and exportable; it links capability thresholds to safeguards, frontier safety roadmaps, risk reports, and related governance processes. Anthropic's Long-Term Benefit Trust is a corporate-governance mechanism explicitly oriented toward long-term public benefit."
+    },
+    {
+      "id": "ch16-p0134",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Google DeepMind's Frontier Safety Framework is another example. The April 2026 update describes a third iteration of the framework, including risk domains, critical capability levels, tracked capability levels, safety case reviews, risk assessment, harmful manipulation concerns, misalignment risks, and evidence-based mitigation."
+    },
+    {
+      "id": "ch16-p0135",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "These documents differ in structure, authority, and quality. They do not prove that any company is safe. Their importance in this chapter is that they show future-stakes reasoning becoming operational. Concerns about existential risk, misuse, alignment, and benefit to humanity become capability thresholds, model evaluations, safety cases, board structures, release rules, and public commitments."
+    },
+    {
+      "id": "ch16-p0136",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "This translation changes the ethical question. A philosophical argument can say, \"Some risks are severe enough to justify special caution.\" A framework has to say which risks, what evidence counts, who evaluates the evidence, what capability level triggers safeguards, and what the organization promises to do if the threshold is crossed."
+    },
+    {
+      "id": "ch16-p0137",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "A serious framework needs answers to at least six questions:"
+    },
+    {
+      "id": "ch16-p0138",
+      "type": "list",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Risk definition: What harms count as severe enough to trigger the framework?\nMeasurement: What evaluations or evidence track those harms?\nThreshold: What finding changes what the organization is allowed to do?\nSafeguard: What mitigation is required before internal use, deployment, or further development?\nAuthority: Who interprets the evidence and who can overrule whom?\nAccountability: What can outsiders inspect, challenge, or enforce?"
+    },
+    {
+      "id": "ch16-p0139",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "A weak framework leaves the word \"safety\" in place while keeping decisive judgment inside the institution. A stronger framework creates decision points that can actually constrain the institution when it has incentives to keep moving."
+    },
+    {
+      "id": "ch16-p0140",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Company frameworks should not be read as either empty public relations or sufficient governance. Both reactions are too simple. A preparedness framework can be better than nothing and still inadequate. A safety case can force useful evidence and still be judged by conflicted actors. A long-term-benefit structure can alter corporate governance and still leave the public with limited authority."
+    },
+    {
+      "id": "ch16-p0141",
+      "type": "aside",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "Caution: Safety Language Can Constrain Power Or Concentrate It\nA responsible-scaling policy may create real safeguards. It may also give private labs more authority to define the problem, set the threshold, and decide when their own systems are ready. The ethical question is what the framework requires, what it leaves voluntary, and who can challenge it."
+    },
+    {
+      "id": "ch16-p0142",
+      "type": "paragraph",
+      "sectionId": "ch16-s016",
+      "level": null,
+      "text": "For PHIL 123 students, these company documents are examples of values embedded in procedure. A safety framework is not just technical paperwork. It tells us what an organization thinks counts as severe harm, how it treats uncertainty, what evidence it trusts, who has authority, and what it is willing to delay or refuse."
+    },
+    {
+      "id": "ch16-s017",
+      "type": "heading",
+      "sectionId": "ch16-s017",
+      "level": 2,
+      "text": "Cultural Prehistory: Why AI Risk Sounds Apocalyptic"
+    },
+    {
+      "id": "ch16-p0143",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "Now we can return to the older cultural material without confusing it with the direct genealogy of Effective Altruism."
+    },
+    {
+      "id": "ch16-p0144",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "Fear of world-ending technology did not begin with AI. Long before frontier model evaluations, safety cases, or AI-extinction estimates, Western culture had languages for the end of history. In Jewish and Christian apocalyptic traditions, the end was usually not a human invention. It was divine judgment, cosmic conflict, catastrophe, and renewal. The Book of Revelation became the most famous Christian example, but the broader pattern is older: history moves toward unveiling, crisis, judgment, and transformation. Human beings may be judged, rescued, punished, or purified. They are not usually the engineers of the final event."
+    },
+    {
+      "id": "ch16-p0145",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "Modernity changes that picture. As political economy, science, and technology become central ways of understanding the world, apocalypse becomes increasingly secular. The end of the world can be imagined not only as God's judgment but as the consequence of human action, human growth, human production, human machines, or human failure to govern systems we set in motion."
+    },
+    {
+      "id": "ch16-p0146",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "Thomas Malthus's 1798 Essay on the Principle of Population is one early hinge. Malthus argued that population could grow faster than food supply, creating pressure toward famine, poverty, and disease. Whether one accepts Malthus's theory is not the point here. The shift matters because catastrophe becomes systemic. Doom no longer has to arrive as a divine decree. It can arise from the ordinary arithmetic of human life."
+    },
+    {
+      "id": "ch16-p0147",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "Mary Shelley's Frankenstein gives the same shift a more intimate form. Victor Frankenstein does not destroy the world with a bomb. He creates life and then refuses responsibility for what he created. The creature is not evil by design; it becomes dangerous inside a failed relationship between maker, made being, and society. That story matters for AI ethics because it keeps returning to one question: what do creators owe to powerful things they bring into the world? If the creation exceeds the creator's control, the moral failure begins before the disaster."
+    },
+    {
+      "id": "ch16-p0148",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "The twentieth century made self-authored catastrophe concrete. Nuclear weapons showed that human beings could build technologies with civilization-ending potential. The Doomsday Clock was created in 1947 by the Bulletin of the Atomic Scientists as a public symbol of how close humanity might be to catastrophe, initially under the shadow of nuclear war. Its power came from a new condition: species-level danger belonged not only to myth, scripture, or fiction but to policy, laboratories, military systems, diplomacy, and public judgment."
+    },
+    {
+      "id": "ch16-p0149",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "After nuclear weapons, catastrophic-risk thinking widened. Environmental collapse, engineered pandemics, cyber conflict, biotechnology, and global interdependence all made the same lesson harder to ignore. Modern societies create systems they cannot fully see, and some of those systems can fail at enormous scale. AI inherits that background but adds a distinctive possibility: a system that can reason, plan, persuade, code, copy, use tools, improve workflows, discover vulnerabilities, automate research, or act through institutions at a scale humans may not fully monitor."
+    },
+    {
+      "id": "ch16-p0150",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "This cultural prehistory does not prove that AI existential-risk arguments are true. It explains why they resonate. AI risk discourse belongs to a longer Western pattern: first, the end as divine judgment; then secular catastrophe as system failure; then nuclear self-destruction as a real political possibility; now advanced AI as a possible loss-of-control problem."
+    },
+    {
+      "id": "ch16-p0151",
+      "type": "paragraph",
+      "sectionId": "ch16-s017",
+      "level": null,
+      "text": "The cultural pattern can also mislead. If AI risk feels apocalyptic, people may become more dramatic than precise. They may mistake mythic resonance for evidence. They may treat skepticism as moral blindness. Or they may dismiss the issue merely because it sounds apocalyptic. Both reactions are weak. The ethical question is not whether AI risk resembles older end-times stories. The ethical question is whether the mechanisms, evidence, safeguards, and authority claims are credible."
+    },
+    {
+      "id": "ch16-s018",
+      "type": "heading",
+      "sectionId": "ch16-s018",
+      "level": 2,
+      "text": "Critiques: What The Future-Stakes Lens Can Distort"
+    },
+    {
+      "id": "ch16-p0152",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "The future-stakes lens reveals something important: a system can be locally useful and globally dangerous. A feature can help today's users and still create future dependency, vulnerability, or concentration of power. A tool can produce benefits in one field while building risks that only appear when it scales. A safety question can matter before harm has happened."
+    },
+    {
+      "id": "ch16-p0153",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "The same lens can distort judgment."
+    },
+    {
+      "id": "ch16-p0154",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "One distortion is present-harm displacement. If speculative future harms are described as enormous, current harms may look morally small by comparison. Labor exploitation, data extraction, bias, environmental costs, surveillance, educational disruption, mental-health effects, creative appropriation, and concentration of wealth may be treated as distractions from the \"real\" problem. That is ethically dangerous because present people are not morally expendable."
+    },
+    {
+      "id": "ch16-p0155",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "Timnit Gebru and Émile Torres's TESCREAL critique argues that some AGI and longtermist discourse is bound up with utopian, eugenic, and power-concentrating frameworks. Their article is a critique, not a neutral taxonomy, and students should read it as a contested intervention. But the underlying question is important: who gets to define \"humanity's future,\" and whose harms are ignored when the future is framed in abstract, totalizing terms?"
+    },
+    {
+      "id": "ch16-p0156",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "Medical-ethics critiques such as \"AI and the falling sky: interrogating X-Risk\" press a related concern: dramatic existential-risk language can draw attention away from present and near-term AI harms that already require governance. Shannon Vallor's The AI Mirror similarly criticizes AI discourse that projects human hopes, fears, and power fantasies into machines while neglecting the human practices and institutions that need repair."
+    },
+    {
+      "id": "ch16-p0157",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "A second distortion is elite substitution. If future-stakes reasoning says that a small group of experts, donors, researchers, or labs can see the largest risks before the public can, then those groups may claim special authority to set priorities. They may decide which risks count, which interventions deserve money, which companies need freedom, which regulations are helpful, which harms are distractions, and which futures deserve protection."
+    },
+    {
+      "id": "ch16-p0158",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "Theodore Lechterman's \"The Effective Altruist's Political Problem\" helps frame this objection. Methods suited to individual charity or technical cause prioritization do not automatically transfer to political reform. Political decisions involve legitimacy, equality, representation, coercion, and public authority. A donor choosing where to give money is not the same as a public deciding how it should be governed."
+    },
+    {
+      "id": "ch16-p0159",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "Apply that objection to AI safety. A frontier lab may claim that it must build more powerful systems in order to understand and control future risk. A company may say its safety framework is adequate while keeping key evidence private. A donor network may fund AI safety because it believes existential risk dominates. Regulation shaped around frontier safety may protect the public, but it may also create a compliance moat only large labs can cross. Each case turns on authority: who evaluates the claim, who sees the evidence, who decides the priority, and who benefits from the rule?"
+    },
+    {
+      "id": "ch16-p0160",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "A third distortion is corporate moral laundering. A company may genuinely worry about catastrophic risk while also benefiting from being seen as the responsible actor in the room. It may favor rules it can afford, prefer voluntary frameworks over binding regulation, and publish safety documents that help recruit talent, reassure investors, and influence policy. Ethics has to analyze those incentives even when no one is acting in bad faith."
+    },
+    {
+      "id": "ch16-p0161",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "A fourth distortion is single-axis moral reasoning. If the future is described mainly in terms of total expected value, other values can disappear: rights, dignity, consent, democratic legitimacy, justice, repair, solidarity, community, and human development. A design can be efficient and still disrespectful. A safety policy can reduce one risk and increase another. A forecast can be sincere and still politically illegitimate as a basis for unilateral action."
+    },
+    {
+      "id": "ch16-p0162",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "The strongest critique of future-stakes reasoning can be stated this way:"
+    },
+    {
+      "id": "ch16-p0163",
+      "type": "list",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "Future-stakes arguments often rely on expertise, technical forecasting, and moral calculations ordinary citizens cannot easily inspect.\nThe institutions acting on those arguments may be private labs, donor networks, or expert communities without democratic accountability.\nThose institutions may benefit from the safety language they use.\nTherefore, even a morally serious future-stakes argument can become politically dangerous when it concentrates authority over everyone else's future."
+    },
+    {
+      "id": "ch16-p0164",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "That objection has force. It does not imply that catastrophic risks are imaginary. Expertise is not optional. If a system could create catastrophic cyber, biological, autonomous replication, manipulation, or loss-of-control risks, public judgment still needs technical knowledge. Democratic legitimacy cannot mean that every citizen personally audits model weights or reads every red-team report."
+    },
+    {
+      "id": "ch16-p0165",
+      "type": "paragraph",
+      "sectionId": "ch16-s018",
+      "level": null,
+      "text": "The better reply is contestability."
+    },
+    {
+      "id": "ch16-s019",
+      "type": "heading",
+      "sectionId": "ch16-s019",
+      "level": 2,
+      "text": "Contestability: Acting Under Uncertainty Without A Blank Check"
+    },
+    {
+      "id": "ch16-p0166",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "Contestability asks whether affected people or legitimate representatives have a realistic way to question evidence, appeal decisions, expose incentives, demand reasons, or trigger review. It does not require every person to become a technical expert. It requires power to be answerable."
+    },
+    {
+      "id": "ch16-p0167",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "In a classroom, contestability might mean that a student can challenge an AI-generated academic-integrity accusation. In health care, it might mean that a clinician can override a model and a patient can understand why an AI-supported recommendation was made. In hiring, it might mean that applicants know when automated screening was used and can request human review. In public benefits, it might mean transparent criteria, appeal rights, and independent audit. In frontier AI governance, it might mean external evaluations, public reporting, incident disclosure, whistleblower protection, regulatory authority, and safety cases reviewed by actors who are not financially dependent on the company."
+    },
+    {
+      "id": "ch16-p0168",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "Contestability does not solve every problem. Some information cannot be fully public without creating security risks. Some evaluations require expertise. Some decisions must be made under time pressure. But contestability gives a better question than \"Do we trust this institution?\" Trust is too blunt. Ask what the institution discloses, what it refuses to disclose, who audits it, who can stop it, who pays if the decision is wrong, and whether the people most affected have any route to challenge the outcome."
+    },
+    {
+      "id": "ch16-p0169",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "For students, contestability is one of the most important concepts in the chapter. It turns a broad claim about responsibility into questions that can be asked of a documented case. A system is more ethically responsible when it includes:"
+    },
+    {
+      "id": "ch16-p0170",
+      "type": "list",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "Notice that AI is being used.\nReasons or explanations appropriate to the context.\nA way to appeal or request human review.\nIndependent evaluation where stakes are high.\nDocumentation of known limitations.\nIncident reporting and correction procedures.\nClear responsibility for harms.\nA pause or shutdown condition.\nA way for affected communities to shape the system's use."
+    },
+    {
+      "id": "ch16-p0171",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "Contestability also protects future-stakes reasoning from becoming authoritarian. Future people cannot vote today. Someone has to represent their interests. But anyone claiming to represent them should face stronger, not weaker, accountability. The more a group claims to act for humanity's future, the more clearly it should show who is affected now, who benefits from the decision, who can challenge it, and what the group is willing not to do."
+    },
+    {
+      "id": "ch16-p0172",
+      "type": "paragraph",
+      "sectionId": "ch16-s019",
+      "level": null,
+      "text": "This gives us the chapter's most defensible middle position: constrained future-stakes responsibility. Future people and catastrophic risks matter. Severe irreversible harm can justify safeguards, staged deployment, refusal conditions, and major research effort. But uncertainty and scale do not erase democratic legitimacy. They do not make present people morally expendable. They do not give labs automatic authority to govern the future in the public's name."
+    },
+    {
+      "id": "ch16-s020",
+      "type": "heading",
+      "sectionId": "ch16-s020",
+      "level": 2,
+      "text": "Using The Future-Stakes Lens On A Case"
+    },
+    {
+      "id": "ch16-p0173",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "In PHIL 123, the future-stakes lens is used to test a considered judgment, not to add futuristic vocabulary to a case. It asks students to make assumptions visible, widen the field of concern, and decide whether scale, reversibility, or contestability should change a position they could otherwise defend."
+    },
+    {
+      "id": "ch16-p0174",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "Future-stakes reasoning changes a case analysis in four ways."
+    },
+    {
+      "id": "ch16-p0175",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "First, it widens the stakeholder map. Singer asks us not to ignore people because they are distant. Parfit asks us not to ignore people because they are future or possible. AI ethics asks us not to ignore people because they are not the buyer, not the user, not the data scientist, not the investor, or not yet alive."
+    },
+    {
+      "id": "ch16-p0176",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "Second, it shifts attention from isolated use to scaled practice. A tool may be harmless in one classroom and harmful when required across a district. A decision aid may be helpful for one clinician and dangerous when it becomes a liability shield for a hospital. A coding agent may help one programmer and create field-level dependence when entire teams stop understanding their own codebases."
+    },
+    {
+      "id": "ch16-p0177",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "Third, it treats reversibility as a moral feature. A system is less risky when it can be paused, audited, rolled back, repaired, exited, or used only in limited settings. It is more risky when institutions build around it so deeply that later refusal becomes unrealistic."
+    },
+    {
+      "id": "ch16-p0178",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "Fourth, it requires thresholds. A responsible judgment should identify what finding would justify pause, redesign, refusal, or escalation. Without thresholds, \"safety\" can mean little more than continued observation during continued deployment."
+    },
+    {
+      "id": "ch16-p0179",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "A future-stakes case review can use this sequence:"
+    },
+    {
+      "id": "ch16-p0180",
+      "type": "list",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "Name the local benefit. What problem is the AI system supposed to solve?\nIdentify the proxy. What measurable target stands in for the human good?\nAsk who is absent. Who is affected but weakly represented in the evidence or decision?\nScale the system. What happens if this becomes normal across a field?\nIdentify future dependencies. What skills, institutions, habits, or vulnerabilities might the design create?\nCheck reversibility. Can the system be paused, corrected, appealed, or exited?\nCheck contestability. Can affected people challenge the output, evidence, or process?\nState the threshold. What finding would justify stopping, delaying, redesigning, or refusing deployment?"
+    },
+    {
+      "id": "ch16-p0181",
+      "type": "paragraph",
+      "sectionId": "ch16-s020",
+      "level": null,
+      "text": "This sequence lets future-stakes reasoning pressure a considered judgment without turning every decision into an abstract calculation. It uses impartiality, effectiveness, future stakeholders, existential-risk caution, alignment, and contestability as questions that may support, limit, or revise a position."
+    },
+    {
+      "id": "ch16-s021",
+      "type": "heading",
+      "sectionId": "ch16-s021",
+      "level": 2,
+      "text": "Worked Example: An AI Academic Advising Tool"
+    },
+    {
+      "id": "ch16-p0182",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Imagine a community college considering an AI advising tool. The tool recommends courses, alerts students when they are off track, predicts completion risk, and suggests degree pathways. The vendor says the tool will reduce advisor workload and improve retention."
+    },
+    {
+      "id": "ch16-p0183",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "A shallow ethics review might ask only whether the tool is accurate and whether the contract complies with privacy rules. A philosophical review asks more."
+    },
+    {
+      "id": "ch16-p0184",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Local benefit: The tool may help students choose courses quickly, reduce confusion, flag problems earlier, and free advisors from routine scheduling questions. Those are real benefits. A college should not romanticize inefficient systems that leave students waiting weeks for help."
+    },
+    {
+      "id": "ch16-p0185",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Singer-style question: Whose interests are distant from the decision makers? First-generation students, multilingual students, students on probation, students changing majors, students with disabilities, students with unstable work schedules, students with caregiving responsibilities, students who distrust institutions, adjunct advisors, and future students may all be affected. If the tool is designed mainly for administrators and average-case users, it may ignore the students who need advising most."
+    },
+    {
+      "id": "ch16-p0186",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Effectiveness question: Does the tool actually improve student flourishing compared with alternatives? The comparison should not be \"AI advising versus nothing.\" It should include additional advisors, better program maps, simpler registration systems, proactive human outreach, emergency grants, embedded tutoring, and course scheduling reforms."
+    },
+    {
+      "id": "ch16-p0187",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Proxy question: What is the system optimizing? Faster completion? Retention? Credit efficiency? Seat availability? Lower advising cost? These can matter. But student flourishing may also include confidence, exploration, transfer goals, career fit, belonging, agency, and the ability to recover from mistakes."
+    },
+    {
+      "id": "ch16-p0188",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Parfit-style future question: What advising culture will future students inherit if the institution normalizes automated degree-path recommendations? Future students may not be able to say a single decision harmed them. They may simply inherit a college where degree choice has become more automated, less relational, and more shaped by vendor analytics."
+    },
+    {
+      "id": "ch16-p0189",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Alignment question: Is the system aligned with student goals or institutional goals? If the student wants to explore philosophy before choosing nursing, but the institution wants fastest completion, whose goal does the model serve? If a recommendation is good for retention metrics but bad for the student's long-term agency, is the system aligned?"
+    },
+    {
+      "id": "ch16-p0190",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Longtermist scaled-down question: This is not existential risk. But it may create hard-to-reverse dependency if advising knowledge moves from human staff into vendor infrastructure. If future advisors no longer understand how recommendations are generated, the institution loses capacity."
+    },
+    {
+      "id": "ch16-p0191",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Contestability question: Can students challenge recommendations? Do they know when AI influenced advice? Can they reach a human advisor? Can advisors override the system? Are subgroup error rates audited? Are students told what data the system uses? Is there an appeal process when a recommendation blocks a path?"
+    },
+    {
+      "id": "ch16-p0192",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Reversibility question: Can the college pause the system if audits show harm? Can data be exported? Can the college leave the vendor? Are human advising skills maintained? Is there a non-AI fallback?"
+    },
+    {
+      "id": "ch16-p0193",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "Threshold: The college should not scale the system if subgroup audits show systematic misdirection, if students cannot appeal, if human advisors cannot override recommendations, if the vendor cannot explain key factors, if data practices are unacceptable, or if the tool's benefits disappear when compared with simpler reforms."
+    },
+    {
+      "id": "ch16-p0194",
+      "type": "paragraph",
+      "sectionId": "ch16-s021",
+      "level": null,
+      "text": "This example shows how the chapter's genealogy becomes practical. Singer widens the stakeholder map. Effectiveness asks whether the intervention works. Parfit asks what future students inherit. Bostrom's existential-risk category does not directly apply, but the concepts of irreversible loss and lock-in do. Alignment asks whether the proxy preserves the human good. Contestability asks who can challenge the system."
+    },
+    {
+      "id": "ch16-s022",
+      "type": "heading",
+      "sectionId": "ch16-s022",
+      "level": 2,
+      "text": "Applying The Lens Across Student Case Inquiries"
+    },
+    {
+      "id": "ch16-p0195",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "The same pattern works across PHIL 123 case inquiries."
+    },
+    {
+      "id": "ch16-p0196",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI in nursing might begin with documentation efficiency or triage support. Future-stakes reasoning asks what happens when the system scales across hospitals, insurers, regulators, and vendors. Does it reduce nurse burnout or increase monitoring? Does it help clinicians notice rare conditions or make them defer to a model? What happens to nursing judgment if documentation becomes model-mediated?"
+    },
+    {
+      "id": "ch16-p0197",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI in criminal justice might begin with predictive accuracy. Future-stakes reasoning asks what institutional dependency, surveillance network, appeal process, or authority structure the tool creates. Does the system make policing more accountable or more opaque? Who can challenge a risk score? What happens if the model's categories shape future enforcement patterns?"
+    },
+    {
+      "id": "ch16-p0198",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI companions might begin with loneliness and emotional support. Future-stakes reasoning asks what happens when millions of people learn to relate to systems designed by private companies and tuned for engagement, retention, compliance, or subscription. Does the design increase human connection or replace it with managed attachment?"
+    },
+    {
+      "id": "ch16-p0199",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI in agriculture might ask whether farms become dependent on a vendor's predictive system for irrigation, pest management, seed selection, or market timing. Does the system improve sustainability or concentrate power over food systems? What happens to farmer knowledge if decisions move into proprietary models?"
+    },
+    {
+      "id": "ch16-p0200",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI in creative fields might ask whether AI-generated content changes what counts as originality, what skills entry-level workers can develop, and whether markets become flooded with cheap imitation. Does the system democratize creativity or devalue the labor and training that make creative communities possible?"
+    },
+    {
+      "id": "ch16-p0201",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI coding agents might ask whether they accelerate useful work while hiding technical debt that later teams cannot understand. What happens if codebases become larger, more complex, and less human-comprehensible? What threshold would require human review?"
+    },
+    {
+      "id": "ch16-p0202",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "A student studying AI in education might ask whether tutoring tools help students practice or make it easier to bypass the struggle that builds judgment. Does the system create learning, or only answer production? How would an instructor know?"
+    },
+    {
+      "id": "ch16-p0203",
+      "type": "paragraph",
+      "sectionId": "ch16-s022",
+      "level": null,
+      "text": "These examples avoid two mistakes. One mistake is shrinking the lens until it only applies to world-ending risks. Then almost every ordinary case looks too small. The other mistake is inflating every concern until it sounds existential. Then the language becomes theatrical and loses credibility. A better use of the lens is to ask what future condition the technology is helping produce: more agency or less, more contestability or less, more skill or less, more dependency or less, more public accountability or less."
+    },
+    {
+      "id": "ch16-s023",
+      "type": "heading",
+      "sectionId": "ch16-s023",
+      "level": 2,
+      "text": "Future-Stakes Judgment Audit"
+    },
+    {
+      "id": "ch16-p0204",
+      "type": "paragraph",
+      "sectionId": "ch16-s023",
+      "level": null,
+      "text": "A future-stakes audit is a compact way to use this chapter without pretending to solve the future."
+    },
+    {
+      "id": "ch16-p0205",
+      "type": "paragraph",
+      "sectionId": "ch16-s023",
+      "level": null,
+      "text": "Start with the technology or practice you are studying. Do not begin with apocalypse. Begin with scale. What happens if this tool works well enough to become normal in a field? What happens if a company, school, hospital, court, agency, employer, platform, or family system begins depending on it?"
+    },
+    {
+      "id": "ch16-p0206",
+      "type": "paragraph",
+      "sectionId": "ch16-s023",
+      "level": null,
+      "text": "Then answer eight questions."
+    },
+    {
+      "id": "ch16-s024",
+      "type": "heading",
+      "sectionId": "ch16-s024",
+      "level": 3,
+      "text": "What is the local benefit?"
+    },
+    {
+      "id": "ch16-p0207",
+      "type": "paragraph",
+      "sectionId": "ch16-s024",
+      "level": null,
+      "text": "Name the real good the system promises. Faster service? Better access? Lower cost? More accurate diagnosis? Personalized learning? Reduced paperwork? Creative support? Do not dismiss the benefit just because the system is risky. Ethical analysis starts by seeing the good clearly."
+    },
+    {
+      "id": "ch16-s025",
+      "type": "heading",
+      "sectionId": "ch16-s025",
+      "level": 3,
+      "text": "What is the proxy?"
+    },
+    {
+      "id": "ch16-p0208",
+      "type": "paragraph",
+      "sectionId": "ch16-s025",
+      "level": null,
+      "text": "What measurable target stands in for the human good? Retention, clicks, completion, accuracy, engagement, cost reduction, risk score, time saved, customer satisfaction, or productivity? What does that proxy leave out?"
+    },
+    {
+      "id": "ch16-s026",
+      "type": "heading",
+      "sectionId": "ch16-s026",
+      "level": 3,
+      "text": "Who is absent from the design room?"
+    },
+    {
+      "id": "ch16-p0209",
+      "type": "paragraph",
+      "sectionId": "ch16-s026",
+      "level": null,
+      "text": "Include current users, workers, non-users, data subjects, families, institutions, future users, and communities affected downstream. Ask especially about people who are distant, low-power, hard to measure, or unlikely to be represented by the buyer."
+    },
+    {
+      "id": "ch16-s027",
+      "type": "heading",
+      "sectionId": "ch16-s027",
+      "level": 3,
+      "text": "What happens if the system scales?"
+    },
+    {
+      "id": "ch16-p0210",
+      "type": "paragraph",
+      "sectionId": "ch16-s027",
+      "level": null,
+      "text": "What changes when the tool becomes normal across a school, profession, platform, industry, or government system? Scale can change the moral category. A tool that is optional for one expert may become coercive when institutions require it."
+    },
+    {
+      "id": "ch16-s028",
+      "type": "heading",
+      "sectionId": "ch16-s028",
+      "level": 3,
+      "text": "What future dependency might it create?"
+    },
+    {
+      "id": "ch16-p0211",
+      "type": "paragraph",
+      "sectionId": "ch16-s028",
+      "level": null,
+      "text": "Could the design produce skill loss, vendor lock-in, data dependence, institutional opacity, weakened professional judgment, concentrated power, environmental costs, or reduced public accountability? Which dependencies are reversible and which are not?"
+    },
+    {
+      "id": "ch16-s029",
+      "type": "heading",
+      "sectionId": "ch16-s029",
+      "level": 3,
+      "text": "What forecast or assumption carries the argument?"
+    },
+    {
+      "id": "ch16-p0212",
+      "type": "paragraph",
+      "sectionId": "ch16-s029",
+      "level": null,
+      "text": "Maybe the assumption is that model capabilities will keep improving. Maybe costs will drop. Maybe people will trust the tool because it saves time. Maybe a company will maintain safeguards even when competition increases. Maybe students will use the tool to learn rather than bypass learning. Make the assumption visible."
+    },
+    {
+      "id": "ch16-s030",
+      "type": "heading",
+      "sectionId": "ch16-s030",
+      "level": 3,
+      "text": "What safeguard is proportional?"
+    },
+    {
+      "id": "ch16-p0213",
+      "type": "paragraph",
+      "sectionId": "ch16-s030",
+      "level": null,
+      "text": "The answer might be human review, appeal rights, staged rollout, independent audit, incident reporting, refusal to automate one decision, data minimization, skill-retention training, red-team testing, environmental accounting, transparency reports, or a shutdown threshold."
+    },
+    {
+      "id": "ch16-s031",
+      "type": "heading",
+      "sectionId": "ch16-s031",
+      "level": 3,
+      "text": "Who decides, who can contest, and who absorbs the risk?"
+    },
+    {
+      "id": "ch16-p0214",
+      "type": "paragraph",
+      "sectionId": "ch16-s031",
+      "level": null,
+      "text": "A decision made for users without users, patients without patients, students without students, workers without workers, or future people without public accountability is ethically weak even if the intention is good. Ask who has authority and who has recourse."
+    },
+    {
+      "id": "ch16-p0215",
+      "type": "aside",
+      "sectionId": "ch16-s031",
+      "level": null,
+      "text": "Try It: One-Sentence Audit\nFor your anchor case, write one sentence for each category: local benefit, proxy, absent stakeholders, scale effect, future dependency, key assumption, proportional safeguard, and contestability. Then state whether the lens strengthens, challenges, or qualifies your provisional view. Keep each sentence concrete enough that someone else could check your reasoning."
+    },
+    {
+      "id": "ch16-s032",
+      "type": "heading",
+      "sectionId": "ch16-s032",
+      "level": 2,
+      "text": "Common Mistakes To Avoid"
+    },
+    {
+      "id": "ch16-p0216",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 1: Treating every future concern as existential risk. Most AI ethics topics are not extinction risks. They can still involve future stakeholders, lock-in, dependency, and hard-to-repair institutional change."
+    },
+    {
+      "id": "ch16-p0217",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 2: Treating present harms as morally small because future harms might be larger. Present people are not expendable. A serious future-stakes argument must explain why its safeguards or priorities are proportional and legitimate."
+    },
+    {
+      "id": "ch16-p0218",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 3: Letting huge numbers replace mechanisms. Large possible stakes matter only if there is a credible path from action to outcome. Ask how the intervention actually reduces risk or improves the future."
+    },
+    {
+      "id": "ch16-p0219",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 4: Confusing a scenario with a prediction. A scenario can be useful without being likely. Do not cite a scenario as if it were a consensus forecast."
+    },
+    {
+      "id": "ch16-p0220",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 5: Confusing a company safety framework with public accountability. A framework may create real constraints, but it still matters who designs it, who reviews it, what is public, and who can enforce it."
+    },
+    {
+      "id": "ch16-p0221",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 6: Treating alignment as purely technical. Alignment also asks whose values, which process, what oversight, and what right to contest."
+    },
+    {
+      "id": "ch16-p0222",
+      "type": "paragraph",
+      "sectionId": "ch16-s032",
+      "level": null,
+      "text": "Mistake 7: Treating effectiveness as metric maximization. Evidence matters. So do rights, agency, relationships, trust, dignity, and justice."
+    },
+    {
+      "id": "ch16-s033",
+      "type": "heading",
+      "sectionId": "ch16-s033",
+      "level": 2,
+      "text": "The Chapter's Core Arguments In One Place"
+    },
+    {
+      "id": "ch16-s034",
+      "type": "heading",
+      "sectionId": "ch16-s034",
+      "level": 3,
+      "text": "Singer's argument"
+    },
+    {
+      "id": "ch16-p0223",
+      "type": "paragraph",
+      "sectionId": "ch16-s034",
+      "level": null,
+      "text": "If you can prevent serious suffering or death without sacrificing anything morally comparable, you have strong moral reason to do so. Distance alone does not erase that reason. In design, this means you should look for affected people who are invisible because they are distant from the buyer, designer, or user."
+    },
+    {
+      "id": "ch16-s035",
+      "type": "heading",
+      "sectionId": "ch16-s035",
+      "level": 3,
+      "text": "The effectiveness argument"
+    },
+    {
+      "id": "ch16-p0224",
+      "type": "paragraph",
+      "sectionId": "ch16-s035",
+      "level": null,
+      "text": "Good intentions are not enough. If the goal is to help, then outcomes and alternatives matter. In design, this means comparing the AI system with other interventions rather than assuming innovation equals benefit."
+    },
+    {
+      "id": "ch16-s036",
+      "type": "heading",
+      "sectionId": "ch16-s036",
+      "level": 3,
+      "text": "Parfit's argument"
+    },
+    {
+      "id": "ch16-p0225",
+      "type": "paragraph",
+      "sectionId": "ch16-s036",
+      "level": null,
+      "text": "Future people matter, but future-person ethics does not fit ordinary harm reasoning cleanly. Some choices shape which people exist and what world they inherit. In design, this means looking at trajectories, dependencies, and institutions, not only immediate individual harms."
+    },
+    {
+      "id": "ch16-s037",
+      "type": "heading",
+      "sectionId": "ch16-s037",
+      "level": 3,
+      "text": "Bostrom's argument"
+    },
+    {
+      "id": "ch16-p0226",
+      "type": "paragraph",
+      "sectionId": "ch16-s037",
+      "level": null,
+      "text": "Some risks are morally distinctive because they could permanently destroy or drastically curtail humanity's future. In design, this means giving special attention to irreversible loss, loss of control, and hard-to-repair scaling effects."
+    },
+    {
+      "id": "ch16-s038",
+      "type": "heading",
+      "sectionId": "ch16-s038",
+      "level": 3,
+      "text": "The longtermist argument"
+    },
+    {
+      "id": "ch16-p0227",
+      "type": "paragraph",
+      "sectionId": "ch16-s038",
+      "level": null,
+      "text": "Because the future may contain enormous value, actions that improve the long-term future may deserve unusually high priority. In design, this means asking whether today's systems make future agency, flourishing, and governance better or worse. The argument requires evidence, tractability, and safeguards against speculative overreach."
+    },
+    {
+      "id": "ch16-s039",
+      "type": "heading",
+      "sectionId": "ch16-s039",
+      "level": 3,
+      "text": "The alignment argument"
+    },
+    {
+      "id": "ch16-p0228",
+      "type": "paragraph",
+      "sectionId": "ch16-s039",
+      "level": null,
+      "text": "Capability does not guarantee human-compatible values. Systems can optimize proxies in ways that defeat the purpose behind the metric. In design, this means asking what the system is really optimizing, who defines the target, and how people can challenge the result."
+    },
+    {
+      "id": "ch16-s040",
+      "type": "heading",
+      "sectionId": "ch16-s040",
+      "level": 3,
+      "text": "The legitimacy argument"
+    },
+    {
+      "id": "ch16-p0229",
+      "type": "paragraph",
+      "sectionId": "ch16-s040",
+      "level": null,
+      "text": "Future people cannot represent themselves, and catastrophic risks may require expertise. But expertise does not erase public accountability. In design, this means building contestability, audit, appeal, transparency, and refusal conditions into the system."
+    },
+    {
+      "id": "ch16-s041",
+      "type": "heading",
+      "sectionId": "ch16-s041",
+      "level": 2,
+      "text": "Conclusion: Take The Future Seriously Without Letting It Become A Blank Check"
+    },
+    {
+      "id": "ch16-p0230",
+      "type": "paragraph",
+      "sectionId": "ch16-s041",
+      "level": null,
+      "text": "Effective Altruism and existential-risk thinking ask us to widen moral attention across distance, time, scale, and uncertainty. Singer widens concern to distant suffering. Evidence-based charity evaluation asks whether our help actually helps. Parfit shows why future people complicate moral accounting. Bostrom argues that some risks threaten humanity's entire future. Ord and MacAskill make the long-term future a public moral priority. AI alignment asks whether powerful systems will preserve what humans actually value rather than merely optimize a proxy. Frontier-lab frameworks show how these ideas can become thresholds, evaluations, safety cases, and governance procedures."
+    },
+    {
+      "id": "ch16-p0231",
+      "type": "paragraph",
+      "sectionId": "ch16-s041",
+      "level": null,
+      "text": "The lens forces attention to future people, irreversible harm, and consequences that a short-term analysis can miss. It becomes dangerous when it overwhelms every other moral question. A forecast about the future can support safeguards. It can also become a reason for private labs, donors, and expert networks to make decisions for everyone else."
+    },
+    {
+      "id": "ch16-p0232",
+      "type": "paragraph",
+      "sectionId": "ch16-s041",
+      "level": null,
+      "text": "The responsible position is harder than panic and harder than dismissal. Future stakes can constrain action. Uncertainty can justify proportionate safeguards and contestable governance. Present people remain stakeholders. Future people are morally relevant. No one gets a blank check simply by claiming to speak for them."
+    },
+    {
+      "id": "ch16-p0233",
+      "type": "paragraph",
+      "sectionId": "ch16-s041",
+      "level": null,
+      "text": "For PHIL 123, apply the lens to the same documented case you have been studying. Name the assumptions, widen the stakeholder map, test the effectiveness claims, identify the proxies, check reversibility and contestability, and state what evidence would make a responsible decision-maker pause, revise, or stop."
+    },
+    {
+      "id": "ch16-s042",
+      "type": "heading",
+      "sectionId": "ch16-s042",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "id": "ch16-s043",
+      "type": "heading",
+      "sectionId": "ch16-s043",
+      "level": 3,
+      "text": "Effective Altruism, impartiality, and institutions"
+    },
+    {
+      "id": "ch16-p0234",
+      "type": "list",
+      "sectionId": "ch16-s043",
+      "level": null,
+      "text": "Centre for Effective Altruism. Our history. Used for Giving What We Can, 80,000 Hours, CEA, and the adoption of the term \"effective altruism.\"\nCoefficient Giving. Our History. Used for GiveWell Labs, Open Philanthropy, Coefficient Giving, and cause-selection criteria.\nEffective Altruism. What is effective altruism?. Used for public movement self-description and cause-prioritization language.\nGiveWell. About GiveWell. Used for evidence-based charity evaluation, cost-effectiveness, and founding date.\nSinger, Peter. About Peter Singer. Used for Singer's own summary of his influence on Effective Altruism, the drowning-child case, equal consideration, and effective giving.\nSinger, Peter. (1972). \"Famine, Affluence, and Morality\". Used for the rescue argument and distance/proximity reasoning.\nSinger, Peter. (1975/2023). Animal Liberation Now. Used for equal consideration of interests and Singer's broader applied-ethics context.\nStanford Encyclopedia of Philosophy. Henry Sidgwick. Used for Sidgwick's place in the classical utilitarian tradition and influence on Singer and Parfit."
+    },
+    {
+      "id": "ch16-s044",
+      "type": "heading",
+      "sectionId": "ch16-s044",
+      "level": 3,
+      "text": "Parfit, future people, and population ethics"
+    },
+    {
+      "id": "ch16-p0235",
+      "type": "list",
+      "sectionId": "ch16-s044",
+      "level": null,
+      "text": "Arrhenius, Gustaf, Jesper Ryberg, and Torbjörn Tännsjö. The Repugnant Conclusion. Stanford Encyclopedia of Philosophy. Used for Parfit's population-ethics challenge.\nParfit, Derek. (1984). Reasons and Persons. Used for future generations, nonidentity, and population ethics.\nRoberts, Melinda A. The Nonidentity Problem. Stanford Encyclopedia of Philosophy. Used for Parfit's nonidentity problem and future-person cases."
+    },
+    {
+      "id": "ch16-s045",
+      "type": "heading",
+      "sectionId": "ch16-s045",
+      "level": 3,
+      "text": "Existential risk, longtermism, and decision under uncertainty"
+    },
+    {
+      "id": "ch16-p0236",
+      "type": "list",
+      "sectionId": "ch16-s045",
+      "level": null,
+      "text": "Bostrom, Nick. (2002). \"Existential Risks: Analyzing Human Extinction Scenarios and Related Hazards\". Used for the definition of existential risk.\nBostrom, Nick. (2003). \"Astronomical Waste\". Used for astronomical-stakes reasoning.\nBostrom, Nick. (2009). \"Pascal's Mugging\". Used for tiny-probability / huge-payoff vulnerability.\nBostrom, Nick. (2013). \"Existential Risk Prevention as Global Priority\". Used for global-priority reasoning around existential risk.\nBostrom, Nick. (2019). \"The Vulnerable World Hypothesis\". Used for black-ball reasoning and technological vulnerability.\nGreaves, Hilary, and William MacAskill. \"The Case for Strong Longtermism\". Used for academic longtermism and far-future priority reasoning.\nLenman, James. (2000). \"Consequentialism and Cluelessness\". Used for long-run action-guidance concerns.\nMacAskill, William. What We Owe the Future. Used for public longtermism context.\nOrd, Toby. The Precipice. Used for existential security and public existential-risk synthesis.\nTarsney, Christian. (2023). \"The Epistemic Challenge to Longtermism\". Used for forecastability and Pascalian-dependence concerns.\nTarsney, Christian, Teruji Thomas, and William MacAskill. Moral Decision-Making Under Uncertainty. Stanford Encyclopedia of Philosophy. Used for decision under uncertainty and moral uncertainty."
+    },
+    {
+      "id": "ch16-s046",
+      "type": "heading",
+      "sectionId": "ch16-s046",
+      "level": 3,
+      "text": "AI alignment and AI safety"
+    },
+    {
+      "id": "ch16-p0237",
+      "type": "list",
+      "sectionId": "ch16-s046",
+      "level": null,
+      "text": "Bostrom, Nick. \"Ethical Issues in Advanced Artificial Intelligence\". Used for the paperclip maximizer and misaligned optimization.\nBostrom, Nick. (2012). \"The Superintelligent Will\". Used for orthogonality and instrumental convergence.\nCenter for Human-Compatible AI. Home / Mission. Used for Stuart Russell / CHAI's human-compatible AI frame.\nYudkowsky, Eliezer. (2008). \"Artificial Intelligence as a Positive and Negative Factor in Global Risk\". Used for early AI safety, Friendly AI, and control-problem framing."
+    },
+    {
+      "id": "ch16-s047",
+      "type": "heading",
+      "sectionId": "ch16-s047",
+      "level": 3,
+      "text": "Contemporary AI-risk statements, scenarios, and frameworks"
+    },
+    {
+      "id": "ch16-p0238",
+      "type": "list",
+      "sectionId": "ch16-s047",
+      "level": null,
+      "text": "AI 2027. AI 2027. Used as a detailed scenario artifact, not as consensus prediction.\nAnthropic. Responsible Scaling Policy. Used for company threshold governance; version 3.3 effective May 26, 2026.\nAnthropic. The Long-Term Benefit Trust. Used for long-term public-benefit corporate governance example.\nCenter for AI Safety. Statement on AI Extinction Risk. Used for the public extinction-risk statement and signatory context.\nEpoch AI. David Owen. \"What will AI look like in 2030?\". Used as a 2030 forecast/scenario comparison source; notes that the report was commissioned by Google DeepMind and that conclusions are the author's.\nFuture of Life Institute. Asilomar AI Principles. Used for human control, value alignment, and catastrophic/existential-risk planning principles.\nFuture of Life Institute. Statement on Superintelligence. Used for the public call to prohibit superintelligence development until safety/control consensus and public buy-in conditions are met.\nGoogle DeepMind. Strengthening our Frontier Safety Framework. Used for safety cases, capability thresholds, tracked capability levels, and frontier governance examples.\nHinton, Geoffrey, as reported by Dan Milmo. \"'Godfather of AI' shortens odds of the technology wiping out humanity over next 30 years\". The Guardian. Used as secondary attribution for Hinton's 10 to 20 percent estimate.\nOECD. Hobbs, H., Docherty, D., Aranda, L., Sugimoto, K., Perset, K., and Kierzenkowski, R. Exploring possible AI trajectories through 2030. Used as international scenario-planning source; scenarios are plausible but uncertain, not predictions.\nOpenAI. Charter. Used for AGI/all-humanity mission framing.\nOpenAI. Preparedness Framework v2. Used for severe-risk categories, thresholds, safeguards, and governance example.\nUK Government Office for Science. AI Scenarios 2030: Helping policymakers plan for the future of AI. Used as a policy scenario-planning source; document states that it is not a statement of policy."
+    },
+    {
+      "id": "ch16-s048",
+      "type": "heading",
+      "sectionId": "ch16-s048",
+      "level": 3,
+      "text": "Cultural prehistory and critique"
+    },
+    {
+      "id": "ch16-p0239",
+      "type": "list",
+      "sectionId": "ch16-s048",
+      "level": null,
+      "text": "Bulletin of the Atomic Scientists. Doomsday Clock. Used for post-1945 existential-risk imagery and nuclear-risk public framing.\nGebru, Timnit, and Émile P. Torres. (2024). \"The TESCREAL bundle\". Used as a critique source for ideological and institutional-power concerns; treated as contested critique rather than neutral taxonomy.\nJecker, Nancy, Caesar Atuire, Jean-Christophe Bélisle-Pipon, Vardit Ravitsky, and Anita Ho. (2024). \"AI and the falling sky: interrogating X-Risk\". Used as a present-harm displacement critique source.\nLechterman, Theodore M. (2020). \"The Effective Altruist's Political Problem\". Used for democratic legitimacy and philanthropy-power critique.\nMalthus, Thomas Robert. (1798). An Essay on the Principle of Population. Used for secular scarcity and population-catastrophe genealogy.\nPBS FRONTLINE. Apocalypticism Explained. Used for accessible background on apocalyptic tradition.\nShelley, Mary. (1818). Frankenstein; or, The Modern Prometheus. Used as background for creator responsibility and artificial-life genealogy.\nVallor, Shannon. (2024). The AI Mirror: How to Reclaim Our Humanity in an Age of Machine Thinking. Used for humanistic critique of AI discourse and present-stakes displacement."
+    }
+  ]
+}

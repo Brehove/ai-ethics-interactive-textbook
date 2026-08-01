@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "bookId": "phil-123-ai-ethics",
+  "expectedChapterCount": 18,
+  "selectionPolicy": "Import the current file resolved by each published-manifest source route. Materialize it in this repository; never retain symlinks or private filesystem paths.",
+  "sourceRootArgumentRequired": true,
+  "excludedSources": [
+    {
+      "sourcePath": "module-05-deep-research-discover/ch-new-ai-companions-robot-rights-status/draft.md",
+      "reason": "Optional nineteenth draft; not part of the approved eighteen-chapter book."
+    }
+  ],
+  "chapters": [
+    {
+      "id": "ch01",
+      "order": 1,
+      "part": { "id": "part-01", "order": 1, "chapterOrder": 1, "title": "Philosophical Practice and AI", "slug": "philosophical-practice-and-ai" },
+      "title": "Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility",
+      "slug": "practicing-philosophy",
+      "pressbooksId": 5,
+      "sourcePath": "module-01-ai-basics-argumentation/ch25-practicing-philosophy/draft.md",
+      "selectedSourceSha256": "6b626dfebd8a007326cd853def51175c091afc287cbd22c3d7b7639315966886",
+      "priorRelease": { "sourceSha256": "6b626dfebd8a007326cd853def51175c091afc287cbd22c3d7b7639315966886", "deploymentSha256": "ef765cbb1de306476d20fb95837d47312038e71244bfc5bf6b66662ad557e840", "publishedAt": "2026-07-22T08:54:33-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch02",
+      "order": 2,
+      "part": { "id": "part-01", "order": 1, "chapterOrder": 2, "title": "Philosophical Practice and AI", "slug": "philosophical-practice-and-ai" },
+      "title": "Testing Moral Arguments: Premises, Inferences, Objections, and Revision",
+      "slug": "testing-moral-arguments",
+      "pressbooksId": 24,
+      "sourcePath": "module-01-ai-basics-argumentation/ch29-argument-testing-rebuild/draft.md",
+      "selectedSourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd",
+      "priorRelease": { "sourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd", "deploymentSha256": "b4d9af31584511a9fae1598932de5940a790a24443e1204854110da754a01114", "publishedAt": "2026-07-22T08:17:34-06:00" },
+      "transformations": [
+        {
+          "kind": "replace-exact",
+          "reason": "Harmonize the imported H1 with the approved public title.",
+          "from": "# Testing Moral Arguments: A Step-by-Step Practice",
+          "to": "# Testing Moral Arguments: Premises, Inferences, Objections, and Revision",
+          "expectedOccurrences": 1
+        }
+      ],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch03",
+      "order": 3,
+      "part": { "id": "part-01", "order": 1, "chapterOrder": 3, "title": "Philosophical Practice and AI", "slug": "philosophical-practice-and-ai" },
+      "title": "How Generative AI Produces Answers: Prediction, Post-Training, and the Source Trail",
+      "slug": "how-generative-ai-produces-answers",
+      "pressbooksId": 26,
+      "sourcePath": "module-01-ai-basics-argumentation/ch-new-generative-ai-produces-answers/draft.md",
+      "selectedSourceSha256": "3cb58ba7c69935ccb297b53ffeaabb4b9c3c0282d86307b11cafebe391284eef",
+      "priorRelease": { "sourceSha256": "3cb58ba7c69935ccb297b53ffeaabb4b9c3c0282d86307b11cafebe391284eef", "deploymentSha256": "e2822d2d971655d3b67c50549322c02dabab902e1fd46000e45e712977f1d85a", "publishedAt": "2026-07-22T08:17:37-06:00" },
+      "transformations": [],
+      "rightsRecordIds": ["adapt-cwi101-generative-ai"]
+    },
+    {
+      "id": "ch04",
+      "order": 4,
+      "part": { "id": "part-01", "order": 1, "chapterOrder": 4, "title": "Philosophical Practice and AI", "slug": "philosophical-practice-and-ai" },
+      "title": "AI as an Interlocutor in Philosophical Work",
+      "slug": "ai-as-an-interlocutor",
+      "pressbooksId": 28,
+      "sourcePath": "module-01-ai-basics-argumentation/ch-new-ai-as-an-interlocutor/draft.md",
+      "selectedSourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
+      "priorRelease": { "sourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c", "deploymentSha256": "84691a52ecc4b8aacddc7be7cdb1a437d4ec55c5316f83cf869d810a555e5e9e", "publishedAt": "2026-07-22T08:17:39-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch05",
+      "order": 5,
+      "part": { "id": "part-02", "order": 2, "chapterOrder": 1, "title": "Moral Authority, Character, and Practical Wisdom", "slug": "moral-authority-character-and-practical-wisdom" },
+      "title": "Is It Good Because God Commands It? Divine Command, Natural Law, and Moral Authority",
+      "slug": "divine-command-natural-law-moral-authority",
+      "pressbooksId": 31,
+      "sourcePath": "module-02-dct-virtue-ethics/ch35-dct-natural-law/draft.md",
+      "selectedSourceSha256": "ee247cdffa3c204cf68ac1ffcdff8c385074c0bc478694b6310b03e65e674791",
+      "priorRelease": { "sourceSha256": "ee247cdffa3c204cf68ac1ffcdff8c385074c0bc478694b6310b03e65e674791", "deploymentSha256": "197289a5fa1fbb434aba87a82777c709c7f34972502b92a42593e2d786933575", "publishedAt": "2026-07-17T15:45:56-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch06",
+      "order": 6,
+      "part": { "id": "part-02", "order": 2, "chapterOrder": 2, "title": "Moral Authority, Character, and Practical Wisdom", "slug": "moral-authority-character-and-practical-wisdom" },
+      "title": "Commands, Constitutions, and Alignment: Natural Law in the AI Alignment Conversation",
+      "slug": "commands-constitutions-and-alignment",
+      "pressbooksId": 33,
+      "sourcePath": "module-02-dct-virtue-ethics/ch-new-commands-constitutions-alignment/draft.md",
+      "selectedSourceSha256": "1c98f3cf16b6695f705d835b1c6d46167ca1699dd9cab15c3bec51ee9e26e8c9",
+      "priorRelease": { "sourceSha256": "1c98f3cf16b6695f705d835b1c6d46167ca1699dd9cab15c3bec51ee9e26e8c9", "deploymentSha256": "c9a6be5edff9c281a92d14dc66a88cb7d3aa1eaec3302d77f73c8bf473568e67", "publishedAt": "2026-07-17T15:45:59-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch07",
+      "order": 7,
+      "part": { "id": "part-02", "order": 2, "chapterOrder": 3, "title": "Moral Authority, Character, and Practical Wisdom", "slug": "moral-authority-character-and-practical-wisdom" },
+      "title": "What Are You Becoming? Aristotle, Character, and AI-Assisted Life",
+      "slug": "aristotle-character-and-ai-assisted-life",
+      "pressbooksId": 35,
+      "sourcePath": "module-02-dct-virtue-ethics/ch-new-aristotle-virtue-ethics/draft.md",
+      "selectedSourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",
+      "priorRelease": { "sourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a", "deploymentSha256": "d02f5db4fd32cba5c69886be00711a1d6a541e2a2b5605c88c1aa0a2b413ec2a", "publishedAt": "2026-07-17T15:46:01-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch08",
+      "order": 8,
+      "part": { "id": "part-02", "order": 2, "chapterOrder": 4, "title": "Moral Authority, Character, and Practical Wisdom", "slug": "moral-authority-character-and-practical-wisdom" },
+      "title": "Practical Wisdom After Aristotle: Vallor, Askell, and the Problem of Machine Judgment",
+      "slug": "practical-wisdom-after-aristotle",
+      "pressbooksId": 37,
+      "sourcePath": "module-02-dct-virtue-ethics/ch-new-practical-wisdom-vallor-claude/draft.md",
+      "selectedSourceSha256": "b97f34feb63d36a83e02543a5d99918b139a6d818998f20504b17113715fcf44",
+      "priorRelease": { "sourceSha256": "b97f34feb63d36a83e02543a5d99918b139a6d818998f20504b17113715fcf44", "deploymentSha256": "d415fc177e13398db1d31e081053d0b73df112fe8eadcf7c9489d8d2fbca5818", "publishedAt": "2026-07-17T15:46:04-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch09",
+      "order": 9,
+      "part": { "id": "part-03", "order": 3, "chapterOrder": 1, "title": "Duty, Consequences, and Moral Choice", "slug": "duty-consequences-and-moral-choice" },
+      "title": "Kantian Deontology",
+      "slug": "kantian-deontology",
+      "pressbooksId": 40,
+      "sourcePath": "module-03-kant-utilitarianism/ch74-kantian-deontology-rebuilt/draft.md",
+      "selectedSourceSha256": "31e60824fa51644fd57517708f1682b54961d565b16774eae995ac82b8b85abc",
+      "priorRelease": { "sourceSha256": "31e60824fa51644fd57517708f1682b54961d565b16774eae995ac82b8b85abc", "deploymentSha256": "b6200bfadd2d83aa7daa24890ec8641415418952a15de9ee6fe653b04720f2c4", "publishedAt": "2026-07-17T15:46:07-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch10",
+      "order": 10,
+      "part": { "id": "part-03", "order": 3, "chapterOrder": 2, "title": "Duty, Consequences, and Moral Choice", "slug": "duty-consequences-and-moral-choice" },
+      "title": "Utilitarianism: Consequences, Rules, and Two-Level Reasoning",
+      "slug": "utilitarianism-consequences-rules-and-two-level-reasoning",
+      "pressbooksId": 42,
+      "sourcePath": "module-03-kant-utilitarianism/ch272-utilitarianism-rebuild/draft.md",
+      "selectedSourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",
+      "priorRelease": { "sourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00", "deploymentSha256": "42b82e8a10f27fea4a3bdd0318e0f06ef6eb4bd8406223841d0615ac7814c926", "publishedAt": "2026-07-17T15:46:09-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch11",
+      "order": 11,
+      "part": { "id": "part-04", "order": 4, "chapterOrder": 1, "title": "Data, Bias, and Delegated Judgment", "slug": "data-bias-and-delegated-judgment" },
+      "title": "From Data Trails to AI Systems: How Human Activity Becomes Prediction, Automation, and Generation",
+      "slug": "from-data-trails-to-ai-systems",
+      "pressbooksId": 45,
+      "sourcePath": "module-05-deep-research-discover/ch91-datafication-foundation-rebuild/draft.md",
+      "selectedSourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",
+      "priorRelease": { "sourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97", "deploymentSha256": "0770e1241014dbdcd502b78c48b8554bbb93c607198bfa297b6578b106b622d5", "publishedAt": "2026-07-17T15:46:11-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch12",
+      "order": 12,
+      "part": { "id": "part-04", "order": 4, "chapterOrder": 2, "title": "Data, Bias, and Delegated Judgment", "slug": "data-bias-and-delegated-judgment" },
+      "title": "Algorithmic Bias and the AI Mirror: When Prediction Becomes an Opportunity Gate",
+      "slug": "algorithmic-bias-and-the-ai-mirror",
+      "pressbooksId": 47,
+      "sourcePath": "module-05-deep-research-discover/ch102-ai-mirror-algorithmic-bias-rebuild/draft.md",
+      "selectedSourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
+      "priorRelease": { "sourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591", "deploymentSha256": "0514c0620575dbdf27c70ae07f424145b7d59026e27a823d099dffbe88a050fb", "publishedAt": "2026-08-01T09:39:18-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch13",
+      "order": 13,
+      "part": { "id": "part-04", "order": 4, "chapterOrder": 3, "title": "Data, Bias, and Delegated Judgment", "slug": "data-bias-and-delegated-judgment" },
+      "title": "Delegating Judgment: Automation, Robotics, Skill, and Answerable Control",
+      "slug": "delegating-judgment",
+      "pressbooksId": 49,
+      "sourcePath": "module-05-deep-research-discover/ch315-cybernetics-agentic-systems-rebuild/draft.md",
+      "selectedSourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
+      "priorRelease": { "sourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991", "deploymentSha256": "3f504d251e8860df5433cde4dce269480520535b698bb9a5ccc2ed3739973304", "publishedAt": "2026-07-17T15:46:17-06:00" },
+      "transformations": [
+        {
+          "kind": "replace-exact",
+          "reason": "Replace two obsolete Aristotle chapter links with the current public chapter URL.",
+          "from": "https://cwi.pressbooks.pub/aiethics/chapter/aristotle-and-the-origins-of-western-virtue-ethics/",
+          "to": "https://cwi.pressbooks.pub/ethicsandai/chapter/aristotle-character-and-ai-assisted-life/",
+          "expectedOccurrences": 2
+        }
+      ],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch14",
+      "order": 14,
+      "part": { "id": "part-05", "order": 5, "chapterOrder": 1, "title": "Relationships, Creativity, and Co-Existence", "slug": "relationships-creativity-and-coexistence" },
+      "title": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status",
+      "slug": "ai-companions-and-coexistence",
+      "pressbooksId": 52,
+      "sourcePath": "module-06-ai-companions-creativity/ch-new-ai-companions-coexistence/draft.md",
+      "selectedSourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
+      "priorRelease": { "sourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd", "deploymentSha256": "7440ff73146aeae2dbe97f005b876389d4b0c8743afdc64beb84c0ff3d128d90", "publishedAt": "2026-07-17T15:46:19-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch15",
+      "order": 15,
+      "part": { "id": "part-05", "order": 5, "chapterOrder": 2, "title": "Relationships, Creativity, and Co-Existence", "slug": "relationships-creativity-and-coexistence" },
+      "title": "Creativity, Innovation, and AI: Authorship, Judgment, and the Ethics of Generated Work",
+      "slug": "creativity-innovation-and-ai",
+      "pressbooksId": 54,
+      "sourcePath": "module-06-ai-companions-creativity/ch319-creativity-innovation-rebuild/draft.md",
+      "selectedSourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",
+      "priorRelease": { "sourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6", "deploymentSha256": "2b042b5a645ec398d899ade40bc2bd4390a1121090a24bdcc77411bd3f605c3d", "publishedAt": "2026-08-01T09:39:22-06:00" },
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch16",
+      "order": 16,
+      "part": { "id": "part-06", "order": 6, "chapterOrder": 1, "title": "Future Stakes and Technological Movements", "slug": "future-stakes-and-technological-movements" },
+      "title": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes",
+      "slug": "existential-risk-effective-altruism-and-future-stakes",
+      "pressbooksId": 57,
+      "sourcePath": "module-07-philosophy-lens-workshop/ch328-xrisk-effective-altruism-rebuild/draft.md",
+      "selectedSourceSha256": "b2f444b7bb54de445e57f0fa4e2c6a623696b027c8d7b2e908fb2722e3ef3e2a",
+      "priorRelease": { "sourceSha256": "067f79f2b483ac961eb959f8435c2f4cab159a2f559e4678afe336f8955f87f3", "deploymentSha256": "0206b2a4879400fb06c772156e3fc6a9b8bc96adc996917319d56028869d3771", "publishedAt": "2026-07-17T15:46:25-06:00" },
+      "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization.",
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch17",
+      "order": 17,
+      "part": { "id": "part-06", "order": 6, "chapterOrder": 2, "title": "Future Stakes and Technological Movements", "slug": "future-stakes-and-technological-movements" },
+      "title": "Accelerationism, AI, and the Ethics of Speed",
+      "slug": "accelerationism-ai-and-the-ethics-of-speed",
+      "pressbooksId": 59,
+      "sourcePath": "module-07-philosophy-lens-workshop/ch123-accelerationism-rebuild/draft.md",
+      "selectedSourceSha256": "4f6f756f4449bcc07931f1417f57c081336a2a7b62288e30c98bde2acdf0cece",
+      "priorRelease": { "sourceSha256": "cfa0a52db6dbedcf9fadfe263f8edce7928dc2e8426a03a9367bd39f82c06e68", "deploymentSha256": "662606a5c5c54b9e7249d5a0cf842ee3f50aae9dbf7a54cfb05818dfa1586c2d", "publishedAt": "2026-07-17T15:46:28-06:00" },
+      "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization.",
+      "transformations": [],
+      "rightsRecordIds": []
+    },
+    {
+      "id": "ch18",
+      "order": 18,
+      "part": { "id": "part-06", "order": 6, "chapterOrder": 3, "title": "Future Stakes and Technological Movements", "slug": "future-stakes-and-technological-movements" },
+      "title": "Transhumanism, Enhancement, and the Ethics of Human Capacity",
+      "slug": "transhumanism-enhancement-and-human-capacity",
+      "pressbooksId": 61,
+      "sourcePath": "module-07-philosophy-lens-workshop/ch134-transhumanism-rebuild/draft.md",
+      "selectedSourceSha256": "b762f6b2009209fd7e15a88420fc916a9a38b1c7c58a54f879306f6606e73221",
+      "priorRelease": { "sourceSha256": "8fd2bc61d24924780bc2498f7eaf9c936f827453f4a7fcb145f788b7638fd8ac", "deploymentSha256": "98b442bb36a696eddf7cedb290caee542eb396fc8ae454be601f1888e4a4e258", "publishedAt": "2026-07-17T15:46:30-06:00" },
+      "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization.",
+      "transformations": [],
+      "rightsRecordIds": []
+    }
+  ]
+}

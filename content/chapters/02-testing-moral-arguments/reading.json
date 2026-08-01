@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch02",
+  "slug": "testing-moral-arguments",
+  "title": "Testing Moral Arguments: Premises, Inferences, Objections, and Revision",
+  "language": "en",
+  "sourceSha256": "4d8bc034ded86acba3ddfaa7612b702644a0f6e1b1425672a02a08c864a1df5a",
+  "plainTextSha256": "e7094d3dca151686bdab6806c24a33fe2beed497922edc27ff56aaa6174601be",
+  "wordCount": 3771,
+  "readingMinutes": 17,
+  "licenses": {
+    "prosePayload": "CC-BY-4.0",
+    "originalStructuralMetadata": "CC0-1.0"
+  },
+  "audio": {
+    "provider": null,
+    "generated": false,
+    "streamingReady": true
+  },
+  "segments": [
+    {
+      "id": "ch02-title",
+      "type": "title",
+      "sectionId": null,
+      "level": 1,
+      "text": "Testing Moral Arguments: Premises, Inferences, Objections, and Revision"
+    },
+    {
+      "id": "ch02-p0001",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "A study-planning app offers a seven-day free trial. Unless the user changes a preselected option, the trial becomes a paid annual subscription. The price and renewal date appear in the terms."
+    },
+    {
+      "id": "ch02-p0002",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "Should the app require users to choose the paid subscription actively?"
+    },
+    {
+      "id": "ch02-p0003",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "You may already have an answer. Philosophy asks you to show how you reached it. Chapter 1 explained why PHIL 123 begins with argumentation. A visible argument gives other people a fair chance to understand your reasons, question them, and offer a competing view. It also lets you notice where your own judgment changes."
+    },
+    {
+      "id": "ch02-s001",
+      "type": "heading",
+      "sectionId": "ch02-s001",
+      "level": 2,
+      "text": "How This Chapter Fits the Course"
+    },
+    {
+      "id": "ch02-p0004",
+      "type": "paragraph",
+      "sectionId": "ch02-s001",
+      "level": null,
+      "text": "This chapter gives you the five-move method you will reuse throughout PHIL 123. The ethical frameworks in the first half of the course will supply different principles and standards for your arguments. During chatbot practice, the method will help you decide whether an objection actually reaches your reasoning. Later, it will help you formulate philosophical questions and defend decisions connected with your final project. The argument may change as the course progresses, but the underlying practice remains the same: make your reasoning visible, test one part of it, and explain what you decide after the test."
+    },
+    {
+      "id": "ch02-s002",
+      "type": "heading",
+      "sectionId": "ch02-s002",
+      "level": 2,
+      "text": "The Five-Move Method"
+    },
+    {
+      "id": "ch02-p0005",
+      "type": "paragraph",
+      "sectionId": "ch02-s002",
+      "level": null,
+      "text": "The method begins with an ordinary judgment. You will turn it into a compact argument, locate one vulnerable step, and decide what to do after that step is challenged."
+    },
+    {
+      "id": "ch02-p0006",
+      "type": "aside",
+      "sectionId": "ch02-s002",
+      "level": null,
+      "text": "Framework Map: Five Moves for Testing a Moral Argument\nSay what you think. State the judgment you currently make about the case.\nShow why. Put your main moral reason, relevant facts, and conclusion into a compact argument.\nMake any missing because-step visible. Add the connection a reader needs to follow your reasoning.\nChoose one visible point to pressure-test. Question a premise, a connection, or the scope of the conclusion.\nRepair the argument and explain what changed. Defend, revise, narrow, or concede, then record your judgment."
+    },
+    {
+      "id": "ch02-p0007",
+      "type": "paragraph",
+      "sectionId": "ch02-s002",
+      "level": null,
+      "text": "The method begins simply. Moral arguments can become more complicated when the case, evidence, or ethical framework requires it. Premises should be added because the reasoning needs them, not because a longer argument looks more philosophical."
+    },
+    {
+      "id": "ch02-s003",
+      "type": "heading",
+      "sectionId": "ch02-s003",
+      "level": 2,
+      "text": "Begin with a Judgment"
+    },
+    {
+      "id": "ch02-p0008",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "Start by saying what you think someone should do. For the study app, a student might write:"
+    },
+    {
+      "id": "ch02-p0009",
+      "type": "blockquote",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "The app should require users to choose the annual subscription actively."
+    },
+    {
+      "id": "ch02-p0010",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "This is a moral judgment. It identifies the policy the student currently accepts. The statement does not yet show the reason behind that judgment."
+    },
+    {
+      "id": "ch02-p0011",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "The student adds:"
+    },
+    {
+      "id": "ch02-p0012",
+      "type": "blockquote",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "People should make an active choice before a free trial becomes a paid annual subscription."
+    },
+    {
+      "id": "ch02-p0013",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "Now another person can see one of the student's reasons. They might agree. They might argue that clear disclosure is sufficient. They might ask whether monthly and annual subscriptions should follow the same rule. Each response can address something the student has actually said."
+    },
+    {
+      "id": "ch02-p0014",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "Begin in ordinary language because your first task is to identify your own position. Formal labels cannot decide which details you consider relevant or which moral reason you accept. The labels enter after you have something to examine."
+    },
+    {
+      "id": "ch02-p0015",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "A first judgment can remain provisional. You are recording where you are beginning, not promising that you will never change your mind. Later information may give you a reason to revise the judgment. A strong objection may show that your reason is too broad. You may also decide that the original reason survives the pressure."
+    },
+    {
+      "id": "ch02-p0016",
+      "type": "aside",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "Try It: Find the Judgment\nRead these two sentences:\nThe app enrolls the user in an annual subscription unless the user changes the renewal option.\nThe app should require the user to choose the annual subscription actively.\nWhich sentence describes what the app does? Which sentence states what the app should do?"
+    },
+    {
+      "id": "ch02-p0017",
+      "type": "paragraph",
+      "sectionId": "ch02-s003",
+      "level": null,
+      "text": "The distinction between description and judgment will become useful when you build the argument. A description tells the reader what happened or how a system operates. A moral judgment states what someone ought to do, which policy should change, or which action is ethically justified."
+    },
+    {
+      "id": "ch02-s004",
+      "type": "heading",
+      "sectionId": "ch02-s004",
+      "level": 2,
+      "text": "Build the Starter Argument"
+    },
+    {
+      "id": "ch02-p0018",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "An argument is a set of claims offered in support of a conclusion. The supporting claims are called premises. The conclusion states what those premises are supposed to establish."
+    },
+    {
+      "id": "ch02-p0019",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "PHIL 123 uses P1, P2, and C as a starting form. P1 is the first premise, P2 is the second, and C is the conclusion."
+    },
+    {
+      "id": "ch02-p0020",
+      "type": "aside",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Worked Argument: Active Renewal\nP1. Any app that converts a free trial into a paid annual subscription should require the user to choose that subscription actively.\nP2. This app converts its free trial into a paid annual subscription unless the user changes a preselected renewal option.\nC. Therefore, this app should require the user to choose the annual subscription actively."
+    },
+    {
+      "id": "ch02-p0021",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Each line has a different job. P1 states the moral standard. It says what companies should do when a free trial becomes a paid annual subscription. P2 states the relevant feature of this app. C applies the standard to the case."
+    },
+    {
+      "id": "ch02-p0022",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "The form resembles the principle, case, and conclusion structure developed in Jason Swartwood and Ian Stoner's Doing Practical Ethics. The structure gives students one manageable way to begin applying a moral reason to a case. It does not define every possible moral argument."
+    },
+    {
+      "id": "ch02-p0023",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Once the lines are visible, ask two different questions."
+    },
+    {
+      "id": "ch02-p0024",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "First, should we accept the premises? A critic may reject P1. They may argue that clear disclosure gives users enough responsibility for managing a subscription. Another critic may question P2 by asking whether the renewal option is genuinely preselected or merely displayed as a recommendation."
+    },
+    {
+      "id": "ch02-p0025",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Second, if we accept the premises for the moment, do they support the conclusion? In the active-renewal argument, P1 applies to any app that converts a free trial into a paid annual subscription without an active choice. P2 says this app does that. The conclusion applies the stated standard to this app."
+    },
+    {
+      "id": "ch02-p0026",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Philosophers use validity and soundness to distinguish these checks. As the Internet Encyclopedia of Philosophy's explanation of validity and soundness puts it, a deductive argument is valid when its premises cannot all be true while its conclusion is false. A sound argument is valid and has true premises."
+    },
+    {
+      "id": "ch02-p0027",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Suppose an argument is valid but begins with the premise that every use of AI is dishonest. The conclusion may follow from that premise in a particular case, yet the premise itself still needs a defense. Validity does not make a questionable moral standard true."
+    },
+    {
+      "id": "ch02-p0028",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Moral arguments also rely on uncertain evidence, predictions, interpretations, and comparisons. They will not all function as strict deductive proofs. The two-question check still helps: examine whether each claim deserves acceptance, then examine whether the claims supply enough support for the judgment."
+    },
+    {
+      "id": "ch02-p0029",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "The three-line form is a starter. It is not a rule that every argument must contain exactly two premises. David Carl Wilson's open textbook chapter on what makes an argument explains that an argument needs at least one premise and has no fixed maximum. Add a line when a reader needs it to see how the reasoning works."
+    },
+    {
+      "id": "ch02-p0030",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "Before moving on, identify the job performed by each line in the active-renewal argument. Which line states the moral standard? Which line states what this app does? Which line states what the app should do?"
+    },
+    {
+      "id": "ch02-p0031",
+      "type": "paragraph",
+      "sectionId": "ch02-s004",
+      "level": null,
+      "text": "This compact argument works because the conclusion closely matches the moral standard. More ambitious conclusions often require more support."
+    },
+    {
+      "id": "ch02-s005",
+      "type": "heading",
+      "sectionId": "ch02-s005",
+      "level": 2,
+      "text": "Make the Missing Step Visible"
+    },
+    {
+      "id": "ch02-p0032",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Now add the rest of the fictional case. Cancelling the subscription takes five screens. Each screen gives visual emphasis to a large Keep my plan button. A smaller link allows the user to continue cancelling. The price and renewal date remain disclosed, and cancellation remains possible."
+    },
+    {
+      "id": "ch02-p0033",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "A student might look at the design and conclude, “The app manipulates users through its free-trial design.” That sentence may sound plausible, but it compresses the important reasoning into the word manipulates. The preselected renewal, five cancellation screens, large Keep my plan buttons, and smaller cancellation links are features a person could inspect. Calling those features manipulative interprets what they do. A company defender could accept every visible fact while denying that manipulation occurred."
+    },
+    {
+      "id": "ch02-p0034",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The student begins by placing the moral standard, visible facts, and conclusion into a starter argument:"
+    },
+    {
+      "id": "ch02-p0035",
+      "type": "aside",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Worked Argument: A Step Is Still Missing\nP1. Companies should give users clear control over whether they begin or continue paying for a service.\nP2. This app preselects annual renewal and repeatedly makes keeping the plan more visually prominent than continuing cancellation.\nC. Therefore, the app should require an active renewal choice and present the options to keep or cancel the subscription with comparable clarity."
+    },
+    {
+      "id": "ch02-p0036",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The starter argument makes the relevant facts visible, but a reader can still ask how P2 connects with P1 and the proposed remedy. The student needs to answer a plain question:"
+    },
+    {
+      "id": "ch02-p0037",
+      "type": "blockquote",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Why do these design features weaken clear user control?"
+    },
+    {
+      "id": "ch02-p0038",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The answer is a because-step:"
+    },
+    {
+      "id": "ch02-p0039",
+      "type": "blockquote",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "When continued payment is preselected and the interface repeatedly makes staying more prominent than leaving, the design makes continued payment easier than a neutral presentation of both choices and weakens clear user control over the decision."
+    },
+    {
+      "id": "ch02-p0040",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "In PHIL 123, we will call this a bridge premise. It connects the facts of the case with the moral category or standard being applied. The term is useful because many moral disagreements occur at this bridge. Two people can agree about what happened while disagreeing about whether it counts as deception, coercion, harm, disrespect, vice, or another morally relevant category."
+    },
+    {
+      "id": "ch02-p0041",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The student adds that statement as P3. Nothing else in the starter argument needs to change yet:"
+    },
+    {
+      "id": "ch02-p0042",
+      "type": "aside",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Worked Argument: The Missing Step Made Visible\nP1. Companies should give users clear control over whether they begin or continue paying for a service.\nP2. This app preselects annual renewal and repeatedly makes keeping the plan more visually prominent than continuing cancellation.\nP3. Preselection and repeated visual pressure make continued payment easier than a neutral presentation of both choices and weaken clear user control over the decision.\nC. Therefore, the app should require an active renewal choice and present the options to keep or cancel the subscription with comparable clarity."
+    },
+    {
+      "id": "ch02-p0043",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The added line isolates the point a critic can now question. Does visual prominence genuinely weaken control? How much asymmetry is enough? Does the user's ability to read the terms and complete cancellation preserve the kind of control described in P1?"
+    },
+    {
+      "id": "ch02-p0044",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "The bridge also helps the student notice what the argument does not yet establish. The visible design may support concern about how the app steers users. It does not by itself prove why the company selected the design. If the student claims that the company deliberately created unnecessary barriers for financial gain, evidence about the company's purpose and available alternatives becomes relevant."
+    },
+    {
+      "id": "ch02-p0045",
+      "type": "aside",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Go Deeper: When a Stronger Claim Needs Evidence\nThe word manipulation may imply that the company deliberately used avoidable friction to influence users. To defend that stronger claim, a student may need to know what each cancellation screen does, whether a shorter process could provide the same security, and whether the company retained the design because it reduced cancellations. Those claims could become additional premises supported by research. The baseline argument can remain narrower when that evidence is unavailable."
+    },
+    {
+      "id": "ch02-p0046",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "A bridge should express reasoning the student accepts. Adding a sentence merely because it makes the argument look complete will not help. The student must be able to explain why the bridge connects the facts with the moral standard."
+    },
+    {
+      "id": "ch02-p0047",
+      "type": "paragraph",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Adding more lines is useful only when each line performs a necessary function. A premise that repeats the conclusion in different words gives the argument no new support. A premise that introduces an unrelated fact adds length without clarifying the inference. The test is practical: could a reader accept the visible lines and still reasonably ask how the conclusion follows? If so, one step may still be hidden."
+    },
+    {
+      "id": "ch02-p0048",
+      "type": "aside",
+      "sectionId": "ch02-s005",
+      "level": null,
+      "text": "Try It: Choose the Because-Step\nWhich sentence best connects the app's visible design with the concern about user control?\nThe app is unethical because free trials are bad.\nThe app uses five screens, and its logo is blue.\nPreselected renewal and repeated visual emphasis on staying make continued payment easier than a neutral presentation of both choices.\nExplain which sentence performs the bridge and which alternatives fail to do so."
+    },
+    {
+      "id": "ch02-s006",
+      "type": "heading",
+      "sectionId": "ch02-s006",
+      "level": 2,
+      "text": "Pressure and Repair"
+    },
+    {
+      "id": "ch02-p0049",
+      "type": "paragraph",
+      "sectionId": "ch02-s006",
+      "level": null,
+      "text": "The argument is now visible enough to test. Begin with the first serious point a critic reaches. Three questions cover much of the pressure students will use in PHIL 123."
+    },
+    {
+      "id": "ch02-s007",
+      "type": "heading",
+      "sectionId": "ch02-s007",
+      "level": 3,
+      "text": "Can I Accept This Line?"
+    },
+    {
+      "id": "ch02-p0050",
+      "type": "paragraph",
+      "sectionId": "ch02-s007",
+      "level": null,
+      "text": "A premise test asks whether a specific premise is clear, accurate, and adequately supported."
+    },
+    {
+      "id": "ch02-p0051",
+      "type": "paragraph",
+      "sectionId": "ch02-s007",
+      "level": null,
+      "text": "In the app argument, P2 makes claims about visible design features. Those features could be checked by inspecting the interface. P3 makes a more interpretive claim: the design weakens clear control over the decision. A critic may ask what kind of control has been reduced. Users still know the price and can complete cancellation."
+    },
+    {
+      "id": "ch02-p0052",
+      "type": "paragraph",
+      "sectionId": "ch02-s007",
+      "level": null,
+      "text": "The student should identify the exact line under pressure:"
+    },
+    {
+      "id": "ch02-p0053",
+      "type": "blockquote",
+      "sectionId": "ch02-s007",
+      "level": null,
+      "text": "Claim under pressure: P3 says that preselection and visual pressure weaken clear control.\nQuestion: Does presenting one option more prominently interfere with control when the other option remains available and the terms are truthful?"
+    },
+    {
+      "id": "ch02-p0054",
+      "type": "paragraph",
+      "sectionId": "ch02-s007",
+      "level": null,
+      "text": "The question does not prove P3 false. It identifies what the student must explain or support."
+    },
+    {
+      "id": "ch02-s008",
+      "type": "heading",
+      "sectionId": "ch02-s008",
+      "level": 3,
+      "text": "Do the Lines Support the Conclusion?"
+    },
+    {
+      "id": "ch02-p0055",
+      "type": "paragraph",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "An inference is the support relationship between premises and a conclusion. A connection test asks whether the conclusion follows if the premises are granted for the moment."
+    },
+    {
+      "id": "ch02-p0056",
+      "type": "paragraph",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "Suppose the student concludes:"
+    },
+    {
+      "id": "ch02-p0057",
+      "type": "blockquote",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "Therefore, the company deliberately designed the process to trap users for profit."
+    },
+    {
+      "id": "ch02-p0058",
+      "type": "paragraph",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "The premises concern what the design does to user choice. They do not establish why the company selected the design. The argument has moved from a claim about the effects of the interface to a claim about the company's purpose without evidence connecting the two."
+    },
+    {
+      "id": "ch02-p0059",
+      "type": "blockquote",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "Which conclusion follows from the problem the premises have identified?"
+    },
+    {
+      "id": "ch02-p0060",
+      "type": "paragraph",
+      "sectionId": "ch02-s008",
+      "level": null,
+      "text": "If the problem is preselected payment and visual pressure against cancelling, a fitting conclusion addresses those features. The student can require an active renewal choice and comparable clarity between staying and leaving. A conclusion about deliberate intent would require additional evidence."
+    },
+    {
+      "id": "ch02-s009",
+      "type": "heading",
+      "sectionId": "ch02-s009",
+      "level": 3,
+      "text": "Does the Conclusion Say Too Much?"
+    },
+    {
+      "id": "ch02-p0061",
+      "type": "paragraph",
+      "sectionId": "ch02-s009",
+      "level": null,
+      "text": "A scope test asks whether the conclusion covers more people, actions, systems, or cases than the premises support."
+    },
+    {
+      "id": "ch02-p0062",
+      "type": "paragraph",
+      "sectionId": "ch02-s009",
+      "level": null,
+      "text": "Compare these conclusions:"
+    },
+    {
+      "id": "ch02-p0063",
+      "type": "blockquote",
+      "sectionId": "ch02-s009",
+      "level": null,
+      "text": "Every free trial is manipulative and unethical.\nAn app should require active renewal when a free trial becomes an annual paid subscription and should present cancellation options as clearly as options to remain subscribed."
+    },
+    {
+      "id": "ch02-p0064",
+      "type": "paragraph",
+      "sectionId": "ch02-s009",
+      "level": null,
+      "text": "The first conclusion reaches every free trial. The second identifies the combination of features examined in the argument. A narrower conclusion can be stronger because its claims remain within the reach of its reasons."
+    },
+    {
+      "id": "ch02-p0065",
+      "type": "paragraph",
+      "sectionId": "ch02-s009",
+      "level": null,
+      "text": "Premise, connection, and scope pressures can overlap. A broad conclusion may reveal a missing premise. A disputed bridge may expose a weak connection. You do not need to assign every possible label. Identify the first point that requires an answer."
+    },
+    {
+      "id": "ch02-s010",
+      "type": "heading",
+      "sectionId": "ch02-s010",
+      "level": 3,
+      "text": "Give the Argument a Serious Objection"
+    },
+    {
+      "id": "ch02-p0066",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The company offers this defense:"
+    },
+    {
+      "id": "ch02-p0067",
+      "type": "blockquote",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The price and renewal date are disclosed before enrollment. Users remain capable of cancelling. Adults are responsible for reading agreements and managing subscriptions. Some cancellation steps may also authenticate the account, identify the correct subscription, or prevent an accidental cancellation. Friction and manipulation are not the same thing."
+    },
+    {
+      "id": "ch02-p0068",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "This objection grants much of P2. It does not deny that renewal is preselected or that cancellation takes five screens. It pressures P3, which connects those features with weakened control. It also pressures the scope of any conclusion that condemns every additional cancellation step."
+    },
+    {
+      "id": "ch02-p0069",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The objection deserves a direct response. The student has four main choices."
+    },
+    {
+      "id": "ch02-p0070",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Defend. The student can keep the challenged line and explain why the objection fails. They might argue that disclosure does not remove the effects of a default or repeated visual pressure, especially when the company presents continued payment as the easiest path."
+    },
+    {
+      "id": "ch02-p0071",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Revise. The student can change a premise so it states the reason more accurately. They might distinguish steps needed for security from repeated prompts designed to discourage cancellation."
+    },
+    {
+      "id": "ch02-p0072",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Narrow. The student can reduce the conclusion to the cases the reasons support. They might limit the judgment to annual renewal that is preselected and paired with visually unequal cancellation choices."
+    },
+    {
+      "id": "ch02-p0073",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Concede. The student can accept that a premise, connection, or part of the conclusion has failed. They may concede that the fictional case does not establish deliberate manipulation while retaining a more limited objection to the design."
+    },
+    {
+      "id": "ch02-p0074",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The four choices do not represent grades. Defending a premise can be thoughtful or evasive. Conceding part of a claim can improve the argument when the original reasons did not support it. The student must explain why the chosen response fits the pressure."
+    },
+    {
+      "id": "ch02-p0075",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Here is one repair."
+    },
+    {
+      "id": "ch02-p0076",
+      "type": "aside",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Worked Repair: One Conclusion Before and After Pressure\nBefore pressure: Every free trial that renews automatically is manipulative and unethical, and companies should eliminate every additional cancellation screen.\nAfter pressure: An app should require active renewal before beginning an annual paid subscription and should present the options to keep or cancel with comparable clarity. Steps genuinely needed to authenticate the user, identify the subscription, or confirm the end date may remain when they do not repeatedly pressure the user to stay."
+    },
+    {
+      "id": "ch02-p0077",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The revised conclusion makes two changes. It removes the unsupported claim that every automatically renewing trial is manipulative. It also distinguishes legitimate security and confirmation steps from repeated visual pressure against cancellation. The student has narrowed the scope and revised the proposed remedy."
+    },
+    {
+      "id": "ch02-p0078",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The student should make that decision visible:"
+    },
+    {
+      "id": "ch02-p0079",
+      "type": "blockquote",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Judgment Note: The objection pressured my claim that every extra cancellation step interferes with user control. I kept my concern about preselected annual renewal and repeated visual pressure, but I narrowed the conclusion to exclude steps genuinely needed for security or confirmation. The fictional case does not establish the company's intent, so I also removed the stronger accusation of deliberate manipulation."
+    },
+    {
+      "id": "ch02-p0080",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The note records which claim changed, why it changed, and what evidence remains missing. This is the metacognitive work introduced in Chapter 1: the student notices the exact point where an objection affects the argument and decides whether to defend, revise, narrow, or concede."
+    },
+    {
+      "id": "ch02-p0081",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Test the revision with a nearby case. Suppose cancellation takes three screens. One authenticates the account holder, one identifies the subscription, and one confirms the end date. Each screen presents Keep and Cancel with comparable visibility and does not ask the user repeatedly to reverse the decision."
+    },
+    {
+      "id": "ch02-p0082",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "The repaired conclusion permits those steps. It gives a reason for treating them differently from the five-screen case. The revision can guide a new judgment instead of changing whenever a difficult example appears."
+    },
+    {
+      "id": "ch02-p0083",
+      "type": "paragraph",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Henry Richardson's account of moral reasoning explains why this kind of revision belongs in ethics. Applying a general moral reason requires deciding which details matter and what the reason means in this case. A difficult example may show that the reason needs a more precise limit. The judgment note lets a reader see the limit the student added and the reason for adding it."
+    },
+    {
+      "id": "ch02-p0084",
+      "type": "aside",
+      "sectionId": "ch02-s010",
+      "level": null,
+      "text": "Try It: Identify the Repair\nA student begins with “Every automated renewal is unethical.” A critic responds, “A monthly subscription that sends a clear reminder and can be cancelled in one click does not create the same problem.” After considering active consent, disclosure, and different subscription periods, the student changes the conclusion to “Annual renewal should require an active choice after a free trial.”\nName the exact claim under pressure. Then write two complete sentences: one explaining whether the student defended, revised, narrowed, or conceded, and one explaining which words show the change."
+    },
+    {
+      "id": "ch02-s011",
+      "type": "heading",
+      "sectionId": "ch02-s011",
+      "level": 2,
+      "text": "Try the Whole Method"
+    },
+    {
+      "id": "ch02-p0085",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "A concert platform offers different prices for the same seat. Its model predicts willingness to pay from browsing behavior, device type, location, and past purchases. The platform discloses that prices may vary, but it does not tell users which features affected an offered price. Two people sitting beside one another may receive different prices for the same seat."
+    },
+    {
+      "id": "ch02-p0086",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "Use this policy question: Should the platform tell users which kinds of personal data affected the price they were offered? You may choose one of the other issues in the case if you can state it as an equally narrow question."
+    },
+    {
+      "id": "ch02-p0087",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "Complete the method on your own. Keep the entire response under 200 words."
+    },
+    {
+      "id": "ch02-p0088",
+      "type": "code",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "My first judgment:\nP1:\nP2:\nC:\nMissing because-step, if needed:\nObjection or pressure question:\nExact line under pressure:\nWhy this is the strongest pressure point:\nMy repair:\nWhat changed and why:"
+    },
+    {
+      "id": "ch02-p0089",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "Begin with the judgment you currently make. Use P1 / P2 / C to show the main reason and facts. If you need help beginning, you may test this possible first premise: Platforms should tell users when personal data affects the price they are offered. Add a because-step only when someone could accept the visible lines and still reasonably resist the conclusion. Then write one objection or pressure question, name the exact line it reaches, and decide whether to defend, revise, narrow, or concede."
+    },
+    {
+      "id": "ch02-p0090",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "The final line should explain the decision in your reasoning. A sentence such as I changed P1 because the objection showed that... provides more information than I made the argument stronger. Identify the actual premise, connection, or scope decision."
+    },
+    {
+      "id": "ch02-p0091",
+      "type": "paragraph",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "This practice prepares the argument work you will do later in PHIL 123. Each ethical framework will give you different standards to test. One may ask what kind of character a repeated practice develops; another may ask who is helped or harmed. In every case, you will still need to state the standard, connect it with the facts, respond to pressure, and explain the judgment you made."
+    },
+    {
+      "id": "ch02-p0092",
+      "type": "aside",
+      "sectionId": "ch02-s011",
+      "level": null,
+      "text": "Key Takeaways\nBegin with an ordinary judgment you can state in one sentence.\nUse P1 / P2 / C to show the main moral reason, relevant facts, and conclusion.\nAdd a bridge when the facts do not yet explain why the moral standard applies.\nPressure one exact premise, connection, or scope decision.\nDefend, revise, narrow, or concede, then state what changed and why."
+    },
+    {
+      "id": "ch02-s012",
+      "type": "heading",
+      "sectionId": "ch02-s012",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "id": "ch02-p0093",
+      "type": "list",
+      "sectionId": "ch02-s012",
+      "level": null,
+      "text": "Gladd, J. (2026). Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility. Used for the course handoff concerning visible judgment, pressure-testing, metacognition, and intellectual responsibility.\nInternet Encyclopedia of Philosophy. Validity and Soundness. Used for the compact distinction between a valid deductive structure and a sound argument with true premises.\nRichardson, H. S. (2018). Moral Reasoning. Stanford Encyclopedia of Philosophy. Used for moral reasoning as revisable practical judgment involving relevance, interpretation, conflict, and specification.\nSwartwood, J., & Stoner, I. (2021). Doing Practical Ethics, sample Chapter 5. Oxford University Press. Used for principle, case, and conclusion as one useful starting structure for practical ethics.\nWilson, D. C. (2020). What Makes an Argument?. In A Guide to Good Reasoning: Cultivating Intellectual Virtues. Used for premise-count flexibility."
+    }
+  ]
+}

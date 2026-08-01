@@ -1,0 +1,31 @@
+# Dependencies and generated output
+node_modules/
+dist/
+.astro/
+coverage/
+
+# Cloudflare local state
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary local artifacts
+*.log
+tmp/
+.cache/

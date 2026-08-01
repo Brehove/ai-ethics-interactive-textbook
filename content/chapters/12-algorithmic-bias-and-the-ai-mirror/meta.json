@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch12",
+  "contentKey": "12-algorithmic-bias-and-the-ai-mirror",
+  "slug": "algorithmic-bias-and-the-ai-mirror",
+  "title": "Algorithmic Bias and the AI Mirror: When Prediction Becomes an Opportunity Gate",
+  "subtitle": null,
+  "description": "An adviser at a community college opens a student-success dashboard on Monday morning. Each student appears next to a color-coded risk score built by an AI system trained on years of grades, financial-aid patterns,…",
+  "order": 12,
+  "part": {
+    "id": "part-04",
+    "order": 4,
+    "chapterOrder": 2,
+    "title": "Data, Bias, and Delegated Judgment",
+    "slug": "data-bias-and-delegated-judgment"
+  },
+  "path": "/chapter/algorithmic-bias-and-the-ai-mirror/",
+  "wordCount": 9876,
+  "readingMinutes": 44,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/algorithmic-bias-and-the-ai-mirror/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 47,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
+      "deploymentSha256": "0514c0620575dbdf27c70ae07f424145b7d59026e27a823d099dffbe88a050fb",
+      "publishedAt": "2026-08-01T09:39:18-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
+    "canonicalMarkdownSha256": "c3207b81e9b00fcd0766afb4d02ba1ce9424d8119a154962f8616f78446f3032",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

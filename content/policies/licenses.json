@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "prose": {
+    "spdx": "CC-BY-4.0",
+    "name": "Creative Commons Attribution 4.0 International",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "code": {
+    "spdx": "MIT",
+    "name": "MIT License",
+    "appliesTo": ["Application source code", "Build scripts", "Validators"]
+  },
+  "originalMetadata": {
+    "spdx": "CC0-1.0",
+    "name": "CC0 1.0 Universal",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "appliesTo": ["Original entity records", "Original source-link metadata", "Original structural metadata"]
+  },
+  "thirdPartyRule": "A third-party item keeps its own rights status. Every exception must have an item-level record in content/rights/registry.json and be referenced by the chapter that uses it."
+}

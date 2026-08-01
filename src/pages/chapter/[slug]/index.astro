@@ -1,0 +1,35 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+import ReaderShell from "../../../components/ReaderShell.astro";
+import { getChapterSlugs, requireChapter } from "../../../lib/content";
+
+export async function getStaticPaths() {
+  return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
+}
+
+const chapter = await requireChapter(Astro.params.slug!);
+const { meta, Content, headings, previous, next } = chapter;
+---
+
+<SiteLayout title={meta.title} description={meta.description} chapterNumber={meta.order} canonicalPath={meta.path}>
+  <ReaderShell
+    slug={meta.slug}
+    title={meta.title}
+    partTitle={meta.part.title}
+    chapterNumber={meta.order}
+    readingMinutes={meta.readingMinutes}
+    headings={headings}
+    active="first"
+    pressbooksUrl={meta.pressbooksUrl}
+    previous={previous}
+    next={next}
+  >
+    <div class="chapter-prose first-read">
+      <Content />
+    </div>
+  </ReaderShell>
+</SiteLayout>
+
+<style>
+  .first-read :global(h1) { margin-top: 0.3rem; }
+</style>

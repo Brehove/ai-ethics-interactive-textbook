@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch07",
+  "contentKey": "07-aristotle-character-and-ai-assisted-life",
+  "slug": "aristotle-character-and-ai-assisted-life",
+  "title": "What Are You Becoming? Aristotle, Character, and AI-Assisted Life",
+  "subtitle": null,
+  "description": "You said something cruel to a friend on Thursday night. By Friday morning you know you have to apologize. You sit down to write the message, and every draft comes out defensive, tangled, half-blaming her for making…",
+  "order": 7,
+  "part": {
+    "id": "part-02",
+    "order": 2,
+    "chapterOrder": 3,
+    "title": "Moral Authority, Character, and Practical Wisdom",
+    "slug": "moral-authority-character-and-practical-wisdom"
+  },
+  "path": "/chapter/aristotle-character-and-ai-assisted-life/",
+  "wordCount": 6568,
+  "readingMinutes": 30,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/aristotle-character-and-ai-assisted-life/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 35,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",
+      "deploymentSha256": "d02f5db4fd32cba5c69886be00711a1d6a541e2a2b5605c88c1aa0a2b413ec2a",
+      "publishedAt": "2026-07-17T15:46:01-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",
+    "canonicalMarkdownSha256": "bbcb0eeeb92cf6b7df17b8a2d39c61798cc432e96c1a77eb949b4fe86ea020c8",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

@@ -1,0 +1,162 @@
+name: Validate and build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-boundary:
+    name: Public boundary, symlink, and secret audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Audit every tracked file
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+
+          const tracked = execFileSync("git", ["ls-files", "-z"])
+            .toString("utf8")
+            .split("\0")
+            .filter(Boolean);
+          const indexed = execFileSync("git", ["ls-files", "-s", "-z"])
+            .toString("utf8")
+            .split("\0")
+            .filter(Boolean);
+          const violations = [];
+
+          for (const entry of indexed) {
+            const [metadata, path] = entry.split("\t");
+            if (metadata?.startsWith("120000 ")) {
+              violations.push(`${path}: symbolic links are not allowed`);
+            }
+          }
+
+          const forbiddenPath = new RegExp(
+            "(^|/)(?:" +
+              [
+                "\\.env(?:\\.|$)",
+                "\\.dev\\.vars(?:\\.|$)",
+                "submissions?",
+                "grade(?:s|book)?",
+                "rosters?",
+                "Faculty" + "-Resources",
+                "\\.canvas" + "-config(?:\\.yaml)?",
+                "[^/]*(?:backup|private|secret)[^/]*\\.(?:zip|tar|tgz|json|ya?ml|csv)"
+              ].join("|") +
+              ")($|/)"
+          , "i");
+
+          const privateTextPatterns = [
+            [new RegExp("/" + "Users" + "/"), "macOS home path"],
+            [new RegExp("/" + "home" + "/[^/\\s]+/"), "Linux home path"],
+            [new RegExp("[A-Za-z]:\\\\" + "Users" + "\\\\", "i"), "Windows home path"],
+            [new RegExp("Obsidian" + " Vault", "i"), "private Obsidian path"],
+            [new RegExp("Library/" + "CloudStorage", "i"), "private cloud-storage path"],
+            [new RegExp("OneDrive" + "-(?:College|SharedLibraries)", "i"), "private OneDrive path"],
+            [new RegExp("Workspaces/" + "clerk", "i"), "private Clerk path"],
+            [new RegExp("BEGIN " + "(?:RSA |EC |OPENSSH )?PRIVATE KEY"), "private key"],
+            [new RegExp("\\b" + "github" + "_pat_[A-Za-z0-9_]{20,}"), "GitHub token"],
+            [new RegExp("\\b" + "gh" + "[pousr]_[A-Za-z0-9]{20,}"), "GitHub token"],
+            [new RegExp("\\b" + "sk" + "-[A-Za-z0-9_-]{24,}"), "API token"]
+          ];
+
+          const secretNames = [
+            "GITHUB_APP_CLIENT_" + "SECRET",
+            "GITHUB_APP_PRIVATE_" + "KEY",
+            "EDITOR_SESSION_" + "SECRET",
+            "CLOUDFLARE_API_" + "TOKEN"
+          ];
+          const literalSecret = new RegExp(
+            `(?:${secretNames.join("|")})\\s*[:=]\\s*["'](?!<|REPLACE|\\$\\{|process\\.env)[^"']{8,}["']`,
+            "i"
+          );
+
+          for (const path of tracked) {
+            if (forbiddenPath.test(path)) {
+              violations.push(`${path}: forbidden private or credential-shaped path`);
+            }
+
+            const stat = fs.lstatSync(path);
+            if (stat.isSymbolicLink()) {
+              violations.push(`${path}: symbolic links are not allowed`);
+              continue;
+            }
+            if (!stat.isFile()) continue;
+            if (stat.size > 5 * 1024 * 1024) {
+              violations.push(`${path}: tracked file exceeds the 5 MiB public-repository cap`);
+              continue;
+            }
+
+            const bytes = fs.readFileSync(path);
+            if (bytes.includes(0)) continue;
+            const text = bytes.toString("utf8");
+            for (const [pattern, label] of privateTextPatterns) {
+              if (pattern.test(text)) violations.push(`${path}: contains a ${label}`);
+            }
+            if (literalSecret.test(text)) {
+              violations.push(`${path}: appears to assign a literal secret`);
+            }
+          }
+
+          if (violations.length) {
+            console.error("Public-boundary audit failed:\n" + violations.map((v) => `- ${v}`).join("\n"));
+            process.exit(1);
+          }
+          console.log(`Public-boundary audit passed for ${tracked.length} tracked files.`);
+          NODE
+
+  validate-build:
+    name: Astro, editor security tests, and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - public-boundary
+    steps:
+      - name: Check out without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Use the repository-pinned Node release
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+
+      - name: Validate content, types, and editor security boundaries
+        run: npm run validate
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+
+      - name: Build the static reader
+        run: npm run build
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+
+      - name: Bundle both Cloudflare targets without deploying
+        run: |
+          npx wrangler deploy --dry-run
+          npx wrangler deploy --dry-run --config workers/editor-auth/wrangler.jsonc

@@ -1,0 +1,18 @@
+Creative Commons Attribution 4.0 International
+SPDX-License-Identifier: CC-BY-4.0
+
+Original textbook prose covered by this notice may be shared and adapted for
+any purpose, provided appropriate credit is given, a link to the license is
+provided, and changes are indicated. No additional legal or technological
+restrictions may be applied to the licensed material.
+
+License deed and legal code:
+https://creativecommons.org/licenses/by/4.0/
+
+Suggested attribution:
+
+AI Ethics Interactive Textbook, Joel Gladd, licensed CC BY 4.0. Include the
+canonical chapter URL and indicate whether the text was modified.
+
+This notice does not cover third-party works identified in item-level rights
+records.

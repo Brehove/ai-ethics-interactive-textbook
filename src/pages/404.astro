@@ -1,0 +1,17 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Page not found" noindex>
+  <main id="main-content" class="missing site-width">
+    <p class="eyebrow">404 · Page not found</p>
+    <h1>This path leaves the argument unfinished.</h1>
+    <p>The page may have moved, or the address may contain an error.</p>
+    <p><a class="action-link" href="/contents/">Open the textbook contents</a></p>
+  </main>
+</SiteLayout>
+
+<style>
+  .missing { max-width: 52rem; padding-block: clamp(4rem, 12vw, 10rem); }
+  h1 { margin: 0.5rem 0 1rem; font-size: clamp(2.7rem, 8vw, 5rem); font-weight: 500; line-height: 1; letter-spacing: -0.045em; }
+</style>

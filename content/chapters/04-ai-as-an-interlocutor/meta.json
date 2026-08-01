@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch04",
+  "contentKey": "04-ai-as-an-interlocutor",
+  "slug": "ai-as-an-interlocutor",
+  "title": "AI as an Interlocutor in Philosophical Work",
+  "subtitle": null,
+  "description": "Philosophers often develop ideas through dialogue. A conversation partner can ask for a reason, question an assumption, offer a counterexample, or show that a conclusion reaches beyond its support. Language models…",
+  "order": 4,
+  "part": {
+    "id": "part-01",
+    "order": 1,
+    "chapterOrder": 4,
+    "title": "Philosophical Practice and AI",
+    "slug": "philosophical-practice-and-ai"
+  },
+  "path": "/chapter/ai-as-an-interlocutor/",
+  "wordCount": 4373,
+  "readingMinutes": 20,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/ai-as-an-interlocutor/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 28,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
+      "deploymentSha256": "84691a52ecc4b8aacddc7be7cdb1a437d4ec55c5316f83cf869d810a555e5e9e",
+      "publishedAt": "2026-07-22T08:17:39-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
+    "canonicalMarkdownSha256": "ec51728bba7ae63de54fc0a2f7f78f8bb3cae80d50dc04d2bf313d0789e2658e",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

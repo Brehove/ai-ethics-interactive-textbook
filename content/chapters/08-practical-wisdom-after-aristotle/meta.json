@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch08",
+  "contentKey": "08-practical-wisdom-after-aristotle",
+  "slug": "practical-wisdom-after-aristotle",
+  "title": "Practical Wisdom After Aristotle: Vallor, Askell, and the Problem of Machine Judgment",
+  "subtitle": null,
+  "description": "Imagine a student named Maya applying to a competitive nursing program. The application asks for a personal statement about a time she cared for someone during a hard stretch. She wants to write about her…",
+  "order": 8,
+  "part": {
+    "id": "part-02",
+    "order": 2,
+    "chapterOrder": 4,
+    "title": "Moral Authority, Character, and Practical Wisdom",
+    "slug": "moral-authority-character-and-practical-wisdom"
+  },
+  "path": "/chapter/practical-wisdom-after-aristotle/",
+  "wordCount": 6805,
+  "readingMinutes": 31,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/practical-wisdom-after-aristotle/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 37,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "b97f34feb63d36a83e02543a5d99918b139a6d818998f20504b17113715fcf44",
+      "deploymentSha256": "d415fc177e13398db1d31e081053d0b73df112fe8eadcf7c9489d8d2fbca5818",
+      "publishedAt": "2026-07-17T15:46:04-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "b97f34feb63d36a83e02543a5d99918b139a6d818998f20504b17113715fcf44",
+    "canonicalMarkdownSha256": "8e8fa2c2afcfe25b345a410f84a8b04ad22295b7a59ae4ff9a324e317a9b6be0",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

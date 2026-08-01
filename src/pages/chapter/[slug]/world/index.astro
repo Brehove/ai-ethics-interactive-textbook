@@ -1,0 +1,55 @@
+---
+import SiteLayout from "../../../../layouts/SiteLayout.astro";
+import ReaderShell from "../../../../components/ReaderShell.astro";
+import LayerIntro from "../../../../components/LayerIntro.astro";
+import { getChapterSlugs, requireChapter } from "../../../../lib/content";
+
+export async function getStaticPaths() {
+  return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
+}
+
+const chapter = await requireChapter(Astro.params.slug!);
+const { meta, headings, world, previous, next } = chapter;
+const people = Array.isArray(world?.people) ? world.people : [];
+const concepts = Array.isArray(world?.concepts) ? world.concepts : [];
+const traditions = Array.isArray(world?.traditions) ? world.traditions : [];
+const hasRecords = people.length + concepts.length + traditions.length > 0;
+---
+
+<SiteLayout title={`World · ${meta.title}`} description={`People, concepts, and traditions surrounding ${meta.title}.`} chapterNumber={meta.order} canonicalPath={`${meta.path}world/`}>
+  <ReaderShell
+    slug={meta.slug}
+    title={meta.title}
+    partTitle={meta.part.title}
+    chapterNumber={meta.order}
+    readingMinutes={meta.readingMinutes}
+    headings={headings}
+    active="world"
+    pressbooksUrl={meta.pressbooksUrl}
+    previous={previous}
+    next={next}
+  >
+    <LayerIntro eyebrow="World" title="Ideas have histories" description="The World layer situates the chapter's people, concepts, texts, and traditions so context sharpens rather than replaces philosophical reading." />
+    {hasRecords ? (
+      <div class="world-grid">
+        {people.map((item: any) => <article><p class="eyebrow">Person</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
+        {concepts.map((item: any) => <article><p class="eyebrow">Concept</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
+        {traditions.map((item: any) => <article><p class="eyebrow">Tradition</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
+      </div>
+    ) : (
+      <section class="world-empty">
+        <h2>The record is intentionally bounded</h2>
+        <p>The complete chapter is available now. Biographies, intellectual lineages, and rights-cleared images will enter this layer only through reviewed metadata, not a live API call that can silently change the textbook.</p>
+      </section>
+    )}
+  </ReaderShell>
+</SiteLayout>
+
+<style>
+  .world-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: var(--content-width); border-top: 1px solid var(--ink); }
+  article { padding: 1.3rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--wash); }
+  article h2, .world-empty h2 { margin: 0.4rem 0 0.6rem; font-size: 1.35rem; font-weight: 500; }
+  article p:last-child { font-size: 0.9rem; }
+  .world-empty { max-width: var(--content-width); margin: 2rem 0; padding: 1.5rem; border-top: 2px solid var(--ink); background: var(--wash); }
+  @media (max-width: 700px) { .world-grid { grid-template-columns: 1fr; } }
+</style>

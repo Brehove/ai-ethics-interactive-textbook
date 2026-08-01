@@ -1,0 +1,33 @@
+{
+  "name": "ai-ethics-interactive-textbook",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "npm run dev",
+    "check": "astro check",
+    "build": "astro build && node scripts/finalize-offline-downloads.mjs",
+    "preview": "astro preview",
+    "content:check": "node scripts/generate-reading.mjs --all --check",
+    "content:generate": "node scripts/generate-reading.mjs --all --write",
+    "audit:public": "node scripts/audit-public-boundary.mjs",
+    "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && node scripts/validate-pressbooks.mjs",
+    "test": "npm run test:editor-auth",
+    "test:editor-auth": "node --test --test-reporter=spec workers/editor-auth/test/*.test.mjs",
+    "validate": "npm run audit:public && npm run content:check && npm run validate:content && npm run check && npm run test:editor-auth",
+    "deploy:reader": "wrangler deploy",
+    "deploy:editor-auth": "wrangler deploy --config workers/editor-auth/wrangler.jsonc"
+  },
+  "dependencies": {
+    "astro": "7.1.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3",
+    "wrangler": "4.118.0"
+  }
+}

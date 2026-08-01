@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch11",
+  "contentKey": "11-from-data-trails-to-ai-systems",
+  "slug": "from-data-trails-to-ai-systems",
+  "title": "From Data Trails to AI Systems: How Human Activity Becomes Prediction, Automation, and Generation",
+  "subtitle": null,
+  "description": "Rosa opens Canvas on her phone during a break at work. She checks the deadline for a philosophy discussion, downloads the reading, and closes the app before the page finishes loading. Later that night she watches…",
+  "order": 11,
+  "part": {
+    "id": "part-04",
+    "order": 4,
+    "chapterOrder": 1,
+    "title": "Data, Bias, and Delegated Judgment",
+    "slug": "data-bias-and-delegated-judgment"
+  },
+  "path": "/chapter/from-data-trails-to-ai-systems/",
+  "wordCount": 8054,
+  "readingMinutes": 36,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/from-data-trails-to-ai-systems/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 45,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",
+      "deploymentSha256": "0770e1241014dbdcd502b78c48b8554bbb93c607198bfa297b6578b106b622d5",
+      "publishedAt": "2026-07-17T15:46:11-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",
+    "canonicalMarkdownSha256": "2d423258c9bbca407fe17efa27e6431bfcac3ba1b3fa3d21b73907fd408b7087",
+    "reconciliationTransformations": [],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

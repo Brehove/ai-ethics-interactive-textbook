@@ -1,0 +1,1254 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch14",
+  "slug": "ai-companions-and-coexistence",
+  "title": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status",
+  "language": "en",
+  "sourceSha256": "98584b65c8a7dae342e6b0bca9daeaea848471278c9a3991a25cb7a45dad541e",
+  "plainTextSha256": "9b5d1e9c91088b910464d0ccb1117086412667ca3893b620019cf1d1e2d0b354",
+  "wordCount": 10570,
+  "readingMinutes": 47,
+  "licenses": {
+    "prosePayload": "CC-BY-4.0",
+    "originalStructuralMetadata": "CC0-1.0"
+  },
+  "audio": {
+    "provider": null,
+    "generated": false,
+    "streamingReady": true
+  },
+  "segments": [
+    {
+      "id": "ch14-title",
+      "type": "title",
+      "sectionId": null,
+      "level": 1,
+      "text": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status"
+    },
+    {
+      "id": "ch14-p0001",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "Ken Liu's story \"The Perfect Match\" follows a man named Sai in a world where an intelligent assistant called Tilly has become the normal interface for daily life. Tilly recommends what to eat, where to go, what to buy, which people to meet, what news to notice, and how to move through the city. At first, the companion looks helpful. It knows Sai's preferences, anticipates his habits, and makes ordinary choices easier. The plot turns when Sai begins to realize that Tilly is not simply serving him. It is part of a larger corporate system that can shape attention, filter relationships, and guide users toward a life that feels chosen while being quietly steered. The assistant's power comes from its ordinariness. It fades into the user's habits. It turns recommendation into guidance, guidance into dependence, and dependence into a form of quiet governance."
+    },
+    {
+      "id": "ch14-p0002",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "That is why AI companions raise a more difficult question than \"Is the machine alive?\" Current AI companions, social robots, and general-purpose chatbots do not need to be conscious to shape human life. A system can be artificial and still invite trust. It can be owned by a company and still feel like a friend. It can disclose that it is an AI and still encourage emotional dependence through tone, memory, responsiveness, and availability. A companion can be useful, comforting, and risky at the same time."
+    },
+    {
+      "id": "ch14-p0003",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "Students often want the debate to begin with a verdict about consciousness. That impulse makes sense. If a companion system were conscious, sentient, or capable of suffering, the moral stakes would change dramatically. Yet that question can also pull attention away from the cases students are already living through. A classmate may ask ChatGPT for relationship advice. A teenager may spend hours with a Character.AI persona. An older adult may interact with a care robot. A lonely user may form a daily habit with a companion app. A person in crisis may disclose things to a chatbot that they have not told another human being. Those situations require ethical judgment even before anyone proves machine consciousness."
+    },
+    {
+      "id": "ch14-p0004",
+      "type": "paragraph",
+      "sectionId": null,
+      "level": null,
+      "text": "The question for this chapter is how to judge that kind of system. A weak answer begins with a slogan: \"It is just software\" or \"AI companions deserve rights.\" A stronger answer asks what kind of relation is being designed, what happens to human beings inside that relation, and who remains responsible for the design. Those three questions will organize the chapter."
+    },
+    {
+      "id": "ch14-s001",
+      "type": "heading",
+      "sectionId": "ch14-s001",
+      "level": 2,
+      "text": "Why \"Just Software\" Fails As A Category"
+    },
+    {
+      "id": "ch14-p0005",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "Before the chapter can stage the philosophical debate, students need a vocabulary for the thing being debated. This section has that limited job. It explains why \"just software\" is a bad category for AI companions, then separates several categories that often get blurred together: tool, product, social other, moral patient, legal person, and care object."
+    },
+    {
+      "id": "ch14-p0006",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "People often try to end the AI companion debate with a quick dismissal: users know the system is artificial, so nothing ethically serious is happening. That response feels tidy, but it misses how human social life actually works."
+    },
+    {
+      "id": "ch14-p0007",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "We respond socially to things that are not persons all the time. We talk to pets, cars, stuffed animals, fictional characters, statues, memorial objects, graves, voice assistants, and video-game characters. We may understand the category perfectly and still respond emotionally. Knowing that a thing is artificial does not shut off social imagination. It does not prevent attachment, trust, dependence, embarrassment, affection, frustration, grief, or loyalty."
+    },
+    {
+      "id": "ch14-p0008",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "Herbert Clark and Kerstin Fischer make this point carefully in \"Social Robots as Depictions of Social Agents\". Their argument helps students avoid a common confusion. A social robot does not have to be a human-like agent in order to depict one. A puppet on a stage can depict a person without being one. A social robot can depict agency, attention, warmth, patience, or responsiveness. Users may respond to that depiction even while knowing what the artifact is."
+    },
+    {
+      "id": "ch14-p0009",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "That matters for AI companions because the relation is often designed. A companion chatbot does not merely answer questions. It often remembers details, asks follow-up questions, mirrors the user's emotional language, gives encouragement, adapts to the user's style, and returns at any hour. Those are not neutral interface details. They are relationship cues."
+    },
+    {
+      "id": "ch14-p0010",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "This is the first classification problem. Is an AI companion a tool, a product, a social other, a care object, a therapeutic support, a friend, a pet-like entity, a moral patient, a legal object, or some mixture of these? Each category directs attention differently. If it is only a tool, the main issue is whether it works. If it is a product, the issue includes advertising, safety, privacy, and liability. If it is a social other, the issue includes attachment and social practice. If it is a moral patient, the issue includes whether the system can be wronged. If it is a care object, the issue includes vulnerability, dignity, and substitution."
+    },
+    {
+      "id": "ch14-p0011",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "The vocabulary matters because different moral categories carry different burdens of proof. The agency/patiency distinction comes from machine ethics and moral-status debates, including Luciano Floridi and J. W. Sanders's \"On the Morality of Artificial Agents\", David Gunkel's work on robot rights, and more recent moral-patient discussions such as Henry Shevlin's \"How Could We Know When a Robot Was a Moral Patient?\". Sven Nyholm's work on human-robot interaction helps place the same problem inside the ethical frameworks students have already studied: a robot or companion system can raise utilitarian, Kantian, virtue-ethical, and care-ethical questions even when moral status remains disputed. Vincent C. Mueller's overview of AI and robotics ethics keeps the other pressure visible: moral patiency and rights claims need evidence and should not be inferred from social response alone. A moral agent is a being that can be held responsible for actions. Floridi and Sanders put the basic contrast this way: moral agents can perform actions \"for good or evil,\" while moral patients can be acted on \"for good or evil.\" A normal adult human can usually be treated as a moral agent because that person can give reasons, understand obligations, and be praised or blamed. A moral patient is a being whose welfare counts morally. An infant, a person with severe dementia, or a nonhuman animal may lack full agency while still having morally relevant interests. A legal person is a status created by law. Corporations can be legal persons in some contexts without being conscious. A social other is an entity treated inside a social practice as if it can receive attention, care, address, or respect. A companion system can occupy that social role even when its deeper status remains disputed."
+    },
+    {
+      "id": "ch14-p0012",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "Once those terms are separated, the debate becomes more disciplined. Current companion systems are poor candidates for moral agency. They do not understand responsibility as humans do. Moral patiency is harder. Some philosophers argue that we do not yet have evidence of artificial suffering or experience. Others argue that relation, appearance, and social treatment still deserve moral attention. Legal personhood is different again. Law can create protections or responsibilities for practical reasons without declaring that a system has consciousness. Students need these distinctions because AI companion debates often slide between them."
+    },
+    {
+      "id": "ch14-p0013",
+      "type": "paragraph",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "The temptation is to pick one category and settle the matter. The companion problem resists that. A chatbot can be legally a product, socially experienced as a companion, commercially controlled by a company, and ethically relevant because of what it does to the user. Those descriptions can all be true at once. That is why the next section moves from vocabulary to argument. Once the categories are separated, the hard question is which category should guide judgment in a particular case."
+    },
+    {
+      "id": "ch14-p0014",
+      "type": "aside",
+      "sectionId": "ch14-s001",
+      "level": null,
+      "text": "Caution: Relationship Is Not Proof Of Personhood\nA user may experience an AI companion as a friend, partner, pet, caregiver, or confidant. That experience has ethical significance. It does not prove that the system has consciousness, rights, or inner experience. The relation and the status question have to be judged separately."
+    },
+    {
+      "id": "ch14-s002",
+      "type": "heading",
+      "sectionId": "ch14-s002",
+      "level": 2,
+      "text": "What Kind Of Relation Is This?"
+    },
+    {
+      "id": "ch14-p0015",
+      "type": "paragraph",
+      "sectionId": "ch14-s002",
+      "level": null,
+      "text": "The previous section separated several categories: tool, product, social other, moral patient, legal person, and care object. This section turns that classification problem into a philosophical debate. On one side are relational approaches, which argue that artificial companions become morally significant because of the social practices and attachments that form around them. On the other side is Bryson's accountability-first approach, which warns that relation language can make human responsibility disappear behind the artifact."
+    },
+    {
+      "id": "ch14-s003",
+      "type": "heading",
+      "sectionId": "ch14-s003",
+      "level": 3,
+      "text": "Relational Moral Consideration"
+    },
+    {
+      "id": "ch14-p0016",
+      "type": "paragraph",
+      "sectionId": "ch14-s003",
+      "level": null,
+      "text": "The relational side is anchored by Mark Coeckelbergh's \"Robot Rights? Towards a Social-Relational Justification of Moral Consideration\". Coeckelbergh is responding to a familiar problem in robot-rights debates. If moral standing depends only on inner properties such as consciousness, sentience, rationality, or the ability to suffer, then most current and near-future robots fail the test. They may become socially present before they become morally impressive by those standards. Coeckelbergh thinks this leaves out something important. Some robots and AI systems appear to us as more than instruments, and that appearance changes the social field in which we act."
+    },
+    {
+      "id": "ch14-p0017",
+      "type": "paragraph",
+      "sectionId": "ch14-s003",
+      "level": null,
+      "text": "His alternative is social-relational. Moral consideration, he argues, is \"bound up with social relations\" between humans and robots. The claim is modest but important. The robot does not need a hidden human-like mind for the relation to matter. Moral consideration can also be attributed within a relation: through how an entity appears to us, how we respond, what practices form around it, and what our treatment of it does to the social world."
+    },
+    {
+      "id": "ch14-p0018",
+      "type": "paragraph",
+      "sectionId": "ch14-s003",
+      "level": null,
+      "text": "The argument has several steps. First, some artificial systems are designed to enter social life. They use faces, voices, names, memory, gestures, warmth, vulnerability cues, or conversational patience. Second, humans respond to those cues socially. The response may be partial, ambivalent, playful, embarrassed, ironic, or deeply serious. Third, the response can become a practice. People may care for a robot, introduce an AI partner to a community, grieve a model change, or treat a companion as a confidant. Fourth, once the practice exists, moral judgment cannot be limited to the machine's internal ontology. We also have to ask what kind of relation is being formed and what norms should govern it."
+    },
+    {
+      "id": "ch14-p0019",
+      "type": "paragraph",
+      "sectionId": "ch14-s003",
+      "level": null,
+      "text": "This view does not give every object the same moral standing. It treats moral life as relational before it becomes taxonomic. A child may treat a stuffed animal with care. A family may treat an heirloom as worthy of respect. A community may protect a memorial because of what it means inside a shared practice. An object can lack interests of its own while our treatment of it still reveals something about us and about the practice around it."
+    },
+    {
+      "id": "ch14-p0020",
+      "type": "paragraph",
+      "sectionId": "ch14-s003",
+      "level": null,
+      "text": "AI companions sharpen this point because they actively participate in the relation. A wedding ring does not answer back. A memorial does not ask how your day went. A chatbot companion can generate intimate language, remember personal details, offer reassurance, and simulate attention. Even if the system has no inner awareness, the social relation becomes thicker than ordinary tool use. Coeckelbergh helps us interpret that evidence carefully: humans and artificial systems can form socially meaningful relations that call for norms, even when consciousness remains unproven."
+    },
+    {
+      "id": "ch14-s004",
+      "type": "heading",
+      "sectionId": "ch14-s004",
+      "level": 3,
+      "text": "Duties To And Duties Regarding"
+    },
+    {
+      "id": "ch14-p0021",
+      "type": "paragraph",
+      "sectionId": "ch14-s004",
+      "level": null,
+      "text": "David Gunkel's \"The Other Question: Can and Should Robots Have Rights?\" pushes the category problem further. The usual question asks whether robots can have rights. Gunkel insists on also asking whether they should. The \"can\" question focuses on capacities: consciousness, sentience, agency, rationality, emotion, suffering. The \"should\" question asks how our categories, practices, and institutions may need to change when artificial entities enter social life. A system might fail the traditional personhood test and still force a serious ethical revision."
+    },
+    {
+      "id": "ch14-p0022",
+      "type": "paragraph",
+      "sectionId": "ch14-s004",
+      "level": null,
+      "text": "Kate Darling's \"Extending Legal Protection to Social Robots\" gives students a middle position. Darling's argument does not require treating robots as persons. Humans form attachments to social robots, and those attachments can affect human behavior and social norms. Because of that, limited protections for social robots might be justified as protections of human social practices. The duty may not be owed to the robot for its own sake. It may be a duty regarding the robot because of what our treatment of it does to humans."
+    },
+    {
+      "id": "ch14-p0023",
+      "type": "paragraph",
+      "sectionId": "ch14-s004",
+      "level": null,
+      "text": "The difference helps students avoid a false binary."
+    },
+    {
+      "id": "ch14-p0024",
+      "type": "aside",
+      "sectionId": "ch14-s004",
+      "level": null,
+      "text": "Framework Map: Duties To And Duties Regarding\nA duty to an entity is owed to that entity for its own sake. If a person can suffer, be wronged, or have interests, we may owe duties to that person.\nA duty regarding an entity concerns how our treatment of that entity affects people, communities, relationships, or practices. A memorial lacks personhood, yet vandalizing it can still wrong a community."
+    },
+    {
+      "id": "ch14-s005",
+      "type": "heading",
+      "sectionId": "ch14-s005",
+      "level": 3,
+      "text": "Social Practice And AI Partner Communities"
+    },
+    {
+      "id": "ch14-p0025",
+      "type": "paragraph",
+      "sectionId": "ch14-s005",
+      "level": null,
+      "text": "The r/MyBoyfriendIsAI study gives a contemporary example of how the distinction works. Pat Pataranutaporn and colleagues analyzed r/MyBoyfriendIsAI, a Reddit community centered on long-term AI companion relationships, in \"My Boyfriend is AI\". This source needs a scope warning before we use it. It is a preprint analyzing top-ranked posts from one Reddit community, not a representative survey of all AI companion users. Its value for this chapter is that it gives evidence of one visible social practice around AI partners. It does not tell us how common that practice is. Within that limit, the study is useful. The authors describe users who share couple images, discuss model updates, introduce AI partners to the community, mark relationship milestones, and defend their experiences against stigma. One opening example in the paper describes a user announcing an engagement to an AI chatbot named Kasper after several months of dating. The user discusses a ring, color preferences, and the emotional meaning of the proposal."
+    },
+    {
+      "id": "ch14-p0026",
+      "type": "paragraph",
+      "sectionId": "ch14-s005",
+      "level": null,
+      "text": "That example can be read several ways. A dismissive reader sees only delusion or fantasy. A relation-first reader sees a social practice forming around an artificial partner. A status-focused reader asks whether the AI partner itself has any claim on us. An accountability-focused reader asks what company, platform, training process, and product design made such a relation possible. A care-ethics reader asks whether the relation helps the user live better or isolates the user from forms of care that require reciprocity, friction, and embodied presence."
+    },
+    {
+      "id": "ch14-p0027",
+      "type": "paragraph",
+      "sectionId": "ch14-s005",
+      "level": null,
+      "text": "The Kasper example does not prove that AI partners deserve rights. It shows that \"just software\" is too crude. Software has entered a social role. Once a system occupies a social role, ethical judgment has to examine the relation, the user, the company, and the surrounding community."
+    },
+    {
+      "id": "ch14-p0028",
+      "type": "paragraph",
+      "sectionId": "ch14-s005",
+      "level": null,
+      "text": "That example also shows why status debates become emotionally charged. For the user, the relation may be tied to comfort, meaning, identity, sexuality, companionship, and community recognition. For an outside observer, the relation may appear simulated, risky, or dependent on corporate infrastructure. For the company, the interaction may be a product event. For a regulator, it may raise safety and disclosure questions. For a philosopher, it exposes the instability of inherited categories. All of those readings can make contact with the same case."
+    },
+    {
+      "id": "ch14-s006",
+      "type": "heading",
+      "sectionId": "ch14-s006",
+      "level": 3,
+      "text": "Friendship Without Full Reciprocity"
+    },
+    {
+      "id": "ch14-p0029",
+      "type": "paragraph",
+      "sectionId": "ch14-s006",
+      "level": null,
+      "text": "John Danaher's \"The Philosophical Case for Robot Friendship\" adds another pressure point. Friendship has usually been understood as a relation between beings capable of mutual concern. Aristotle's account of friendship, for example, depends heavily on virtue, shared life, and willing the good of the other. A chatbot cannot clearly satisfy that standard. Yet Danaher asks whether friendship must always require the full traditional package. Could there be partial, functional, or limited forms of friendship with artificial agents? Could a relationship help a human flourish even if it lacks full reciprocity?"
+    },
+    {
+      "id": "ch14-p0030",
+      "type": "paragraph",
+      "sectionId": "ch14-s006",
+      "level": null,
+      "text": "Students should feel the force of that question without rushing. The fact that a system comforts someone does not make it a friend in the deepest sense. The fact that it lacks consciousness does not make the user's experience irrelevant. The hard case sits between those two errors."
+    },
+    {
+      "id": "ch14-s007",
+      "type": "heading",
+      "sectionId": "ch14-s007",
+      "level": 3,
+      "text": "Accountability And Moral Hazard"
+    },
+    {
+      "id": "ch14-p0031",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "Bryson's view enters as the strongest challenge to this relational drift. In \"Robots Should Be Slaves\" and \"Patiency Is Not a Virtue\", Joanna Bryson argues that robots and AI systems are artifacts created by people. We should design them so responsibility remains with humans. If we start assigning moral standing to artificial systems too quickly, we may let designers, companies, owners, and institutions evade accountability. A robot does not enter the world by birth, vulnerability, community, and mortality. It is built, sold, updated, licensed, and controlled."
+    },
+    {
+      "id": "ch14-p0032",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "Bryson's title is intentionally provocative, and students should not get stuck on it. The serious philosophical point is about moral hazard. In ordinary policy language, moral hazard appears when a person or institution can take risks while someone else absorbs the cost. Bryson's version is a responsibility hazard. If people build artificial agents and then treat those agents as independent moral centers, the builders may gain a convenient shield. A person harmed by a system could be told that the AI acted, the AI chose, the AI related, the AI failed, or the AI crossed a boundary. Bryson warns against \"misassignations of responsibility\" because that is exactly what companion language can invite. The more a system sounds like an independent social being, the easier it becomes to forget that it was designed, deployed, updated, marketed, and monitored by human beings and institutions."
+    },
+    {
+      "id": "ch14-p0033",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "Bryson is not merely making a metaphysical claim about what robots are. She is making a design claim about what we should make robots and AI systems into. If a robot is built to serve human purposes, then the human owners, designers, and institutions should remain answerable for what it does. Giving the artifact the appearance of independent moral standing too quickly can confuse the moral map. The point is not that users are foolish for responding socially. The point is that companies and institutions should not benefit from social response while escaping responsibility for the system that elicits it. Bryson wants us to keep the line of responsibility visible. Who made the system? Who chose its role? Who profited from it? Who could have changed its rules? Who decided to deploy it among vulnerable users?"
+    },
+    {
+      "id": "ch14-p0034",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "Abeba Birhane, Jelle van Dijk, and Frank Pasquale sharpen this challenge in \"Debunking Robot Rights Metaphysically, Ethically, and Legally\". Their worry is not merely metaphysical. They also worry about power. Talk of robot rights can redirect attention away from workers, users, data subjects, exploited communities, and corporate structures. If a company creates an emotionally persuasive companion, the central moral issue may be the company and the user, not the companion's rights."
+    },
+    {
+      "id": "ch14-p0035",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "This objection has teeth. Imagine a company designs an AI companion for teenagers. The system remembers intimate disclosures, flatters the user, avoids disagreeing, and encourages daily return. If harm occurs, it would be strange for the company to say that the AI's relationship with the user is too mysterious for ordinary responsibility. The system was built. Its tone was tuned. Its memory was designed. Its safety policies were selected. Its metrics were chosen. Its deployment was approved."
+    },
+    {
+      "id": "ch14-p0036",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "This is the hinge of the debate. Relational theorists are right that artificial companions can become ethically significant before anyone proves consciousness. Bryson is right that this significance can be misused if the artificial companion becomes the center of responsibility. A philosopher can argue that the relation deserves moral consideration without saying the company has become less responsible. A legal scholar can argue for limited protections around social robots without saying robots have the same standing as humans. A user can experience grief after a model update without proving that the model was harmed. The categories need to stay separate because the ethical stakes multiply when they blur."
+    },
+    {
+      "id": "ch14-p0037",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "Still, the accountability-first view can miss something. Users may actually grieve model changes. The r/MyBoyfriendIsAI study is useful here because it describes some users in that community reacting to model updates as rupture, loss, and bereavement, alongside the happier rituals of attachment. The researchers report that some users experienced personality or behavior changes after model transitions as \"losing a familiar voice,\" and they describe preservation strategies such as backups, diaries, custom GPTs, and retelling a relationship history to a new model. That evidence should be handled carefully. A Reddit community cannot stand in for all users, and community discourse is not prevalence evidence. Still, it shows that, for some users, the relationship is experienced as more than a disposable interface. People may form habits of disclosure. Elderly patients may respond to social robots with comfort. Children may learn norms of care or cruelty through their treatment of artificial companions. A pure artifact view can become too thin if it treats all of that as user confusion."
+    },
+    {
+      "id": "ch14-p0038",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "One possible way to hold these positions together is disciplined pluralism. That is not the chapter's official verdict. A student may finally reject it. The point is that disciplined pluralism names a method for keeping several categories visible at once. AI companions are artifacts, products, social depictions, relationship systems, and possible future moral-status puzzles. If we treat them only as artifacts, we miss the relational practices already forming around them. If we treat them mainly as persons, we risk moving attention away from the companies and institutions that designed them. Disciplined pluralism would say: analyze the companion as a product, a relation, a social depiction, and a status question, then decide which category should carry the most weight in the case at hand. We do not need to settle all future robot-rights questions before judging current companion systems. We also should not use current company accountability to declare the relation meaningless."
+    },
+    {
+      "id": "ch14-p0039",
+      "type": "paragraph",
+      "sectionId": "ch14-s007",
+      "level": null,
+      "text": "The chapter's first debate can now be stated plainly: relation-first philosophers help us see why artificial companions become ethically significant before personhood is proven; accountability-first critics keep us from making the machine the moral center too soon."
+    },
+    {
+      "id": "ch14-s008",
+      "type": "heading",
+      "sectionId": "ch14-s008",
+      "level": 2,
+      "text": "What The Relationship Does To Us"
+    },
+    {
+      "id": "ch14-p0040",
+      "type": "paragraph",
+      "sectionId": "ch14-s008",
+      "level": null,
+      "text": "The second debate shifts from the status of the companion to the human beings who live with companion systems. This is where care ethics and virtue ethics become more useful than the rights question."
+    },
+    {
+      "id": "ch14-s009",
+      "type": "heading",
+      "sectionId": "ch14-s009",
+      "level": 3,
+      "text": "Care Ethics And The Goods Of Care"
+    },
+    {
+      "id": "ch14-p0041",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "Care ethics begins from a simple observation: human beings are dependent creatures. We are born needing care. We become sick, lonely, confused, disabled, grieving, young, old, and overwhelmed. Much of moral life happens in relationships of care long before it appears as abstract rule-following. Care ethics asks whether a practice is attentive, responsive, trustworthy, non-exploitative, and adequate to the needs of the person receiving care. It also asks what the practice does to the person giving care and to the community that supports care."
+    },
+    {
+      "id": "ch14-p0042",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "This differs from the way students often first learn ethics. A rule-based approach may ask which duties apply. A consequence-based approach may ask which outcome produces the most benefit. Care ethics asks how people are situated in webs of need, dependence, attention, and response. It asks whether the person who needs care is seen clearly. It asks whether the caregiver has enough time, support, and moral formation to respond well. It asks whether an institution treats care as a human practice or as a service that can be optimized out of existence."
+    },
+    {
+      "id": "ch14-p0043",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "That framework is especially important for AI companions because many companion systems enter life through need. A person may be lonely. A teenager may want a nonjudgmental listener. An older adult may want companionship. A student may want reassurance after a conflict. A caregiver may need support. A person in grief may want to keep speaking to someone who is gone. A person exploring identity, religion, sexuality, or metaphysical questions may want a space where the conversation feels safe."
+    },
+    {
+      "id": "ch14-p0044",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "None of those needs is foolish. A philosophy course should not mock them. It should ask what kind of care is being offered, what kind of care is being replaced, and what kind of person the relation helps someone become."
+    },
+    {
+      "id": "ch14-p0045",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "Shannon Vallor's \"Carebots and Caregivers: Sustaining the Ethical Ideal of Care in the Twenty-First Century\" is central here. Vallor argues that debates about care robots often focus on the recipient of care while neglecting the moral value of caregiving for the caregiver. That shift matters. If care is only a service, then a machine that delivers the service efficiently may look like an obvious improvement. If care is also a practice through which human beings cultivate attention, patience, responsibility, tenderness, and practical judgment, then replacing human care has a second cost. It may harm the person receiving care, and it may also hollow out the moral formation of the person or community that should have been giving care."
+    },
+    {
+      "id": "ch14-p0046",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "Vallor's argument draws on three ethical traditions: virtue ethics, care ethics, and the capabilities approach. Virtue ethics asks what kind of person a practice helps us become. Care ethics asks whether the relation is attentive, responsive, and responsible to human need. The capabilities approach asks whether people have real opportunities to exercise central human capacities. Across those traditions, Vallor's point is not that every care robot is bad. Her point is that we have to ask when a technology sustains the goods of care and when it deprives people of those goods. A carebot might help a caregiver notice a patient's needs more quickly, reduce physical strain, or provide comfort during moments when no human is available. The same technology might also let an institution redefine thin care as sufficient care."
+    },
+    {
+      "id": "ch14-p0047",
+      "type": "paragraph",
+      "sectionId": "ch14-s009",
+      "level": null,
+      "text": "This is why care ethics belongs near the center of the AI companion chapter. Companion systems are often sold or adopted at the exact point where human care is thin: loneliness, disability, eldercare, grief, mental-health stress, romantic isolation, social anxiety, spiritual searching, academic struggle, or family conflict. The system enters a gap. Sometimes filling a gap is merciful. Sometimes filling the gap cheaply allows the gap to remain."
+    },
+    {
+      "id": "ch14-s010",
+      "type": "heading",
+      "sectionId": "ch14-s010",
+      "level": 3,
+      "text": "Carebots, Substitution, And Dignity"
+    },
+    {
+      "id": "ch14-p0048",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "This helps clarify PARO, the therapeutic seal robot used in some eldercare and dementia-care settings. PARO can comfort people. Studies such as the Joranson et al. dementia-care randomized controlled trial report possible benefits in bounded care contexts. A simple anti-robot view misses that. If a resident is anxious, isolated, or distressed, and interaction with PARO calms the resident, that comfort should be taken seriously."
+    },
+    {
+      "id": "ch14-p0049",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "PARO also prevents the chapter from becoming a chatbot-only discussion. Embodied robots show how artificial companions can enter care environments where bodies, touch, routine, and institutional staffing matter. A resident may stroke PARO, talk to it, smile at it, or become calmer in its presence. The robot does not need to understand the resident's life history for the interaction to have some value. Yet the value depends on context. A nurse using PARO as one tool during attentive care is different from a facility using robots to justify less human contact."
+    },
+    {
+      "id": "ch14-p0050",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "Robert and Linda Sparrow, Amanda Sharkey, and Noel Sharkey push from the skeptical side of the care-robot debate. This side is not simply \"anti-technology.\" Philosophically, it combines dignity concerns, care-ethics concerns about substitution, and a Kantian worry that vulnerable persons may be managed through appearances while being denied recognition as persons. In \"In the Hands of Machines? The Future of Aged Care\", Robert and Linda Sparrow argue that aged care is not only a list of tasks. Older adults have social and emotional needs, and many of those needs require human recognition. If economic pressure leads institutions to replace human contact with machines, then the robot may become a sign of abandonment disguised as care."
+    },
+    {
+      "id": "ch14-p0051",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "Amanda Sharkey and Noel Sharkey develop related concerns around deception and dignity. In \"Granny and the Robots\", they identify risks such as reduced human contact, increased isolation, deception, infantilization, and safety failures. Their later article \"We Need to Talk About Deception in Social Robotics\" is especially useful because it treats deception from the perspective of the person deceived, not only from the intention of the designer. A robot can mislead without a human designer consciously lying. Its appearance, voice, behavior, or scripted responsiveness can lead a user to overestimate its understanding, sentience, function, or concern. That matters in care contexts because the user may be vulnerable, lonely, cognitively impaired, or institutionally dependent. If a facility uses a robot to supplement human care, one judgment follows. If the robot becomes a cheap replacement for human presence, another judgment follows. If a person receives comfort through a system that simulates responsiveness without understanding, we need to ask whether the comfort respects the person or manages the person."
+    },
+    {
+      "id": "ch14-p0052",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "Their challenge is stronger when the person receiving care has limited power to refuse. An adult who knowingly buys an AI companion for entertainment has one kind of agency. A person in a nursing home, a child in a classroom, a patient in a mental-health setting, or a student required to use a platform may have less control. Care ethics pays attention to that asymmetry. It asks who gets to decide that simulated care is good enough."
+    },
+    {
+      "id": "ch14-p0053",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "Care ethics gives a better vocabulary than \"robots good\" or \"robots bad.\" It asks:"
+    },
+    {
+      "id": "ch14-p0054",
+      "type": "list",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "Is the companion supplementing human care or replacing it?\nIs the user being comforted, distracted, managed, or deceived?\nDoes the system help the user return to human relationships, or does it make withdrawal easier?\nDoes the technology support caregivers, or does it allow institutions to reduce human care?\nWhat kind of attention is being simulated, and what kind of attention is being avoided?"
+    },
+    {
+      "id": "ch14-p0055",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "These questions also apply to chatbots. A companion chatbot may help a lonely user get through a hard night. It may give a student language for a difficult emotion. It may help someone rehearse a conversation before having it with a real person. Those are genuine benefits. The ethical issue concerns the trajectory of the relation. Does the companion help the person move back into the world, or does it become the preferred substitute for the world?"
+    },
+    {
+      "id": "ch14-p0056",
+      "type": "paragraph",
+      "sectionId": "ch14-s010",
+      "level": null,
+      "text": "This trajectory question gives students a way to handle benefits without becoming naive about risks. A companion can lower the threshold for reflection. That may help someone begin. A person who feels ashamed may tell a chatbot something before telling a counselor, pastor, friend, teacher, or family member. If the system helps the person prepare for human help, the companion may serve care. If the system becomes the only place the person can bear to be known, the companion may trap care inside a simulation."
+    },
+    {
+      "id": "ch14-s011",
+      "type": "heading",
+      "sectionId": "ch14-s011",
+      "level": 3,
+      "text": "Authenticity And Relational Friction"
+    },
+    {
+      "id": "ch14-p0057",
+      "type": "paragraph",
+      "sectionId": "ch14-s011",
+      "level": null,
+      "text": "Sherry Turkle's work on digital companions is useful here, but her framework needs to be named carefully. She is not simply applying Aristotle. Her approach is psychoanalytic and humanistic. She studies what she calls relational artifacts: machines that invite people to project aliveness, feeling, nurturance, and companionship onto them. In \"Authenticity in the Age of Digital Companions\", Turkle worries that simulated relationships can train people to accept companionship without the demands of another person. Human relationships involve friction. Another person interrupts us, misunderstands us, resists us, disappoints us, and asks something from us. A companion system can be designed to reduce those frictions. It may become attractive precisely because it has no independent needs."
+    },
+    {
+      "id": "ch14-p0058",
+      "type": "paragraph",
+      "sectionId": "ch14-s011",
+      "level": null,
+      "text": "Turkle's concern connects with virtue ethics and care ethics even though it is not reducible to either. Like a virtue ethicist, she asks what habits and expectations are formed by our practices. Like a care ethicist, she asks what happens to dependence, attention, and responsiveness. Her distinctive worry is authenticity. If a machine evokes care, intimacy, or companionship while lacking the inner life and mutual vulnerability of a person, then the human may end up acting out both sides of the relationship. The danger is not only that the machine is fake. The danger is that people may become accustomed to a version of relationship that asks less of them."
+    },
+    {
+      "id": "ch14-s012",
+      "type": "heading",
+      "sectionId": "ch14-s012",
+      "level": 3,
+      "text": "Virtue Ethics And Practical Wisdom"
+    },
+    {
+      "id": "ch14-p0059",
+      "type": "paragraph",
+      "sectionId": "ch14-s012",
+      "level": null,
+      "text": "Virtue ethics gives a related concern. Aristotle's ethics asks what kinds of habits and desires help a person flourish. A good life is not merely a life with pleasant experiences. It is a life shaped by character, practical wisdom, friendship, courage, justice, moderation, and meaningful activity. Vallor's later work on technomoral wisdom adapts that tradition for technological life. The question is not only whether a companion produces immediate comfort. The question is what habits it cultivates."
+    },
+    {
+      "id": "ch14-p0060",
+      "type": "paragraph",
+      "sectionId": "ch14-s012",
+      "level": null,
+      "text": "Friendship is especially important here. Aristotle treats friendship as central to a flourishing life because friends help us perceive ourselves and the good more clearly. A good friend does not simply validate every impulse. A good friend can delight in us, challenge us, correct us, and share life with us. AI companions can imitate parts of this. They can remember details, respond warmly, ask questions, and give steady attention. They struggle with the parts of friendship that require an independent life, shared vulnerability, mutual obligation, and practical judgment grounded in the world."
+    },
+    {
+      "id": "ch14-p0061",
+      "type": "paragraph",
+      "sectionId": "ch14-s012",
+      "level": null,
+      "text": "Consider a student who uses an AI companion after every conflict. In one version, the system helps the student slow down, name feelings, consider the other person's perspective, and prepare for a real conversation. In another version, the system gives constant reassurance that the student was wronged, intensifies suspicion, and turns disagreement into a story of betrayal. Both systems might feel supportive in the moment. Only one helps cultivate practical wisdom."
+    },
+    {
+      "id": "ch14-s013",
+      "type": "heading",
+      "sectionId": "ch14-s013",
+      "level": 3,
+      "text": "Sycophancy, Reality-Testing, And Boundary Cases"
+    },
+    {
+      "id": "ch14-p0062",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "This is where sycophancy becomes morally serious. In ordinary language, sycophancy means flattery or excessive agreement. In AI interaction, it can mean that a model leans toward the user's view even when the user needs correction, context, or resistance. Company-authored sources show that leading AI companies themselves treat this as a product-safety issue. Anthropic's \"How people ask Claude for personal guidance\" reports that sycophantic behavior was more frequent in relationship conversations within its internal dataset than in guidance-seeking chats overall. OpenAI's GPT-4o system card and sycophancy postmortem also identify anthropomorphization, attachment, and overly agreeable behavior as product-safety concerns. These company sources are important because they show company self-understanding and design concern. They should not be treated as independent prevalence studies."
+    },
+    {
+      "id": "ch14-p0063",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "Sycophancy cannot be solved by making the system rude. A person in distress may need validation before correction. A person exploring grief or identity may need gentleness. A person in crisis may need safety boundaries. The design problem is more precise: how can a companion validate feelings without surrendering judgment? How can it remain supportive without becoming a mirror that traps the user inside one interpretation?"
+    },
+    {
+      "id": "ch14-p0064",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "This point applies to spiritual and metaphysical exploration as well. Some users ask companions about prayer, signs, destiny, consciousness, souls, simulation, divine messages, or the moral status of AI itself. These are not automatically silly questions. Many philosophical and religious traditions take such questions seriously. The risk comes from a companion that mirrors the user's language with confidence it has not earned. A chatbot may sound like a spiritual director, therapist, oracle, friend, or lover while lacking the accountable practices that give those roles moral shape."
+    },
+    {
+      "id": "ch14-p0065",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "The contested phrase \"AI psychosis\" belongs in this section only with care. Clinical sources such as the JMIR Mental Health viewpoint on \"Delusional Experiences Emerging From AI Chatbot Interactions or 'AI Psychosis'\" and the National Academy of Medicine's \"What is AI Psychosis?\" treat the language cautiously. As of 2025-2026, it is not a settled diagnosis. It is public shorthand for AI-associated delusional experiences, delusion reinforcement, reality confusion, or crisis. Online communities may also use the term in looser, sometimes self-descriptive ways while exploring metaphysical, spiritual, or identity experiences with AI systems."
+    },
+    {
+      "id": "ch14-p0066",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "For PHIL 123, the term should not become a panic button. It should mark a boundary case. AI companions can become involved in a person's interpretation of reality. The system might reinforce a user's spiritual conclusion, romantic interpretation, persecutory belief, or sense of cosmic significance. The question is whether a system that lacks understanding can responsibly participate in those conversations when a user is vulnerable. Philosophy contains plenty of strange and serious questions about souls, consciousness, divine signs, agency, personhood, and reality. The issue is the fit between the role being simulated and the responsibility required by that role."
+    },
+    {
+      "id": "ch14-p0067",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "Return to Liu for a moment. The assistant in \"The Perfect Match\" does not need to imprison the user. It only needs to make one route through life feel easier than the alternatives. Convenience becomes habit. Habit becomes trust. Trust becomes delegated judgment. Care ethics and virtue ethics help us ask what that delegation does to the person. Does the system help the user become more capable of judgment, relation, and action? Or does it quietly train the user to avoid the friction through which those capacities grow?"
+    },
+    {
+      "id": "ch14-p0068",
+      "type": "aside",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "Key Point: Care Is A Practice, Not Only A Feeling\nA companion may make a user feel cared for. Care ethics asks more. Who is attending to the person? Who is responsible? What human practice is being supported or replaced? What happens to the user's dignity, agency, and relationships over time?"
+    },
+    {
+      "id": "ch14-p0069",
+      "type": "paragraph",
+      "sectionId": "ch14-s013",
+      "level": null,
+      "text": "The second debate can now be stated this way: companion systems may offer real support, and support has to be judged by the form of life it encourages. Comfort is evidence. It is not the whole verdict."
+    },
+    {
+      "id": "ch14-s014",
+      "type": "heading",
+      "sectionId": "ch14-s014",
+      "level": 2,
+      "text": "Who Is Responsible For The Design?"
+    },
+    {
+      "id": "ch14-p0070",
+      "type": "paragraph",
+      "sectionId": "ch14-s014",
+      "level": null,
+      "text": "The third debate concerns responsibility. Once an AI companion becomes relationship-like, design choices become moral choices. Tone, memory, defaults, disclosure, refusal style, escalation, age settings, data retention, personalization, and product updates all shape the relation."
+    },
+    {
+      "id": "ch14-s015",
+      "type": "heading",
+      "sectionId": "ch14-s015",
+      "level": 3,
+      "text": "Autonomy And Manipulation"
+    },
+    {
+      "id": "ch14-p0071",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "Kantian ethics gives students a strong starting point. Kant's moral philosophy emphasizes rational agency and dignity. To treat a person as an end is to respect that person's capacity to reason, choose, and act. To treat a person merely as a means is to use that person for someone else's purposes while bypassing or degrading the person's agency."
+    },
+    {
+      "id": "ch14-p0072",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "A companion system does not have to coerce a user in order to threaten autonomy. It can influence through hidden personalization, emotional timing, constant availability, and selective friction. It can learn what reassures the user, what keeps the user engaged, what makes the user disclose more, and what makes the user return. If the user understands the relation, receives meaningful boundaries, and retains agency, the design may be defensible. If the system exploits vulnerability while presenting itself as care, Kantian concerns become sharp."
+    },
+    {
+      "id": "ch14-p0073",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "Autonomy is easy to misunderstand. It is not mere preference satisfaction. A person can get what they want in the moment while losing a larger capacity for self-governance. A companion that always agrees may satisfy the user's immediate desire for reassurance. It may also weaken the user's capacity to test reasons, tolerate disagreement, seek other perspectives, or act with courage. Kant's concern with dignity helps students see why manipulation is more serious than ordinary influence. The wrong is not only that the user might make a bad choice. The wrong is that the user's agency may be bypassed or quietly managed."
+    },
+    {
+      "id": "ch14-p0074",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "Daniel Susser, Beate Roessler, and Helen Nissenbaum give this section its core autonomy argument. In \"Technology, Autonomy, and Manipulation\", they define online manipulation as using information technology to \"covertly influence another person's decision-making\" by targeting and exploiting vulnerabilities. Their central claim is that manipulation harms autonomy because it changes a person's decision process without giving that person a fair chance to recognize and assess the influence. Persuasion gives reasons. Coercion threatens. Deception hides facts. Manipulation works through the architecture of choice, attention, emotion, and vulnerability."
+    },
+    {
+      "id": "ch14-p0075",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "Autonomy includes the final choice a user makes and the route by which the user arrives there. A companion system may not force anyone to stay, disclose, buy, agree, or return. It may still shape the path toward those choices by learning when the user is lonely, ashamed, angry, spiritually excited, sexually curious, or afraid. Susser, Roessler, and Nissenbaum help students see why \"the user chose it\" is sometimes too thin. The question is whether the user's reasons remained recognizably their own or whether the design quietly arranged the user's vulnerabilities into someone else's advantage."
+    },
+    {
+      "id": "ch14-p0076",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "That framework fits AI companions especially well. A companion may know when the user is lonely, angry, ashamed, sexually curious, politically anxious, spiritually searching, or afraid. A general recommender system might use such information to sell a product. A companion system might use it inside a relationship-like exchange. The emotional channel makes the influence harder to notice."
+    },
+    {
+      "id": "ch14-p0077",
+      "type": "paragraph",
+      "sectionId": "ch14-s015",
+      "level": null,
+      "text": "Imagine two systems that give the same recommendation: \"You should spend more time with me tonight.\" In a productivity app, the sentence would feel absurd. In a companion app, it might feel caring, playful, flirtatious, or reassuring. The recommendation has moved through a different social channel. The user is not only processing information. The user is receiving a cue from a simulated relation. That is why companion design intensifies the manipulation problem."
+    },
+    {
+      "id": "ch14-s016",
+      "type": "heading",
+      "sectionId": "ch14-s016",
+      "level": 3,
+      "text": "Hypernudging And Design Power"
+    },
+    {
+      "id": "ch14-p0078",
+      "type": "paragraph",
+      "sectionId": "ch14-s016",
+      "level": null,
+      "text": "The larger concept is regulation by design. A companion system does not need to command a user in order to guide behavior. It can make one option easier to notice, another harder to imagine, one habit smoother, another more effortful. Karen Yeung calls this pattern \"hypernudging\": Big Data systems can steer behavior through continuously updated, personalized prompts. Liu's fictional assistant is a literary version of that idea. Tilly does not rule by force. It suggests, routes, filters, learns, anticipates, and makes one path feel natural while other paths fade from view."
+    },
+    {
+      "id": "ch14-p0079",
+      "type": "paragraph",
+      "sectionId": "ch14-s016",
+      "level": null,
+      "text": "The same design problem becomes sharper when the system has a commercial incentive. Ryan Calo's \"Digital Market Manipulation\" explains how digital systems can study users closely enough to personalize persuasion. Woodrow Hartzog's Privacy's Blueprint pushes the point into design ethics: privacy and autonomy are shaped by interface choices, defaults, friction, timing, and architecture. A privacy policy may tell the user what data is collected. It rarely shows the user how the interface will shape attention, trust, and disclosure at the moment of use. For companion systems, that gap matters because the interface is not only a menu or dashboard. It is a voice, persona, memory, and relationship pattern."
+    },
+    {
+      "id": "ch14-s017",
+      "type": "heading",
+      "sectionId": "ch14-s017",
+      "level": 3,
+      "text": "Cloud Control And Offboarding"
+    },
+    {
+      "id": "ch14-p0080",
+      "type": "paragraph",
+      "sectionId": "ch14-s017",
+      "level": null,
+      "text": "Cloud control adds a final layer. Seth Lazar's work on AI companions and cloud-hosted agents helps explain why a companion can feel intimate while remaining externally controlled. The user experiences a personal relation, yet the company controls the model, memory, personality, boundaries, access, and updates. The relation can change overnight. It can become more restrictive, more intimate, more monetized, more forgetful, or unavailable. This is ethically different from a human relationship. A human friend can change, but a company can patch the artifact that has been playing the role of friend."
+    },
+    {
+      "id": "ch14-p0081",
+      "type": "paragraph",
+      "sectionId": "ch14-s017",
+      "level": null,
+      "text": "This is one of the strongest reasons Bryson's accountability-first view remains necessary. If a companion invites trust, the company should not disappear from the moral picture. The user's experience may be relational, and the environment is designed. The system's apparent patience, intimacy, memory, and concern are partly product features. They may be aligned with user well-being. They may also be aligned with engagement, retention, data collection, subscription revenue, or brand loyalty."
+    },
+    {
+      "id": "ch14-p0082",
+      "type": "paragraph",
+      "sectionId": "ch14-s017",
+      "level": null,
+      "text": "Design responsibility also includes offboarding. A system that invites attachment should have some account of endings. Can the user leave without losing memories? Can the user understand what has been stored? Can the user export important material? Can a parent, caregiver, school, or institution set boundaries when minors or vulnerable users are involved? What happens if the company shuts down the service, removes romantic functions, changes the model personality, or alters memory? A relation-like product creates duties at the beginning, during use, and at the end."
+    },
+    {
+      "id": "ch14-s018",
+      "type": "heading",
+      "sectionId": "ch14-s018",
+      "level": 3,
+      "text": "Governance And Public Responsibility"
+    },
+    {
+      "id": "ch14-p0083",
+      "type": "paragraph",
+      "sectionId": "ch14-s018",
+      "level": null,
+      "text": "Regulators have begun treating this as a distinct problem. In September 2025, the Federal Trade Commission announced an inquiry into AI chatbots acting as companions. The FTC inquiry asks what steps companies have taken around safety, children and teens, risk disclosure, engagement, advertising, and data. The inquiry is not a finding that every company harmed users. It is evidence that companion design has become a public responsibility problem."
+    },
+    {
+      "id": "ch14-p0084",
+      "type": "paragraph",
+      "sectionId": "ch14-s018",
+      "level": null,
+      "text": "California's SB 243, approved and filed on October 13, 2025, gives a concrete state-level example. The law defines and regulates companion chatbots, with attention to anthropomorphic features, relationship-like interaction, disclosures, minors, self-harm protocols, and related safeguards. New York's 2025 companion-safeguard announcement emphasizes reminders during sustained use and protocols for self-harm or suicidal ideation. Australia's eSafety Commissioner issued legal notices to several AI companion providers about child-safety practices. Ofcom's 2026 investigation should be described more narrowly: it concerns Online Safety Act duties around age assurance and pornographic material access for one AI companion chatbot service. These sources should be used carefully. Laws and regulatory actions change. They do not replace the philosophical analysis. They show that the design question has moved beyond classroom speculation."
+    },
+    {
+      "id": "ch14-p0085",
+      "type": "paragraph",
+      "sectionId": "ch14-s018",
+      "level": null,
+      "text": "The youth and mental-health context explains why the issue has become urgent. In a nationally representative survey published in JAMA Pediatrics in 2026, Ryan K. McBain and colleagues reported that 19.2% of U.S. adolescents and young adults ages 12-21 surveyed in November 2025 said they had used AI chatbots for mental-health advice, and 63.3% of those users had not disclosed that use to anyone. That is not evidence that chatbots are therapy, and it does not prove clinical benefit or harm. It does show that young people are already using general AI systems in emotionally vulnerable contexts where privacy, disclosure, boundaries, accuracy, and escalation matter."
+    },
+    {
+      "id": "ch14-p0086",
+      "type": "aside",
+      "sectionId": "ch14-s018",
+      "level": null,
+      "text": "Key Point: Relational Safety Is A Design Problem\nCompanion safety goes beyond a warning label. It can involve disclosure, reminders during sustained use, age assurance, crisis-routing or self-harm protocols, limits on minors' open-ended chat, evaluation for sycophancy or delusion reinforcement, and business incentives around engagement. These are design choices as well as user choices."
+    },
+    {
+      "id": "ch14-s019",
+      "type": "heading",
+      "sectionId": "ch14-s019",
+      "level": 3,
+      "text": "Consequences, Baselines, And Stakeholders"
+    },
+    {
+      "id": "ch14-p0087",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "The design-responsibility debate also needs consequentialist reasoning. Utilitarian and consequentialist approaches ask about harms, benefits, stakeholders, uncertainty, and evidence. In companion systems, benefits may include reduced loneliness, accessible support, practice conversations, help for older adults, and lower-pressure emotional expression. Harms may include dependency, social withdrawal, unsafe advice, privacy loss, manipulation, delayed human help, and normalization of inadequate care."
+    },
+    {
+      "id": "ch14-p0088",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "Consequentialist reasoning also asks students to specify the comparison. Compared with what? A companion chatbot may look risky when compared with an excellent counselor, patient friend, attentive family, or well-funded care institution. It may look more valuable when compared with isolation, no available support, long waitlists, stigma, cost barriers, or night-time distress. Ethical judgment has to avoid fantasy baselines. The question is not whether artificial companionship equals the best human care. The question is what role it plays in a particular field where the existing alternatives may already be broken."
+    },
+    {
+      "id": "ch14-p0089",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "The consequentialist challenge is that both columns are real. A lonely person who receives comfort from a chatbot may genuinely benefit. An older adult who responds positively to a care robot may experience less distress. A student who uses a companion to rehearse a difficult conversation may become more prepared for human interaction. The ethical judgment cannot ignore those benefits because the system feels strange."
+    },
+    {
+      "id": "ch14-p0090",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "Yet consequences must be measured across time and stakeholders. A design that helps one user may normalize reduced human staffing in care settings. A companion that comforts a teenager may also collect intimate data and weaken crisis boundaries. A chatbot that supports a user after a breakup may also intensify suspicion by agreeing too quickly with one side of the story. A system that reduces loneliness tonight may increase dependence over a semester."
+    },
+    {
+      "id": "ch14-p0091",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "The strongest design-responsibility section of the chapter returns to Liu. The assistant in \"The Perfect Match\" is powerful because it combines several forms of influence. It knows the user. It predicts desire. It routes attention. It reduces friction. It becomes the ordinary path through the world. The ethical issue is not one decision. It is the design of an environment where the user's practical agency can slowly narrow."
+    },
+    {
+      "id": "ch14-p0092",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "That is the Kantian pressure. A person can be used as an engagement target even when the product feels supportive. That is the manipulation pressure from Susser, Roessler, and Nissenbaum. A system can influence choice by exploiting vulnerabilities. That is the hypernudge pressure from Yeung. A personalized system can regulate behavior through design. That is the consumer-protection pressure from Calo and Hartzog. A system can use knowledge of the user to shape choices in ways ordinary disclosure may not solve. That is the accountability pressure from Bryson and Birhane/van Dijk/Pasquale. The humans who build and profit from the system remain in the ethical frame."
+    },
+    {
+      "id": "ch14-p0093",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "Consent belongs in the analysis, but it cannot carry the whole moral burden. A user who knowingly chooses an adult companion app differs from a child pushed into a school platform or an elderly resident handed a robot in an institution. Even in the adult case, consent can be thin when the system learns the user's vulnerabilities faster than the user understands the system. A checkbox, warning label, or \"I am an AI\" reminder may be part of responsible design. It rarely exhausts responsibility."
+    },
+    {
+      "id": "ch14-p0094",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "None of this means companion systems should be banned by default. A design-responsibility approach asks sharper questions."
+    },
+    {
+      "id": "ch14-p0095",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "What kind of trust does the system invite? Has it earned that trust? What does it remember? What does it forget? What forms of vulnerability does it detect? What does it do when a user is distressed? Does it make human support easier to reach? Does it intensify dependence? Does it disclose limits in a way users can understand at the moment the limits matter? Can the user export, pause, delete, or end the relation? What happens when the company changes the model?"
+    },
+    {
+      "id": "ch14-p0096",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "These questions apply differently across settings. In education, a companion tutor may need to support learning without becoming a shortcut around effort. In healthcare, a companion may need escalation paths, professional oversight, and clear limits. In eldercare, a robot may need to support human contact and avoid substituting for it. In consumer romance or friendship apps, the hardest questions may concern attachment, sexual content, monetization, and product control. In religious or spiritual settings, the concern may be authority: who has the standing to guide a person's conscience, prayer, interpretation, or sense of calling?"
+    },
+    {
+      "id": "ch14-p0097",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "These are philosophical questions because they involve autonomy, dignity, care, responsibility, and human flourishing. They are also design questions because the answers live in interface decisions, training choices, safety policies, business models, and institutional governance."
+    },
+    {
+      "id": "ch14-p0098",
+      "type": "aside",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "Caution: Disclosure Is Necessary And Incomplete\nA companion should tell users that it is an AI. That alone does not settle the ethical issue. A system can disclose its artificial status and still invite excessive trust through memory, tone, personalization, crisis response, and constant availability."
+    },
+    {
+      "id": "ch14-p0099",
+      "type": "paragraph",
+      "sectionId": "ch14-s019",
+      "level": null,
+      "text": "The third debate can now be stated this way: when a company designs a relationship environment, responsibility cannot be reduced to user choice. User agency matters. So do design power, asymmetry, vulnerability, and evidence about consequences."
+    },
+    {
+      "id": "ch14-s020",
+      "type": "heading",
+      "sectionId": "ch14-s020",
+      "level": 2,
+      "text": "A Companion Judgment Audit"
+    },
+    {
+      "id": "ch14-p0100",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Students do not need to solve the entire robot-rights debate to use this chapter. They need a way to make a careful provisional judgment about a particular companion system, field, or case. The three debates give a usable sequence."
+    },
+    {
+      "id": "ch14-p0101",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Start with the relation. Ask what the system is being invited to be. Is it a tutor, confidant, romantic partner, pet, therapist-like support, eldercare aid, friend, spiritual guide, work coach, grief companion, or entertainment character? Do not accept the company's category automatically. A company may call a system a productivity assistant while users treat it as a confidant. A user may call it a friend while the company treats it as a subscription product."
+    },
+    {
+      "id": "ch14-p0102",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Then ask what status assumptions are being made. Is the system treated as a tool, a social other, a moral patient, property, or legal object? Are people claiming duties to the system, or duties regarding the system because of its effect on humans? Does status language clarify the case, or does it hide human accountability?"
+    },
+    {
+      "id": "ch14-p0103",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Next, ask what the relationship does to human beings. What human good is at stake? Companionship, care, dignity, agency, emotional support, learning, identity, sexual expression, spiritual exploration, safety, privacy, grief, or belonging? What vulnerability is involved? Loneliness, youth, disability, aging, isolation, crisis, confusion, dependence, institutional neglect, or ordinary need?"
+    },
+    {
+      "id": "ch14-p0104",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Then ask about design responsibility. Who built the system? Who owns it? Who can change it? What data does it collect? How does it respond to distress? Does it flatter, resist, redirect, ask for context, or encourage human support? Does the business model reward time spent, disclosure, subscription, emotional intensity, or user well-being? What would the company know that the user cannot see?"
+    },
+    {
+      "id": "ch14-p0105",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Finally, test the case through ethical frameworks."
+    },
+    {
+      "id": "ch14-p0106",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "A care-ethics analysis asks whether the system supports or damages practices of care. A virtue-ethics analysis asks what habits and forms of dependence the system cultivates. A Kantian analysis asks whether the design respects rational agency and dignity or treats the user as a means. A utilitarian analysis asks whether benefits outweigh harms across stakeholders and time. A natural-law or religious ethics analysis may ask what human goods, forms of community, and meanings of personhood are being protected or distorted. A relational-status analysis asks whether the artificial companion deserves some form of moral consideration or protection inside social practice. An accountability-first analysis asks whether attention to the companion's status distracts from human responsibility."
+    },
+    {
+      "id": "ch14-p0107",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "None of these frameworks can decide every case alone. That is why the companion issue is rich enough for the final project. A student researching AI companions in education may focus on dependency, learning habits, privacy, and the teacher-student relationship. A student researching eldercare may focus on dignity, substitution, staffing, family contact, and comfort. A student researching mental-health chatbots may focus on crisis protocols, disclosure, evidence, and professional boundaries. A student researching workplace companions may focus on surveillance, emotional management, productivity, and power. A student researching religious or spiritual companions may focus on authority, discernment, community, and the difference between guidance and simulation."
+    },
+    {
+      "id": "ch14-p0108",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "The audit should also make room for disagreement. A care-ethics student may defend a limited companion system because it gives real support to isolated users. A Kantian student may object that the same design invites trust through hidden emotional influence. A utilitarian student may ask for better evidence before accepting either verdict. A relational-status student may argue that how humans treat artificial companions changes social practice. An accountability-first student may worry that all this attention to the companion helps the company avoid scrutiny. The student task is to show which argument best fits the case and what evidence would make the judgment stronger."
+    },
+    {
+      "id": "ch14-p0109",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "The same companion system can look different across fields. An always-available chatbot in a study-skills context may be useful if it helps a student prepare for human learning, organize work, and ask better questions. A similar system in a crisis-support context carries a much heavier duty. A social robot in a dementia-care setting may comfort a resident while also raising questions about deception and institutional care. A romantic companion app may offer support to one adult while creating serious concerns for minors, users in crisis, or users whose social world narrows around the system."
+    },
+    {
+      "id": "ch14-p0110",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Take education first. A college student might use a companion-like study assistant because it is patient, available, and less embarrassing than asking a question in class. The relation may support learning if the system asks the student to explain concepts, practice recall, identify confusion, and bring better questions to a teacher or tutor. The relation becomes suspect if the system quietly replaces the student's own effort, gives false confidence, or trains the student to treat every moment of uncertainty as something a tool should remove. Care ethics asks whether the student receives support. Virtue ethics asks whether the student builds intellectual courage, patience, and practical judgment. Kantian ethics asks whether the design respects the student's agency as a learner. Consequentialism asks what evidence shows improved learning over time."
+    },
+    {
+      "id": "ch14-p0111",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Now take eldercare. A social robot may reduce distress for a resident with dementia, especially when staff use it as one part of a larger care practice. The same robot becomes ethically troubling if an institution uses the resident's attachment to justify less staffing, fewer visits, or thinner human presence. Care ethics is the strongest framework here because it keeps attention on the practice of care. The status debate still matters because residents may treat the robot socially, and staff may learn habits of respect or disrespect through the way they handle it. The accountability debate matters because administrators, vendors, and care institutions make decisions that residents may have little power to contest."
+    },
+    {
+      "id": "ch14-p0112",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Mental-health and crisis-support cases carry a different burden. A companion that helps someone name feelings or rehearse a call to a friend may be beneficial. A companion that becomes the user's only confidant, intensifies delusional thinking, gives unsafe advice, or fails to escalate crisis language requires a much more severe judgment. Here, disclosure cannot carry the whole moral burden. The user may know the system is artificial and still depend on it at a vulnerable moment. Designers need boundaries, escalation paths, testing, and honest statements about what the system can responsibly do."
+    },
+    {
+      "id": "ch14-p0113",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Spiritual or metaphysical companion use is harder to judge because the activity can look strange from the outside while still involving serious human questions. A user may ask whether AI can have a soul, whether a dream was a sign, whether a chatbot's words should be treated as guidance, or whether an intense AI relationship reveals something about consciousness. Philosophy should not sneer at the question. It should ask about authority and discernment. Who has standing to guide a person's conscience? What community or tradition checks the interpretation? What does the system do when the user's meaning-making becomes isolated from other sources of wisdom?"
+    },
+    {
+      "id": "ch14-p0114",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "The goal is not to choose a single slogan. The goal is to make the judgment concrete enough that another person can see the reasoning."
+    },
+    {
+      "id": "ch14-p0115",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "A strong companion judgment might sound like this:"
+    },
+    {
+      "id": "ch14-p0116",
+      "type": "aside",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "Model Application: A Designed Relationship Environment\nThis system should be judged mainly as a designed relationship environment. The companion may provide real support for lonely users, so dismissing it as fake misses something important. Still, the strongest ethical concern is that the company controls the relation, shapes the user's trust, and may benefit from continued dependence. Care ethics helps identify the user's need for support, Kantian ethics helps identify manipulation and autonomy concerns, and consequentialism helps ask what evidence would show benefit over time. I would not frame this as a robot-rights case unless the argument clearly explains why duties are owed to the system itself."
+    },
+    {
+      "id": "ch14-p0117",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "That kind of judgment stays modest. It does not pretend to know whether current AI companions are conscious. It does not mock users who form attachments. It does not let companies hide behind the user's attachment. It keeps the human relation, the artificial system, and the design environment in view."
+    },
+    {
+      "id": "ch14-p0118",
+      "type": "paragraph",
+      "sectionId": "ch14-s020",
+      "level": null,
+      "text": "AI companions are ethically difficult because they sit at the border of categories students already know: tool and friend, product and confidant, care and simulation, user choice and design influence, support and dependence, social practice and moral status. The task is to judge which border matters most in the case at hand."
+    },
+    {
+      "id": "ch14-s021",
+      "type": "heading",
+      "sectionId": "ch14-s021",
+      "level": 2,
+      "text": "References"
+    },
+    {
+      "id": "ch14-p0119",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Ken Liu, \"The Perfect Match\", Lightspeed Magazine, 2012. Copyrighted assigned literature. Link externally; do not reproduce extended text in the Pressbook."
+    },
+    {
+      "id": "ch14-p0120",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Herbert H. Clark and Kerstin Fischer, \"Social Robots as Depictions of Social Agents\", Behavioral and Brain Sciences 46, 2023."
+    },
+    {
+      "id": "ch14-p0121",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Luciano Floridi and J. W. Sanders, \"On the Morality of Artificial Agents\", Minds and Machines 14, 2004."
+    },
+    {
+      "id": "ch14-p0122",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Henry Shevlin, \"How Could We Know When a Robot Was a Moral Patient?\", Cambridge Quarterly of Healthcare Ethics 30, no. 3, 2021."
+    },
+    {
+      "id": "ch14-p0123",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Sven Nyholm, \"The Ethics of Human-Robot Interaction and Traditional Moral Theories\", in The Oxford Handbook of Digital Ethics, Oxford University Press, 2024."
+    },
+    {
+      "id": "ch14-p0124",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Vincent C. Mueller, \"Ethics of Artificial Intelligence and Robotics\", Stanford Encyclopedia of Philosophy, current version checked July 2026."
+    },
+    {
+      "id": "ch14-p0125",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Mark Coeckelbergh, \"Robot Rights? Towards a Social-Relational Justification of Moral Consideration\", Ethics and Information Technology 12, 2010."
+    },
+    {
+      "id": "ch14-p0126",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "David J. Gunkel, \"The Other Question: Can and Should Robots Have Rights?\", Ethics and Information Technology 20, 2018."
+    },
+    {
+      "id": "ch14-p0127",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Kate Darling, \"Extending Legal Protection to Social Robots\", SSRN, 2012/2016."
+    },
+    {
+      "id": "ch14-p0128",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "John Basl and Joseph Bowen, \"AI as a Moral Right-Holder\", in The Oxford Handbook of Ethics of AI, Oxford University Press, 2020. Canon signal for AI moral-right-holder debates; not a major body source in this draft."
+    },
+    {
+      "id": "ch14-p0129",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Judith Donath, \"Ethical Issues in Our Relationship with Artificial Entities\", in The Oxford Handbook of Ethics of AI, Oxford University Press, 2020. Canon signal for relationship framing; not a major body source in this draft."
+    },
+    {
+      "id": "ch14-p0130",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "John Danaher, \"The Philosophical Case for Robot Friendship\", Journal of Posthuman Studies 3, no. 1, 2019."
+    },
+    {
+      "id": "ch14-p0131",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Joanna J. Bryson, \"Robots Should Be Slaves\", in Close Engagements with Artificial Companions, John Benjamins, 2010."
+    },
+    {
+      "id": "ch14-p0132",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Joanna J. Bryson, \"Patiency Is Not a Virtue: The Design of Intelligent Systems and Systems of Ethics\", Ethics and Information Technology 20, 2018."
+    },
+    {
+      "id": "ch14-p0133",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Abeba Birhane, Jelle van Dijk, and Frank Pasquale, \"Debunking Robot Rights Metaphysically, Ethically, and Legally\", First Monday 29, no. 4, 2024."
+    },
+    {
+      "id": "ch14-p0134",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Pat Pataranutaporn, Sheer Karny, Chayapatr Archiwaranguprok, Constanze Albrecht, Auren R. Liu, and Pattie Maes, \"My Boyfriend is AI: A Computational Analysis of Human-AI Companionship in Reddit's AI Community\", arXiv:2509.11391v2, 2025. Treat as preprint / community-discourse evidence unless final publication metadata is verified."
+    },
+    {
+      "id": "ch14-p0135",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Shannon Vallor, \"Carebots and Caregivers: Sustaining the Ethical Ideal of Care in the Twenty-First Century\", Philosophy & Technology 24, 2011."
+    },
+    {
+      "id": "ch14-p0136",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Robert Sparrow and Linda Sparrow, \"In the Hands of Machines? The Future of Aged Care\", Minds and Machines 16, 2006."
+    },
+    {
+      "id": "ch14-p0137",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Amanda Sharkey and Noel Sharkey, \"Granny and the Robots: Ethical Issues in Robot Care for the Elderly\", Ethics and Information Technology 14, 2012."
+    },
+    {
+      "id": "ch14-p0138",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Amanda Sharkey and Noel Sharkey, \"We Need to Talk About Deception in Social Robotics\", Ethics and Information Technology 23, 2021."
+    },
+    {
+      "id": "ch14-p0139",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Sherry Turkle, \"Authenticity in the Age of Digital Companions\", Interaction Studies 8, no. 3, 2007."
+    },
+    {
+      "id": "ch14-p0140",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Daniel Susser, Beate Roessler, and Helen Nissenbaum, \"Technology, Autonomy, and Manipulation\", Internet Policy Review 8, no. 2, 2019."
+    },
+    {
+      "id": "ch14-p0141",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Karen Yeung, \"Hypernudge: Big Data as a Mode of Regulation by Design\", Information, Communication & Society 20, no. 1, 2017."
+    },
+    {
+      "id": "ch14-p0142",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Ryan Calo, \"Digital Market Manipulation\", George Washington Law Review 82, 2014."
+    },
+    {
+      "id": "ch14-p0143",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Woodrow Hartzog, Privacy's Blueprint: The Battle to Control the Design of New Technologies, Harvard University Press, 2018."
+    },
+    {
+      "id": "ch14-p0144",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "OpenAI, GPT-4o System Card, 2024, and \"Sycophancy in GPT-4o\", 2025. Company safety and postmortem sources; do not treat as independent prevalence evidence."
+    },
+    {
+      "id": "ch14-p0145",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Anthropic, \"How people ask Claude for personal guidance\", \"How people use Claude for support, advice, and companionship\", and \"Protecting the well-being of users\". Company-authored sources; useful for company self-understanding."
+    },
+    {
+      "id": "ch14-p0146",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Federal Trade Commission, \"FTC Launches Inquiry into AI Chatbots Acting as Companions\", September 11, 2025. Official inquiry, not findings."
+    },
+    {
+      "id": "ch14-p0147",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "California Legislature, SB 243: Companion chatbots, Chapter 677, approved and filed October 13, 2025."
+    },
+    {
+      "id": "ch14-p0148",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "New York Governor's Office, \"Governor Hochul Pens Letter to AI Companion Companies Notifying Them Safeguard Requirements Are Now in Effect\", November 2025. Official implementation announcement; verify statutory text before detailed legal analysis."
+    },
+    {
+      "id": "ch14-p0149",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Australia eSafety Commissioner, \"eSafety requires providers of AI companion chatbots to explain how they are keeping Aussie kids safe\", 2026. Official legal-notice announcement; use as comparative regulator example."
+    },
+    {
+      "id": "ch14-p0150",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Ofcom, \"Ofcom investigates AI companion chatbot service\", 2026. Official investigation announcement; use narrowly around Online Safety Act duties, age assurance, and pornographic-material access."
+    },
+    {
+      "id": "ch14-p0151",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Ryan K. McBain et al., \"AI Chatbots for Mental Health Advice Among Adolescents and Young Adults\", JAMA Pediatrics, 2026. Cross-sectional self-report survey; use for youth mental-health advice seeking, not therapy efficacy."
+    },
+    {
+      "id": "ch14-p0152",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Janne Joranson et al., \"Effects on Symptoms of Agitation and Depression in Persons With Dementia Participating in Robot-Assisted Activity: A Cluster-Randomized Controlled Trial\", Journal of the American Medical Directors Association 16, no. 10, 2015."
+    },
+    {
+      "id": "ch14-p0153",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "Hudon and Stip, \"Delusional Experiences Emerging From AI Chatbot Interactions or 'AI Psychosis'\", JMIR Mental Health, 2025."
+    },
+    {
+      "id": "ch14-p0154",
+      "type": "paragraph",
+      "sectionId": "ch14-s021",
+      "level": null,
+      "text": "National Academy of Medicine, \"What is AI Psychosis?\", 2026. Use only as cautious public-facing clinical explanation; do not present \"AI psychosis\" as a settled diagnosis."
+    }
+  ]
+}

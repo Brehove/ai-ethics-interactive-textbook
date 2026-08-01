@@ -1,0 +1,21 @@
+---
+interface Props {
+  slug: string;
+}
+const { slug } = Astro.props;
+---
+
+<div class="chapter-actions" aria-label="Chapter copies">
+  <button class="action-button" type="button" data-print>Print / Save as PDF</button>
+  <a class="action-link" href={`/downloads/${slug}.html`} download>Download chapter HTML</a>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-print]").forEach((button) => {
+    button.addEventListener("click", () => window.print());
+  });
+</script>
+
+<style>
+  .chapter-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+</style>

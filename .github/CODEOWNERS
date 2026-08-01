@@ -1,0 +1,7 @@
+# The repository owner is the initial maintainer. Do not turn this into a
+# required CODEOWNERS approval until a second qualified reviewer exists.
+* @Brehove
+
+/.github/ @Brehove
+/content/ @Brehove
+/workers/editor-auth/ @Brehove

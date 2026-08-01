@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "ch16",
+  "contentKey": "16-existential-risk-effective-altruism-and-future-stakes",
+  "slug": "existential-risk-effective-altruism-and-future-stakes",
+  "title": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes",
+  "subtitle": null,
+  "description": "Some AI leaders, safety researchers, philosophers, policymakers, and critics now argue that advanced AI could create catastrophic or even existential risks. Others argue that this framing exaggerates speculative…",
+  "order": 16,
+  "part": {
+    "id": "part-06",
+    "order": 6,
+    "chapterOrder": 1,
+    "title": "Future Stakes and Technological Movements",
+    "slug": "future-stakes-and-technological-movements"
+  },
+  "path": "/chapter/existential-risk-effective-altruism-and-future-stakes/",
+  "wordCount": 13580,
+  "readingMinutes": 61,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/existential-risk-effective-altruism-and-future-stakes/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 57,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "067f79f2b483ac961eb959f8435c2f4cab159a2f559e4678afe336f8955f87f3",
+      "deploymentSha256": "0206b2a4879400fb06c772156e3fc6a9b8bc96adc996917319d56028869d3771",
+      "publishedAt": "2026-07-17T15:46:25-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "b2f444b7bb54de445e57f0fa4e2c6a623696b027c8d7b2e908fb2722e3ef3e2a",
+    "canonicalMarkdownSha256": "41c8971c9602f990c79efb4ceefbe793fae789ebf0df6d945b6940b314f3aec6",
+    "reconciliationTransformations": [],
+    "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization."
+  }
+}

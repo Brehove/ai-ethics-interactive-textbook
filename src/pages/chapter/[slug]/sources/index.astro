@@ -1,0 +1,51 @@
+---
+import SiteLayout from "../../../../layouts/SiteLayout.astro";
+import ReaderShell from "../../../../components/ReaderShell.astro";
+import LayerIntro from "../../../../components/LayerIntro.astro";
+import { getChapterSlugs, requireChapter } from "../../../../lib/content";
+
+export async function getStaticPaths() {
+  return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
+}
+
+const chapter = await requireChapter(Astro.params.slug!);
+const { meta, headings, sourceLinks, rights, previous, next } = chapter;
+const sources = [
+  ...(Array.isArray(sourceLinks?.primarySources) ? sourceLinks.primarySources : []),
+  ...(Array.isArray(sourceLinks?.companionSources) ? sourceLinks.companionSources : []),
+];
+const exceptions = Array.isArray(rights?.thirdPartyExceptions) ? rights.thirdPartyExceptions : [];
+---
+
+<SiteLayout title={`Sources · ${meta.title}`} description={`Primary sources and provenance for ${meta.title}.`} chapterNumber={meta.order} canonicalPath={`${meta.path}sources/`}>
+  <ReaderShell
+    slug={meta.slug}
+    title={meta.title}
+    partTitle={meta.part.title}
+    chapterNumber={meta.order}
+    readingMinutes={meta.readingMinutes}
+    headings={headings}
+    active="sources"
+    pressbooksUrl={meta.pressbooksUrl}
+    previous={previous}
+    next={next}
+  >
+    <LayerIntro eyebrow="Sources" title="Open the evidence" description="The source layer distinguishes primary texts, editions or translations, the chapter's interpretation, and the rights governing any reproduced material." />
+    <section class="source-ledger">
+      <h2>Chapter source record</h2>
+      <p>The complete reference list remains part of the canonical First Read. Structured passage-to-source links will appear here as they pass rights and citation review.</p>
+      <p><a class="action-link" href={meta.pressbooksUrl}>Open the public Pressbooks edition</a></p>
+      {sources.length > 0 && <ul>{sources.map((source: any) => <li>{source.title ?? source.id}</li>)}</ul>}
+    </section>
+    <section class="rights-note">
+      <h2>Rights status</h2>
+      <p>Original chapter prose is CC BY 4.0. Original structured metadata is CC0 1.0. Third-party material retains its item-level rights.</p>
+      {exceptions.length > 0 ? <ul>{exceptions.map((item: any) => <li>{typeof item === "string" ? item : item.label ?? item.id}</li>)}</ul> : <p>No separate third-party exception is recorded in the website baseline for this chapter.</p>}
+    </section>
+  </ReaderShell>
+</SiteLayout>
+
+<style>
+  .source-ledger, .rights-note { max-width: var(--content-width); margin: 2rem 0; padding: 1.4rem; border-top: 2px solid var(--ink); background: var(--wash); }
+  h2 { margin: 0 0 0.75rem; font-size: 1.45rem; font-weight: 500; }
+</style>

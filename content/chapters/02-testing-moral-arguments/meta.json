@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "ch02",
+  "contentKey": "02-testing-moral-arguments",
+  "slug": "testing-moral-arguments",
+  "title": "Testing Moral Arguments: Premises, Inferences, Objections, and Revision",
+  "subtitle": null,
+  "description": "A study-planning app offers a seven-day free trial. Unless the user changes a preselected option, the trial becomes a paid annual subscription. The price and renewal date appear in the terms.",
+  "order": 2,
+  "part": {
+    "id": "part-01",
+    "order": 1,
+    "chapterOrder": 2,
+    "title": "Philosophical Practice and AI",
+    "slug": "philosophical-practice-and-ai"
+  },
+  "path": "/chapter/testing-moral-arguments/",
+  "wordCount": 3771,
+  "readingMinutes": 17,
+  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/",
+  "status": "website-canonical",
+  "licenses": {
+    "prose": "CC-BY-4.0",
+    "code": "MIT",
+    "originalMetadata": "CC0-1.0",
+    "thirdPartyExceptions": []
+  },
+  "rightsRecordIds": [],
+  "exports": {
+    "print": true,
+    "offlineHtml": true,
+    "readingJson": true,
+    "plainText": true
+  },
+  "pressbooks": {
+    "id": 24,
+    "sourceFormat": "gfm+raw-html",
+    "compatible": true,
+    "validated": false,
+    "publishAuthorized": false,
+    "priorRelease": {
+      "sourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd",
+      "deploymentSha256": "b4d9af31584511a9fae1598932de5940a790a24443e1204854110da754a01114",
+      "publishedAt": "2026-07-22T08:17:34-06:00"
+    }
+  },
+  "websiteBaseline": {
+    "selectedSourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd",
+    "canonicalMarkdownSha256": "4d8bc034ded86acba3ddfaa7612b702644a0f6e1b1425672a02a08c864a1df5a",
+    "reconciliationTransformations": [
+      {
+        "kind": "replace-exact",
+        "reason": "Harmonize the imported H1 with the approved public title.",
+        "expectedOccurrences": 1
+      }
+    ],
+    "selectionNote": "Imported from the current resolved published-manifest source route."
+  }
+}

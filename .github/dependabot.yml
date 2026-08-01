@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "13:00"
+      timezone: America/Boise
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    groups:
+      routine-development-updates:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      routine-production-updates:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch

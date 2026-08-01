@@ -1,0 +1,18 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ethicsandai-editor-auth",
+  "main": "./src/index.mjs",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false
+  },
+  "vars": {
+    "EDITOR_REPO_OWNER": "Brehove",
+    "EDITOR_REPO_NAME": "ai-ethics-interactive-textbook",
+    "EDITOR_DEFAULT_BRANCH": "main",
+    "EDITOR_STATE_TTL_SECONDS": "600",
+    "EDITOR_SESSION_TTL_SECONDS": "3600"
+  }
+}

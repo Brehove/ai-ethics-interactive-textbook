@@ -1,0 +1,11 @@
+Creative Commons CC0 1.0 Universal
+SPDX-License-Identifier: CC0-1.0
+
+To the extent possible under law, the creator has waived copyright and related
+or neighboring rights in original structured metadata covered by this notice.
+
+Deed and legal code:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+This dedication does not apply to third-party facts, prose, excerpts, media,
+or other material whose record identifies another source or rights basis.
