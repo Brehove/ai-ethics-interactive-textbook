@@ -1,0 +1,232 @@
+---
+import type { ChapterSourceLinks } from "../lib/content";
+import type { ResolvedChapterPerson } from "../lib/scholarly-layer";
+import PersonPortrait from "./PersonPortrait.astro";
+
+interface Props {
+  people: ResolvedChapterPerson[];
+  primarySources: ChapterSourceLinks["primarySources"];
+}
+
+const { people, primarySources } = Astro.props;
+const featuredPeople = people.filter(({ relation }) => relation.featured);
+---
+
+{featuredPeople.length > 0 && (
+  <section class="inline-scholar-gallery" data-inline-scholar-gallery aria-label="Featured thinkers in this chapter">
+    {featuredPeople.map(({ person, relation }) => {
+      const sources = primarySources.filter((source) => source.authorPersonId === person.id);
+      return (
+        <aside
+          class="inline-scholar-card"
+          data-inline-scholar-card
+          data-person-path={person.path}
+          aria-labelledby={`inline-scholar-${person.id}`}
+        >
+          <div class="inline-scholar-card__portrait">
+            <PersonPortrait person={person} variant="card" showCredit={false} />
+            {person.portrait && (
+              <details class="image-credit">
+                <summary>Image credit</summary>
+                <p>
+                  <cite>{person.portrait.title}</cite> · {person.portrait.rights.artist}. {
+                    person.portrait.rights.licenseUrl
+                      ? <a href={person.portrait.rights.licenseUrl} rel="license noreferrer">{person.portrait.rights.licenseShortName}</a>
+                      : person.portrait.rights.licenseShortName
+                  }. Modified: {person.portrait.derivative.modification}. <a href={person.portrait.source.pageUrl} rel="noreferrer">Commons record</a>, reviewed revision {person.portrait.source.revisionId}.
+                </p>
+              </details>
+            )}
+          </div>
+
+          <div class="inline-scholar-card__record">
+            <p class="inline-label">Thinker in the text</p>
+            <h3 id={`inline-scholar-${person.id}`}>{person.displayName}</h3>
+            <p class="life-dates">{person.lifeDates}</p>
+            <p class="chapter-role">{relation.role || person.teaching.whyThisPerson}</p>
+            <p class="teaching-note">{person.teaching.whyThisPerson}</p>
+
+            <div class="scholar-disclosures">
+              <details>
+                <summary>Biography</summary>
+                <div class="disclosure-body">
+                  <p>{person.biography}</p>
+                  <a href={person.path}>Open permanent biography <span aria-hidden="true">→</span></a>
+                </div>
+              </details>
+
+              <details>
+                <summary>{sources.length === 1 ? "Primary text" : `Primary texts (${sources.length})`}</summary>
+                <div class="disclosure-body source-disclosure">
+                  {sources.length > 0 ? sources.map((source) => (
+                    <section aria-labelledby={`inline-source-${person.id}-${source.id}`}>
+                      <h4 id={`inline-source-${person.id}-${source.id}`}>{source.title}</h4>
+                      <dl>
+                        {source.locator && <><dt>Passage</dt><dd>{source.locator}</dd></>}
+                        {source.translation && <><dt>Edition</dt><dd>{source.translation}</dd></>}
+                      </dl>
+                      {source.excerpt && <blockquote>{source.excerpt}</blockquote>}
+                      <p>{source.teachingUse}</p>
+                      <a href={source.url} rel="noreferrer">Read the public text <span aria-hidden="true">↗</span></a>
+                    </section>
+                  )) : (
+                    <p>The chapter does not yet have a reviewed primary-text excerpt attributed to this thinker.</p>
+                  )}
+                </div>
+              </details>
+            </div>
+          </div>
+        </aside>
+      );
+    })}
+  </section>
+)}
+
+<script>
+  const placeInlineScholarFigures = (): void => {
+    document.querySelectorAll<HTMLElement>("[data-inline-scholar-gallery]").forEach((gallery) => {
+      const prose = gallery.closest<HTMLElement>(".chapter-prose");
+      if (!prose) return;
+
+      gallery.querySelectorAll<HTMLElement>("[data-inline-scholar-card]").forEach((card) => {
+        const path = card.dataset.personPath;
+        if (!path) return;
+        const introduction = [...prose.querySelectorAll<HTMLAnchorElement>(`a[href="${path}"]`)]
+          .find((link) => !link.closest("[data-inline-scholar-card]"));
+        const paragraph = introduction?.closest("p");
+        if (!paragraph) return;
+
+        let insertionPoint: Element = paragraph;
+        while (insertionPoint.nextElementSibling?.matches("[data-inline-scholar-card][data-inline-placed]")) {
+          insertionPoint = insertionPoint.nextElementSibling;
+        }
+        card.dataset.inlinePlaced = "true";
+        insertionPoint.insertAdjacentElement("afterend", card);
+      });
+
+      if (gallery.childElementCount === 0) gallery.remove();
+    });
+
+    if ("IntersectionObserver" in window) {
+      const visibleCards = new Set<Element>();
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) visibleCards.add(entry.target);
+          else visibleCards.delete(entry.target);
+        });
+        document.body.classList.toggle("inline-scholar-visible", visibleCards.size > 0);
+      }, { threshold: 0.08 });
+      document.querySelectorAll("[data-inline-scholar-card]").forEach((card) => observer.observe(card));
+    }
+  };
+
+  placeInlineScholarFigures();
+</script>
+
+<style>
+  .inline-scholar-gallery { margin: 3rem 0; }
+  .inline-scholar-gallery:empty { display: none; }
+  .inline-scholar-card {
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.78fr) minmax(0, 1.22fr);
+    margin: 2.6rem 0 3rem;
+    border-block: 1px solid var(--line-dark);
+    background: var(--wash);
+    box-shadow: var(--shadow);
+    break-inside: avoid;
+  }
+  .inline-scholar-card__portrait {
+    min-width: 0;
+    padding: 1rem;
+    border-right: 1px solid var(--line);
+    background: var(--wash-strong);
+  }
+  .inline-scholar-card__portrait :global(.person-portrait img),
+  .inline-scholar-card__portrait :global(.portrait-placeholder) {
+    min-height: 17rem;
+    border: 0;
+    object-fit: cover;
+  }
+  .inline-scholar-card__record { align-self: center; padding: clamp(1.25rem, 3vw, 2rem); }
+  .inline-label {
+    margin: 0;
+    color: var(--rust-dark);
+    font: 700 0.64rem/1.35 var(--sans);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .inline-scholar-card h3 {
+    margin: 0.35rem 0 0;
+    font-size: clamp(2rem, 5vw, 3.3rem);
+    font-weight: 500;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+  .life-dates {
+    margin: 0.55rem 0 1rem;
+    color: var(--rust-dark);
+    font: 700 0.67rem/1.35 var(--sans);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .chapter-role { margin: 0 0 0.5rem; color: var(--ink); font-style: italic; }
+  .teaching-note { margin: 0 0 1.15rem; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.5; }
+  .scholar-disclosures { display: grid; gap: 0.55rem; }
+  .scholar-disclosures > details,
+  .image-credit {
+    border-top: 1px solid var(--line);
+    font-family: var(--sans);
+  }
+  summary {
+    display: flex;
+    min-height: 2.65rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--ink);
+    font: 700 0.68rem/1.3 var(--sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  summary::after { content: "+"; color: var(--rust-dark); font-size: 1rem; }
+  details[open] > summary::after { content: "−"; }
+  .disclosure-body { padding: 0.15rem 0 1rem; color: var(--ink-soft); font: 0.82rem/1.55 var(--sans); }
+  .disclosure-body p { margin: 0 0 0.75rem; }
+  .disclosure-body a { color: var(--rust-dark); font-weight: 700; }
+  .source-disclosure section + section { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .source-disclosure h4 { margin: 0 0 0.5rem; color: var(--ink); font: 500 1.15rem/1.2 var(--serif); }
+  .source-disclosure dl { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.65rem; margin: 0.6rem 0; padding: 0; background: transparent; }
+  .source-disclosure dt { font-weight: 700; }
+  .source-disclosure dd { margin: 0; }
+  .source-disclosure blockquote {
+    margin: 0.85rem 0;
+    padding: 0.75rem 0 0.75rem 1rem;
+    border-left: 2px solid var(--rust);
+    color: var(--ink);
+    font: 0.95rem/1.55 var(--serif);
+  }
+  .image-credit { margin-top: 0.5rem; }
+  .image-credit summary { min-height: 2rem; font-size: 0.58rem; }
+  .image-credit p { margin: 0; padding: 0.15rem 0 0.4rem; color: var(--ink-soft); font: 0.58rem/1.45 var(--sans); overflow-wrap: anywhere; }
+  @media (max-width: 620px) {
+    .inline-scholar-card { grid-template-columns: 1fr; margin-block: 2.2rem; }
+    .inline-scholar-card__portrait { border-right: 0; border-bottom: 1px solid var(--line); }
+    .inline-scholar-card__portrait :global(.person-portrait) { max-width: 18rem; margin-inline: auto; }
+    .inline-scholar-card__portrait :global(.person-portrait img),
+    .inline-scholar-card__portrait :global(.portrait-placeholder) { min-height: 0; max-height: 22rem; }
+    .inline-scholar-card__record { padding: 1.25rem; }
+  }
+  @media (max-width: 820px) {
+    :global(body.inline-scholar-visible .scholar-launch) {
+      translate: 0 1rem;
+      opacity: 0;
+      pointer-events: none;
+    }
+    :global(.scholar-launch) { transition: opacity 120ms ease, translate 120ms ease; }
+  }
+  @media print {
+    .inline-scholar-card { box-shadow: none; }
+    .scholar-disclosures, .image-credit { display: none; }
+  }
+</style>

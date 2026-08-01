@@ -30,6 +30,7 @@ interface Props {
   people: ResolvedChapterPerson[];
   primarySources?: ChapterSourceLinks["primarySources"];
   pressbooksUrl: string;
+  inlineFeatured?: boolean;
 }
 
 function stringField(record: Record<string, unknown>, key: string): string | null {
@@ -66,6 +67,7 @@ const {
   people,
   primarySources = [],
   pressbooksUrl,
+  inlineFeatured = false,
 } = Astro.props;
 const orderedPeople = orderChapterPeople(people);
 const defaultEntry = orderedPeople[0];
@@ -128,13 +130,13 @@ const modeDescription = active === "first"
             const connectionsId = `scholar-${slug}-${person.id}-connections`;
             return (
               <section
-                class="scholar-panel"
+                class:list={["scholar-panel", inlineFeatured && relation.featured && "scholar-panel--inline-featured"]}
                 data-scholar-panel={person.id}
                 aria-labelledby={`scholar-${slug}-${person.id}-name`}
                 hidden={index !== 0}
               >
                 <div class="scholar-figure">
-                  <PersonPortrait person={person} variant="dock" />
+                  <PersonPortrait person={person} variant="dock" showCredit={!(inlineFeatured && relation.featured)} />
                 </div>
                 <header class="scholar-person-head">
                   <p class="eyebrow">{relation.featured ? "Featured thinker" : "Connected thinker"}</p>

@@ -2,6 +2,7 @@
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../components/ReaderShell.astro";
 import ScholarlyDock from "../../../components/ScholarlyDock.astro";
+import InlineScholarFigures from "../../../components/InlineScholarFigures.astro";
 import { getChapterSlugs, requireChapter } from "../../../lib/content";
 import { resolveChapterPeople } from "../../../lib/scholarly-layer";
 
@@ -29,6 +30,7 @@ const chapterPeople = await resolveChapterPeople(world);
   >
     <div class="chapter-prose first-read">
       <Content />
+      <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
     </div>
     <ScholarlyDock
       slot="scholarly-dock"
@@ -37,6 +39,7 @@ const chapterPeople = await resolveChapterPeople(world);
       people={chapterPeople}
       primarySources={sourceLinks.primarySources}
       pressbooksUrl={meta.pressbooksUrl}
+      inlineFeatured
     />
   </ReaderShell>
 </SiteLayout>
