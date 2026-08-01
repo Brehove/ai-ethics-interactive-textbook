@@ -43,6 +43,7 @@ Read:
 - [`workers/editor-auth/README.md`](workers/editor-auth/README.md)
 - [`docs/PRESSBOOKS_COMPATIBILITY.md`](docs/PRESSBOOKS_COMPATIBILITY.md)
 - [`docs/VOICE_BOUNDARY.md`](docs/VOICE_BOUNDARY.md)
+- [`docs/WIKIMEDIA_WORLD_LAYER.md`](docs/WIKIMEDIA_WORLD_LAYER.md)
 
 ## Content maintenance
 

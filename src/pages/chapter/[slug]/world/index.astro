@@ -2,18 +2,43 @@
 import SiteLayout from "../../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../../components/ReaderShell.astro";
 import LayerIntro from "../../../../components/LayerIntro.astro";
+import PersonCard from "../../../../components/PersonCard.astro";
+import ScholarlyDock from "../../../../components/ScholarlyDock.astro";
 import { getChapterSlugs, requireChapter } from "../../../../lib/content";
+import { resolveChapterPeople } from "../../../../lib/scholarly-layer";
 
 export async function getStaticPaths() {
   return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
 }
 
 const chapter = await requireChapter(Astro.params.slug!);
-const { meta, headings, world, previous, next } = chapter;
-const people = Array.isArray(world?.people) ? world.people : [];
+const { meta, headings, world, sourceLinks, previous, next } = chapter;
+const people = await resolveChapterPeople(world);
 const concepts = Array.isArray(world?.concepts) ? world.concepts : [];
 const traditions = Array.isArray(world?.traditions) ? world.traditions : [];
 const hasRecords = people.length + concepts.length + traditions.length > 0;
+
+function itemId(item: unknown): string | null {
+  if (typeof item === "string") return item;
+  if (item && typeof item === "object" && typeof (item as Record<string, unknown>).id === "string") return (item as Record<string, unknown>).id as string;
+  return null;
+}
+
+function itemTitle(item: unknown): string {
+  if (item && typeof item === "object") {
+    const record = item as Record<string, unknown>;
+    if (typeof record.title === "string") return record.title;
+    if (typeof record.label === "string") return record.label;
+  }
+  const id = itemId(item);
+  return id ? id.split("-").map((part) => part ? part[0].toLocaleUpperCase("en") + part.slice(1) : part).join(" ") : "Reviewed record";
+}
+
+function itemSummary(item: unknown): string | null {
+  if (!item || typeof item !== "object") return null;
+  const record = item as Record<string, unknown>;
+  return typeof record.summary === "string" ? record.summary : typeof record.role === "string" ? record.role : null;
+}
 ---
 
 <SiteLayout title={`World · ${meta.title}`} description={`People, concepts, and traditions surrounding ${meta.title}.`} chapterNumber={meta.order} canonicalPath={`${meta.path}world/`}>
@@ -31,10 +56,22 @@ const hasRecords = people.length + concepts.length + traditions.length > 0;
   >
     <LayerIntro eyebrow="World" title="Ideas have histories" description="The World layer situates the chapter's people, concepts, texts, and traditions so context sharpens rather than replaces philosophical reading." />
     {hasRecords ? (
-      <div class="world-grid">
-        {people.map((item: any) => <article><p class="eyebrow">Person</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
-        {concepts.map((item: any) => <article><p class="eyebrow">Concept</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
-        {traditions.map((item: any) => <article><p class="eyebrow">Tradition</p><h2>{item.title ?? item.id}</h2><p>{item.summary}</p></article>)}
+      <div class="world-records">
+        {people.length > 0 && (
+          <section class="world-section" aria-labelledby="world-people-title">
+            <header><p class="eyebrow">People</p><h2 id="world-people-title">Thinkers in this chapter</h2></header>
+            <div class="people-grid">{people.map((entry) => <PersonCard entry={entry} headingLevel={3} />)}</div>
+          </section>
+        )}
+        {(concepts.length > 0 || traditions.length > 0) && (
+          <section class="world-section" aria-labelledby="world-connections-title">
+            <header><p class="eyebrow">Intellectual context</p><h2 id="world-connections-title">Concepts and traditions</h2></header>
+            <div class="world-grid">
+              {concepts.map((item) => <article id={itemId(item) ? `concept-${itemId(item)}` : undefined}><p class="eyebrow">Concept</p><h3>{itemTitle(item)}</h3>{itemSummary(item) && <p>{itemSummary(item)}</p>}</article>)}
+              {traditions.map((item) => <article id={itemId(item) ? `tradition-${itemId(item)}` : undefined}><p class="eyebrow">Tradition</p><h3>{itemTitle(item)}</h3>{itemSummary(item) && <p>{itemSummary(item)}</p>}</article>)}
+            </div>
+          </section>
+        )}
       </div>
     ) : (
       <section class="world-empty">
@@ -42,14 +79,27 @@ const hasRecords = people.length + concepts.length + traditions.length > 0;
         <p>The complete chapter is available now. Biographies, intellectual lineages, and rights-cleared images will enter this layer only through reviewed metadata, not a live API call that can silently change the textbook.</p>
       </section>
     )}
+    <ScholarlyDock
+      slot="scholarly-dock"
+      slug={meta.slug}
+      active="world"
+      people={people}
+      primarySources={sourceLinks.primarySources}
+      pressbooksUrl={meta.pressbooksUrl}
+    />
   </ReaderShell>
 </SiteLayout>
 
 <style>
-  .world-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: var(--content-width); border-top: 1px solid var(--ink); }
+  .world-records { display: grid; gap: 3rem; max-width: var(--content-width); }
+  .world-section > header { margin-bottom: 1rem; border-bottom: 1px solid var(--ink); }
+  .world-section > header h2 { margin: 0.35rem 0 0.85rem; font-size: 1.65rem; font-weight: 500; }
+  .people-grid { display: grid; gap: 1rem; }
+  .world-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ink); }
   article { padding: 1.3rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--wash); }
-  article h2, .world-empty h2 { margin: 0.4rem 0 0.6rem; font-size: 1.35rem; font-weight: 500; }
+  article h3, .world-empty h2 { margin: 0.4rem 0 0.6rem; font-size: 1.35rem; font-weight: 500; }
   article p:last-child { font-size: 0.9rem; }
+  article[id] { scroll-margin-top: 7rem; }
   .world-empty { max-width: var(--content-width); margin: 2rem 0; padding: 1.5rem; border-top: 2px solid var(--ink); background: var(--wash); }
   @media (max-width: 700px) { .world-grid { grid-template-columns: 1fr; } }
 </style>

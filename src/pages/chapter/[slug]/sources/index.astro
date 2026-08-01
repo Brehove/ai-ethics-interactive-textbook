@@ -2,19 +2,22 @@
 import SiteLayout from "../../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../../components/ReaderShell.astro";
 import LayerIntro from "../../../../components/LayerIntro.astro";
+import ScholarlyDock from "../../../../components/ScholarlyDock.astro";
 import { getChapterSlugs, requireChapter } from "../../../../lib/content";
+import { resolveChapterPeople } from "../../../../lib/scholarly-layer";
 
 export async function getStaticPaths() {
   return (await getChapterSlugs()).map((slug) => ({ params: { slug } }));
 }
 
 const chapter = await requireChapter(Astro.params.slug!);
-const { meta, headings, sourceLinks, rights, previous, next } = chapter;
+const { meta, headings, sourceLinks, rights, world, previous, next } = chapter;
 const sources = [
   ...(Array.isArray(sourceLinks?.primarySources) ? sourceLinks.primarySources : []),
   ...(Array.isArray(sourceLinks?.companionSources) ? sourceLinks.companionSources : []),
 ];
 const exceptions = Array.isArray(rights?.thirdPartyExceptions) ? rights.thirdPartyExceptions : [];
+const chapterPeople = await resolveChapterPeople(world);
 ---
 
 <SiteLayout title={`Sources · ${meta.title}`} description={`Primary sources and provenance for ${meta.title}.`} chapterNumber={meta.order} canonicalPath={`${meta.path}sources/`}>
@@ -42,6 +45,14 @@ const exceptions = Array.isArray(rights?.thirdPartyExceptions) ? rights.thirdPar
       <p>Original chapter prose is CC BY 4.0. Original structured metadata is CC0 1.0. Third-party material retains its item-level rights.</p>
       {exceptions.length > 0 ? <ul>{exceptions.map((item: any) => <li>{typeof item === "string" ? item : item.label ?? item.id}</li>)}</ul> : <p>No separate third-party exception is recorded in the website baseline for this chapter.</p>}
     </section>
+    <ScholarlyDock
+      slot="scholarly-dock"
+      slug={meta.slug}
+      active="sources"
+      people={chapterPeople}
+      primarySources={sourceLinks.primarySources}
+      pressbooksUrl={meta.pressbooksUrl}
+    />
   </ReaderShell>
 </SiteLayout>
 

@@ -2,6 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch10",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"introduction-principles-morals-legislation","title":"An Introduction to the Principles of Morals and Legislation","creator":"Jeremy Bentham","authorPersonId":"jeremy-bentham","url":"https://www.econlib.org/library/Bentham/bnthPML.html","locator":"Chapter I, section 1","translation":"1907 reprint of Bentham's corrected 1823 edition","excerpt":"Nature has placed mankind under the governance of two sovereign masters, pain and pleasure.","rightsStatus":"Public-domain text; the linked Econlib edition identifies the text as public domain.","passageIds":["ch10-p0028","ch10-p0029"],"teachingUse":"Primary text for utility and the felicific calculus."},
+    {"id":"utilitarianism-mill","title":"Utilitarianism","creator":"John Stuart Mill","authorPersonId":"john-stuart-mill","url":"https://www.gutenberg.org/files/11224/11224-h/11224-h.htm","locator":"Chapter II","translation":"English text; seventh edition (1879)","excerpt":"The creed which accepts as the foundation of morals, Utility, or the Greatest Happiness Principle, holds that actions are right in proportion as they tend to promote happiness, wrong as they tend to produce the reverse of happiness.","rightsStatus":"Public domain in the United States; Project Gutenberg ebook 11224.","passageIds":["ch10-p0030","ch10-p0031"],"teachingUse":"Primary text for higher pleasures and secondary principles."},
+    {"id":"on-liberty","title":"On Liberty","creator":"John Stuart Mill","authorPersonId":"john-stuart-mill","url":"https://www.gutenberg.org/files/34901/34901-h/34901-h.htm","locator":"Chapter I","translation":"Walter Scott Publishing Co. edition, with W. L. Courtney's 1901 introduction","rightsStatus":"Public domain in the United States; Project Gutenberg ebook 34901.","passageIds":["ch10-p0031"],"teachingUse":"Primary text for liberty and the harm principle."}
+  ],
   "companionSources": []
 }

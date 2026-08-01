@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Aristotle Altemps Inv8575.jpg",
+  "derivative": {
+    "bytes": 83452,
+    "height": 964,
+    "localPath": "/media/wikimedia/aristotle-altemps-inv8575.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "d423c3876329fc1afdea5c8bebce7c7db8006b8f9ca30c6f43968f683f4e6c23",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Aristotle_Altemps_Inv8575.jpg/960px-Aristotle_Altemps_Inv8575.jpg",
+    "width": 720
+  },
+  "id": "aristotle-altemps-portrait",
+  "original": {
+    "bytes": 2244558,
+    "height": 2275,
+    "mime": "image/jpeg",
+    "sha1": "36dba3a15eeaccf6e0993fd66a67a0772f79d303",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Aristotle_Altemps_Inv8575.jpg",
+    "width": 1700
+  },
+  "personId": "aristotle",
+  "rights": {
+    "artist": "After Lysippos",
+    "attributionRequired": false,
+    "credit": "Jastrow (2006)",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "8287d6523cd3271e3bfaf9c1efee709ad4bb1c7934ff1ea752973af1f6c8b05e",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 1359807,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Aristotle_Altemps_Inv8575.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1169250569,
+    "revisionTimestamp": "2026-02-20T12:01:58Z"
+  }
+}

@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch07",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"nicomachean-ethics","title":"Nicomachean Ethics","creator":"Aristotle","authorPersonId":"aristotle","url":"https://classics.mit.edu/Aristotle/nicomachaen.2.ii.html","locator":"Book II, Chapter 1","translation":"W. D. Ross (1925)","excerpt":"For the things we have to learn before we can do them, we learn by doing them, e.g. men become builders by building and lyreplayers by playing the lyre; so too we become just by doing just acts, temperate by doing temperate acts, brave by doing brave acts.","rightsStatus":"Public-domain translation in the United States.","passageIds":["ch07-p0010","ch07-p0025","ch07-p0036"],"teachingUse":"Primary text for flourishing, habituation, and practical wisdom."}
+  ],
   "companionSources": []
 }

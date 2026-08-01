@@ -1,0 +1,150 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Immanuel Kant - Gemaelde 2.jpg",
+  "description": "German philosopher (1724-1804)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1724-04-22T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q4120832",
+        "label": "Königsberg"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q27306",
+        "label": "Kingdom of Prussia"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1804-02-12T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q4120832",
+        "label": "Königsberg"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q12539",
+        "label": "Age of Enlightenment"
+      },
+      {
+        "id": "Q679842",
+        "label": "German idealism"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q1056332",
+        "label": "Critique of Judgment"
+      },
+      {
+        "id": "Q1214817",
+        "label": "The Metaphysics of Morals"
+      },
+      {
+        "id": "Q1215763",
+        "label": "Religion within the Bounds of Bare Reason"
+      },
+      {
+        "id": "Q1550565",
+        "label": "Groundwork of the Metaphysic of Morals"
+      },
+      {
+        "id": "Q1761342",
+        "label": "Prolegomena to Any Future Metaphysics"
+      },
+      {
+        "id": "Q220002",
+        "label": "Critique of Pure Reason"
+      },
+      {
+        "id": "Q812981",
+        "label": "Answering the Question: What Is Enlightenment?"
+      },
+      {
+        "id": "Q870851",
+        "label": "Critique of Practical Reason"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q1231865",
+        "label": "pedagogue"
+      },
+      {
+        "id": "Q1622272",
+        "label": "university teacher"
+      },
+      {
+        "id": "Q169470",
+        "label": "physicist"
+      },
+      {
+        "id": "Q170790",
+        "label": "mathematician"
+      },
+      {
+        "id": "Q182436",
+        "label": "librarian"
+      },
+      {
+        "id": "Q18805",
+        "label": "naturalist"
+      },
+      {
+        "id": "Q23760244",
+        "label": "philosopher of law"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q4773904",
+        "label": "anthropologist"
+      },
+      {
+        "id": "Q482980",
+        "label": "author"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q656823",
+        "label": "in-home tutor"
+      }
+    ]
+  },
+  "id": "immanuel-kant",
+  "label": "Immanuel Kant",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "1d556dd733707850f1965c0770e3c6245a4a68dea9d6f68199e2f7fa021a664f",
+    "entityUrl": "https://www.wikidata.org/wiki/Q9312",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-08-01T14:06:06Z",
+    "provider": "Wikidata",
+    "revisionId": 2525694206
+  },
+  "wikidataId": "Q9312",
+  "wikipedia": {
+    "title": "Immanuel Kant",
+    "url": "https://en.wikipedia.org/wiki/Immanuel_Kant"
+  }
+}

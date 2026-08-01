@@ -85,7 +85,30 @@ export type ChapterSourceLinks = CollectionEntry<"chapterSources">["data"];
 export type ChapterWorld = CollectionEntry<"chapterWorld">["data"];
 export type ChapterRights = CollectionEntry<"chapterRights">["data"];
 export type ChapterReading = CollectionEntry<"chapterReading">["data"];
+export type Person = CollectionEntry<"people">["data"];
+export type PersonWikimedia = CollectionEntry<"peopleWikimedia">["data"];
+export type PersonMedia = CollectionEntry<"media">["data"];
+export type PersonMediaWikimedia = CollectionEntry<"mediaWikimedia">["data"];
 type RenderedChapter = Awaited<ReturnType<typeof render>>;
+
+export type PersonPortrait = PersonMedia & {
+  localPath: string;
+  width: number;
+  height: number;
+  mime: string;
+  source: PersonMediaWikimedia["source"];
+  original: PersonMediaWikimedia["original"];
+  derivative: PersonMediaWikimedia["derivative"];
+  rights: PersonMediaWikimedia["rights"];
+};
+
+export type PersonBundle = Person & {
+  slug: string;
+  path: string;
+  wikipediaUrl: string | null;
+  wikimedia: PersonWikimedia;
+  portrait: PersonPortrait | null;
+};
 
 export interface ChapterBundle {
   meta: ChapterMeta;
@@ -110,6 +133,10 @@ interface ContentIndex {
   world: CollectionEntry<"chapterWorld">[];
   rights: CollectionEntry<"chapterRights">[];
   reading: CollectionEntry<"chapterReading">[];
+  people: CollectionEntry<"people">[];
+  peopleWikimedia: CollectionEntry<"peopleWikimedia">[];
+  media: CollectionEntry<"media">[];
+  mediaWikimedia: CollectionEntry<"mediaWikimedia">[];
 }
 
 let contentIndex: Promise<ContentIndex> | undefined;
@@ -124,9 +151,26 @@ async function loadContentIndex(): Promise<ContentIndex> {
     getCollection("chapterWorld"),
     getCollection("chapterRights"),
     getCollection("chapterReading"),
-  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading]) => {
+    getCollection("people"),
+    getCollection("peopleWikimedia"),
+    getCollection("media"),
+    getCollection("mediaWikimedia"),
+  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading, people, peopleWikimedia, media, mediaWikimedia]) => {
     if (books.length !== 1) throw new Error(`Expected one book record; found ${books.length}`);
-    return { book: books[0], chapters, meta, annotations, sourceLinks, world, rights, reading };
+    return {
+      book: books[0],
+      chapters,
+      meta,
+      annotations,
+      sourceLinks,
+      world,
+      rights,
+      reading,
+      people,
+      peopleWikimedia,
+      media,
+      mediaWikimedia,
+    };
   });
   return contentIndex;
 }
@@ -206,4 +250,69 @@ export async function requireChapter(slug: string): Promise<ChapterBundle> {
   const chapter = await getChapter(slug);
   if (!chapter) throw new Error(`Unknown chapter slug: ${slug}`);
   return chapter;
+}
+
+function joinPerson(index: ContentIndex, person: Person): PersonBundle {
+  const wikimediaMatches = index.peopleWikimedia.filter((entry) => entry.data.id === person.id);
+  if (wikimediaMatches.length !== 1) {
+    throw new Error(`Expected one generated Wikimedia record for person ${person.id}; found ${wikimediaMatches.length}`);
+  }
+  const wikimedia = wikimediaMatches[0].data;
+  let portrait: PersonPortrait | null = null;
+  if (person.portraitId) {
+    const curatedMatches = index.media.filter((entry) => entry.data.id === person.portraitId);
+    const generatedMatches = index.mediaWikimedia.filter((entry) => entry.data.id === person.portraitId);
+    if (curatedMatches.length !== 1 || generatedMatches.length !== 1) {
+      throw new Error(
+        `Expected one curated and one generated portrait record for ${person.id}/${person.portraitId}; found ${curatedMatches.length}/${generatedMatches.length}`,
+      );
+    }
+    const curated = curatedMatches[0].data;
+    const generated = generatedMatches[0].data;
+    if (generated.personId !== person.id) {
+      throw new Error(`Portrait ${person.portraitId} belongs to ${generated.personId}, not ${person.id}`);
+    }
+    portrait = {
+      ...curated,
+      localPath: generated.derivative.localPath,
+      width: generated.derivative.width,
+      height: generated.derivative.height,
+      mime: generated.derivative.mime,
+      source: generated.source,
+      original: generated.original,
+      derivative: generated.derivative,
+      rights: generated.rights,
+    };
+  }
+  return {
+    ...person,
+    slug: person.id,
+    path: `/people/${person.id}/`,
+    wikipediaUrl: wikimedia.wikipedia?.url ?? null,
+    wikimedia,
+    portrait,
+  };
+}
+
+export async function getPeople(): Promise<PersonBundle[]> {
+  const index = await loadContentIndex();
+  return index.people
+    .map((entry) => joinPerson(index, entry.data))
+    .sort((left, right) => left.sortName.localeCompare(right.sortName, "en"));
+}
+
+export async function getPerson(id: string): Promise<PersonBundle | undefined> {
+  const index = await loadContentIndex();
+  const entry = index.people.find((candidate) => candidate.data.id === id);
+  return entry ? joinPerson(index, entry.data) : undefined;
+}
+
+export async function getPersonSlugs(): Promise<string[]> {
+  return (await getPeople()).map((person) => person.slug);
+}
+
+export async function requirePerson(id: string): Promise<PersonBundle> {
+  const person = await getPerson(id);
+  if (!person) throw new Error(`Unknown person id: ${id}`);
+  return person;
 }

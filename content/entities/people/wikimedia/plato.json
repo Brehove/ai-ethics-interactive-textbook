@@ -1,0 +1,253 @@
+{
+  "aliases": [],
+  "commonsImageClaim": "Plato Silanion Musei Capitolini MC1377.jpg",
+  "description": "4th-century BCE Greek philosopher",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "-0427-05-07T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 8,
+        "time": "-0428-00-00T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 11,
+        "time": "-0429-05-21T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q1524",
+        "label": "Athens"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q844930",
+        "label": "Classical Athens"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 9,
+        "time": "-0347-00-00T00:00:00Z"
+      },
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985786",
+        "precision": 8,
+        "time": "-0348-00-00T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q1524",
+        "label": "Athens"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q193589",
+        "label": "Platonism"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q1130762",
+        "label": "Parmenides"
+      },
+      {
+        "id": "Q1153509",
+        "label": "First Alcibiades"
+      },
+      {
+        "id": "Q123397",
+        "label": "The Republic"
+      },
+      {
+        "id": "Q1243625",
+        "label": "Laches"
+      },
+      {
+        "id": "Q1335321",
+        "label": "Critias"
+      },
+      {
+        "id": "Q1347394",
+        "label": "Cratylus"
+      },
+      {
+        "id": "Q1426781",
+        "label": "Ion"
+      },
+      {
+        "id": "Q1474843",
+        "label": "Menexenus"
+      },
+      {
+        "id": "Q1619950",
+        "label": "Hipparchus"
+      },
+      {
+        "id": "Q1653767",
+        "label": "Clitophon"
+      },
+      {
+        "id": "Q1788674",
+        "label": "Second Alcibiades"
+      },
+      {
+        "id": "Q2005313",
+        "label": "Theages"
+      },
+      {
+        "id": "Q2170732",
+        "label": "Epistles"
+      },
+      {
+        "id": "Q220972",
+        "label": "Philebus"
+      },
+      {
+        "id": "Q241668",
+        "label": "Minos"
+      },
+      {
+        "id": "Q2440110",
+        "label": "Eryxias"
+      },
+      {
+        "id": "Q2440551",
+        "label": "Epinomis"
+      },
+      {
+        "id": "Q2440575",
+        "label": "Sisyphus"
+      },
+      {
+        "id": "Q244161",
+        "label": "Phaedo"
+      },
+      {
+        "id": "Q264241",
+        "label": "Gorgias"
+      },
+      {
+        "id": "Q267634",
+        "label": "Crito"
+      },
+      {
+        "id": "Q273668",
+        "label": "Apology"
+      },
+      {
+        "id": "Q371884",
+        "label": "Timaeus"
+      },
+      {
+        "id": "Q471715",
+        "label": "Sophist"
+      },
+      {
+        "id": "Q486727",
+        "label": "Symposium"
+      },
+      {
+        "id": "Q520328",
+        "label": "Protagoras"
+      },
+      {
+        "id": "Q555862",
+        "label": "Phaedrus"
+      },
+      {
+        "id": "Q572073",
+        "label": "Rival Lovers"
+      },
+      {
+        "id": "Q614640",
+        "label": "Hippias Minor"
+      },
+      {
+        "id": "Q634846",
+        "label": "Hippias Major"
+      },
+      {
+        "id": "Q648889",
+        "label": "Euthyphro"
+      },
+      {
+        "id": "Q6499786",
+        "label": "Euthydemus"
+      },
+      {
+        "id": "Q669911",
+        "label": "Statesman"
+      },
+      {
+        "id": "Q746253",
+        "label": "Meno"
+      },
+      {
+        "id": "Q752285",
+        "label": "Laws"
+      },
+      {
+        "id": "Q781206",
+        "label": "Charmides"
+      },
+      {
+        "id": "Q846241",
+        "label": "Theaetetus"
+      },
+      {
+        "id": "Q924977",
+        "label": "Lysis"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q23760244",
+        "label": "philosopher of law"
+      },
+      {
+        "id": "Q26237228",
+        "label": "epigrammatist"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q49757",
+        "label": "poet"
+      }
+    ]
+  },
+  "id": "plato",
+  "label": "Plato",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "7cb8eeebf5c59e52c32239a4d92ead564ee1de45d2d55fe39e0618c1c99aa243",
+    "entityUrl": "https://www.wikidata.org/wiki/Q859",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-25T16:20:01Z",
+    "provider": "Wikidata",
+    "revisionId": 2522560165
+  },
+  "wikidataId": "Q859",
+  "wikipedia": {
+    "title": "Plato",
+    "url": "https://en.wikipedia.org/wiki/Plato"
+  }
+}

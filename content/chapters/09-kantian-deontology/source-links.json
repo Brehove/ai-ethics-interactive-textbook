@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "chapterId": "ch09",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"groundwork-metaphysics-morals","title":"Groundwork of the Metaphysics of Morals","creator":"Immanuel Kant","authorPersonId":"immanuel-kant","url":"https://www.gutenberg.org/files/5682/5682-h/5682-h.htm","locator":"Second Section, categorical imperative","translation":"Thomas Kingsmill Abbott (1895)","excerpt":"Act only on that maxim whereby thou canst at the same time will that it should become a universal law.","rightsStatus":"Public domain in the United States; Project Gutenberg ebook 5682.","passageIds":["ch09-p0012","ch09-p0023"],"teachingUse":"Primary text for autonomy and the formulations of the categorical imperative."}
+  ],
   "companionSources": []
 }

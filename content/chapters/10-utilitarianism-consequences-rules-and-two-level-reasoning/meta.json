@@ -15,7 +15,7 @@
     "slug": "duty-consequences-and-moral-choice"
   },
   "path": "/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
-  "wordCount": 7371,
+  "wordCount": 7372,
   "readingMinutes": 33,
   "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
   "status": "website-canonical",
@@ -46,7 +46,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",
-    "canonicalMarkdownSha256": "07fb1af0a772921bc4bfb8943d41f69be5822168c292d229d8929aeef858ae39",
+    "canonicalMarkdownSha256": "e8cc8654d71b43829ae9085026188eb4dc6be30ceb878f6151b7f655775c32a3",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

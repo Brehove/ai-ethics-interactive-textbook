@@ -35,6 +35,7 @@ const {
   next,
 } = Astro.props;
 const chapterHeadings = headings.filter((heading) => heading.depth === 2);
+const hasScholarlyDock = Astro.slots.has("scholarly-dock");
 ---
 
 <main id="main-content" class="reader-shell">
@@ -66,15 +67,19 @@ const chapterHeadings = headings.filter((heading) => heading.depth === 2);
     </footer>
   </article>
 
-  <aside class="source-dock" aria-label="Source dock">
-    <div>
-      <p class="eyebrow">Source dock</p>
-      <h2>{active === "first" ? "Read with the sources nearby" : active === "deep" ? "Follow the argument" : active === "sources" ? "Open the evidence" : "Locate the tradition"}</h2>
-      <p>{active === "first" ? "Move among reading layers without losing your place in the chapter." : active === "deep" ? "Reconstruct premises, objections, and revisions before deciding whether the argument succeeds." : active === "sources" ? "Source records distinguish the primary text, the edition or translation, and the chapter's interpretation." : "World records connect thinkers, concepts, institutions, and later inheritances without replacing the primary reading."}</p>
-      <a class="source-link" href={pressbooksUrl}>Open this chapter in Pressbooks ↗</a>
-    </div>
-    <PrivacyNote />
-  </aside>
+  {hasScholarlyDock ? (
+    <slot name="scholarly-dock" />
+  ) : (
+    <aside class="source-dock" aria-label="Source dock">
+      <div>
+        <p class="eyebrow">Source dock</p>
+        <h2>{active === "first" ? "Read with the sources nearby" : active === "deep" ? "Follow the argument" : active === "sources" ? "Open the evidence" : "Locate the tradition"}</h2>
+        <p>{active === "first" ? "Move among reading layers without losing your place in the chapter." : active === "deep" ? "Reconstruct premises, objections, and revisions before deciding whether the argument succeeds." : active === "sources" ? "Source records distinguish the primary text, the edition or translation, and the chapter's interpretation." : "World records connect thinkers, concepts, institutions, and later inheritances without replacing the primary reading."}</p>
+        <a class="source-link" href={pressbooksUrl}>Open this chapter in Pressbooks ↗</a>
+      </div>
+      <PrivacyNote />
+    </aside>
+  )}
 </main>
 
 <style>

@@ -67,6 +67,163 @@ const chapterScopedMetadata = z.object({
   chapterId: z.string(),
 });
 
+const publicIdentifier = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const wikidataIdentifier = z.string().regex(/^Q[1-9][0-9]*$/);
+const checksumSha256 = z.string().regex(/^[a-f0-9]{64}$/);
+const chapterPersonRelationSchema = z.object({
+  id: publicIdentifier,
+  role: z.string().min(1),
+  featured: z.boolean(),
+  passageIds: z.array(publicIdentifier),
+});
+
+const chapterSourceRecordSchema = z.object({
+  id: publicIdentifier,
+  title: z.string().min(1),
+  creator: z.string().min(1),
+  authorPersonId: publicIdentifier.optional(),
+  url: z.url(),
+  locator: z.string().min(1).optional(),
+  translation: z.string().min(1).optional(),
+  excerpt: z.string().min(1).optional(),
+  rightsStatus: z.string().min(1).optional(),
+  rightsRecordId: publicIdentifier.optional(),
+  passageIds: z.array(publicIdentifier),
+  teachingUse: z.string().min(1),
+});
+
+export const personSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: publicIdentifier,
+  displayName: z.string().min(1),
+  sortName: z.string().min(1),
+  lifeDates: z.string().min(1),
+  biography: z.string().min(1),
+  teaching: z.object({
+    whyThisPerson: z.string().min(1),
+    traditionIds: z.array(publicIdentifier),
+    conceptIds: z.array(publicIdentifier),
+    primarySourceIds: z.array(publicIdentifier),
+  }),
+  portraitId: publicIdentifier.nullable(),
+  links: z.object({
+    sep: z.url().nullable(),
+    iep: z.url().nullable(),
+    other: z.array(z.object({ label: z.string().min(1), url: z.url() })),
+  }),
+});
+
+export const mediaSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: publicIdentifier,
+  kind: z.literal("image"),
+  title: z.string().min(1),
+  alt: z.string().min(1),
+  caption: z.string().nullable(),
+  teachingUse: z.string().min(1),
+  decorative: z.literal(false),
+  rightsReview: z.object({
+    status: z.enum(["pending", "approved", "rejected"]),
+    reviewedAt: z.string().nullable(),
+    sourceRevisionId: z.number().int().positive().nullable(),
+    notes: z.string().nullable(),
+  }),
+});
+
+const entityReferenceSchema = z.object({ id: wikidataIdentifier, label: z.string().min(1) });
+const wikidataTimeSchema = z.object({
+  time: z.string(),
+  precision: z.number().int(),
+  calendarModel: z.string(),
+});
+
+export const personWikimediaSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: publicIdentifier,
+  wikidataId: wikidataIdentifier,
+  label: z.string().min(1),
+  description: z.string().nullable(),
+  aliases: z.array(z.string()),
+  facts: z.object({
+    birthDates: z.array(wikidataTimeSchema),
+    deathDates: z.array(wikidataTimeSchema),
+    birthPlaces: z.array(entityReferenceSchema),
+    deathPlaces: z.array(entityReferenceSchema),
+    occupations: z.array(entityReferenceSchema),
+    movements: z.array(entityReferenceSchema),
+    countriesOfCitizenship: z.array(entityReferenceSchema),
+    notableWorks: z.array(entityReferenceSchema),
+  }),
+  wikipedia: z.object({ title: z.string().min(1), url: z.url() }).nullable(),
+  commonsImageClaim: z.string().nullable(),
+  source: z.object({
+    provider: z.literal("Wikidata"),
+    entityUrl: z.url(),
+    revisionId: z.number().int().positive(),
+    modified: z.string(),
+    checksumSha256,
+    license: z.literal("CC0-1.0"),
+    licenseUrl: z.literal("https://creativecommons.org/publicdomain/zero/1.0/"),
+  }),
+});
+
+export const mediaWikimediaSchema = z.object({
+  schemaVersion: z.literal(1),
+  id: publicIdentifier,
+  personId: publicIdentifier,
+  commonsTitle: z.string().startsWith("File:"),
+  source: z.object({
+    provider: z.literal("Wikimedia Commons"),
+    pageId: z.number().int().positive(),
+    pageUrl: z.url(),
+    revisionId: z.number().int().positive(),
+    revisionTimestamp: z.string(),
+    checksumSha256,
+    metadataLicense: z.literal("CC0-1.0"),
+  }),
+  original: z.object({
+    url: z.url(),
+    mime: z.string().startsWith("image/"),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    bytes: z.number().int().positive(),
+    sha1: z.string().regex(/^[a-f0-9]{40}$/),
+  }),
+  derivative: z.object({
+    localPath: z.string().regex(/^\/media\/wikimedia\/[a-z0-9][a-z0-9._-]*\.webp$/),
+    sourceUrl: z.url(),
+    mime: z.literal("image/webp"),
+    width: z.number().int().positive().max(720),
+    height: z.number().int().positive(),
+    bytes: z.number().int().positive().max(250_000),
+    sha256: checksumSha256,
+    modification: z.string().min(1),
+  }),
+  rights: z.object({
+    licenseShortName: z.string().min(1),
+    licenseUrl: z.url().nullable(),
+    usageTerms: z.string().min(1),
+    attributionRequired: z.boolean(),
+    artist: z.string().min(1),
+    credit: z.string().nullable(),
+  }),
+});
+
+export const wikimediaManifestSchema = z.object({
+  schemaVersion: z.literal(1),
+  language: z.literal("en"),
+  people: z.array(z.object({
+    id: publicIdentifier,
+    wikidataId: wikidataIdentifier,
+    portrait: z.object({
+      id: publicIdentifier,
+      commonsTitle: z.string().startsWith("File:"),
+      downloadPath: z.string().regex(/^media\/wikimedia\/[a-z0-9][a-z0-9._-]*\.webp$/),
+      width: z.number().int().min(320).max(720),
+    }).nullable(),
+  })),
+});
+
 const chapters = defineCollection({
   loader: glob({
     pattern: "**/chapter.md",
@@ -94,8 +251,8 @@ const chapterSources = defineCollection({
   loader: glob({ pattern: "**/source-links.json", base: "./content/chapters" }),
   schema: chapterScopedMetadata.extend({
     license: z.literal("CC0-1.0"),
-    primarySources: z.array(z.record(z.string(), z.unknown())),
-    companionSources: z.array(z.record(z.string(), z.unknown())),
+    primarySources: z.array(chapterSourceRecordSchema),
+    companionSources: z.array(chapterSourceRecordSchema),
   }),
 });
 
@@ -103,7 +260,7 @@ const chapterWorld = defineCollection({
   loader: glob({ pattern: "**/world.json", base: "./content/chapters" }),
   schema: chapterScopedMetadata.extend({
     license: z.literal("CC0-1.0"),
-    people: z.array(z.unknown()),
+    people: z.array(chapterPersonRelationSchema),
     concepts: z.array(z.unknown()),
     traditions: z.array(z.unknown()),
     places: z.array(z.unknown()),
@@ -148,6 +305,31 @@ const chapterReading = defineCollection({
   }),
 });
 
+const people = defineCollection({
+  loader: glob({ pattern: "entities/people/records/*.json", base: "./content" }),
+  schema: personSchema,
+});
+
+const peopleWikimedia = defineCollection({
+  loader: glob({ pattern: "entities/people/wikimedia/*.json", base: "./content" }),
+  schema: personWikimediaSchema,
+});
+
+const media = defineCollection({
+  loader: glob({ pattern: "media/records/*.json", base: "./content" }),
+  schema: mediaSchema,
+});
+
+const mediaWikimedia = defineCollection({
+  loader: glob({ pattern: "media/wikimedia/*.json", base: "./content" }),
+  schema: mediaWikimediaSchema,
+});
+
+const wikimediaManifest = defineCollection({
+  loader: glob({ pattern: "entities/people/wikimedia-manifest.json", base: "./content" }),
+  schema: wikimediaManifestSchema,
+});
+
 const book = defineCollection({
   loader: glob({ pattern: "book.json", base: "./content" }),
   schema: z.object({
@@ -186,4 +368,9 @@ export const collections = {
   chapterWorld,
   chapterRights,
   chapterReading,
+  people,
+  peopleWikimedia,
+  media,
+  mediaWikimedia,
+  wikimediaManifest,
 };

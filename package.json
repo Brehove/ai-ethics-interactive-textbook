@@ -14,16 +14,21 @@
     "preview": "astro preview",
     "content:check": "node scripts/generate-reading.mjs --all --check",
     "content:generate": "node scripts/generate-reading.mjs --all --write",
+    "wikimedia:refresh": "node scripts/sync-wikimedia.mjs --write",
+    "wikimedia:check": "node scripts/sync-wikimedia.mjs --check",
+    "wikimedia:validate": "node scripts/validate-wikimedia.mjs",
     "audit:public": "node scripts/audit-public-boundary.mjs",
-    "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && node scripts/validate-pressbooks.mjs",
-    "test": "npm run test:editor-auth",
+    "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && node scripts/validate-pressbooks.mjs && npm run wikimedia:validate",
+    "test": "npm run test:editor-auth && npm run test:wikimedia",
     "test:editor-auth": "node --test --test-reporter=spec workers/editor-auth/test/*.test.mjs",
-    "validate": "npm run audit:public && npm run content:check && npm run validate:content && npm run check && npm run test:editor-auth",
+    "test:wikimedia": "node --test --test-reporter=spec scripts/test/wikimedia-sync.test.mjs",
+    "validate": "npm run audit:public && npm run content:check && npm run validate:content && npm run check && npm test",
     "deploy:reader": "wrangler deploy",
     "deploy:editor-auth": "wrangler deploy --config workers/editor-auth/wrangler.jsonc"
   },
   "dependencies": {
-    "astro": "7.1.6"
+    "astro": "7.1.6",
+    "sharp": "0.35.3"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

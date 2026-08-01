@@ -2,6 +2,9 @@
   "schemaVersion": 1,
   "chapterId": "ch05",
   "license": "CC0-1.0",
-  "primarySources": [],
+  "primarySources": [
+    {"id":"plato-euthyphro","title":"Euthyphro","creator":"Plato","authorPersonId":"plato","url":"https://classics.mit.edu/Plato/euthyfro.html","locator":"Euthyphro, 10a","translation":"Benjamin Jowett (1892)","excerpt":"The point which I should first wish to understand is whether the pious or holy is beloved by the gods because it is holy, or holy because it is beloved of the gods.","rightsStatus":"Public-domain translation in the United States.","passageIds":["ch05-p0008","ch05-p0013"],"teachingUse":"Primary dialogue for the Euthyphro question about whether authority alone grounds moral rightness."},
+    {"id":"summa-theologiae-law","title":"Summa Theologiae, I-II, Questions 90-91","creator":"Thomas Aquinas","authorPersonId":"thomas-aquinas","url":"https://www.newadvent.org/summa/2090.htm","locator":"Summa Theologiae, I-II, Question 90, Article 4","translation":"Fathers of the English Dominican Province, second revised edition (1920)","excerpt":"Thus from the four preceding articles, the definition of law may be gathered; and it is nothing else than an ordinance of reason for the common good, made by him who has care of the community, and promulgated.","rightsStatus":"Public-domain translation in the United States.","passageIds":["ch05-p0031","ch05-p0034"],"teachingUse":"Primary source for Aquinas's definition of law and four kinds of law."}
+  ],
   "companionSources": []
 }

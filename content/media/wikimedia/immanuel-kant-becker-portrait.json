@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:Immanuel Kant - Gemaelde 2.jpg",
+  "derivative": {
+    "bytes": 212120,
+    "height": 1117,
+    "localPath": "/media/wikimedia/immanuel-kant-gemaelde-2.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 640px wide, and encoded as WebP quality 82",
+    "sha256": "9c385d46fff91101b5ea2c30cf2b777dfecc18ee723a90eb594b559d8d2d48a3",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/2/22/Immanuel_Kant_-_Gemaelde_2.jpg",
+    "width": 640
+  },
+  "id": "immanuel-kant-becker-portrait",
+  "original": {
+    "bytes": 1670734,
+    "height": 1640,
+    "mime": "image/jpeg",
+    "sha1": "182471571349e51090f6a93192b6134a5eac20c7",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/22/Immanuel_Kant_-_Gemaelde_2.jpg",
+    "width": 940
+  },
+  "personId": "immanuel-kant",
+  "rights": {
+    "artist": "Becker",
+    "attributionRequired": false,
+    "credit": "Self-scanned",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "fb17a0f15c3f3459a11c00cebdfb0ad0ba5e3b0048ae730d1a47a9b87f570c48",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 4371746,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Immanuel_Kant_-_Gemaelde_2.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1106120117,
+    "revisionTimestamp": "2025-10-28T13:34:06Z"
+  }
+}

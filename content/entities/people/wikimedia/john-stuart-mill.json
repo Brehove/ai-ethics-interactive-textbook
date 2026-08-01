@@ -1,0 +1,136 @@
+{
+  "aliases": [
+    "J. S. Mill"
+  ],
+  "commonsImageClaim": "John Stuart Mill by London Stereoscopic Company, c1870.jpg",
+  "description": "British philosopher and political economist (1806–1873)",
+  "facts": {
+    "birthDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1806-05-20T00:00:00Z"
+      }
+    ],
+    "birthPlaces": [
+      {
+        "id": "Q205817",
+        "label": "London Borough of Islington"
+      }
+    ],
+    "countriesOfCitizenship": [
+      {
+        "id": "Q174193",
+        "label": "United Kingdom of Great Britain and Ireland"
+      }
+    ],
+    "deathDates": [
+      {
+        "calendarModel": "http://www.wikidata.org/entity/Q1985727",
+        "precision": 11,
+        "time": "+1873-05-08T00:00:00Z"
+      }
+    ],
+    "deathPlaces": [
+      {
+        "id": "Q6397",
+        "label": "Avignon"
+      }
+    ],
+    "movements": [
+      {
+        "id": "Q160590",
+        "label": "utilitarianism"
+      },
+      {
+        "id": "Q188958",
+        "label": "egalitarianism"
+      },
+      {
+        "id": "Q6216",
+        "label": "liberalism"
+      },
+      {
+        "id": "Q7066",
+        "label": "atheism"
+      }
+    ],
+    "notableWorks": [
+      {
+        "id": "Q1055881",
+        "label": "On Liberty"
+      },
+      {
+        "id": "Q19053628",
+        "label": "Autobiography"
+      },
+      {
+        "id": "Q5163201",
+        "label": "Considerations on Representative Government"
+      }
+    ],
+    "occupations": [
+      {
+        "id": "Q1227195",
+        "label": "political economist"
+      },
+      {
+        "id": "Q16611574",
+        "label": "social reformer"
+      },
+      {
+        "id": "Q188094",
+        "label": "economist"
+      },
+      {
+        "id": "Q18814623",
+        "label": "autobiographer"
+      },
+      {
+        "id": "Q188958",
+        "label": "egalitarianism"
+      },
+      {
+        "id": "Q2083925",
+        "label": "botanical collector"
+      },
+      {
+        "id": "Q27532437",
+        "label": "suffragist"
+      },
+      {
+        "id": "Q36180",
+        "label": "writer"
+      },
+      {
+        "id": "Q4964182",
+        "label": "philosopher"
+      },
+      {
+        "id": "Q738142",
+        "label": "clerk"
+      },
+      {
+        "id": "Q82955",
+        "label": "politician"
+      }
+    ]
+  },
+  "id": "john-stuart-mill",
+  "label": "John Stuart Mill",
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "142105f9817f8f81bba0096d0dbb57b601640c1a06b980ea6152eff10cb23246",
+    "entityUrl": "https://www.wikidata.org/wiki/Q50020",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "modified": "2026-07-25T18:06:17Z",
+    "provider": "Wikidata",
+    "revisionId": 2522597419
+  },
+  "wikidataId": "Q50020",
+  "wikipedia": {
+    "title": "John Stuart Mill",
+    "url": "https://en.wikipedia.org/wiki/John_Stuart_Mill"
+  }
+}

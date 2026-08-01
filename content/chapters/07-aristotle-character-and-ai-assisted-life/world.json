@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "chapterId": "ch07",
   "license": "CC0-1.0",
-  "people": [],
+  "people": [
+    {"id":"aristotle","role":"virtue-ethics guide","featured":true,"passageIds":["ch07-p0006","ch07-p0010","ch07-p0036"]},
+    {"id":"plato","role":"Academy teacher","featured":false,"passageIds":["ch07-p0006"]}
+  ],
   "concepts": [],
   "traditions": [],
   "places": []

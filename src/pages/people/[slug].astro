@@ -1,0 +1,121 @@
+---
+import PersonPortrait from "../../components/PersonPortrait.astro";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { getPersonSlugs, requirePerson } from "../../lib/content";
+
+export async function getStaticPaths() {
+  return (await getPersonSlugs()).map((slug) => ({ params: { slug } }));
+}
+
+function readableId(id: string): string {
+  return id.split("-").map((part) => part ? part[0].toLocaleUpperCase("en") + part.slice(1) : part).join(" ");
+}
+
+const person = await requirePerson(Astro.params.slug!);
+const externalLinkCandidates = [
+  person.links.sep ? { label: "Stanford Encyclopedia of Philosophy", url: person.links.sep } : null,
+  person.links.iep ? { label: "Internet Encyclopedia of Philosophy", url: person.links.iep } : null,
+  person.wikipediaUrl ? { label: "Wikipedia", url: person.wikipediaUrl } : null,
+  ...person.links.other,
+].filter((item): item is { label: string; url: string } => item !== null);
+const seenExternalUrls = new Set<string>();
+const externalLinks = externalLinkCandidates.filter(({ url }) => {
+  if (seenExternalUrls.has(url)) return false;
+  seenExternalUrls.add(url);
+  return true;
+});
+---
+
+<SiteLayout
+  title={person.displayName}
+  description={person.biography}
+  canonicalPath={person.path}
+>
+  <main id="main-content" class="person-page">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/contents/">Contents</a><span aria-hidden="true">/</span><span>People</span><span aria-hidden="true">/</span><span aria-current="page">{person.displayName}</span>
+    </nav>
+
+    <article>
+      <header class="person-hero">
+        <div class="person-hero__portrait">
+          <PersonPortrait person={person} variant="page" />
+        </div>
+        <div class="person-hero__text">
+          <p class="eyebrow">Permanent scholarly record</p>
+          <h1>{person.displayName}</h1>
+          <p class="life-dates">{person.lifeDates}</p>
+          <p class="biography">{person.biography}</p>
+        </div>
+      </header>
+
+      <div class="person-body">
+        <section class="teaching-record" aria-labelledby="why-title">
+          <p class="eyebrow">In PHIL 123</p>
+          <h2 id="why-title">Why this thinker matters</h2>
+          <p>{person.teaching.whyThisPerson}</p>
+          {(person.teaching.traditionIds.length > 0 || person.teaching.conceptIds.length > 0 || person.teaching.primarySourceIds.length > 0) && (
+            <dl class="teaching-links">
+              {person.teaching.traditionIds.length > 0 && <><dt>Traditions</dt><dd>{person.teaching.traditionIds.map(readableId).join(" · ")}</dd></>}
+              {person.teaching.conceptIds.length > 0 && <><dt>Concepts</dt><dd>{person.teaching.conceptIds.map(readableId).join(" · ")}</dd></>}
+              {person.teaching.primarySourceIds.length > 0 && <><dt>Primary texts</dt><dd>{person.teaching.primarySourceIds.map(readableId).join(" · ")}</dd></>}
+            </dl>
+          )}
+        </section>
+
+        <aside class="research-record" aria-labelledby="research-title">
+          <p class="eyebrow">Follow the record</p>
+          <h2 id="research-title">Sources and provenance</h2>
+          {externalLinks.length > 0 ? (
+            <ul>{externalLinks.map((link) => <li><a href={link.url} rel="noreferrer">{link.label} <span aria-hidden="true">↗</span></a></li>)}</ul>
+          ) : (
+            <p>No additional public reference has passed editorial review for this record.</p>
+          )}
+          <p class="provenance-note">
+            The stored Wikidata snapshot supplies the external entity link and update provenance for this record, revision {person.wikimedia.source.revisionId}, last modified {person.wikimedia.source.modified}. The biography and life dates are human-curated, and this page makes no live API request. <a href={person.wikimedia.source.entityUrl} rel="noreferrer">Inspect the Wikidata entity <span aria-hidden="true">↗</span></a>
+          </p>
+        </aside>
+      </div>
+    </article>
+  </main>
+</SiteLayout>
+
+<style>
+  .person-page { width: min(100% - 2rem, 86rem); margin: 0 auto; padding: 1.25rem 0 5rem; }
+  .breadcrumbs { display: flex; flex-wrap: wrap; gap: 0.45rem; color: var(--ink-soft); font: 0.68rem/1.4 var(--sans); }
+  .breadcrumbs a { color: var(--rust-dark); }
+  article { margin-top: 1.3rem; border-top: 1px solid var(--ink); }
+  .person-hero { display: grid; grid-template-columns: minmax(16rem, 0.72fr) minmax(24rem, 1.28fr); border-bottom: 1px solid var(--line); background: var(--wash); }
+  .person-hero__portrait { padding: clamp(1rem, 3vw, 2rem); border-right: 1px solid var(--line); }
+  .person-hero__text { align-self: center; padding: clamp(2rem, 6vw, 5rem); }
+  h1 { margin: 0.6rem 0 0.75rem; font-size: clamp(3rem, 8vw, 6.7rem); font-weight: 500; line-height: 0.9; letter-spacing: -0.055em; text-wrap: balance; }
+  .life-dates { margin: 0 0 1.3rem; color: var(--rust-dark); font: 700 0.72rem/1.35 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+  .biography { max-width: 43rem; margin: 0; font-size: clamp(1.05rem, 2vw, 1.28rem); line-height: 1.62; }
+  .person-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .person-body > section,
+  .person-body > aside { padding: clamp(1.5rem, 4vw, 3rem); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .person-body > :nth-child(2n) { border-right: 0; }
+  .person-body h2 { margin: 0.45rem 0 0.85rem; font-size: 1.75rem; font-weight: 500; line-height: 1.15; }
+  .person-body p { max-width: 42rem; }
+  .teaching-record { background: var(--paper-light); }
+  .teaching-record { grid-column: 1 / -1; border-right: 0 !important; }
+  .research-record { background: var(--wash); }
+  dl { margin: 1rem 0 0; }
+  dt { margin-top: 0.85rem; font: 700 0.67rem/1.35 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+  dd { margin: 0.2rem 0 0; color: var(--ink-soft); font-size: 0.9rem; }
+  ul { margin: 0; padding-left: 1.2rem; }
+  li { margin-bottom: 0.45rem; }
+  .research-record { grid-column: 1 / -1; border-right: 0 !important; }
+  .research-record ul { columns: 2 17rem; }
+  .provenance-note { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink-soft); font: 0.72rem/1.55 var(--sans); }
+  @media (max-width: 760px) {
+    .person-hero { grid-template-columns: 1fr; }
+    .person-hero__portrait { border-right: 0; border-bottom: 1px solid var(--line); }
+    .person-hero__portrait :global(figure),
+    .person-hero__portrait :global(.portrait-placeholder) { margin-inline: auto; }
+    .person-hero__text { padding: 2rem 1.25rem 2.4rem; }
+    .person-body { grid-template-columns: 1fr; }
+    .person-body > section,
+    .person-body > aside { grid-column: auto; border-right: 0; }
+  }
+</style>

@@ -1,0 +1,41 @@
+{
+  "commonsTitle": "File:John Stuart Mill by London Stereoscopic Company, c1870.jpg",
+  "derivative": {
+    "bytes": 65944,
+    "height": 905,
+    "localPath": "/media/wikimedia/john-stuart-mill-stereoscopic-c1870.webp",
+    "mime": "image/webp",
+    "modification": "Locally auto-oriented, metadata-stripped, resized without enlargement to at most 720px wide, and encoded as WebP quality 82",
+    "sha256": "0a0fd330b7ac4c6589a5b4f62aae657d2e2d64cc9a0b69b97d7974a56188166d",
+    "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/John_Stuart_Mill_by_London_Stereoscopic_Company%2C_c1870.jpg/960px-John_Stuart_Mill_by_London_Stereoscopic_Company%2C_c1870.jpg",
+    "width": 720
+  },
+  "id": "john-stuart-mill-stereoscopic-portrait",
+  "original": {
+    "bytes": 251560,
+    "height": 1600,
+    "mime": "image/jpeg",
+    "sha1": "9fdd732b4850526f93da96233c64606917188423",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/John_Stuart_Mill_by_London_Stereoscopic_Company%2C_c1870.jpg",
+    "width": 1274
+  },
+  "personId": "john-stuart-mill",
+  "rights": {
+    "artist": "London Stereoscopic Company",
+    "attributionRequired": false,
+    "credit": "Hulton Archive",
+    "licenseShortName": "Public domain",
+    "licenseUrl": null,
+    "usageTerms": "Public domain"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "checksumSha256": "fa1ed3f97ba48a5a7e2f9d565b4e06815815cf8b6c2fcd5506298c08d5078800",
+    "metadataLicense": "CC0-1.0",
+    "pageId": 30913285,
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:John_Stuart_Mill_by_London_Stereoscopic_Company%2C_c1870.jpg",
+    "provider": "Wikimedia Commons",
+    "revisionId": 1228105606,
+    "revisionTimestamp": "2026-06-08T20:40:20Z"
+  }
+}
