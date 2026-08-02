@@ -6,7 +6,7 @@ The repository is the website's content source of truth. A chapter is not a data
 content/chapters/NN-slug/
   chapter.md          CC BY 4.0 prose and semantic HTML
   meta.json           order, Part, routes, export state, release lineage
-  annotations.json    Deep Read annotations keyed to stable identities
+  annotations.json    passage-linked annotations keyed to stable identities
   source-links.json   primary and companion source metadata
   world.json          people, concepts, traditions, and places
   rights.json         chapter-to-rights-registry references

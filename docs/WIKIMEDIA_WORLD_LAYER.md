@@ -127,32 +127,35 @@ assets. Remove a confirmed stale file in the same reviewed change.
    generated source revision in the approved human review.
 7. Add chapter relations using the validated shape
    `{ "id", "role", "featured", "passageIds" }` in each `world.json` file.
-8. Run `npm run validate`, `npm run build`, and inspect the person page plus all
-   four chapter routes at narrow and wide viewports.
+8. Run `npm run validate`, `npm run build`, and inspect the person page and the
+   canonical chapter route at narrow and wide viewports. Inspect a direct
+   reference route only when the change affects it.
 
 Chapter person resolution is fail-fast: a world relation that names an unknown
 person prevents the build instead of silently dropping the card.
 
 ## Inline chapter figures
 
-First Read and Deep Read render every relation marked `"featured": true` as an
-inline scholarly figure. The enhancement locates the first durable
-`/people/<id>/` link in the chapter prose and places the figure directly after
-that introductory paragraph. The figure includes the vendored portrait, the
-chapter-specific role, the curated teaching rationale, native biography and
-primary-text disclosures, a permanent record link, and complete image credit.
+The canonical chapter route renders every relation marked `"featured": true` as
+an inline scholarly figure. The retained deep-reference route uses the same
+figure treatment. The enhancement locates the first durable `/people/<id>/`
+link in the chapter prose and places the figure directly after that introductory
+paragraph. The figure includes the vendored portrait, the chapter-specific role,
+the curated teaching rationale, native biography and primary-text disclosures, a
+permanent record link, and complete image credit.
 
 This keeps placement under editorial control without inserting generated HTML
 into the canonical Markdown. To move a figure, move the first durable person
 link to the paragraph where the visual intervention belongs. To keep a person
-in the side layer without an inline figure, set `"featured": false`. If
-JavaScript is unavailable, the same figures remain visible as an accessible
-end-of-chapter gallery. No disclosure state is stored.
+available through a passage link without an inline figure, set `"featured":
+false`. If JavaScript is unavailable, the same figures remain visible as an
+accessible end-of-chapter gallery. No disclosure state is stored.
 
-On narrow screens, the existing People & sources launcher yields while an
-inline figure is visible so it cannot cover the figure's controls. It returns
-when the reader scrolls away. Sources and World retain their purpose-built
-layouts rather than duplicating the inline figures.
+The primary chapter route has no manual people-and-sources launcher. Context
+begins dormant and opens only from a durable passage link or an authored prompt,
+so it contributes when the reading invokes it rather than competing with the
+chapter. The direct Sources and World reference routes remain available without
+displacing the canonical chapter as the primary reading experience.
 
 ## Failure modes
 

@@ -60,8 +60,8 @@ Required headers: exact allowed `Origin`, `Content-Type: application/json`, and 
   "content": "# Revised canonical Markdown...",
   "base_commit_sha": "89abcdef0123456789abcdef0123456789abcdef",
   "blob_sha": "0123456789abcdef0123456789abcdef01234567",
-  "commit_message": "Revise the First Read introduction",
-  "pull_request_title": "Revise the First Read introduction",
+  "commit_message": "Revise chapter introduction",
+  "pull_request_title": "Revise chapter introduction",
   "pull_request_body": "Instructor-authored revision from the web editor."
 }
 ```

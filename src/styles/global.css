@@ -1,8 +1,8 @@
 :root {
   --paper: #f7f4ec;
   --paper-deep: #efe9dc;
-  --paper-light: #fffdf7;
-  --ink: #102b4a;
+  --paper-light: #fbf8ef;
+  --ink: #0d2745;
   --ink-soft: #44576b;
   --wash: #e8f0f2;
   --wash-strong: #dce8eb;
@@ -12,6 +12,13 @@
   --rust-dark: #7c2d18;
   --rust-wash: #f7e8de;
   --gold-wash: #f7eed5;
+  --gold: #c6a976;
+  --frame: #050606;
+  --frame-line: #665943;
+  --frame-size: 0.65rem;
+  --header-height: 3.45rem;
+  --chapter-rail: 3.45rem;
+  --pane-gutter: clamp(2rem, 3vw, 2.8rem);
   --success: #235b46;
   --serif: Georgia, "Times New Roman", Times, serif;
   --sans: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
@@ -22,19 +29,26 @@
 * { box-sizing: border-box; }
 
 html {
-  background: var(--paper);
+  background: var(--frame);
   color-scheme: light;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--frame);
   color: var(--ink);
   font-family: var(--serif);
   font-size: 18px;
   line-height: 1.65;
   text-rendering: optimizeLegibility;
+}
+
+body[data-text-scale="large"] .chapter-prose { font-size: 1.12rem; }
+body[data-text-scale="largest"] .chapter-prose { font-size: 1.22rem; }
+body:not(.landing-page) > main:not(.reader-shell) {
+  min-height: calc(100vh - var(--header-height));
+  background: var(--paper);
 }
 
 a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
@@ -83,7 +97,7 @@ img, svg { max-width: 100%; }
 .site-width { width: min(100% - 2rem, 92rem); margin-inline: auto; }
 
 .chapter-prose {
-  max-width: var(--content-width);
+  max-width: min(var(--content-width), 100%);
   font-size: 1.03rem;
 }
 
@@ -98,6 +112,8 @@ img, svg { max-width: 100%; }
   overflow-wrap: break-word;
   hyphens: auto;
 }
+
+.chapter-prose > h1:first-child { display: none; }
 
 .chapter-prose h2 {
   margin: 2.8rem 0 0.9rem;
@@ -116,7 +132,7 @@ img, svg { max-width: 100%; }
 }
 
 .chapter-prose p { margin: 0 0 1.15em; }
-.chapter-prose li { margin-bottom: 0.45em; }
+.chapter-prose li { margin-bottom: 0.45em; overflow-wrap: anywhere; }
 .chapter-prose pre {
   max-width: 100%;
   overflow-x: auto;
@@ -198,6 +214,14 @@ img, svg { max-width: 100%; }
 @media (max-width: 760px) {
   body { font-size: 17px; }
   .site-width { width: min(100% - 2rem, 92rem); }
+  .chapter-prose table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    table-layout: fixed;
+  }
+  .chapter-prose th,
+  .chapter-prose td { overflow-wrap: anywhere; }
   .chapter-prose h1,
   .chapter-title { font-size: clamp(2.6rem, 14vw, 4rem); }
 }
@@ -229,12 +253,20 @@ img, svg { max-width: 100%; }
   .site-header,
   .reading-rail,
   .source-dock,
-  .mode-nav,
+  .pane-gutter,
   .chapter-actions,
   .interactive-only,
   .skip-link { display: none !important; }
   .reader-shell,
-  .reader-main { display: block !important; width: auto !important; max-width: none !important; border: 0 !important; }
+  .reader-main {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
   .chapter-prose { max-width: none; }
   .chapter-prose h1 { font-size: 30pt; }
   .chapter-prose h2 { font-size: 19pt; break-after: avoid; }

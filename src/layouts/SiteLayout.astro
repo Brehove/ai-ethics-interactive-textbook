@@ -8,6 +8,7 @@ interface Props {
   chapterNumber?: number;
   canonicalPath?: string;
   noindex?: boolean;
+  pageClass?: string;
 }
 
 const {
@@ -16,6 +17,7 @@ const {
   chapterNumber,
   canonicalPath = Astro.url.pathname,
   noindex = false,
+  pageClass = "",
 } = Astro.props;
 const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
 ---
@@ -26,12 +28,12 @@ const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#102b4a" />
+    <meta name="theme-color" content="#050606" />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
-    <title>{title} · PHIL 123 AI &amp; Ethics</title>
+    <title>{title} · AI &amp; Ethics</title>
   </head>
-  <body>
+  <body class={pageClass}>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <SiteHeader chapterNumber={chapterNumber} />
     <slot />

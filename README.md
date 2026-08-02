@@ -4,12 +4,9 @@ A public, static, Git-backed interactive edition of the PHIL 123 AI and Ethics t
 
 Production reader: <https://ethicsandai.your-digital-life.org>
 
-The reader treats philosophical interaction as disciplined reading rather than gamification. Every chapter has four route-backed layers:
+The reader treats philosophical interaction as disciplined reading rather than gamification. The canonical chapter is the primary reading surface. On that route, contextual material begins dormant and opens only from a passage-level prompt or link—such as a judgment exercise, a person record, a primary text, or visual evidence—rather than from a persistent layer selector. The chapter outline is available on demand.
 
-- **First Read:** the complete canonical chapter.
-- **Deep Read:** the same prose with argument, objection, and judgment scaffolding.
-- **Sources:** primary texts, editions, evidence, and rights records.
-- **World:** people, concepts, traditions, places, and intellectual lineages.
+Direct `deep`, `sources`, and `world` routes remain available as provisional reference surfaces while their long-term role is evaluated. They are not persistent chapter navigation or required reading.
 
 All required reading works without JavaScript. Each chapter also has print CSS, a browser-native **Print / Save as PDF** action, a self-contained HTML download, and provider-neutral JSON/plain-text reading representations for a possible future streaming voice layer.
 
@@ -76,9 +73,9 @@ The public reader creates no student account and does not persist student judgme
 
 This is a multi-license repository:
 
-- original textbook prose: [CC BY 4.0](LICENSES/CC-BY-4.0.txt);
+- original textbook prose and original project artwork: [CC BY 4.0](LICENSES/CC-BY-4.0.txt);
 - software: [MIT](LICENSES/MIT.txt);
 - original structured metadata: [CC0 1.0](LICENSES/CC0-1.0.txt);
 - third-party texts, translations, and media: item-level terms in the rights registry.
 
-See [`LICENSE`](LICENSE) and [`docs/RIGHTS_AND_LICENSING.md`](docs/RIGHTS_AND_LICENSING.md). A repository-level license never relicenses third-party material.
+See [`LICENSE`](LICENSE), [`docs/RIGHTS_AND_LICENSING.md`](docs/RIGHTS_AND_LICENSING.md), and the site-asset register at [`docs/rights/site-assets.json`](docs/rights/site-assets.json). A repository-level license never relicenses third-party material.
