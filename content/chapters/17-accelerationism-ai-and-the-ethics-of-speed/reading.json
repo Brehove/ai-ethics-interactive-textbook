@@ -4,10 +4,10 @@
   "slug": "accelerationism-ai-and-the-ethics-of-speed",
   "title": "Accelerationism, AI, and the Ethics of Speed",
   "language": "en",
-  "sourceSha256": "936db192687c59a8a883033c0385c1113c422333243d00ccc4216d1ad258ec20",
-  "plainTextSha256": "05033c356f956a6f21e25dba114f3ccb4eaddd1952850d61c0afa93281dca73c",
-  "wordCount": 11941,
-  "readingMinutes": 54,
+  "sourceSha256": "31026f43d5c88a005aead068a27e3b88dbf6ca265f690c3d55f953682d7a5731",
+  "plainTextSha256": "40fba461916a9b37b8d92abc9c63b57a7af5ba2baa840bddc2cd04b41925a021",
+  "wordCount": 11854,
+  "readingMinutes": 53,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -58,7 +58,7 @@
       "type": "paragraph",
       "sectionId": null,
       "level": null,
-      "text": "This is why accelerationism belongs near the end of the course. Earlier chapters gave you ethical frameworks. Aristotle and virtue ethics asked about habit, character, skill, and flourishing. Kantian ethics asked about dignity, autonomy, and whether people are treated merely as instruments. Utilitarian and consequentialist reasoning asked about harms, benefits, stakeholders, uncertainty, and scope. The AI chapters on data, bias, automation, companions, creativity, and existential risk showed how those frameworks work inside current technologies. Accelerationism gathers those threads around one pressure point: the future is being built under conditions of speed."
+      "text": "Accelerationism gathers several ethical traditions around one pressure point: the future is being built under conditions of speed. Aristotle and virtue ethics ask about habit, character, skill, and flourishing. Kantian ethics asks about dignity, autonomy, and whether people are treated merely as instruments. Utilitarian and consequentialist reasoning asks about harms, benefits, stakeholders, uncertainty, and scope. Work on data, bias, automation, companions, creativity, and existential risk shows how those frameworks operate inside current technologies."
     },
     {
       "id": "ch17-p0006",
@@ -72,7 +72,7 @@
       "type": "paragraph",
       "sectionId": null,
       "level": null,
-      "text": "That is also where this chapter becomes useful for applied ethics. Accelerationism helps you notice when a technical or institutional choice is also a claim about time: this should happen faster, this step should disappear, this judgment can be delegated, this risk is worth taking, this future matters more than this delay. The task is to make those assumptions and tradeoffs visible before deciding whether to accept, resist, qualify, or revise the direction."
+      "text": "That is also where this chapter becomes useful for applied ethics. Accelerationism helps you notice when a technical or institutional choice is also a claim about time: this should happen faster, this step should disappear, this judgment can be delegated, this risk is acceptable, or this future matters more than this delay. The task is to make those assumptions and tradeoffs visible before deciding whether to accept, resist, qualify, or revise the direction."
     },
     {
       "id": "ch17-s001",
@@ -86,7 +86,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s001",
       "level": null,
-      "text": "The genealogy of accelerationism can become muddy because several histories run together. This chapter keeps them separate."
+      "text": "The genealogy of accelerationism becomes muddy when several distinct histories run together. They need to remain separate."
     },
     {
       "id": "ch17-p0009",
@@ -142,7 +142,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s002",
       "level": null,
-      "text": "Friction is ethically ambiguous. Some friction is pointless bureaucracy. Some friction is care. A code review delays deployment, but it protects users and future maintainers. A consent process slows research, but it protects persons. A classroom draft process slows writing, but it protects learning. A public hearing slows infrastructure, but it gives affected people a voice. The central mistake in naive accelerationism is treating all friction as failure. The central mistake in naive slowdown is treating all speed as recklessness."
+      "text": "Friction is ethically ambiguous. Some friction is pointless bureaucracy, while other forms protect care and judgment. A code review delays deployment, but it protects users and future maintainers. A consent process slows research, but it protects persons. A classroom draft process slows writing, but it protects learning. A public hearing slows infrastructure, but it gives affected people a voice. Naive accelerationism treats all friction as failure; naive slowdown treats all speed as recklessness."
     },
     {
       "id": "ch17-p0016",
@@ -184,7 +184,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s003",
       "level": null,
-      "text": "Francis Bacon (1561-1626) is one of the clearest early figures in the transition from contemplation to organized improvement. The Stanford Encyclopedia of Philosophy entry on Bacon describes his Instauratio magna, or Great Instauration, as a program for renewing knowledge, especially natural philosophy. Knowledge should not remain merely speculative. It should become operative and beneficial. Bacon's famous move is to connect inquiry, method, institutions, and power. In Novum Organum, he writes that \"knowledge and human power are synonymous.\" Bacon does not mean that every exercise of power is good. He means that disciplined method for studying nature gives human beings new capacities to act within nature. Nature is not mastered by fantasy or rhetoric. It is commanded by obeying it."
+      "text": "Francis Bacon (1561-1626) is one of the clearest early figures in the transition from contemplation to organized improvement. The Stanford Encyclopedia of Philosophy entry on Bacon describes his Instauratio magna, or Great Instauration, as a program for renewing knowledge, especially natural philosophy. Knowledge should become operative and beneficial as well as speculative. Bacon's famous move is to connect inquiry, method, institutions, and power. In Novum Organum, he writes that \"knowledge and human power are synonymous.\" Bacon does not mean that every exercise of power is good. For Bacon, disciplined method replaces fantasy and rhetoric as the source of such power: people gain new capacities to act within nature by understanding and working through its operations."
     },
     {
       "id": "ch17-p0021",
@@ -289,7 +289,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s004",
       "level": null,
-      "text": "The tool releases capacity and creates a new capture point. That is the basic Deleuze-and-Guattari lesson students need. Capitalism is not only a set of companies or owners. It is a process that breaks limits, releases new capacities, and reorganizes what it releases. Speed matters because the process keeps finding new boundaries to loosen and new arrangements to stabilize. In A Thousand Plateaus, this is why movement, speed, line, flight, capture, and assemblage become such important terms. Capitalism is not merely fast. It is a system that produces speed by turning release and capture into a pattern."
+      "text": "The tool releases capacity and creates a new capture point. That is the basic Deleuze-and-Guattari lesson students need. Capitalism breaks limits, releases new capacities, and reorganizes what it releases through companies, owners, markets, and institutions. The process keeps finding new boundaries to loosen and new arrangements to stabilize. In A Thousand Plateaus, this is why movement, speed, line, flight, capture, and assemblage become such important terms. Capitalism produces speed by repeatedly turning release into capture."
     },
     {
       "id": "ch17-p0035",
@@ -331,7 +331,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s005",
       "level": null,
-      "text": "This matters because accelerationism was not born as a Silicon Valley slogan. It was first a disputed theoretical and cultural problem: what if capitalism's destabilizing energies should be intensified rather than merely resisted? What if technology, desire, markets, machines, and feedback were not simply tools humans could calmly govern from the outside? What if the process itself was escaping the human frame?"
+      "text": "Accelerationism began as a disputed theoretical and cultural problem before it became a Silicon Valley slogan: what if capitalism's destabilizing energies should be intensified rather than merely resisted? What if technology, desire, markets, machines, and feedback were not simply tools humans could calmly govern from the outside? What if the process itself was escaping the human frame?"
     },
     {
       "id": "ch17-p0040",
@@ -394,7 +394,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s005",
       "level": null,
-      "text": "Land's recent interviews with Vincent Lê add an apocalyptic and religious register to this story. In Part 1 of the conversation, published January 13, 2026, Lê frames the discussion around Kant, the human, AI apocalypse, simulation hypotheses, LLMs, Deleuze and Guattari, Austrian economics, and Gnostic Calvinism. The advanced interpretive point is that Land can sound technical and apocalyptic at the same time. He can talk about markets, capital, AI, feedback loops, simulation, and intelligence while also sounding as if history is moving toward disclosure. For PHIL 123, this material is secondary. The core point is still the one above: Land's accelerationism asks what happens when the process being accelerated no longer takes human flourishing as its final standard."
+      "text": "Land's recent interviews with Vincent Lê add an apocalyptic and religious register to this story. In Part 1 of the conversation, published January 13, 2026, Lê frames the discussion around Kant, the human, AI apocalypse, simulation hypotheses, LLMs, Deleuze and Guattari, Austrian economics, and Gnostic Calvinism. The advanced interpretive point is that Land can sound technical and apocalyptic at the same time. He can talk about markets, capital, AI, feedback loops, simulation, and intelligence while also sounding as if history is moving toward disclosure. These interviews are secondary evidence for interpreting Land. His accelerationism still asks what happens when the process being accelerated no longer takes human flourishing as its final standard."
     },
     {
       "id": "ch17-p0049",
@@ -422,7 +422,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s005",
       "level": null,
-      "text": "This objection matters for AI design. A model that wins users, a platform that captures attention, a product that dominates a market, or a system that outperforms humans on a benchmark has not thereby shown that it should govern the activity it now shapes. Performance is evidence. It is not moral authority."
+      "text": "For AI design, a model that wins users, a platform that captures attention, a product that dominates a market, or a system that outperforms humans on a benchmark has not thereby shown that it should govern the activity it now shapes. Adoption, attention capture, market power, and benchmark performance supply evidence about a system's uptake, influence, or technical capability; they do not confer moral authority over the activity."
     },
     {
       "id": "ch17-s006",
@@ -457,7 +457,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s006",
       "level": null,
-      "text": "The left-accelerationist complaint is not that technology moved too fast. It is that technological capacity has been captured by capitalist institutions and stripped of emancipatory imagination. If politics retreats into localism, nostalgia, or small acts of resistance, then capital keeps the technological capacity and the left inherits only protest. Rather than surrendering to capitalism's process, as Land's hard accelerationism tempts one to do, the left-accelerationist answer is to reclaim technological ambition for different ends."
+      "text": "The left-accelerationist complaint is that capitalist institutions have captured technological capacity and stripped it of emancipatory imagination. If politics retreats into localism, nostalgia, or small acts of resistance, then capital keeps the technological capacity and the left inherits only protest. The left-accelerationist answer reclaims technological ambition for different ends instead of surrendering to capitalism's process, as Land's hard accelerationism tempts one to do."
     },
     {
       "id": "ch17-p0057",
@@ -975,7 +975,7 @@
       "type": "aside",
       "sectionId": "ch17-s011",
       "level": null,
-      "text": "Try It: Read A Product Launch Philosophically\nFind one AI product launch connected to your anchor case or field. Identify the promised acceleration, the moral story behind it, the friction removed, the friction preserved, the person who benefits, and the person who bears the risk if the tool is wrong."
+      "text": "Try It: Read A Product Launch Philosophically\nFind one AI product launch connected to a field or practice you care about. Identify the promised acceleration, the moral story behind it, the friction removed, the friction preserved, the person who benefits, and the person who bears the risk if the tool is wrong."
     },
     {
       "id": "ch17-s012",
@@ -989,7 +989,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s012",
       "level": null,
-      "text": "By the time students reach Module 7, they have a documented case, competing arguments, and a provisional considered view. Accelerationism gives them a way to test that view by asking what the case speeds up, slows down, redirects, and treats as unnecessary friction. The lens works best when it stays concrete."
+      "text": "With a documented case and competing arguments in view, accelerationism tests a judgment by asking what the case speeds up, slows down, redirects, and treats as unnecessary friction. The lens works best when it stays concrete."
     },
     {
       "id": "ch17-p0127",
@@ -1059,7 +1059,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s014",
       "level": null,
-      "text": "The matrix is not a calculator. It is a discipline for judgment. It helps students avoid the weak claim \"AI will make this field faster\" and produce a stronger claim: this capacity should be accelerated under these safeguards, while this deployment should be slowed or redesigned because this group bears the risk."
+      "text": "The matrix disciplines judgment without calculating a conclusion. It helps students avoid the weak claim \"AI will make this field faster\" and produce a stronger claim: this capacity should be accelerated under these safeguards, while this deployment should be slowed or redesigned because this group bears the risk."
     },
     {
       "id": "ch17-s015",
@@ -1087,7 +1087,7 @@
       "type": "aside",
       "sectionId": "ch17-s015",
       "level": null,
-      "text": "Try It: The Acceleration Audit\nUse the AI tool, product, or practice in your anchor case. Write one sentence for each move: this accelerates , slows , redirects , removes friction around , preserves friction around , benefits , puts risk on , and can be contested by . Then explain whether the lens gives you a reason to accept, resist, qualify, or revise your provisional view."
+      "text": "Try It: The Acceleration Audit\nUse one AI tool, product, or practice. Write one sentence for each move: this accelerates , slows , redirects , removes friction around , preserves friction around , benefits , puts risk on , and can be contested by . Then explain whether the lens gives you a reason to accept, resist, qualify, or revise your judgment."
     },
     {
       "id": "ch17-p0138",
@@ -1171,7 +1171,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s017",
       "level": null,
-      "text": "For PHIL 123, this lens is especially helpful because case inquiries begin from visible uses and decisions. A student studying AI in nursing might focus on documentation efficiency, triage support, or patient communication. Accelerationism asks what happens when the system scales across hospitals, vendors, insurers, and regulators. A student studying AI in criminal justice might focus on one tool's accuracy. Accelerationism asks what institutional dependency, surveillance, appeals process, or authority structure the tool creates. A student studying AI companions might focus on loneliness or emotional support. Accelerationism asks what happens when millions of people learn to relate to systems designed by private companies and tuned for engagement, retention, or compliance."
+      "text": "This lens is especially helpful when an analysis begins from visible uses and decisions. An analysis of AI in nursing might focus on documentation efficiency, triage support, or patient communication. Accelerationism asks what happens when the system scales across hospitals, vendors, insurers, and regulators. An analysis of AI in criminal justice might focus on one tool's accuracy. Accelerationism asks what institutional dependency, surveillance, appeals process, or authority structure the tool creates. An analysis of AI companions might focus on loneliness or emotional support. Accelerationism asks what happens when millions of people learn to relate to systems designed by private companies and tuned for engagement, retention, or compliance."
     },
     {
       "id": "ch17-p0148",
@@ -1213,7 +1213,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s017",
       "level": null,
-      "text": "The template is not an automatic conclusion. It is a guide for judgment. Students still have to argue which capacity matters, which friction protects human goods, what evidence supports the claim, and who should have authority to decide."
+      "text": "The template guides judgment without supplying an automatic conclusion. Students still have to argue which capacity matters, which friction protects human goods, what evidence supports the claim, and who should have authority to decide."
     },
     {
       "id": "ch17-s018",
@@ -1262,7 +1262,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s019",
       "level": null,
-      "text": "X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before Pressbooks publication. This revised chapter does not use them as direct quoted evidence."
+      "text": "X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before publication. This revised chapter does not use them as direct quoted evidence."
     }
   ]
 }

@@ -17,7 +17,6 @@
   "path": "/chapter/testing-moral-arguments/",
   "wordCount": 3771,
   "readingMinutes": 17,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 24,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd",
-      "deploymentSha256": "b4d9af31584511a9fae1598932de5940a790a24443e1204854110da754a01114",
-      "publishedAt": "2026-07-22T08:17:34-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "8984ef1daa98cd9138ef6034bb27e8b85360c7f81ad30ea89ad763c861415dfd",
-    "canonicalMarkdownSha256": "4d8bc034ded86acba3ddfaa7612b702644a0f6e1b1425672a02a08c864a1df5a",
+    "canonicalMarkdownSha256": "a49c3cb40c4672f03263428b153339259f12311aac198409fb8dd27cd5f1f2f1",
     "reconciliationTransformations": [
       {
         "kind": "replace-exact",

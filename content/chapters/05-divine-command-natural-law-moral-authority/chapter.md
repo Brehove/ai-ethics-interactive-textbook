@@ -10,7 +10,7 @@ Imagine a student who is behind in the semester and considering something the sy
 If you ask her why she hesitates, she will give you several answers, and they will not all be the same kind of answer. She might say she hesitates because the instructor said not to. She might say she hesitates because God forbids deception. She might say she hesitates because it feels like cheating, and cheating damages the trust her classmates and instructor have in her work. She might say ghostwriting a response would form a habit she does not want. She might say the assignment is there for a reason, and skipping the thinking undermines the reason. She might say the likely harms of getting caught, or of not learning the material, outweigh the ninety seconds saved.
 
 <!-- phil-passage-id: ch05-p0003 -->
-Each of those answers is doing something different underneath the surface. The first answer treats the syllabus as the source of the obligation. The second treats God as the source. The third points to trust and truthfulness. The fourth points to character. The fifth points to the goods the assignment is meant to protect. The sixth weighs consequences. All six answers might reach the same conclusion. All six answers rely on very different accounts of what makes the conclusion morally binding.
+Each answer rests on a different account of what makes the conclusion morally binding: the syllabus as the source of obligation; God as the source; trust and truthfulness; character; the goods the assignment is meant to protect; or consequences. All six might reach the same conclusion.
 
 <!-- phil-passage-id: ch05-p0004 -->
 This chapter is about that difference. When somebody tells you an action is wrong, they are usually appealing to something. They might appeal to a command, a rule, a scripture, a policy, a shared human nature, a person's dignity, a virtuous character, the good of a community, or the balance of consequences. What philosophers call the *ground* of a moral claim is whatever the claim is finally leaning on. Two people can reach the same judgment while leaning on very different grounds. Two people can lean on the same ground and still reach different judgments about the specific case.
@@ -125,7 +125,7 @@ A Thomistic reply to the Euthyphro pressure can be reconstructed from these clai
 Aquinas's four kinds of law, worked out in [Question 91](https://www.newadvent.org/summa/2091.htm), show how this rational order appears at different levels of creation. Reading the distinctions slowly keeps their different functions visible.
 
 <!-- phil-passage-id: ch05-p0035 -->
-Eternal law is Aquinas's name for divine wisdom directing created things toward their ends. Fire heats. Trees grow toward light. Bees form hives. Human beings pursue understanding. In Aquinas's language, everything is measured by the divine reason from which it comes.
+Eternal law is Aquinas's name for divine wisdom directing created things toward their ends. For Aquinas, fire heats; trees grow toward light; bees form hives; and human beings pursue understanding. In Aquinas's language, everything is measured by the divine reason from which it comes.
 
 <!-- phil-passage-id: ch05-p0036 -->
 Natural law is Aquinas's name for how eternal law shows up in rational creatures. Human beings, because they are rational, do not only follow eternal law the way water fills a container or fire heats what it touches. They participate in it. They can grasp, at least partially, why certain actions serve human goods and certain actions damage them. Aquinas says natural law is the participation of the rational creature in the eternal law. You do not need to be told everything you need to know about how to live. You have a kind of built-in orientation toward goods, and reason lets you work out what those goods are and how to act on them.
@@ -194,7 +194,7 @@ That reply changes how a student should build a natural-law argument. Writing `t
 ## Grounding and Method
 
 <!-- phil-passage-id: ch05-p0051 -->
-Once you see how natural law works, you can look at the frameworks you will meet later in this course and notice something helpful. Many of them use similar questions. They ground the questions differently.
+Natural law and the later frameworks in this course use similar questions but ground them differently.
 
 <!-- phil-passage-id: ch05-p0052 -->
 A virtue ethicist, following Aristotle or a modern successor, will ask what kind of person you are becoming. The [Stanford Encyclopedia of Philosophy entry on virtue ethics](https://plato.stanford.edu/entries/ethics-virtue/) organizes the family around the question of character. What habits does this action form? What virtues does it express or damage? What would a person of practical wisdom do here? A Kantian, following [the tradition described in the SEP entry on Kant's moral philosophy](https://plato.stanford.edu/entries/kant-moral/), will ask about dignity and rational agency. Are you treating other people as ends, or using them merely as means to your convenience? Can the maxim of your action be willed as a universal law? A consequentialist, along the lines mapped in the [SEP entry on consequentialism](https://plato.stanford.edu/entries/consequentialism/), will ask about outcomes. Who is helped, who is harmed, at what scale, with what probability, over what time?

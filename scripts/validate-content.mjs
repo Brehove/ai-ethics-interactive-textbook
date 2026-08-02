@@ -2,7 +2,7 @@
 
 import { lstat, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   extractLeadingTitle,
   normalizeNewlines,
@@ -12,8 +12,6 @@ import {
 } from "./content-model-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const contentRoot = path.join(root, "content");
-const chaptersRoot = path.join(contentRoot, "chapters");
 const requiredChapterFiles = [
   "chapter.md",
   "meta.json",
@@ -29,7 +27,13 @@ function occurrences(source, expression) {
   return [...source.matchAll(expression)].length;
 }
 
-async function main() {
+export function findForbiddenDeploymentHtmlElements(markdown) {
+  return [...markdown.matchAll(/<(?:script|style|form)\b/gi)].map((match) => match[0].slice(1).toLowerCase());
+}
+
+export async function validateContent({ projectRoot = root } = {}) {
+  const contentRoot = path.join(projectRoot, "content");
+  const chaptersRoot = path.join(contentRoot, "chapters");
   const [map, book, baseline] = await Promise.all([
     readJson(path.join(contentRoot, "reconciliation-map.json")),
     readJson(path.join(contentRoot, "book.json")),
@@ -81,12 +85,10 @@ async function main() {
       if (meta.id !== expected.id || meta.slug !== expected.slug || meta.order !== expected.order) failures.push(`${expected.id}: identity/order metadata mismatch`);
       if (meta.part.id !== expected.part.id || meta.part.order !== expected.part.order || meta.part.chapterOrder !== expected.part.chapterOrder) failures.push(`${expected.id}: Part metadata mismatch`);
       if (meta.path !== `/chapter/${expected.slug}/`) failures.push(`${expected.id}: route path mismatch`);
-      if (meta.pressbooksUrl !== `https://cwi.pressbooks.pub/ethicsandai/chapter/${expected.slug}/`) failures.push(`${expected.id}: Pressbooks URL mismatch`);
       if (meta.status !== "website-canonical") failures.push(`${expected.id}: status must be website-canonical`);
-      if (meta.pressbooks.validated !== false || meta.pressbooks.publishAuthorized !== false) failures.push(`${expected.id}: Pressbooks state overclaims validation/authorization`);
       if (meta.websiteBaseline.selectedSourceSha256 !== expected.selectedSourceSha256) failures.push(`${expected.id}: selected source lineage mismatch`);
       if (meta.websiteBaseline.canonicalMarkdownSha256 !== sha256(normalizeNewlines(markdown))) failures.push(`${expected.id}: canonical Markdown hash is stale`);
-      if (JSON.stringify(meta.pressbooks.priorRelease) !== JSON.stringify(expected.priorRelease)) failures.push(`${expected.id}: prior-release lineage mismatch`);
+      if (findForbiddenDeploymentHtmlElements(markdown).length) failures.push(`${expected.id}: forbidden deployment HTML element`);
       for (const sidecar of [annotations, sources, world, rights, reading]) {
         if (sidecar.chapterId !== expected.id) failures.push(`${expected.id}: sidecar chapterId mismatch`);
       }
@@ -136,9 +138,8 @@ async function main() {
   const testing = await readFile(path.join(chaptersRoot, "02-testing-moral-arguments", "chapter.md"), "utf8");
   const delegating = await readFile(path.join(chaptersRoot, "13-delegating-judgment", "chapter.md"), "utf8");
   if (occurrences(testing, /^# Testing Moral Arguments: Premises, Inferences, Objections, and Revision$/gm) !== 1) failures.push("Testing Moral Arguments H1 repair is missing");
-  const obsoleteLink = "https://cwi.pressbooks.pub/aiethics/chapter/aristotle-and-the-origins-of-western-virtue-ethics/";
-  const currentLink = "https://cwi.pressbooks.pub/ethicsandai/chapter/aristotle-character-and-ai-assisted-life/";
-  if (delegating.includes(obsoleteLink) || delegating.split(currentLink).length - 1 !== 2) failures.push("Delegating Judgment Aristotle link repair is missing or over-applied");
+  const websiteAristotleLink = "/chapter/aristotle-character-and-ai-assisted-life/";
+  if (delegating.split(websiteAristotleLink).length - 1 !== 2) failures.push("Delegating Judgment Aristotle website link repair is missing or over-applied");
   for (const excluded of map.excludedSources) {
     const excludedSlug = path.basename(path.dirname(excluded.sourcePath));
     if (directories.some((directory) => directory.includes(excludedSlug))) failures.push(`excluded optional source was imported: ${excluded.sourcePath}`);
@@ -148,10 +149,17 @@ async function main() {
     if (!mapByOrder.has(chapter.order)) failures.push(`${chapter.id}: map ordering failure`);
   }
   if (failures.length) throw new Error(failures.join("\n"));
-  process.stdout.write(`Content validation passed: 18 chapters / 6 Parts, ${totals.sections} sections, ${totals.passages} passages; migration baselines and bounded repairs preserved.\n`);
+  return { chapterCount: directories.length, totals };
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error.message}\n`);
-  process.exitCode = 1;
-});
+async function main() {
+  const { chapterCount, totals } = await validateContent();
+  process.stdout.write(`Content validation passed: ${chapterCount} chapters / 6 Parts, ${totals.sections} sections, ${totals.passages} passages; migration baselines and bounded repairs preserved.\n`);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  });
+}

@@ -4,9 +4,9 @@
   "slug": "ai-as-an-interlocutor",
   "title": "AI as an Interlocutor in Philosophical Work",
   "language": "en",
-  "sourceSha256": "4b4966a0b0aa2171b507f2c6f65a45c9796651df1e3fc875ebf4364c6c5efe9c",
-  "plainTextSha256": "1c2b4e0dbefd9a968fd6ec6c1972377ddcfda0c96d41c900620d42b9603732d2",
-  "wordCount": 4373,
+  "sourceSha256": "2b818bd4f2552d5b6e6d20273256e6b48de72e859095f98d1f52a3f9b8a03ad9",
+  "plainTextSha256": "5d5a360d55a4ee4f8bedabb1e4845d10830fb20faccdd13b546b69e54613490b",
+  "wordCount": 4368,
   "readingMinutes": 20,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -58,7 +58,7 @@
       "type": "paragraph",
       "sectionId": "ch04-s002",
       "level": null,
-      "text": "David Chalmers, for example, describes extended conversations with Claude and ChatGPT while exploring philosophical questions and possible new ideas. A research team led by Ye and colleagues interviewed 21 professional philosophers about language models as critical-thinking tools. The study organized their possible uses into three interaction functions. A model might act as an interlocutor that enters a dialogue, a monitor that watches for gaps or errors, or a respondent that reacts to a philosopher's work. PHIL 123 uses a different three-role structure based on the stages of the course. There are limits, of course. Current models can lose track of subtle positions, supply shallow criticism, or produce fluent answers that the philosopher still has to assess."
+      "text": "David Chalmers, for example, describes extended conversations with Claude and ChatGPT while exploring philosophical questions and possible new ideas. A research team led by Ye and colleagues interviewed 21 professional philosophers about language models as critical-thinking tools. The study organized their possible uses into three interaction functions. A model might act as an interlocutor that enters a dialogue, a monitor that watches for gaps or errors, or a respondent that reacts to a philosopher's work. PHIL 123 uses a different three-role structure based on the stages of the course. Current models can lose track of subtle positions, supply shallow criticism, or produce fluent answers that the philosopher still has to assess."
     },
     {
       "id": "ch04-p0004",
@@ -163,7 +163,7 @@
       "type": "paragraph",
       "sectionId": "ch04-s006",
       "level": null,
-      "text": "Exact permissions vary by assignment. Canvas identifies when AI use is required, permitted, limited, or prohibited, along with the process evidence students must preserve. Across all three roles, a stable obligation remains. Students inspect the contribution, decide what to use or change, preserve the required evidence, and explain the judgment behind the decision."
+      "text": "Exact permissions vary by assignment. Canvas identifies when AI use is required, permitted, limited, or prohibited, along with the process evidence students must preserve. Across all three roles, students inspect the contribution, decide what to use or change, preserve the required evidence, and explain the judgment behind the decision."
     },
     {
       "id": "ch04-p0015",
@@ -359,7 +359,7 @@
       "type": "paragraph",
       "sectionId": "ch04-s011",
       "level": null,
-      "text": "R also asks what ability the student is supposed to develop or demonstrate. A chatbot may produce a sound Kantian objection. If the assignment asks the student to formulate that objection independently, submitting the generated version bypasses the target skill. If the assignment asks the student to evaluate an objection supplied by a chatbot, the same output becomes appropriate material for analysis. The words have not changed. The educational use has."
+      "text": "R also asks what ability the student is supposed to develop or demonstrate. A chatbot may produce a sound Kantian objection. If the assignment asks the student to formulate that objection independently, submitting the generated version bypasses the target skill. If the assignment asks the student to evaluate an objection supplied by a chatbot, the same output becomes appropriate material for analysis. The same words serve different educational purposes because the assignments ask students to do different intellectual work."
     },
     {
       "id": "ch04-p0038",
@@ -422,7 +422,7 @@
       "type": "heading",
       "sectionId": "ch04-s012",
       "level": 2,
-      "text": "Use AI to Learn, Not Merely to Finish"
+      "text": "Use AI to Learn"
     },
     {
       "id": "ch04-p0046",

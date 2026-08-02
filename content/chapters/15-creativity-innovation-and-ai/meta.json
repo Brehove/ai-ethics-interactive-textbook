@@ -15,9 +15,8 @@
     "slug": "relationships-creativity-and-coexistence"
   },
   "path": "/chapter/creativity-innovation-and-ai/",
-  "wordCount": 10045,
+  "wordCount": 9995,
   "readingMinutes": 45,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/creativity-innovation-and-ai/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 54,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",
-      "deploymentSha256": "2b042b5a645ec398d899ade40bc2bd4390a1121090a24bdcc77411bd3f605c3d",
-      "publishedAt": "2026-08-01T09:39:22-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",
-    "canonicalMarkdownSha256": "d66cdf9e2a4dfd7a34c707d81267f9ef3588005d720b1b0737bc55d319a58344",
+    "canonicalMarkdownSha256": "67d0d219a068aaedb8a9b4fed0b93de4cd083769403000416183be1fad7dcb19",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

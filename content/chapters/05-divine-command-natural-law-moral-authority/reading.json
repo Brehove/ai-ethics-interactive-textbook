@@ -4,10 +4,10 @@
   "slug": "divine-command-natural-law-moral-authority",
   "title": "Is It Good Because God Commands It? Divine Command, Natural Law, and Moral Authority",
   "language": "en",
-  "sourceSha256": "e136b422e94b6472ef333e18ee86d2b97e8bbd26b2e6452e258d41a09d337a87",
-  "plainTextSha256": "6e8e934c979215d522b7a35631074b8fc1ec32216ada35bd22c00c93788beb42",
-  "wordCount": 7006,
-  "readingMinutes": 32,
+  "sourceSha256": "e4acb6fbc9d7c720c58cfa77d00cd595bcbe2ffe0bb7128abc5b9facfefd026f",
+  "plainTextSha256": "7f261a3978073be4fe3cc815db4a5816628ec6cab79562b10b575fe3ba5a60b8",
+  "wordCount": 6955,
+  "readingMinutes": 31,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -51,7 +51,7 @@
       "type": "paragraph",
       "sectionId": "ch05-s001",
       "level": null,
-      "text": "Each of those answers is doing something different underneath the surface. The first answer treats the syllabus as the source of the obligation. The second treats God as the source. The third points to trust and truthfulness. The fourth points to character. The fifth points to the goods the assignment is meant to protect. The sixth weighs consequences. All six answers might reach the same conclusion. All six answers rely on very different accounts of what makes the conclusion morally binding."
+      "text": "Each answer rests on a different account of what makes the conclusion morally binding: the syllabus as the source of obligation; God as the source; trust and truthfulness; character; the goods the assignment is meant to protect; or consequences. All six might reach the same conclusion."
     },
     {
       "id": "ch05-p0004",
@@ -296,7 +296,7 @@
       "type": "paragraph",
       "sectionId": "ch05-s004",
       "level": null,
-      "text": "Eternal law is Aquinas's name for divine wisdom directing created things toward their ends. Fire heats. Trees grow toward light. Bees form hives. Human beings pursue understanding. In Aquinas's language, everything is measured by the divine reason from which it comes."
+      "text": "Eternal law is Aquinas's name for divine wisdom directing created things toward their ends. For Aquinas, fire heats; trees grow toward light; bees form hives; and human beings pursue understanding. In Aquinas's language, everything is measured by the divine reason from which it comes."
     },
     {
       "id": "ch05-p0036",
@@ -422,7 +422,7 @@
       "type": "paragraph",
       "sectionId": "ch05-s006",
       "level": null,
-      "text": "Once you see how natural law works, you can look at the frameworks you will meet later in this course and notice something helpful. Many of them use similar questions. They ground the questions differently."
+      "text": "Natural law and the later frameworks in this course use similar questions but ground them differently."
     },
     {
       "id": "ch05-p0052",

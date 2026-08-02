@@ -4,7 +4,7 @@
 ## When Catholic Moral Thinkers Enter the Alignment Room
 
 <!-- phil-passage-id: ch06-p0001 -->
-Anthropic is the company behind Claude and a major AI lab. In early 2026, it published [Claude's Constitution](https://www.anthropic.com/constitution), a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder demands, and its own character. Anthropic calls the Constitution the final authority on its vision for Claude and says its content directly shapes Claude's training and behavior.
+Anthropic is the company behind Claude. In early 2026, it published [Claude's Constitution](https://www.anthropic.com/constitution), a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder demands, and its own character. Anthropic calls the Constitution the final authority on its vision for Claude and says its content directly shapes Claude's training and behavior.
 
 <!-- phil-passage-id: ch06-p0002 -->
 In this context, **alignment** means training a system's behavior to track a chosen target. A constitution states part of that target in words.
@@ -28,7 +28,7 @@ This chapter follows that encounter. Claude's Constitution gives us a public ali
 The resulting question is narrower than "Who gets to say what the good is?" When Catholic moral thinkers, including a natural-law scholar, advise an AI lab, what can their participation contribute to alignment, and what remains under corporate control?
 
 <!-- phil-passage-id: ch06-p0009 -->
-[Chapter 35](https://cwi.pressbooks.pub/ethicsandai/chapter/divine-command-natural-law-moral-authority/) prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
+[Chapter 5](/chapter/divine-command-natural-law-moral-authority/) prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
 
 <!-- phil-passage-id: ch06-p0010 -->
 Students in this course will approach natural law from different religious and nonreligious positions. Understanding its contribution does not require adopting Aquinas's metaphysics or Pope Leo's authority. It requires reconstructing the account of human goods being offered, comparing it with Anthropic's stated values, and deciding how much moral weight the consultation should carry.
@@ -58,7 +58,7 @@ Seen that way, old philosophical questions now apply to AI governance. Why shoul
 ## What Natural Law Brings to Alignment
 
 <!-- phil-passage-id: ch06-p0017 -->
-Chapter 35 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The [Internet Encyclopedia of Philosophy entry on divine command theory](https://iep.utm.edu/divine-command-theory/) surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct.
+Chapter 5 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The [Internet Encyclopedia of Philosophy entry on divine command theory](https://iep.utm.edu/divine-command-theory/) surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct.
 
 <!-- phil-passage-id: ch06-p0018 -->
 <aside class="textbox shaded textbox--key-point" role="note" aria-labelledby="callout-command-good-test">
@@ -79,10 +79,10 @@ Natural-law reasoning also changes how we read a phrase such as "human values." 
 Consider the Constitution's instructions about manipulation and unhealthy reliance. Anthropic tells Claude to respect users as people capable of deciding what is good for them. It also tells Claude to avoid flattery, isolation, and forms of dependence that users would reject after reflection. A natural-law analysis can give those instructions a more developed justification. Human reason and social relationship are goods that help people direct their own lives. An assistant that bypasses judgment or displaces healthy relationships can interfere with those goods even while satisfying an immediate request.
 
 <!-- phil-passage-id: ch06-p0023 -->
-That analysis supports a limited verdict. The anti-manipulation principle protects recognizable features of human flourishing, so it has moral support beyond Anthropic's authorship. The analysis also creates a new objection. Anthropic still has to decide when influence becomes manipulation, which relationships count as healthy, and what a user's long-term good includes. A company can become paternalistic while claiming to protect wellbeing. Natural law gives the lab a standard richer than user preference, but the standard remains open to disagreement about human goods and their application. Consultation with Catholic moral thinkers can sharpen the reasoning. Green's participation also makes it reasonable to compare the Constitution with natural-law ethics. Neither point removes Anthropic's responsibility for the final interpretation, and the public record does not identify which arguments any adviser advanced.
+The anti-manipulation principle protects recognizable features of human flourishing, so it has moral support beyond Anthropic's authorship. The analysis also creates a new objection. Anthropic still has to decide when influence becomes manipulation, which relationships count as healthy, and what a user's long-term good includes. A company can become paternalistic while claiming to protect wellbeing. Natural law gives the lab a standard richer than user preference, but the standard remains open to disagreement about human goods and their application. Consultation with Catholic moral thinkers can sharpen the reasoning. Green's participation also makes it reasonable to compare the Constitution with natural-law ethics. Neither point removes Anthropic's responsibility for the final interpretation, and the public record does not identify which arguments any adviser advanced.
 
 <!-- phil-passage-id: ch06-p0024 -->
-Chapter 35 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks.
+Chapter 5 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks.
 
 <!-- phil-passage-id: ch06-p0025 -->
 <aside class="textbox shaded textbox--framework-map" role="note" aria-labelledby="callout-grounding-method">
@@ -127,7 +127,7 @@ Anthropic's later work on [Collective Constitutional AI](https://www.anthropic.c
 Pope Leo makes this argument in *Magnifica Humanitas*, paragraph 107, from a different starting point. He warns that framing AI development around alignment with "human values" can avoid the public task of asking which values, whose values, and how those values were chosen. If the ethical framework behind alignment is never opened to public discussion, alignment becomes moralization by whoever holds power over the training process. Leo supports alignment work under moral scrutiny. Alignment cannot substitute for the moral reasoning that is supposed to underwrite it.
 
 <!-- phil-passage-id: ch06-p0034 -->
-The corporate research and Vatican sources approach the problem differently. Anthropic's public-input experiment tests how participation can influence a constitution. Pope Leo asks whether the ethical framework behind any constitution can be publicly justified. Both approaches leave the moral target open to evaluation after the technical alignment process succeeds.
+Anthropic's public-input experiment tests whether participation can influence a constitution, while Pope Leo asks whether any constitution's ethical framework can be publicly justified. The moral evaluation of an alignment target remains open after technical alignment succeeds.
 
 <!-- phil-section-id: ch06-s005 -->
 ## Advice, Influence, and Control
@@ -176,7 +176,7 @@ The chapter's verdict is conditional. Consultation strengthens legitimacy when o
 ## Rules, Character, and Moral Formation
 
 <!-- phil-passage-id: ch06-p0045 -->
-Something else happens when you read Anthropic's public writing carefully. Anthropic's vocabulary shifts from rules toward character.
+Anthropic's public writing shifts from rules toward character.
 
 <!-- phil-passage-id: ch06-p0046 -->
 Claude's Constitution talks about the kind of assistant Claude should be, and Claude's Character elaborates. Anthropic describes character training as an alignment method aimed at cultivating consistent dispositions across an enormous range of situations. This pushes past the model of alignment as a list of prohibitions. The company is asking what habits of speech and reasoning the model should display in ordinary use, including situations that no refusal rule anticipated.
@@ -194,7 +194,7 @@ In late 2025, Richard Weiss [reported reconstructing an apparent training docume
 Moral character language for AI systems captures something about consistency and disposition that a bare list of rules misses. The same language can encourage readers to treat the system as more of a person than the evidence supports. Roewe reports that Bishop Tighe coauthored [*Antiqua et nova*](https://www.vatican.va/roman_curia/congregations/cfaith/documents/rc_ddf_doc_20250128_antiqua-et-nova_en.html), which distinguishes human intelligence and moral agency from machine outputs. Applied to the Constitution, that distinction cautions against moving from character language to conclusions about AI personhood. The adviser and the company can share an interest in formation while disagreeing about what kind of being is being formed. The public record does not establish when Tighe offered particular feedback or whether this distinction changed a specific passage in the Constitution.
 
 <!-- phil-passage-id: ch06-p0051 -->
-Later modules will take up the debate over whether AI systems have moral standing. Here the "soul document" episode clarifies the alignment dispute. Anthropic is trying to cultivate patterns of judgment rather than enforce only a list of rules. Natural-law reasoning asks what account of the good directs that cultivation and whether human moral concepts can be transferred to a machine without losing their connection to human embodiment, relationship, and responsibility. The personhood question remains open, while the governance question is already present. Anthropic is choosing which dispositions Claude should display now.
+This chapter does not settle whether AI systems have moral standing. The "soul document" episode instead clarifies the alignment dispute. Anthropic is trying to cultivate patterns of judgment rather than enforce only a list of rules. Natural-law reasoning asks what account of the good directs that cultivation and whether human moral concepts can be transferred to a machine without losing their connection to human embodiment, relationship, and responsibility. The personhood question remains open, while the governance question is already present. Anthropic is choosing which dispositions Claude should display now.
 
 <!-- phil-passage-id: ch06-p0052 -->
 <aside class="textbox shaded textbox--caution" role="note" aria-labelledby="callout-corporate-not-natural-law">
@@ -250,13 +250,13 @@ Suppose you choose the Constitution's discussion of user autonomy and manipulati
 You can still compare the principle with natural-law reasoning. A natural-law argument might support protection from manipulation because rational agency and participation serve human flourishing. It might challenge the Constitution if Anthropic defines wellbeing so narrowly that it overlooks relationships, embodied life, or the common good. Applied to Anthropic, paragraphs 105 through 109 add a governance test: can people outside the company scrutinize the ethical framework and contest how the principle operates?
 
 <!-- phil-passage-id: ch06-p0062 -->
-The audit produces a bounded judgment. Catholic participation, including Green's involvement, gives us reason to compare the Constitution with natural-law reasoning. It gives us no reason to label the Constitution a natural-law document or infer the content of Green's feedback. Anthropic remains the author, implementer, and reviser. Consultation can improve a moral-governance process while leaving its final distribution of power unresolved.
+Catholic participation, including Green's involvement, gives us reason to compare the Constitution with natural-law reasoning. It gives us no reason to label the Constitution a natural-law document or infer the content of Green's feedback. Anthropic remains the author, implementer, and reviser. Consultation can improve a moral-governance process while leaving its final distribution of power unresolved.
 
 <!-- phil-section-id: ch06-s009 -->
 ## From the Audit to an Argument
 
 <!-- phil-passage-id: ch06-p0063 -->
-The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in [Testing Moral Arguments](https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/). In the compact `P1/P2/C` form used elsewhere in the course, `N1` functions as the normative first premise, `F1` supplies the factual content of the second premise, and `B1` makes the disputed connection explicit.
+The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in [Testing Moral Arguments](/chapter/testing-moral-arguments/). In the compact `P1/P2/C` form used elsewhere in the course, `N1` is the normative first premise, `F1` supplies the factual content of the second premise, and `B1` makes the disputed connection explicit.
 
 <!-- phil-passage-id: ch06-p0064 -->
 Suppose you want to judge whether Catholic participation strengthens the legitimacy of Claude's Constitution. Your first pass might look like this:
@@ -292,7 +292,7 @@ Your response should make a visible judgment. You can defend the argument, revis
 You started with a documented encounter. Anthropic asked Catholic thinkers for feedback while developing the moral framework used to shape Claude. The company continued meeting with religious leaders and participated in the Vatican presentation of an encyclical that challenges privately defined alignment. The official acknowledgments, Olah's reported comments, and the May 25 exchange place Catholic moral reasoning inside the alignment conversation. Green's participation provides a documented connection to natural-law scholarship, although the public record does not reveal what arguments he or the other advisers made in private.
 
 <!-- phil-passage-id: ch06-p0070 -->
-Its presence settles less than a slogan would suggest. Anthropic's Constitution remains a corporate governance document. The public evidence establishes consultation and supports a report of broader Catholic influence on some ethical commitments. It does not identify the origin of particular clauses or transfer responsibility for Claude's behavior to the advisers. Pope Leo's argument then presses the unresolved issue: an alignment framework needs public scrutiny because its account of human values can become part of the infrastructure through which people encounter AI.
+Anthropic's Constitution remains a corporate governance document. The public evidence establishes consultation and supports a report of broader Catholic influence on some ethical commitments. It does not identify the origin of particular clauses or transfer responsibility for Claude's behavior to the advisers. Pope Leo's argument then presses the unresolved issue: an alignment framework needs public scrutiny because its account of human values can become part of the infrastructure through which people encounter AI.
 
 <!-- phil-passage-id: ch06-p0071 -->
 You now have a method for judging that exchange. Identify the human good, distinguish authors from advisers, separate documented influence from inference, and locate final control. Then build an argument that states how much legitimacy the consultation provides and why.
@@ -347,7 +347,7 @@ In 2.7, you will compare how DCT or natural-law reasoning and virtue ethics judg
 ### Consulted Background
 
 <!-- phil-passage-id: ch06-p0077 -->
-The following sources informed the evidence and architecture but do not carry the chapter's central factual claims.
+The following sources provide background but do not carry the chapter's central factual claims.
 
 <!-- phil-passage-id: ch06-p0078 -->
 - Hautala, Vesa. ["Shaping the soul of Claude: How and why Anthropic wants to make AI virtuous."](https://christandcounterfactuals.substack.com/p/shaping-the-soul-of-claude-how-and) *Christ and Counterfactuals*. May 8, 2026.

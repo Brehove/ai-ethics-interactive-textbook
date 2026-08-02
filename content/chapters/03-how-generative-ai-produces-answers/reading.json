@@ -4,9 +4,9 @@
   "slug": "how-generative-ai-produces-answers",
   "title": "How Generative AI Produces Answers: Prediction, Post-Training, and the Source Trail",
   "language": "en",
-  "sourceSha256": "d253704cb0dca082f0e8e8234c8b8de193781b8f1f7c0c14d223cb0c5b8a36c2",
-  "plainTextSha256": "36142c4d16d0e93f3fd2b239385f493b7552b3d9d022068f895a9cf95884b0bd",
-  "wordCount": 4528,
+  "sourceSha256": "d410323b818361886fa17ac5b2432ed2bd81445495d91c9cb859d86d05caed8d",
+  "plainTextSha256": "68f1a8f0ede680c13eadbcf762c93afd753f5b4bd2a9b1a50534b181f225c66c",
+  "wordCount": 4531,
   "readingMinutes": 21,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -338,7 +338,7 @@
       "type": "paragraph",
       "sectionId": "ch03-s007",
       "level": null,
-      "text": "Once we separate prediction, training, post-training, and the wrapper, familiar failures stop looking random."
+      "text": "Once we separate prediction, training, post-training, and the wrapper, familiar failures become easier to explain."
     },
     {
       "id": "ch03-p0039",
@@ -359,7 +359,7 @@
       "type": "paragraph",
       "sectionId": "ch03-s007",
       "level": null,
-      "text": "Genericity is quieter. The original answer follows a common introductory pattern, so it never reaches the particular distinction this course asks students to practice. Inherited framing produces a similar effect. A model may begin from familiar learned patterns, mirror the assumptions in the prompt, or smooth a disciplinary disagreement into a neutral-looking summary. The answer can remain polished while the frame narrows what the student sees."
+      "text": "Genericity is harder to notice. The original answer follows a common introductory pattern, so it never reaches the particular distinction this course asks students to practice. Inherited framing produces a similar effect. A model may begin from familiar learned patterns, mirror the assumptions in the prompt, or smooth a disciplinary disagreement into a neutral-looking summary. The answer can remain polished while the frame narrows what the student sees."
     },
     {
       "id": "ch03-p0042",

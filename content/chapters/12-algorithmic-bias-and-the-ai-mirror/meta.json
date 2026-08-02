@@ -15,9 +15,8 @@
     "slug": "data-bias-and-delegated-judgment"
   },
   "path": "/chapter/algorithmic-bias-and-the-ai-mirror/",
-  "wordCount": 9876,
+  "wordCount": 9769,
   "readingMinutes": 44,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/algorithmic-bias-and-the-ai-mirror/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 47,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
-      "deploymentSha256": "0514c0620575dbdf27c70ae07f424145b7d59026e27a823d099dffbe88a050fb",
-      "publishedAt": "2026-08-01T09:39:18-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
-    "canonicalMarkdownSha256": "c3207b81e9b00fcd0766afb4d02ba1ce9424d8119a154962f8616f78446f3032",
+    "canonicalMarkdownSha256": "5dbd20c9fcf5d39781ebfe207bce4be58e9aca4bd1b455cfa35c590e3ed6de18",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

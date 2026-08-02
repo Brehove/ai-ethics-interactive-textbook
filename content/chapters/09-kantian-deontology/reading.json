@@ -4,9 +4,9 @@
   "slug": "kantian-deontology",
   "title": "Kantian Deontology",
   "language": "en",
-  "sourceSha256": "b29fd19c3f41a9a95761611c9f3acaaa815cbc1fa5881548f8f5eece1468a178",
-  "plainTextSha256": "7852f07952650c796ae03ae9e8f5f36050cf638a4a0f89f2bdd45859a69e77ad",
-  "wordCount": 6406,
+  "sourceSha256": "d4bdc85fa3d6ae13a6790bf9292a147da534175638c77521c9d2a6224a2a419d",
+  "plainTextSha256": "35dd6418fd242f23ad608d4ab62fa735054b179585f48f5ecb19b9daf3ee2d44",
+  "wordCount": 6394,
   "readingMinutes": 29,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -191,7 +191,7 @@
       "type": "paragraph",
       "sectionId": "ch09-s002",
       "level": null,
-      "text": "You may recall that Aquinas used the term \"law\" in his Summa Theologica. It's important to understand the difference between his idea of natural law vs. Kant's moral law. Aquinas's account of natural law begins with God's created order. Human reason can recognize the goods and purposes built into human nature. It then judges actions by whether they support the flourishing proper to that nature. Virtues help a person choose those goods consistently."
+      "text": "You may recall that Aquinas used the term \"law\" in his Summa Theologica. Aquinas's natural law and Kant's moral law use \"law\" differently. Aquinas's account of natural law begins with God's created order. Human reason can recognize the goods and purposes built into human nature. It then judges actions by whether they support the flourishing proper to that nature. Virtues help a person choose those goods consistently."
     },
     {
       "id": "ch09-p0023",
@@ -723,7 +723,7 @@
       "type": "paragraph",
       "sectionId": "ch09-s011",
       "level": null,
-      "text": "In the discussion and midterm ahead, you will build Kantian arguments about your own dilemmas and cross-examine arguments made by classmates. A chatbot may help generate candidate maxims, bridges, or objections. Each output remains a proposal until you test it against the chapter and your case."
+      "text": "When you build a Kantian argument about a dilemma, you need to cross-examine its maxims, bridges, and objections. A chatbot may help generate candidate maxims, bridges, or objections. Each output remains a proposal until you test it against the chapter and your case."
     },
     {
       "id": "ch09-p0090",
@@ -744,7 +744,7 @@
       "type": "paragraph",
       "sectionId": "ch09-s011",
       "level": null,
-      "text": "For the midterm, write the compact argument first. Open it if P2 hides a maxim, bridge, prediction, or moral classification. Ask the chatbot for a strong objection, then verify that objection against the Kantian concepts in this chapter. Decide whether to defend, revise, narrow, or concede part of the argument. Record what you changed and why. If the objection misstates your maxim or substitutes consequence-counting for Kantian reasoning, reject it and explain the error."
+      "text": "Write the compact argument first. Expand it if P2 hides a maxim, bridge, prediction, or moral classification. Ask the chatbot for a strong objection, then verify that objection against the Kantian concepts in this chapter. Decide whether to defend, revise, narrow, or concede part of the argument. Record what you changed and why. If the objection misstates your maxim or substitutes consequence-counting for Kantian reasoning, reject it and explain the error."
     },
     {
       "id": "ch09-p0093",

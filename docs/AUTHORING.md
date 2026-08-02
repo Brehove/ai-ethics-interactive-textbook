@@ -2,7 +2,7 @@
 
 ## Local Markdown
 
-Edit a chapter at `content/chapters/<NN>-<slug>/chapter.md`. Keep its leading H1. Do not add YAML frontmatter; the same source remains compatible with the Pressbooks preparation path.
+Edit a chapter at `content/chapters/<NN>-<slug>/chapter.md`. Keep its leading H1. Do not add YAML frontmatter; chapter identity and publication metadata live in the reviewed sidecars.
 
 After a prose change:
 

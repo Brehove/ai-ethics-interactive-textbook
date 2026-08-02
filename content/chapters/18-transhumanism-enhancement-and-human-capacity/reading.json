@@ -4,9 +4,9 @@
   "slug": "transhumanism-enhancement-and-human-capacity",
   "title": "Transhumanism, Enhancement, and the Ethics of Human Capacity",
   "language": "en",
-  "sourceSha256": "f52efa11375f9a203a93c13b5280acec5fea0fd94cc340cf91d927d6a5013a3b",
-  "plainTextSha256": "0193696594092495ee653eece5e043cf9b9660e5e3c4143585a89206eb40f1d5",
-  "wordCount": 10251,
+  "sourceSha256": "c2305cb89432d846399a3a221fccec815c12e37faa28b83bc0302a188efcd24d",
+  "plainTextSha256": "f4d83657d333d70f906bfb911026c5717a0f8663bf47373db92814fe245e5a3d",
+  "wordCount": 10142,
   "readingMinutes": 46,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -51,7 +51,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s001",
       "level": null,
-      "text": "The case also needs guardrails. Neuralink did not invent implanted brain-computer interfaces. Earlier systems such as BrainGate had already shown that people with paralysis could use implanted neural signals to control computer cursors or devices; Wired reported on BrainGate's peer-reviewed 2006 results years before Neuralink existed. The Arbaugh case was also experimental. The Guardian reported that some implant threads retracted after the procedure, reducing functionality before software changes restored some performance. Those details matter ethically. They keep the opening from becoming either a miracle story or a horror story. The technology is real. The benefit can be life-changing. The risks and uncertainties are also real."
+      "text": "The case also needs guardrails. Neuralink did not invent implanted brain-computer interfaces. Earlier systems such as BrainGate had already shown that people with paralysis could use implanted neural signals to control computer cursors or devices; Wired reported on BrainGate's peer-reviewed 2006 results years before Neuralink existed. The Arbaugh case was also experimental. The Guardian reported that some implant threads retracted after the procedure, reducing functionality before software changes restored some performance. These details keep the opening from becoming either a miracle story or a horror story: the technology produced a potentially life-changing benefit under experimental conditions that still carried risk and uncertainty."
     },
     {
       "id": "ch18-p0004",
@@ -79,7 +79,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s001",
       "level": null,
-      "text": "Transhumanism is the movement and philosophical family most strongly associated with the answer: human limits are not automatically sacred. If technology can safely reduce suffering, extend life, improve cognition, expand agency, or open forms of flourishing that current humans cannot yet access, then the mere fact that a limit is natural is not enough to make that limit morally binding. Transhumanism is not just enthusiasm for gadgets. At its strongest, it is an argument about human possibility."
+      "text": "Transhumanism is the movement and philosophical family most strongly associated with the answer: human limits are not automatically sacred. If technology can safely reduce suffering, extend life, improve cognition, expand agency, or open forms of flourishing that current humans cannot yet access, then the mere fact that a limit is natural is not enough to make that limit morally binding. At its strongest, transhumanism is an argument about human possibility rather than enthusiasm for gadgets."
     },
     {
       "id": "ch18-p0008",
@@ -128,7 +128,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s002",
       "level": null,
-      "text": "The hard questions begin when the improvement reaches bodies, brains, reproduction, identity, competition, access to opportunity, or the baseline of what society expects. The Stanford Encyclopedia of Philosophy entry on human enhancement notes that enhancement ethics includes more than a simple debate about \"technology beyond nature.\" It includes questions about the proper limits of health care, parental and reproductive obligations, fairness in competition, moral agency, distributive justice, science policy, and regulation. In other words, enhancement is not one issue. It is a cluster of issues around human capacity."
+      "text": "The hard questions begin when the improvement reaches bodies, brains, reproduction, identity, competition, access to opportunity, or the baseline of what society expects. The Stanford Encyclopedia of Philosophy entry on human enhancement notes that enhancement ethics includes more than a simple debate about \"technology beyond nature.\" It includes questions about the proper limits of health care, parental and reproductive obligations, fairness in competition, moral agency, distributive justice, science policy, and regulation. Enhancement ethics therefore contains a cluster of issues around human capacity."
     },
     {
       "id": "ch18-p0014",
@@ -156,7 +156,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s002",
       "level": null,
-      "text": "The ethical question is not only whether a technology improves a capacity. It is what kind of change is being made."
+      "text": "Ethical judgment asks what kind of change is being made, not merely whether a technology improves a capacity."
     },
     {
       "id": "ch18-p0018",
@@ -177,7 +177,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s002",
       "level": null,
-      "text": "For PHIL 123, the distinction is practical. Suppose your case concerns AI tutoring. The question is not merely whether AI tutors are good or bad. Ask what capacity they affect. Do they support learning? Replace practice? Optimize performance? Create dependency? Help students with disabilities access material? Make every student feel pressure to use AI just to keep up? A human-capacity lens turns a vague opinion into a question that can guide judgment."
+      "text": "The distinction becomes practical with AI tutoring. The question is not merely whether AI tutors are good or bad. Ask what capacity they affect. Do they support learning? Replace practice? Optimize performance? Create dependency? Help students with disabilities access material? Make every student feel pressure to use AI just to keep up? A human-capacity lens turns a vague opinion into a question that can guide judgment."
     },
     {
       "id": "ch18-p0021",
@@ -275,7 +275,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s003",
       "level": null,
-      "text": "The conclusion is not that every enhancement is good. It is that the burden shifts. A critic has to say more than \"this goes beyond nature.\" They need to explain the specific harm: coercion, inequality, loss of agency, damage to relationships, exploitation, unsafe experimentation, bad governance, or a degraded picture of human worth."
+      "text": "The argument shifts the burden without declaring every enhancement good. A critic has to say more than \"this goes beyond nature.\" They need to explain the specific harm: coercion, inequality, loss of agency, damage to relationships, exploitation, unsafe experimentation, bad governance, or a degraded picture of human worth."
     },
     {
       "id": "ch18-p0034",
@@ -296,7 +296,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s003",
       "level": null,
-      "text": "A responsible chapter must make the appeal vivid before moving to critique. It is easy to mock transhumanism when it is represented only by uploading minds, cryonics, or billionaire fantasies. It is harder to dismiss when the case begins with a person using a BCI to regain digital agency, a patient hoping for gene therapy, a student with a disability using assistive AI, or an older adult hoping for more healthy years with family."
+      "text": "Uploading minds, cryonics, and billionaire fantasies invite easy mockery. The appeal of transhumanism becomes harder to dismiss in cases of a person using a BCI to regain digital agency, a patient hoping for gene therapy, a student with a disability using assistive AI, or an older adult hoping for more healthy years with family."
     },
     {
       "id": "ch18-p0037",
@@ -373,7 +373,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s004",
       "level": null,
-      "text": "This is why \"choice\" must be examined carefully. A student may choose to use AI study tools. A worker may choose to wear a productivity tracker. A parent may choose genetic screening. But if the school, employer, insurance system, or competitive market makes the choice practically necessary, the choice is not as free as it appears. An optional enhancement can become a social requirement."
+      "text": "This is why \"choice\" must be examined carefully. A student may choose to use AI study tools. A worker may choose to wear a productivity tracker. A parent may choose genetic screening. But if the school, employer, insurance system, or competitive market makes the choice practically necessary, the choice is not as free as it appears. Those institutions can turn an optional enhancement into a social requirement."
     },
     {
       "id": "ch18-p0047",
@@ -436,7 +436,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s005",
       "level": null,
-      "text": "Take parenting. Parents should care for children, protect them, educate them, and help them grow. They should also receive children as persons rather than products. If reproductive technology becomes a way to select children toward parental preferences for height, temperament, intelligence, appearance, athletic promise, or emotional style, the child may be subtly treated as a project to be optimized. The worry is not only unfair advantage. It is the attitude of mastery toward another person."
+      "text": "Take parenting. Parents should care for children, protect them, educate them, and help them grow. They should also receive children as persons rather than products. If reproductive technology becomes a way to select children toward parental preferences for height, temperament, intelligence, appearance, athletic promise, or emotional style, the child may be subtly treated as a project to be optimized. Sandel's objection targets both unfair advantage and the attitude of mastery toward another person."
     },
     {
       "id": "ch18-p0055",
@@ -513,7 +513,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s006",
       "level": null,
-      "text": "A chapter on enhancement would be ethically incomplete without disability justice. Enhancement debates often assume a simple picture: disability is a defect, normal functioning is the baseline, enhancement rises above that baseline, and technology helps people move upward. That picture is too simple."
+      "text": "Disability justice challenges a simple picture that often appears in enhancement debates: disability is a defect, normal functioning is the baseline, enhancement rises above that baseline, and technology helps people move upward. This picture misses the roles of environment, social judgment, and diverse forms of flourishing."
     },
     {
       "id": "ch18-p0065",
@@ -562,14 +562,14 @@
       "type": "paragraph",
       "sectionId": "ch18-s006",
       "level": null,
-      "text": "The access problem is not secondary. Bostrom's own \"Transhumanist Values\" names wide access as a basic condition. The Transhumanist Declaration calls for responsible and inclusive moral vision. But declaring wide access is easier than building it. Expensive technologies often reach wealthy users first. Medical systems already distribute access unequally. Schools and workplaces often adopt tools before they have accommodations, appeals, or support structures. Enhancement can become one more way advantage compounds."
+      "text": "The access problem is not secondary. Bostrom's own \"Transhumanist Values\" names wide access as a basic condition. The Transhumanist Declaration calls for responsible and inclusive moral vision. But declaring wide access is easier than building it. Expensive technologies often reach wealthy users first. Medical systems already distribute access unequally. Schools and workplaces often adopt tools before they have accommodations, appeals, or support structures. When access tracks wealth, enhancement compounds existing advantage."
     },
     {
       "id": "ch18-p0072",
       "type": "paragraph",
       "sectionId": "ch18-s006",
       "level": null,
-      "text": "Consider cognitive enhancement in education. Students with money can pay for better devices, private tutoring, AI subscriptions, quiet workspaces, diagnoses, medications, and health care. Students without those resources may be told to compete in the same environment. If AI tutors, memory systems, or attention tools become expected, the gap may widen. The ethical issue is not only whether the tool improves learning. It is whether the institution builds access, support, and fair expectations around it."
+      "text": "Consider cognitive enhancement in education. Students with money can pay for better devices, private tutoring, AI subscriptions, quiet workspaces, diagnoses, medications, and health care. Students without those resources may be told to compete in the same environment. If AI tutors, memory systems, or attention tools become expected, the gap may widen. Ethical judgment must consider whether the tool improves learning and whether the institution builds access, support, and fair expectations around it."
     },
     {
       "id": "ch18-p0073",
@@ -611,7 +611,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s006",
       "level": null,
-      "text": "For PHIL 123 case inquiries, this lens is direct. If you study AI in nursing, ask whether the tool supports nurses' judgment or pressures them to work at machine pace. If you study AI in education, ask whether the tool helps students learn or redefines adequate student performance around AI assistance. If you study workplace automation, ask whether the technology expands capacity or treats human fatigue, slowness, care, and disability as productivity defects. If you study health AI, ask who gets the benefit first and who becomes data for others' benefit."
+      "text": "Applied to AI in nursing, the lens asks whether a tool supports nurses' judgment or pressures them to work at machine pace. In education, it asks whether a tool helps students learn or redefines adequate student performance around AI assistance. In workplace automation, it asks whether the technology expands capacity or treats human fatigue, slowness, care, and disability as productivity defects. In health AI, it asks who gets the benefit first and who becomes data for others' benefit."
     },
     {
       "id": "ch18-s007",
@@ -674,7 +674,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s007",
       "level": null,
-      "text": "The distinction between active and passive use also matters. An active BCI lets a user intentionally control an output. A passive monitoring system observes ongoing brain states such as fatigue, attention, stress, or emotional response. Active control can support agency. Passive monitoring can support care, but it can also turn mental states into institutional evidence. A company, school, military, or insurer might use attention, stress, or fatigue signals to manage people. That is why consent and context matter so much."
+      "text": "The distinction between active and passive use also matters. An active BCI lets a user intentionally control an output. A passive monitoring system observes ongoing brain states such as fatigue, attention, stress, or emotional response. Active control can support agency. Passive monitoring can support care, but it can also turn mental states into institutional evidence. A company, school, military, or insurer might use attention, stress, or fatigue signals to manage people. Consent and context determine whether monitoring supports care or turns mental states into institutional evidence."
     },
     {
       "id": "ch18-p0087",
@@ -730,7 +730,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s008",
       "level": null,
-      "text": "The He case is not useful as a simple \"mad scientist\" story. It is useful because it makes several ethical pressures visible at once. He presented the project as disease prevention: an attempt to alter CCR5 in order to reduce HIV vulnerability. But the case raised major concerns about safety, medical necessity, informed consent, secrecy, uncertain benefit, off-target effects, mosaicism, future children, and governance. Greely condemns the experiment, but he also slows the analysis enough to show why the case is not just about personality. It is about the structure of heritable intervention."
+      "text": "The He case makes several ethical pressures visible at once that a simple \"mad scientist\" story would obscure. He presented the project as disease prevention: an attempt to alter CCR5 in order to reduce HIV vulnerability. But the case raised major concerns about safety, medical necessity, informed consent, secrecy, uncertain benefit, off-target effects, mosaicism, future children, and governance. Greely condemns the experiment while showing that the ethical analysis concerns the structure of heritable intervention as well as He's personality."
     },
     {
       "id": "ch18-p0094",
@@ -814,7 +814,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "An AI writing assistant extends fluency. A translation tool extends communication. A coding agent extends software-building capacity. An image generator extends visual production. A medical model extends diagnostic attention. A route-planning system extends navigation. A reminder system extends memory. An AI tutor extends practice, explanation, and feedback. A research assistant extends search and synthesis. A wearable paired with AI extends self-monitoring. These are not posthuman fantasies. They are already part of ordinary life."
+      "text": "An AI writing assistant extends fluency. A translation tool extends communication. A coding agent extends software-building capacity. An image generator extends visual production. A medical model extends diagnostic attention. A route-planning system extends navigation. A reminder system extends memory. An AI tutor extends practice, explanation, and feedback. A research assistant extends search and synthesis. A wearable paired with AI extends self-monitoring. These ordinary technologies already extend capacities without implants or genetic redesign."
     },
     {
       "id": "ch18-p0105",
@@ -835,14 +835,14 @@
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "Now the caution. If the tutor gives answers too quickly, the student may stop practicing struggle. If it summarizes every hard text, the student may not build reading endurance. If it sounds confident when wrong, the student may build false understanding. If the college assumes all students now have AI support, assignments may become more demanding without more human care. If only some students can afford better tools, inequality grows. If the tool logs everything, student confusion becomes data."
+      "text": "Now the caution. If the tutor gives answers too quickly, the student may stop practicing struggle. If it summarizes every hard text, the student may not build reading endurance. If it sounds confident when wrong, the student may build false understanding. If the college assumes all students now have AI support, assignments may become more demanding without more human care. If only some students can afford better tools, inequality grows. If the tool logs everything, it also turns student confusion into data available to whoever controls those logs."
     },
     {
       "id": "ch18-p0108",
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "The same tool can build or weaken capacity. The difference is design, context, and use."
+      "text": "The same AI tutor can build capacity through guided practice or weaken it by replacing the student's practice, depending on its design, context, and use."
     },
     {
       "id": "ch18-p0109",
@@ -856,14 +856,14 @@
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "Take workplace AI. A system that helps nurses document faster may preserve attention for patients. It may also increase workload because administrators expect every nurse to handle more patients. A coding agent may help a developer build quickly. It may also create technical debt or weaken understanding. A productivity assistant may support focus. It may also make slower human rhythms look irresponsible. Soft enhancement can quietly become optimization."
+      "text": "Take workplace AI. A system that helps nurses document faster may preserve attention for patients. It may also increase workload because administrators expect every nurse to handle more patients. A coding agent may help a developer build quickly. It may also create technical debt or weaken understanding. A productivity assistant may support focus. It may also make slower human rhythms look irresponsible. In workplaces, soft enhancement can become an optimization regime that sets the acceptable pace of work."
     },
     {
       "id": "ch18-p0111",
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "This is where the transhumanism lens connects with the automation chapter. Automation asks what moved into the system. Transhumanism asks what human capacity the system now imagines. A tool that writes for you is not only automating text. It is changing the capacity of writing: invention, expression, revision, voice, argument, and accountability. A tool that recommends emotional responses is not only automating communication. It is changing the capacity of relational judgment. A tool that monitors sleep, mood, and focus is not only collecting data. It is changing the capacity of self-interpretation."
+      "text": "The human-capacity lens complements the delegated-action analysis. Delegated-action analysis asks what activity moved into the system; transhumanism asks what human capacity the system now imagines. A tool that writes for you changes the capacity of writing along with automating text: invention, expression, revision, voice, argument, and accountability. A tool that recommends emotional responses automates communication while changing the capacity of relational judgment. A tool that monitors sleep, mood, and focus collects data while changing the capacity of self-interpretation."
     },
     {
       "id": "ch18-p0112",
@@ -898,7 +898,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s009",
       "level": null,
-      "text": "This section should prevent a narrow misunderstanding. Transhumanism is not only about becoming a cyborg. It is about what human beings should be able to do and become with technological help. AI already belongs inside that question."
+      "text": "Transhumanism asks what human beings should be able to do and become with technological help, so AI belongs inside the question alongside cyborg imagery and biological enhancement."
     },
     {
       "id": "ch18-s010",
@@ -954,14 +954,14 @@
       "type": "paragraph",
       "sectionId": "ch18-s010",
       "level": null,
-      "text": "That is not a failure of philosophy. It is what philosophy is for. A framework that never creates tension is usually hiding something."
+      "text": "Philosophy makes these conflicts explicit so a judgment can say which concern governs the case. A framework that never creates tension is usually hiding something."
     },
     {
       "id": "ch18-p0124",
       "type": "paragraph",
       "sectionId": "ch18-s010",
       "level": null,
-      "text": "For a PHIL 123 case inquiry, the goal is not to declare allegiance to one camp. The goal is to use the lenses to make a judgment more answerable. If you defend a technology, say what dignity, access, and agency risks must be addressed. If you oppose a technology, say whether your objection blocks restoration or only irresponsible enhancement. If your view depends on safeguards, connect them to the specific capacity at stake."
+      "text": "The four lenses make a judgment more answerable. A defense of a technology should identify the dignity, access, and agency risks that must be addressed. An objection should say whether it blocks restoration or only irresponsible enhancement. A position that depends on safeguards should connect them to the specific capacity at stake."
     },
     {
       "id": "ch18-s011",
@@ -975,21 +975,21 @@
       "type": "paragraph",
       "sectionId": "ch18-s011",
       "level": null,
-      "text": "The current chapter should not be organized as a long genealogy of posthuman dreams, but a little background helps. Human beings have long imagined becoming more than they are: wiser, purer, stronger, longer-lived, closer to gods, free from disease, free from death, or liberated from bodily limits. Religious traditions, philosophical perfectionism, alchemy, Enlightenment progress, science fiction, cybernetics, and biotechnology all carry versions of that longing."
+      "text": "A short genealogy of posthuman dreams provides useful background without organizing the chapter. Human beings have long imagined becoming more than they are: wiser, purer, stronger, longer-lived, closer to gods, free from disease, free from death, or liberated from bodily limits. Religious traditions, philosophical perfectionism, alchemy, Enlightenment progress, science fiction, cybernetics, and biotechnology all carry versions of that longing."
     },
     {
       "id": "ch18-p0126",
       "type": "paragraph",
       "sectionId": "ch18-s011",
       "level": null,
-      "text": "The historical pattern matters only if we do not overstate it. Ancient spiritual ascent, Christian theosis, Enlightenment perfectibility, Nietzschean self-overcoming, Russian Cosmism, and Silicon Valley transhumanism are not one straight line. They are different traditions with different assumptions about body, soul, technology, salvation, politics, and human nature. Similar imagery is not the same as direct genealogy."
+      "text": "This history supports only a limited claim. Ancient spiritual ascent, Christian theosis, Enlightenment perfectibility, Nietzschean self-overcoming, Russian Cosmism, and Silicon Valley transhumanism are different traditions with different assumptions about body, soul, technology, salvation, politics, and human nature. Similar imagery does not establish a direct genealogy."
     },
     {
       "id": "ch18-p0127",
       "type": "paragraph",
       "sectionId": "ch18-s011",
       "level": null,
-      "text": "The more useful point for this chapter is this: transhumanism gives a technological form to an old human question. What should we do with our limits? Accept them? Interpret them? Heal them? Resist them? Design around them? Overcome them? Use them to structure a good life? Redesign ourselves so the old limits no longer define us?"
+      "text": "Transhumanism gives a technological form to an old human question. What should we do with our limits? Accept them? Interpret them? Heal them? Resist them? Design around them? Overcome them? Use them to structure a good life? Redesign ourselves so the old limits no longer define us?"
     },
     {
       "id": "ch18-p0128",
@@ -1003,7 +1003,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s011",
       "level": null,
-      "text": "So the chapter does not need a long march from Plato to uploading. It needs a disciplined question: what kind of human capacity is being imagined, and can that vision survive ethical scrutiny?"
+      "text": "The historical comparison leads to a disciplined question: what kind of human capacity is being imagined, and can that vision survive ethical scrutiny?"
     },
     {
       "id": "ch18-s012",
@@ -1017,14 +1017,14 @@
       "type": "paragraph",
       "sectionId": "ch18-s012",
       "level": null,
-      "text": "A human-capacity audit applies the chapter's competing positions to a documented case. It turns broad claims about enhancement and human limits into questions that can pressure a provisional considered view."
+      "text": "A human-capacity audit applies competing positions to a documented case. It turns broad claims about enhancement and human limits into questions that can test a moral judgment."
     },
     {
       "id": "ch18-p0131",
       "type": "paragraph",
       "sectionId": "ch18-s012",
       "level": null,
-      "text": "Start with the technology or practice in your anchor case. Do not begin with whether it is futuristic. Begin with capacity. What does the technology help people do, stop doing, do faster, do differently, or no longer need to practice?"
+      "text": "Start with the technology or practice under review. Do not begin with whether it is futuristic. Begin with capacity. What does the technology help people do, stop doing, do faster, do differently, or no longer need to practice?"
     },
     {
       "id": "ch18-p0132",
@@ -1052,7 +1052,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s012",
       "level": null,
-      "text": "Here is a second example closer to student work."
+      "text": "AI tutoring shows how the same audit applies outside medicine."
     },
     {
       "id": "ch18-p0136",
@@ -1087,7 +1087,7 @@
       "type": "paragraph",
       "sectionId": "ch18-s012",
       "level": null,
-      "text": "The chapter's thesis can now be stated plainly:"
+      "text": "Responsible enhancement depends on what a technology does to human capacity and the social terms attached to it."
     },
     {
       "id": "ch18-p0141",

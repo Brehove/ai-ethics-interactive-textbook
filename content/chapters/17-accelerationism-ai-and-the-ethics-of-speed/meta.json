@@ -15,9 +15,8 @@
     "slug": "future-stakes-and-technological-movements"
   },
   "path": "/chapter/accelerationism-ai-and-the-ethics-of-speed/",
-  "wordCount": 11941,
-  "readingMinutes": 54,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/accelerationism-ai-and-the-ethics-of-speed/",
+  "wordCount": 11854,
+  "readingMinutes": 53,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,22 +31,10 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 59,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "cfa0a52db6dbedcf9fadfe263f8edce7928dc2e8426a03a9367bd39f82c06e68",
-      "deploymentSha256": "662606a5c5c54b9e7249d5a0cf842ee3f50aae9dbf7a54cfb05818dfa1586c2d",
-      "publishedAt": "2026-07-17T15:46:28-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "4f6f756f4449bcc07931f1417f57c081336a2a7b62288e30c98bde2acdf0cece",
-    "canonicalMarkdownSha256": "936db192687c59a8a883033c0385c1113c422333243d00ccc4216d1ad258ec20",
+    "canonicalMarkdownSha256": "31026f43d5c88a005aead068a27e3b88dbf6ca265f690c3d55f953682d7a5731",
     "reconciliationTransformations": [],
-    "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This is not Pressbooks validation or publication authorization."
+    "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This website chapter is the active canonical edition."
   }
 }

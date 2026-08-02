@@ -41,4 +41,4 @@ The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `B
 
 ## Publication boundary
 
-A successful reader deployment does not modify Pressbooks. Pressbooks publication remains an explicit, separately authorized conversion-and-validation operation. The repository is canonical for website content and retains the reviewed migration and rights records.
+A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. The repository is canonical for textbook content and retains reviewed migration and rights records.

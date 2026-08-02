@@ -38,7 +38,6 @@ Read:
 - [`docs/CONTENT_MODEL.md`](docs/CONTENT_MODEL.md)
 - [`docs/AUTHORING.md`](docs/AUTHORING.md)
 - [`workers/editor-auth/README.md`](workers/editor-auth/README.md)
-- [`docs/PRESSBOOKS_COMPATIBILITY.md`](docs/PRESSBOOKS_COMPATIBILITY.md)
 - [`docs/VOICE_BOUNDARY.md`](docs/VOICE_BOUNDARY.md)
 - [`docs/WIKIMEDIA_WORLD_LAYER.md`](docs/WIKIMEDIA_WORLD_LAYER.md)
 
@@ -54,15 +53,14 @@ npm run validate
 npm run build
 ```
 
-CI rejects symlinks, private machine paths, credential-shaped values, missing content relationships, stale reading derivatives, and incompatible Pressbooks preparation.
+CI rejects symlinks, private machine paths, credential-shaped values, missing content relationships, and stale reading derivatives.
 
 ## Publication boundaries
 
 - GitHub is the canonical source and review history.
 - Cloudflare Workers Static Assets serves the public Astro build.
 - The reader and editor auth service use same-site custom hostnames under `your-digital-life.org`; this preserves the editor's Strict session-cookie boundary without adding a new domain cost.
-- Pressbooks remains an independent downstream OER edition and fallback.
-- A Git merge or Cloudflare deployment never publishes to Pressbooks.
+- The website is the only maintained student-facing textbook edition.
 - Canvas remains the durable course discussion, submission, identity, and grading layer.
 
 ## Privacy

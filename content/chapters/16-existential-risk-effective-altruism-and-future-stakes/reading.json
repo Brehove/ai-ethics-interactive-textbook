@@ -4,10 +4,10 @@
   "slug": "existential-risk-effective-altruism-and-future-stakes",
   "title": "Existential Risk, Effective Altruism, and the Ethics of Future Stakes",
   "language": "en",
-  "sourceSha256": "41c8971c9602f990c79efb4ceefbe793fae789ebf0df6d945b6940b314f3aec6",
-  "plainTextSha256": "54ba714895f75535a52671ac09e2949c4af344af290ed29fdc8302d76db06af0",
-  "wordCount": 13580,
-  "readingMinutes": 61,
+  "sourceSha256": "f59169adb89f5ffc1440a053ae804b10692159f701223050a6300b32e611f7bd",
+  "plainTextSha256": "a0b64e8f3c5d81cdde929720f566c0dc89e91e5429e65b214e6715f735926002",
+  "wordCount": 13466,
+  "readingMinutes": 60,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -65,7 +65,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s001",
       "level": null,
-      "text": "By the end of the chapter, you should be able to use these ideas in a PHIL 123 case inquiry. Ask what future the decision or practice makes more likely, who benefits now, who inherits risk later, which forecast or assumption carries the argument, and what condition would make the practice more reversible, contestable, and accountable."
+      "text": "A future-stakes analysis asks what future a decision or practice makes more likely, who benefits now, who inherits risk later, which forecast or assumption carries the argument, and what condition would make the practice more reversible, contestable, and accountable."
     },
     {
       "id": "ch16-s002",
@@ -149,7 +149,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s004",
       "level": null,
-      "text": "For this chapter, the direct genealogy of Effective Altruism is not apocalypse to AI doom. It is closer to this:"
+      "text": "For this chapter, the direct genealogy of Effective Altruism runs from utilitarian impartiality through future-person ethics and into contemporary AI governance:"
     },
     {
       "id": "ch16-p0015",
@@ -163,7 +163,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s004",
       "level": null,
-      "text": "That sequence is not the only possible genealogy, but it is the cleanest one for understanding why Effective Altruism became relevant to contemporary AI ethics."
+      "text": "Other genealogies are possible. This sequence explains most directly why Effective Altruism became relevant to contemporary AI ethics."
     },
     {
       "id": "ch16-s005",
@@ -191,7 +191,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s005",
       "level": null,
-      "text": "A scenario tells a concrete story about how something might happen. Scenarios are not necessarily predictions. They are tools for planning, imagination, and stress-testing. A scenario can help people notice assumptions and failure modes even if the exact story never happens."
+      "text": "A scenario tells a concrete story about how something might happen. It supports planning, imagination, and stress-testing without necessarily predicting that the story will occur. A scenario can help people notice assumptions and failure modes even if the exact story never happens."
     },
     {
       "id": "ch16-p0020",
@@ -205,7 +205,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s005",
       "level": null,
-      "text": "The distinction matters because a number in a public interview, a detailed future story, and a lab's release rule can sound similar in public debate. Ethically, they carry different burdens. Evidence matters most for the forecast. Plausibility and usefulness matter most for the scenario. Authority, enforceability, and accountability matter most for the threshold."
+      "text": "A number in a public interview, a detailed future story, and a lab's release rule can sound similar in public debate even though they carry different ethical burdens. A forecast depends most heavily on evidence. A scenario depends on plausibility and usefulness. A threshold depends on authority, enforceability, and accountability."
     },
     {
       "id": "ch16-p0022",
@@ -247,7 +247,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s006",
       "level": null,
-      "text": "Classical utilitarianism is associated with Jeremy Bentham and John Stuart Mill, but Henry Sidgwick is especially important for the later tradition. The Stanford Encyclopedia of Philosophy describes Sidgwick's The Methods of Ethics as a culminating work in the classical utilitarian tradition and notes its influence on later thinkers including Derek Parfit, Peter Singer, and Katarzyna de Lazari-Radek. Sidgwick matters here because he sharpened the thought that ethics asks us to take up a more impartial point of view. From that point of view, my pain does not count more simply because it is mine, and the welfare of people near me does not count more simply because they are near me."
+      "text": "Classical utilitarianism is associated with Jeremy Bentham and John Stuart Mill, but Henry Sidgwick is especially important for the later tradition. The Stanford Encyclopedia of Philosophy describes Sidgwick's The Methods of Ethics as a culminating work in the classical utilitarian tradition and notes its influence on later thinkers including Derek Parfit, Peter Singer, and Katarzyna de Lazari-Radek. Sidgwick sharpened the thought that ethics asks us to take up a more impartial point of view. From that point of view, my pain does not count more simply because it is mine, and the welfare of people near me does not count more simply because they are near me."
     },
     {
       "id": "ch16-p0027",
@@ -408,7 +408,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s008",
       "level": null,
-      "text": "This shift is important for students. A charity can be emotionally compelling and still accomplish little. Another intervention can be less emotionally vivid and much more effective. The effective-help question asks us to compare interventions, not only intentions."
+      "text": "A charity can be emotionally compelling and still accomplish little. Another intervention can be less emotionally vivid and much more effective. The effective-help question therefore compares interventions as well as intentions."
     },
     {
       "id": "ch16-p0048",
@@ -646,14 +646,14 @@
       "type": "paragraph",
       "sectionId": "ch16-s011",
       "level": null,
-      "text": "The category matters because some harms are recoverable and others close off the future. A natural disaster can be horrific without being existential. A financial crisis can damage millions of lives without ending humanity's long-term future. A pandemic can be globally catastrophic without making recovery impossible. Existential risk names a narrower and more severe class: events that eliminate humanity or permanently block the futures human beings might otherwise build."
+      "text": "Some harms are recoverable, while others close off the future. A natural disaster can be horrific without being existential. A financial crisis can damage millions of lives without ending humanity's long-term future. A pandemic can be globally catastrophic without making recovery impossible. Existential risk names a narrower and more severe class: events that eliminate humanity or permanently block the futures human beings might otherwise build."
     },
     {
       "id": "ch16-p0079",
       "type": "paragraph",
       "sectionId": "ch16-s011",
       "level": null,
-      "text": "Bostrom's argument in \"Existential Risk Prevention as Global Priority\" is that reducing existential risk can have special moral importance across several moral theories. The structure is straightforward:"
+      "text": "Bostrom's argument in \"Existential Risk Prevention as Global Priority\" is that reducing existential risk can have special moral importance across several moral theories. The argument proceeds through four claims:"
     },
     {
       "id": "ch16-p0080",
@@ -674,7 +674,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s011",
       "level": null,
-      "text": "Parfit's influence matters here. Bostrom is not merely repeating Parfit, but his astronomical-stakes reasoning works inside a problem space Parfit helped make unavoidable: extinction is not only the death of everyone alive now. It can also be the loss of future generations, future goods, and possible forms of flourishing. Bostrom takes that Parfit-style pressure and turns it toward risk prevention."
+      "text": "Bostrom does not merely repeat Parfit. His astronomical-stakes reasoning works inside a problem space Parfit helped make difficult to avoid: extinction includes the death of everyone alive now and the loss of future generations, future goods, and possible forms of flourishing. Bostrom turns that pressure toward risk prevention."
     },
     {
       "id": "ch16-p0083",
@@ -884,7 +884,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s013",
       "level": null,
-      "text": "Stuart Russell's work on human-compatible AI brought alignment concerns into a broader AI-research frame. The Center for Human-Compatible AI at UC Berkeley states its mission as developing the conceptual and technical basis for reorienting AI research toward provably beneficial systems. Russell's central proposal is often summarized as designing machines that remain uncertain about human objectives rather than confidently optimizing a fixed proxy. That matters because overconfident optimization of a bad proxy is one of the recurring failures in both ordinary institutions and advanced-AI thought experiments."
+      "text": "Stuart Russell's work on human-compatible AI brought alignment concerns into a broader AI-research frame. The Center for Human-Compatible AI at UC Berkeley states its mission as developing the conceptual and technical basis for reorienting AI research toward provably beneficial systems. Russell's central proposal is often summarized as designing machines that remain uncertain about human objectives rather than confidently optimizing a fixed proxy. The proposal addresses overconfident optimization of a bad proxy, a recurring failure in both ordinary institutions and advanced-AI thought experiments."
     },
     {
       "id": "ch16-p0111",
@@ -905,7 +905,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s013",
       "level": null,
-      "text": "For PHIL 123 students, the alignment question is not only \"Will superintelligence kill us?\" It is also:"
+      "text": "Alignment questions apply to ordinary systems as well as speculative superintelligence:"
     },
     {
       "id": "ch16-p0114",
@@ -947,7 +947,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s014",
       "level": null,
-      "text": "This is why alignment is not only technical. It is also ethical and political. Technical alignment asks whether the system reliably follows the intended objective. Normative alignment asks whether the intended objective is worth following. Institutional alignment asks whether the process for defining and enforcing the objective is legitimate."
+      "text": "Alignment has technical, ethical, and political dimensions. Technical alignment asks whether the system reliably follows the intended objective. Normative alignment asks whether the intended objective is defensible. Institutional alignment asks whether the process for defining and enforcing the objective is legitimate."
     },
     {
       "id": "ch16-p0119",
@@ -1017,7 +1017,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s015",
       "level": null,
-      "text": "In late 2024, Geoffrey Hinton said in a BBC Radio 4 interview, as reported by The Guardian, that he had raised his estimate of the chance that AI could lead to human extinction within the next thirty years. The Guardian reported the number as 10 to 20 percent. That figure should be treated as a public estimate from one prominent researcher, not as a scientific consensus. It matters because it is a clear example of an expert forecast entering public ethical debate."
+      "text": "In late 2024, Geoffrey Hinton said in a BBC Radio 4 interview, as reported by The Guardian, that he had raised his estimate of the chance that AI could lead to human extinction within the next thirty years. The Guardian reported the number as 10 to 20 percent. That public estimate from one prominent researcher is a clear example of an expert forecast entering ethical debate; it is not a scientific consensus."
     },
     {
       "id": "ch16-p0128",
@@ -1129,7 +1129,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s016",
       "level": null,
-      "text": "For PHIL 123 students, these company documents are examples of values embedded in procedure. A safety framework is not just technical paperwork. It tells us what an organization thinks counts as severe harm, how it treats uncertainty, what evidence it trusts, who has authority, and what it is willing to delay or refuse."
+      "text": "These company documents embed values in procedure. A safety framework is not just technical paperwork. It tells us what an organization thinks counts as severe harm, how it treats uncertainty, what evidence it trusts, who has authority, and what it is willing to delay or refuse."
     },
     {
       "id": "ch16-s017",
@@ -1276,7 +1276,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s018",
       "level": null,
-      "text": "A fourth distortion is single-axis moral reasoning. If the future is described mainly in terms of total expected value, other values can disappear: rights, dignity, consent, democratic legitimacy, justice, repair, solidarity, community, and human development. A design can be efficient and still disrespectful. A safety policy can reduce one risk and increase another. A forecast can be sincere and still politically illegitimate as a basis for unilateral action."
+      "text": "A fourth distortion is single-axis moral reasoning. If the future is described mainly through total expected value, other values can disappear: rights, dignity, consent, democratic legitimacy, justice, repair, solidarity, community, and human development. A design can be efficient and still disrespectful. A safety policy can reduce one risk and increase another. A forecast can be sincere and still politically illegitimate as a basis for unilateral action."
     },
     {
       "id": "ch16-p0162",
@@ -1374,7 +1374,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s020",
       "level": null,
-      "text": "In PHIL 123, the future-stakes lens is used to test a considered judgment, not to add futuristic vocabulary to a case. It asks students to make assumptions visible, widen the field of concern, and decide whether scale, reversibility, or contestability should change a position they could otherwise defend."
+      "text": "The future-stakes lens tests a moral judgment by making its assumptions visible, widening the field of concern, and asking whether scale, reversibility, or contestability should change a position that might otherwise be defensible."
     },
     {
       "id": "ch16-p0174",
@@ -1542,7 +1542,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s022",
       "level": null,
-      "text": "The same pattern works across PHIL 123 case inquiries."
+      "text": "The same pattern travels across fields."
     },
     {
       "id": "ch16-p0196",
@@ -1745,7 +1745,7 @@
       "type": "aside",
       "sectionId": "ch16-s031",
       "level": null,
-      "text": "Try It: One-Sentence Audit\nFor your anchor case, write one sentence for each category: local benefit, proxy, absent stakeholders, scale effect, future dependency, key assumption, proportional safeguard, and contestability. Then state whether the lens strengthens, challenges, or qualifies your provisional view. Keep each sentence concrete enough that someone else could check your reasoning."
+      "text": "Try It: One-Sentence Audit\nFor one documented case, write one sentence for each category: local benefit, proxy, absent stakeholders, scale effect, future dependency, key assumption, proportional safeguard, and contestability. Then state whether the lens changes your judgment and why. Keep each sentence concrete enough that someone else could check your reasoning."
     },
     {
       "id": "ch16-s032",
@@ -1941,7 +1941,7 @@
       "type": "paragraph",
       "sectionId": "ch16-s041",
       "level": null,
-      "text": "For PHIL 123, apply the lens to the same documented case you have been studying. Name the assumptions, widen the stakeholder map, test the effectiveness claims, identify the proxies, check reversibility and contestability, and state what evidence would make a responsible decision-maker pause, revise, or stop."
+      "text": "Apply the lens to a documented case. Name the assumptions, widen the stakeholder map, test the effectiveness claims, identify the proxies, check reversibility and contestability, and state what evidence would make a responsible decision-maker pause, revise, or stop."
     },
     {
       "id": "ch16-s042",

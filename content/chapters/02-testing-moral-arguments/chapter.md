@@ -7,7 +7,7 @@ A study-planning app offers a seven-day free trial. Unless the user changes a pr
 Should the app require users to choose the paid subscription actively?
 
 <!-- phil-passage-id: ch02-p0003 -->
-You may already have an answer. Philosophy asks you to show how you reached it. [Chapter 1](https://cwi.pressbooks.pub/ethicsandai/chapter/practicing-philosophy/) explained why PHIL 123 begins with argumentation. A visible argument gives other people a fair chance to understand your reasons, question them, and offer a competing view. It also lets you notice where your own judgment changes.
+You may already have an answer. Philosophy asks you to show how you reached it. [Chapter 1](/chapter/practicing-philosophy/) explained why PHIL 123 begins with argumentation. A visible argument gives other people a fair chance to understand your reasons, question them, and offer a competing view. It also lets you notice where your own judgment changes.
 
 <!-- phil-section-id: ch02-s001 -->
 ## How This Chapter Fits the Course
@@ -321,7 +321,7 @@ The student should make that decision visible:
 > **Judgment Note:** The objection pressured my claim that every extra cancellation step interferes with user control. I kept my concern about preselected annual renewal and repeated visual pressure, but I narrowed the conclusion to exclude steps genuinely needed for security or confirmation. The fictional case does not establish the company's intent, so I also removed the stronger accusation of deliberate manipulation.
 
 <!-- phil-passage-id: ch02-p0080 -->
-The note records which claim changed, why it changed, and what evidence remains missing. This is the [metacognitive work introduced in Chapter 1](https://cwi.pressbooks.pub/ethicsandai/chapter/practicing-philosophy/): the student notices the exact point where an objection affects the argument and decides whether to defend, revise, narrow, or concede.
+The note records which claim changed, why it changed, and what evidence remains missing. This is the [metacognitive work introduced in Chapter 1](/chapter/practicing-philosophy/): the student notices the exact point where an objection affects the argument and decides whether to defend, revise, narrow, or concede.
 
 <!-- phil-passage-id: ch02-p0081 -->
 Test the revision with a nearby case. Suppose cancellation takes three screens. One authenticates the account holder, one identifies the subscription, and one confirms the end date. Each screen presents **Keep** and **Cancel** with comparable visibility and does not ask the user repeatedly to reverse the decision.
@@ -399,7 +399,7 @@ This practice prepares the argument work you will do later in PHIL 123. Each eth
 ## References
 
 <!-- phil-passage-id: ch02-p0093 -->
-- Gladd, J. (2026). [*Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility*](https://cwi.pressbooks.pub/ethicsandai/chapter/practicing-philosophy/). Used for the course handoff concerning visible judgment, pressure-testing, metacognition, and intellectual responsibility.
+- Gladd, J. (2026). [*Practicing Philosophy: Argument, Judgment, and Intellectual Responsibility*](/chapter/practicing-philosophy/). Used for the course handoff concerning visible judgment, pressure-testing, metacognition, and intellectual responsibility.
 - Internet Encyclopedia of Philosophy. [*Validity and Soundness*](https://iep.utm.edu/val-snd/). Used for the compact distinction between a valid deductive structure and a sound argument with true premises.
 - Richardson, H. S. (2018). [*Moral Reasoning*](https://plato.stanford.edu/entries/reasoning-moral/). *Stanford Encyclopedia of Philosophy*. Used for moral reasoning as revisable practical judgment involving relevance, interpretation, conflict, and specification.
 - Swartwood, J., & Stoner, I. (2021). [*Doing Practical Ethics*, sample Chapter 5](https://philarchive.org/archive/SWADPE). Oxford University Press. Used for principle, case, and conclusion as one useful starting structure for practical ethics.

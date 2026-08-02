@@ -23,7 +23,6 @@ export const chapterMetaSchema = z.object({
   path: z.string(),
   wordCount: z.number().int().positive(),
   readingMinutes: z.number().int().positive(),
-  pressbooksUrl: z.url(),
   status: z.literal("website-canonical"),
   licenses: z.object({
     prose: z.literal("CC-BY-4.0"),
@@ -37,18 +36,6 @@ export const chapterMetaSchema = z.object({
     offlineHtml: z.boolean(),
     readingJson: z.boolean(),
     plainText: z.boolean(),
-  }),
-  pressbooks: z.object({
-    id: z.number().int().positive(),
-    sourceFormat: z.literal("gfm+raw-html"),
-    compatible: z.boolean(),
-    validated: z.boolean(),
-    publishAuthorized: z.boolean(),
-    priorRelease: z.object({
-      sourceSha256: z.string().length(64),
-      deploymentSha256: z.string().length(64),
-      publishedAt: z.string(),
-    }),
   }),
   websiteBaseline: z.object({
     selectedSourceSha256: z.string().length(64),

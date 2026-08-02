@@ -4,10 +4,10 @@
   "slug": "commands-constitutions-and-alignment",
   "title": "Commands, Constitutions, and Alignment: Natural Law in the AI Alignment Conversation",
   "language": "en",
-  "sourceSha256": "da16b3f0c52a3d0ddb09bf0e8557a626b4e21857933688f75118c81a993eace5",
-  "plainTextSha256": "461a4c1872386aded64f19108eb4c0af5914490f21b0d4121f2eb9824aba0154",
-  "wordCount": 5653,
-  "readingMinutes": 26,
+  "sourceSha256": "c31bbda3b4e7c2dbcaf5236631a5fe573d48533f3139127ae009a116a3d1d702",
+  "plainTextSha256": "2419e64e99d63855b13ea45d4479bfa6ce46a90efb31b4d37e8b0f344e33639e",
+  "wordCount": 5598,
+  "readingMinutes": 25,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -37,7 +37,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s001",
       "level": null,
-      "text": "Anthropic is the company behind Claude and a major AI lab. In early 2026, it published Claude's Constitution, a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder demands, and its own character. Anthropic calls the Constitution the final authority on its vision for Claude and says its content directly shapes Claude's training and behavior."
+      "text": "Anthropic is the company behind Claude. In early 2026, it published Claude's Constitution, a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder demands, and its own character. Anthropic calls the Constitution the final authority on its vision for Claude and says its content directly shapes Claude's training and behavior."
     },
     {
       "id": "ch06-p0002",
@@ -93,7 +93,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s001",
       "level": null,
-      "text": "Chapter 35 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document."
+      "text": "Chapter 5 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document."
     },
     {
       "id": "ch06-p0010",
@@ -163,7 +163,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s003",
       "level": null,
-      "text": "Chapter 35 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct."
+      "text": "Chapter 5 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct."
     },
     {
       "id": "ch06-p0018",
@@ -205,14 +205,14 @@
       "type": "paragraph",
       "sectionId": "ch06-s003",
       "level": null,
-      "text": "That analysis supports a limited verdict. The anti-manipulation principle protects recognizable features of human flourishing, so it has moral support beyond Anthropic's authorship. The analysis also creates a new objection. Anthropic still has to decide when influence becomes manipulation, which relationships count as healthy, and what a user's long-term good includes. A company can become paternalistic while claiming to protect wellbeing. Natural law gives the lab a standard richer than user preference, but the standard remains open to disagreement about human goods and their application. Consultation with Catholic moral thinkers can sharpen the reasoning. Green's participation also makes it reasonable to compare the Constitution with natural-law ethics. Neither point removes Anthropic's responsibility for the final interpretation, and the public record does not identify which arguments any adviser advanced."
+      "text": "The anti-manipulation principle protects recognizable features of human flourishing, so it has moral support beyond Anthropic's authorship. The analysis also creates a new objection. Anthropic still has to decide when influence becomes manipulation, which relationships count as healthy, and what a user's long-term good includes. A company can become paternalistic while claiming to protect wellbeing. Natural law gives the lab a standard richer than user preference, but the standard remains open to disagreement about human goods and their application. Consultation with Catholic moral thinkers can sharpen the reasoning. Green's participation also makes it reasonable to compare the Constitution with natural-law ethics. Neither point removes Anthropic's responsibility for the final interpretation, and the public record does not identify which arguments any adviser advanced."
     },
     {
       "id": "ch06-p0024",
       "type": "paragraph",
       "sectionId": "ch06-s003",
       "level": null,
-      "text": "Chapter 35 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks."
+      "text": "Chapter 5 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks."
     },
     {
       "id": "ch06-p0025",
@@ -289,7 +289,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s004",
       "level": null,
-      "text": "The corporate research and Vatican sources approach the problem differently. Anthropic's public-input experiment tests how participation can influence a constitution. Pope Leo asks whether the ethical framework behind any constitution can be publicly justified. Both approaches leave the moral target open to evaluation after the technical alignment process succeeds."
+      "text": "Anthropic's public-input experiment tests whether participation can influence a constitution, while Pope Leo asks whether any constitution's ethical framework can be publicly justified. The moral evaluation of an alignment target remains open after technical alignment succeeds."
     },
     {
       "id": "ch06-s005",
@@ -380,7 +380,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s006",
       "level": null,
-      "text": "Something else happens when you read Anthropic's public writing carefully. Anthropic's vocabulary shifts from rules toward character."
+      "text": "Anthropic's public writing shifts from rules toward character."
     },
     {
       "id": "ch06-p0046",
@@ -422,7 +422,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s006",
       "level": null,
-      "text": "Later modules will take up the debate over whether AI systems have moral standing. Here the \"soul document\" episode clarifies the alignment dispute. Anthropic is trying to cultivate patterns of judgment rather than enforce only a list of rules. Natural-law reasoning asks what account of the good directs that cultivation and whether human moral concepts can be transferred to a machine without losing their connection to human embodiment, relationship, and responsibility. The personhood question remains open, while the governance question is already present. Anthropic is choosing which dispositions Claude should display now."
+      "text": "This chapter does not settle whether AI systems have moral standing. The \"soul document\" episode instead clarifies the alignment dispute. Anthropic is trying to cultivate patterns of judgment rather than enforce only a list of rules. Natural-law reasoning asks what account of the good directs that cultivation and whether human moral concepts can be transferred to a machine without losing their connection to human embodiment, relationship, and responsibility. The personhood question remains open, while the governance question is already present. Anthropic is choosing which dispositions Claude should display now."
     },
     {
       "id": "ch06-p0052",
@@ -513,7 +513,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s008",
       "level": null,
-      "text": "The audit produces a bounded judgment. Catholic participation, including Green's involvement, gives us reason to compare the Constitution with natural-law reasoning. It gives us no reason to label the Constitution a natural-law document or infer the content of Green's feedback. Anthropic remains the author, implementer, and reviser. Consultation can improve a moral-governance process while leaving its final distribution of power unresolved."
+      "text": "Catholic participation, including Green's involvement, gives us reason to compare the Constitution with natural-law reasoning. It gives us no reason to label the Constitution a natural-law document or infer the content of Green's feedback. Anthropic remains the author, implementer, and reviser. Consultation can improve a moral-governance process while leaving its final distribution of power unresolved."
     },
     {
       "id": "ch06-s009",
@@ -527,7 +527,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s009",
       "level": null,
-      "text": "The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in Testing Moral Arguments. In the compact P1/P2/C form used elsewhere in the course, N1 functions as the normative first premise, F1 supplies the factual content of the second premise, and B1 makes the disputed connection explicit."
+      "text": "The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in Testing Moral Arguments. In the compact P1/P2/C form used elsewhere in the course, N1 is the normative first premise, F1 supplies the factual content of the second premise, and B1 makes the disputed connection explicit."
     },
     {
       "id": "ch06-p0064",
@@ -583,7 +583,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s010",
       "level": null,
-      "text": "Its presence settles less than a slogan would suggest. Anthropic's Constitution remains a corporate governance document. The public evidence establishes consultation and supports a report of broader Catholic influence on some ethical commitments. It does not identify the origin of particular clauses or transfer responsibility for Claude's behavior to the advisers. Pope Leo's argument then presses the unresolved issue: an alignment framework needs public scrutiny because its account of human values can become part of the infrastructure through which people encounter AI."
+      "text": "Anthropic's Constitution remains a corporate governance document. The public evidence establishes consultation and supports a report of broader Catholic influence on some ethical commitments. It does not identify the origin of particular clauses or transfer responsibility for Claude's behavior to the advisers. Pope Leo's argument then presses the unresolved issue: an alignment framework needs public scrutiny because its account of human values can become part of the infrastructure through which people encounter AI."
     },
     {
       "id": "ch06-p0071",
@@ -674,7 +674,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s016",
       "level": null,
-      "text": "The following sources informed the evidence and architecture but do not carry the chapter's central factual claims."
+      "text": "The following sources provide background but do not carry the chapter's central factual claims."
     },
     {
       "id": "ch06-p0078",

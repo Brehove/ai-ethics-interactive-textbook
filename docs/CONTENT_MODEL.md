@@ -55,7 +55,7 @@ Start by saying what you think someone should do.
 
 These IDs are the durable join points for annotations, judgment prompts, deep links, future class activities, and streaming audio segments. Editors should move the marker with its section or passage. They should delete the marker when deleting that entire block. The synchronization tool allocates new IDs above the chapter's current maximum; it does not renumber surviving blocks.
 
-Identity comments are website authoring metadata. `scripts/prepare-pressbooks-source.mjs` removes them from a temporary Pressbooks-preparation copy without changing the canonical Markdown.
+Identity comments are website authoring metadata used to anchor annotations, figures, and reading-layer interactions. Preserve them through ordinary chapter revisions.
 
 ## Loading content in Astro
 
@@ -72,7 +72,7 @@ requireChapter(slug)
 getAdjacentChapters(slug)
 ```
 
-`getChapter()` returns `{ meta, entry, Content, headings, annotations, sourceLinks, world, rights, reading, previous, next }`. `Content` is the rendered Astro component. `ChapterSummary` guarantees `title`, `subtitle`, `description`, `order`, `part`, `path`, `wordCount`, `readingMinutes`, and `pressbooksUrl`.
+`getChapter()` returns `{ meta, entry, Content, headings, annotations, sourceLinks, world, rights, reading, previous, next }`. `Content` is the rendered Astro component. `ChapterSummary` guarantees `title`, `subtitle`, `description`, `order`, `part`, `path`, `wordCount`, and `readingMinutes`.
 
 ## GitHub and admin editing
 
@@ -94,4 +94,4 @@ The baseline contains the eighteen chapters in the published six-Part order. It 
 - the Testing Moral Arguments H1 now uses the approved public title;
 - the two obsolete Aristotle links in Delegating Judgment now point to the current chapter.
 
-The three Module 7 chapters use their July 31 course-aligned drafts as website baselines. Their July 17 source and deployment hashes remain prior-release lineage in public-safe metadata. They are explicitly not marked Pressbooks-validated or publication-authorized.
+The three Module 7 chapters use their July 31 course-aligned drafts as website baselines. Earlier source and deployment hashes remain migration provenance only; they do not identify a second active edition.

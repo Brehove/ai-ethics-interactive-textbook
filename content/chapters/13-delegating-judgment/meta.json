@@ -15,9 +15,8 @@
     "slug": "data-bias-and-delegated-judgment"
   },
   "path": "/chapter/delegating-judgment/",
-  "wordCount": 10604,
-  "readingMinutes": 48,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/delegating-judgment/",
+  "wordCount": 10566,
+  "readingMinutes": 47,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 49,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
-      "deploymentSha256": "3f504d251e8860df5433cde4dce269480520535b698bb9a5ccc2ed3739973304",
-      "publishedAt": "2026-07-17T15:46:17-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
-    "canonicalMarkdownSha256": "560ad649f2afa02e390e7f9f50aeb3dad99e360a0ed244e0aba295ee502320cc",
+    "canonicalMarkdownSha256": "548dbb368ee965ca9bd6817603c0c3aea0ca7e75641ce0b4eaaffe5bfa4169cd",
     "reconciliationTransformations": [
       {
         "kind": "replace-exact",

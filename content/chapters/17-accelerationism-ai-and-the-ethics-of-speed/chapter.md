@@ -13,19 +13,19 @@ Verdon's language points to a larger pattern in AI culture. A startup may descri
 The central ethical question is this: **when AI makes work, research, communication, production, and deployment move faster, what should be accelerated, what should be slowed down, and what should be redirected?**
 
 <!-- phil-passage-id: ch17-p0005 -->
-This is why accelerationism belongs near the end of the course. Earlier chapters gave you ethical frameworks. Aristotle and virtue ethics asked about habit, character, skill, and flourishing. Kantian ethics asked about dignity, autonomy, and whether people are treated merely as instruments. Utilitarian and consequentialist reasoning asked about harms, benefits, stakeholders, uncertainty, and scope. The AI chapters on data, bias, automation, companions, creativity, and existential risk showed how those frameworks work inside current technologies. Accelerationism gathers those threads around one pressure point: **the future is being built under conditions of speed.**
+Accelerationism gathers several ethical traditions around one pressure point: **the future is being built under conditions of speed.** Aristotle and virtue ethics ask about habit, character, skill, and flourishing. Kantian ethics asks about dignity, autonomy, and whether people are treated merely as instruments. Utilitarian and consequentialist reasoning asks about harms, benefits, stakeholders, uncertainty, and scope. Work on data, bias, automation, companions, creativity, and existential risk shows how those frameworks operate inside current technologies.
 
 <!-- phil-passage-id: ch17-p0006 -->
 By the end of this chapter, you should be able to read an AI product launch as an ethical claim about speed. You will ask: what does the product accelerate, what friction does it remove, what friction should remain, who benefits from the speed, who absorbs the risk, and who can contest the direction?
 
 <!-- phil-passage-id: ch17-p0007 -->
-That is also where this chapter becomes useful for applied ethics. Accelerationism helps you notice when a technical or institutional choice is also a claim about time: this should happen faster, this step should disappear, this judgment can be delegated, this risk is worth taking, this future matters more than this delay. The task is to make those assumptions and tradeoffs visible before deciding whether to accept, resist, qualify, or revise the direction.
+That is also where this chapter becomes useful for applied ethics. Accelerationism helps you notice when a technical or institutional choice is also a claim about time: this should happen faster, this step should disappear, this judgment can be delegated, this risk is acceptable, or this future matters more than this delay. The task is to make those assumptions and tradeoffs visible before deciding whether to accept, resist, qualify, or revise the direction.
 
 <!-- phil-section-id: ch17-s001 -->
 ## The Roadmap: Three Histories, Not One
 
 <!-- phil-passage-id: ch17-p0008 -->
-The genealogy of accelerationism can become muddy because several histories run together. This chapter keeps them separate.
+The genealogy of accelerationism becomes muddy when several distinct histories run together. They need to remain separate.
 
 <!-- phil-passage-id: ch17-p0009 -->
 First, there is a **deep cultural and philosophical background**: Western stories about history, progress, rupture, apocalypse, science, industry, and transformation. This background helps explain why accelerationist rhetoric often sounds world-historical or even religious. But accelerationism does not simply begin in medieval theology or Enlightenment optimism.
@@ -57,7 +57,7 @@ These histories overlap, but they should not be flattened into one line. Augusti
 Acceleration is not just speed in the everyday sense. In AI, acceleration can mean faster drafting, faster coding, faster research, faster diagnosis, faster logistics, faster hiring, faster surveillance, faster model training, faster deployment, or faster institutional dependency. A tool can accelerate a workflow even if no one describes it as accelerationist. A model that turns a vague prompt into a plan, codebase change, medical summary, image set, or policy memo changes the time between intention and execution. That time gap matters ethically because it used to contain human hesitation, skill, review, conversation, and accountability.
 
 <!-- phil-passage-id: ch17-p0015 -->
-Friction is ethically ambiguous. Some friction is pointless bureaucracy. Some friction is care. A code review delays deployment, but it protects users and future maintainers. A consent process slows research, but it protects persons. A classroom draft process slows writing, but it protects learning. A public hearing slows infrastructure, but it gives affected people a voice. The central mistake in naive accelerationism is treating all friction as failure. The central mistake in naive slowdown is treating all speed as recklessness.
+Friction is ethically ambiguous. Some friction is pointless bureaucracy, while other forms protect care and judgment. A code review delays deployment, but it protects users and future maintainers. A consent process slows research, but it protects persons. A classroom draft process slows writing, but it protects learning. A public hearing slows infrastructure, but it gives affected people a voice. Naive accelerationism treats all friction as failure; naive slowdown treats all speed as recklessness.
 
 <!-- phil-passage-id: ch17-p0016 -->
 The better question is more precise: **which forms of friction protect judgment, and which forms of delay only protect the present arrangement?**
@@ -75,7 +75,7 @@ Joachim of Fiore became famous for a more staged account of history: an age of t
 Modern progress stories secularize parts of that structure. They remove divine judgment and replace it with reason, science, law, education, markets, industry, and institutions. The [Stanford Encyclopedia of Philosophy entry on progress](https://plato.stanford.edu/entries/progress/) explains that Enlightenment progress discourse treated history as having a tendency toward freedom, though philosophers disagreed about whether that tendency was rational, institutional, material, moral, inevitable, or open-ended.
 
 <!-- phil-passage-id: ch17-p0020 -->
-Francis Bacon (1561-1626) is one of the clearest early figures in the transition from contemplation to organized improvement. The [Stanford Encyclopedia of Philosophy entry on Bacon](https://plato.stanford.edu/entries/francis-bacon/) describes his *Instauratio magna*, or Great Instauration, as a program for renewing knowledge, especially natural philosophy. Knowledge should not remain merely speculative. It should become operative and beneficial. Bacon's famous move is to connect inquiry, method, institutions, and power. In *Novum Organum*, he writes that "knowledge and human power are synonymous." Bacon does not mean that every exercise of power is good. He means that disciplined method for studying nature gives human beings new capacities to act within nature. Nature is not mastered by fantasy or rhetoric. It is commanded by obeying it.
+Francis Bacon (1561-1626) is one of the clearest early figures in the transition from contemplation to organized improvement. The [Stanford Encyclopedia of Philosophy entry on Bacon](https://plato.stanford.edu/entries/francis-bacon/) describes his *Instauratio magna*, or Great Instauration, as a program for renewing knowledge, especially natural philosophy. Knowledge should become operative and beneficial as well as speculative. Bacon's famous move is to connect inquiry, method, institutions, and power. In *Novum Organum*, he writes that "knowledge and human power are synonymous." Bacon does not mean that every exercise of power is good. For Bacon, disciplined method replaces fantasy and rhetoric as the source of such power: people gain new capacities to act within nature by understanding and working through its operations.
 
 <!-- phil-passage-id: ch17-p0021 -->
 Bacon matters because he gives progress a practical research program. Knowledge is cumulative, collaborative, experimental, and institutionally organized. A society advances knowledge by building methods, instruments, institutions, and shared records. A company that says it will accelerate discovery is speaking a Baconian language whether it knows it or not: better instruments and better methods should expand human power.
@@ -120,7 +120,7 @@ Deterritorialization names a process of loosening, disembedding, or breaking apa
 A music platform deterritorializes listening by breaking older limits around owning albums, waiting for radio, or buying physical media. It then reterritorializes listening around subscriptions, streaming metrics, playlists, recommendation systems, and platform contracts. A rideshare platform deterritorializes taxi dispatch and then reterritorializes transportation around ratings, algorithmic pricing, driver dashboards, insurance categories, and platform rules. Generative AI deterritorializes writing, coding, image-making, lesson planning, and research by making drafts easier to produce. It then reterritorializes those activities around prompting, evaluation, curation, disclosure, review, model access, and platform dependency.
 
 <!-- phil-passage-id: ch17-p0034 -->
-The tool releases capacity and creates a new capture point. That is the basic Deleuze-and-Guattari lesson students need. Capitalism is not only a set of companies or owners. It is a process that breaks limits, releases new capacities, and reorganizes what it releases. Speed matters because the process keeps finding new boundaries to loosen and new arrangements to stabilize. In *A Thousand Plateaus*, this is why movement, speed, line, flight, capture, and assemblage become such important terms. Capitalism is not merely fast. It is a system that produces speed by turning release and capture into a pattern.
+The tool releases capacity and creates a new capture point. That is the basic Deleuze-and-Guattari lesson students need. Capitalism breaks limits, releases new capacities, and reorganizes what it releases through companies, owners, markets, and institutions. The process keeps finding new boundaries to loosen and new arrangements to stabilize. In *A Thousand Plateaus*, this is why movement, speed, line, flight, capture, and assemblage become such important terms. Capitalism produces speed by repeatedly turning release into capture.
 
 <!-- phil-passage-id: ch17-p0035 -->
 This is a simplified classroom use of difficult concepts. Deleuze and Guattari are not offering a product-management checklist. But their vocabulary gives students a design heuristic: **what capacity is being released, and where is it being captured?**
@@ -138,7 +138,7 @@ The phrase "accelerate the process" becomes important because it refuses the com
 The direct accelerationist lineage passes through the 1990s cyberculture scene around the Cybernetic Culture Research Unit, or CCRU, at the University of Warwick. The [Urbanomic page for *#Accelerate: The Accelerationist Reader*](https://www.urbanomic.com/book/accelerate/) describes the reader as presenting a genealogy of accelerationism through 1990s UK darkside cyberculture, the theory-fictions of Nick Land, Sadie Plant, Iain Hamilton Grant, and CCRU, and earlier sources in post-1968 theory. The table of contents places Marx's "Fragment on Machines" near the beginning, Deleuze and Guattari in the central sequence, and later pieces by Mark Fisher, Srnicek and Williams, Reza Negarestani, Ray Brassier, Tiziana Terranova, Nick Land, and others.
 
 <!-- phil-passage-id: ch17-p0039 -->
-This matters because accelerationism was not born as a Silicon Valley slogan. It was first a disputed theoretical and cultural problem: what if capitalism's destabilizing energies should be intensified rather than merely resisted? What if technology, desire, markets, machines, and feedback were not simply tools humans could calmly govern from the outside? What if the process itself was escaping the human frame?
+Accelerationism began as a disputed theoretical and cultural problem before it became a Silicon Valley slogan: what if capitalism's destabilizing energies should be intensified rather than merely resisted? What if technology, desire, markets, machines, and feedback were not simply tools humans could calmly govern from the outside? What if the process itself was escaping the human frame?
 
 <!-- phil-passage-id: ch17-p0040 -->
 Nick Land is the figure most associated with the hard version of accelerationism: right accelerationism, r/acc, or the darker techno-capital lineage that treats capital, markets, machines, intelligence, and computation as a process exceeding human political steering. His essay ["Meltdown"](https://www.urbanomic.com/chapter/fanged-noumena-meltdown/), later collected in [*Fanged Noumena*](https://www.urbanomic.com/book/fanged-noumena/), opens with the sentence students need to sit with:
@@ -165,7 +165,7 @@ A humanist frame tends to ask how AI helps human beings learn, heal, create, wor
 **Key Point: Land's Hard Question.** Land pushes the accelerationist question into its hardest form: what standard guides the process being accelerated if human flourishing is no longer the final measure? Students can reject his answer and still see why that question changes the ethical stakes of AI.
 
 <!-- phil-passage-id: ch17-p0048 -->
-Land's recent interviews with Vincent Lê add an apocalyptic and religious register to this story. In [Part 1 of the conversation](https://vincentl3.substack.com/p/a-conversation-with-nick-land-part-d2d), published January 13, 2026, Lê frames the discussion around Kant, the human, AI apocalypse, simulation hypotheses, LLMs, Deleuze and Guattari, Austrian economics, and Gnostic Calvinism. The advanced interpretive point is that Land can sound technical and apocalyptic at the same time. He can talk about markets, capital, AI, feedback loops, simulation, and intelligence while also sounding as if history is moving toward disclosure. For PHIL 123, this material is secondary. The core point is still the one above: Land's accelerationism asks what happens when the process being accelerated no longer takes human flourishing as its final standard.
+Land's recent interviews with Vincent Lê add an apocalyptic and religious register to this story. In [Part 1 of the conversation](https://vincentl3.substack.com/p/a-conversation-with-nick-land-part-d2d), published January 13, 2026, Lê frames the discussion around Kant, the human, AI apocalypse, simulation hypotheses, LLMs, Deleuze and Guattari, Austrian economics, and Gnostic Calvinism. The advanced interpretive point is that Land can sound technical and apocalyptic at the same time. He can talk about markets, capital, AI, feedback loops, simulation, and intelligence while also sounding as if history is moving toward disclosure. These interviews are secondary evidence for interpreting Land. His accelerationism still asks what happens when the process being accelerated no longer takes human flourishing as its final standard.
 
 <!-- phil-passage-id: ch17-p0049 -->
 Benjamin Noys is important because accelerationism was named and criticized before it became a startup-culture identity. In *The Persistence of the Negative*, Noys criticizes what he sees as the tendency of some contemporary theory to rely too heavily on affirmation, intensity, and self-amplifying process rather than negation, contradiction, and political agency. His later *Malign Velocities: Accelerationism and Capitalism* is a direct critique of accelerationism. Adding Noys prevents a common misunderstanding: accelerationism was never simply a positive doctrine that everyone in the lineage endorsed. It has been a contested term from the beginning.
@@ -177,7 +177,7 @@ One serious reply to Land also comes from Reza Negarestani's later rationalist a
 Negarestani gives students a cleaner objection because he does not answer Land with a sentimental defense of "the human" as it already exists. His rational inhumanism also wants to move beyond shallow humanism. But it insists that intelligence is answerable to reasons, error correction, conceptual revision, and norms. This creates a direct question for Land: if the process accelerates, what makes the process rational rather than merely powerful? If AI, markets, and capital select for some capacities over others, what standard lets us say that the selected result ought to be preserved? Selection can explain why something survives. It cannot by itself show that the survivor is good.
 
 <!-- phil-passage-id: ch17-p0052 -->
-This objection matters for AI design. A model that wins users, a platform that captures attention, a product that dominates a market, or a system that outperforms humans on a benchmark has not thereby shown that it should govern the activity it now shapes. Performance is evidence. It is not moral authority.
+For AI design, a model that wins users, a platform that captures attention, a product that dominates a market, or a system that outperforms humans on a benchmark has not thereby shown that it should govern the activity it now shapes. Adoption, attention capture, market power, and benchmark performance supply evidence about a system's uptake, influence, or technical capability; they do not confer moral authority over the activity.
 
 <!-- phil-section-id: ch17-s006 -->
 ## The Left-Accelerationist Reply
@@ -192,7 +192,7 @@ In U.S. political discourse, the left is often associated with slowing growth, r
 That short phrase carries the manifesto's basic argument. Srnicek and Williams think the left has lost the ability to imagine and build a large-scale future. Mark Fisher's work on capitalist realism helps explain the mood behind this claim. *Capitalist Realism* names the sense that capitalism appears to be the only viable political and economic system, so that even imagination is narrowed by the present. Fisher's essay on popular culture's interrupted accelerationist dreams, collected in the *#Accelerate* context, connects accelerationism to the loss of a future that once seemed culturally available.
 
 <!-- phil-passage-id: ch17-p0056 -->
-The left-accelerationist complaint is not that technology moved too fast. It is that technological capacity has been captured by capitalist institutions and stripped of emancipatory imagination. If politics retreats into localism, nostalgia, or small acts of resistance, then capital keeps the technological capacity and the left inherits only protest. Rather than surrendering to capitalism's process, as Land's hard accelerationism tempts one to do, the left-accelerationist answer is to reclaim technological ambition for different ends.
+The left-accelerationist complaint is that capitalist institutions have captured technological capacity and stripped it of emancipatory imagination. If politics retreats into localism, nostalgia, or small acts of resistance, then capital keeps the technological capacity and the left inherits only protest. The left-accelerationist answer reclaims technological ambition for different ends instead of surrendering to capitalism's process, as Land's hard accelerationism tempts one to do.
 
 <!-- phil-passage-id: ch17-p0057 -->
 This is why the manifesto calls for an "alternative modernity." The left-accelerationist position begins with Marx's problem: capitalism develops machinery, automation, computation, logistics, and productive forces, but organizes them through profit, ownership, competition, scarcity, and labor discipline. Simply slowing everything down does not answer that problem. It may preserve the present system while giving up the tools that could support a different one. Automation, planning, computation, and large-scale coordination could be used for post-work politics, public abundance, and new forms of collective life.
@@ -445,14 +445,14 @@ The philosophical lesson is not "use coding agents" or "ban coding agents." The 
 <!-- phil-passage-id: ch17-p0125 -->
 <aside class="textbox exercises" aria-labelledby="running-example-question">
 <h3 id="running-example-question">Try It: Read A Product Launch Philosophically</h3>
-<p>Find one AI product launch connected to your anchor case or field. Identify the promised acceleration, the moral story behind it, the friction removed, the friction preserved, the person who benefits, and the person who bears the risk if the tool is wrong.</p>
+<p>Find one AI product launch connected to a field or practice you care about. Identify the promised acceleration, the moral story behind it, the friction removed, the friction preserved, the person who benefits, and the person who bears the risk if the tool is wrong.</p>
 </aside>
 
 <!-- phil-section-id: ch17-s012 -->
 ## Using The Accelerationist Lens On A Case
 
 <!-- phil-passage-id: ch17-p0126 -->
-By the time students reach Module 7, they have a documented case, competing arguments, and a provisional considered view. Accelerationism gives them a way to test that view by asking what the case speeds up, slows down, redirects, and treats as unnecessary friction. The lens works best when it stays concrete.
+With a documented case and competing arguments in view, accelerationism tests a judgment by asking what the case speeds up, slows down, redirects, and treats as unnecessary friction. The lens works best when it stays concrete.
 
 <!-- phil-passage-id: ch17-p0127 -->
 Start with one AI use case in a field. Do not ask only whether AI is good or bad for that field. Ask what the system accelerates. Does it accelerate diagnosis, grading, hiring, code review, design iteration, counseling, scheduling, surveillance, content production, or decision-making? Then ask what it slows down. Does it slow human review, deliberation, error correction, relationship-building, skill formation, appeals, or public oversight? Then ask what it redirects. Does it move authority from workers to managers, from teachers to platforms, from patients to dashboards, from writers to tools, from public institutions to vendors?
@@ -503,7 +503,7 @@ Use this matrix to turn the friction test into a design response.
 </table>
 
 <!-- phil-passage-id: ch17-p0134 -->
-The matrix is not a calculator. It is a discipline for judgment. It helps students avoid the weak claim "AI will make this field faster" and produce a stronger claim: **this capacity should be accelerated under these safeguards, while this deployment should be slowed or redesigned because this group bears the risk.**
+The matrix disciplines judgment without calculating a conclusion. It helps students avoid the weak claim "AI will make this field faster" and produce a stronger claim: **this capacity should be accelerated under these safeguards, while this deployment should be slowed or redesigned because this group bears the risk.**
 
 <!-- phil-section-id: ch17-s015 -->
 ### The Acceleration Audit
@@ -529,7 +529,7 @@ Here is the audit in its simplest form:
 <!-- phil-passage-id: ch17-p0137 -->
 <aside class="textbox exercises" aria-labelledby="acceleration-audit">
 <h3 id="acceleration-audit">Try It: The Acceleration Audit</h3>
-<p>Use the AI tool, product, or practice in your anchor case. Write one sentence for each move: this accelerates ____, slows ____, redirects ____, removes friction around ____, preserves friction around ____, benefits ____, puts risk on ____, and can be contested by ____. Then explain whether the lens gives you a reason to accept, resist, qualify, or revise your provisional view.</p>
+<p>Use one AI tool, product, or practice. Write one sentence for each move: this accelerates ____, slows ____, redirects ____, removes friction around ____, preserves friction around ____, benefits ____, puts risk on ____, and can be contested by ____. Then explain whether the lens gives you a reason to accept, resist, qualify, or revise your judgment.</p>
 </aside>
 
 <!-- phil-passage-id: ch17-p0138 -->
@@ -566,7 +566,7 @@ In **public administration**, accelerationism asks whether AI accelerates servic
 Accelerationism reveals something a narrow case description can miss: speed is not neutral. A system can be locally useful while changing the pace, authority structure, and future dependency of a field. A feature can help today's users and still create future deskilling, surveillance, technical debt, labor displacement, platform capture, or loss of contestability. A product can remove wasted time or remove judgment. A safeguard can protect the public or entrench incumbents. A delay can be obstruction or moral infrastructure.
 
 <!-- phil-passage-id: ch17-p0147 -->
-For PHIL 123, this lens is especially helpful because case inquiries begin from visible uses and decisions. A student studying AI in nursing might focus on documentation efficiency, triage support, or patient communication. Accelerationism asks what happens when the system scales across hospitals, vendors, insurers, and regulators. A student studying AI in criminal justice might focus on one tool's accuracy. Accelerationism asks what institutional dependency, surveillance, appeals process, or authority structure the tool creates. A student studying AI companions might focus on loneliness or emotional support. Accelerationism asks what happens when millions of people learn to relate to systems designed by private companies and tuned for engagement, retention, or compliance.
+This lens is especially helpful when an analysis begins from visible uses and decisions. An analysis of AI in nursing might focus on documentation efficiency, triage support, or patient communication. Accelerationism asks what happens when the system scales across hospitals, vendors, insurers, and regulators. An analysis of AI in criminal justice might focus on one tool's accuracy. Accelerationism asks what institutional dependency, surveillance, appeals process, or authority structure the tool creates. An analysis of AI companions might focus on loneliness or emotional support. Accelerationism asks what happens when millions of people learn to relate to systems designed by private companies and tuned for engagement, retention, or compliance.
 
 <!-- phil-passage-id: ch17-p0148 -->
 The same pattern works outside obvious AI-safety cases. In agriculture, the question might be whether farms become dependent on a vendor's predictive system for irrigation, pest management, or seed selection. In creative fields, the question might be whether AI-generated content changes what counts as originality, what skills entry-level workers can still develop, and whether the market becomes flooded with cheap imitation. In software, the question might be whether coding agents accelerate useful work while hiding technical debt that later teams cannot understand. In education, the question might be whether tutoring tools help students practice or make it easier to bypass the struggle that builds judgment.
@@ -590,7 +590,7 @@ The responsible conclusion is neither "accelerate everything" nor "slow everythi
 </aside>
 
 <!-- phil-passage-id: ch17-p0153 -->
-The template is not an automatic conclusion. It is a guide for judgment. Students still have to argue which capacity matters, which friction protects human goods, what evidence supports the claim, and who should have authority to decide.
+The template guides judgment without supplying an automatic conclusion. Students still have to argue which capacity matters, which friction protects human goods, what evidence supports the claim, and who should have authority to decide.
 
 <!-- phil-section-id: ch17-s018 -->
 ## Conclusion: Which Speed Serves Judgment?
@@ -653,4 +653,4 @@ AI ethics asks for a reasoned account of which speed serves human judgment and w
 - Wiener, Norbert. [Cybernetics: or Control and Communication in the Animal and the Machine](https://mitpress.mit.edu/9780262537841/cybernetics-or-control-and-communication-in-the-animal-and-the-machine/). MIT Press edition page. Used for cybernetics as feedback, control, and communication.
 
 <!-- phil-passage-id: ch17-p0158 -->
-X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before Pressbooks publication. This revised chapter does not use them as direct quoted evidence.
+X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before publication. This revised chapter does not use them as direct quoted evidence.

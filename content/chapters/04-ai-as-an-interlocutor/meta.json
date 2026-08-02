@@ -15,9 +15,8 @@
     "slug": "philosophical-practice-and-ai"
   },
   "path": "/chapter/ai-as-an-interlocutor/",
-  "wordCount": 4373,
+  "wordCount": 4368,
   "readingMinutes": 20,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/ai-as-an-interlocutor/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 28,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
-      "deploymentSha256": "84691a52ecc4b8aacddc7be7cdb1a437d4ec55c5316f83cf869d810a555e5e9e",
-      "publishedAt": "2026-07-22T08:17:39-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
-    "canonicalMarkdownSha256": "4b4966a0b0aa2171b507f2c6f65a45c9796651df1e3fc875ebf4364c6c5efe9c",
+    "canonicalMarkdownSha256": "2b818bd4f2552d5b6e6d20273256e6b48de72e859095f98d1f52a3f9b8a03ad9",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }
