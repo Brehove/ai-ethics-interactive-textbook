@@ -49,7 +49,7 @@ const {
     <button type="button" class="record-close" data-context-close data-context-close-own-focus aria-label="Close reading record">×</button>
   </header>
 
-  <p id="reading-record-privacy" class="record-privacy"><b>Page memory only.</b> Typed responses stay in this page and are not stored or transmitted by the textbook. The site does not request microphone access.</p>
+  <p id="reading-record-privacy" class="record-privacy"><b>Page memory only.</b> Typed responses stay in this page and are not stored or transmitted by the textbook.</p>
 
   <section class="record-prompt" aria-labelledby="active-prompt-title" hidden data-record-prompt>
     <p class="prompt-stage" data-active-stage></p>
@@ -82,7 +82,6 @@ const {
         <span id="response-requirement">Write two to five sentences.</span>
         <span data-character-count>0 / 1,200</span>
       </div>
-      <p class="dictation-fallback">For voice input, focus the response field and use your device's built-in dictation. The textbook does not request microphone access.</p>
       <p id="response-error" class="response-error" role="alert" data-response-error></p>
       <button type="button" class="preserve-button" data-request-preserve>Preserve this response</button>
     </div>
@@ -709,7 +708,6 @@ const {
   .response-field textarea { width: 100%; resize: vertical; border: 1px solid var(--line-dark); border-radius: 0; background: #fffdf7; color: var(--ink); padding: 0.8rem; font: 0.96rem/1.55 var(--serif); }
   .response-field textarea[aria-invalid="true"] { border-color: #8f2d1e; box-shadow: inset 0 0 0 1px #8f2d1e; }
   .response-meta { display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 0.45rem; color: var(--ink-soft); font: var(--record-tiny)/1.4 var(--sans); }
-  .dictation-fallback { margin: 0.55rem 0 0; color: var(--ink-soft); font: var(--record-tiny)/1.45 var(--sans); }
   .response-error { min-height: 1.35em; margin: 0.65rem 0; color: #8f2d1e; font: 700 var(--record-tiny)/1.4 var(--sans); }
   .preserve-button, .download-button { width: 100%; min-height: 2.75rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper-light); padding: 0.8rem 1rem; font: 700 var(--record-small)/1.3 var(--sans); letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; }
   .preserved-response { padding: 1rem 0 0; }

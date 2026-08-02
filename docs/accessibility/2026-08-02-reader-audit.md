@@ -17,15 +17,19 @@ Primary surface: Chapter 7 reading record and self-contained offline chapter
 
 ### Label in Name — repaired
 
-The outline rail displayed `In this chapter` while its accessible name was `Open chapter outline`. Lighthouse failed the Label-in-Name audit in mobile and desktop modes. The accessible name now begins with the visible label: `In this chapter: open chapter outline`.
+The outline rail displayed `In this chapter` while its accessible name was `Open chapter outline`. Lighthouse failed the Label-in-Name audit in mobile and desktop modes. The control now uses the same visible and accessible label: `Chapter contents`.
 
 ### Header target size — improved
 
 The visible `Aa` and `Print` controls had content boxes below 24 CSS pixels in height. Although spacing likely met the WCAG 2.2 target-size exception, their interactive boxes were increased to a minimum of 44 by 44 CSS pixels.
 
+### Mobile chapter navigation — repaired
+
+The desktop outline rail remained a grid column below the mobile breakpoint, reducing the reading width on phones. At 900 CSS pixels and below, the control now becomes a full-width horizontal `Chapter contents` bar above the reading and the content grid collapses to one column. The closed and open states were verified at 390 by 844 and 320 by 800 CSS pixels without horizontal overflow; selecting a section still closes the outline and focuses the destination heading.
+
 ### Voice input privacy boundary — resolved
 
-The prototype's direct Web Speech API path would have invoked a browser speech provider and conflicted with the reader's no-transmission contract. It was removed. Students can type or use device-level dictation while the field is focused; the textbook does not request microphone access or receive audio.
+The prototype's direct Web Speech API path would have invoked a browser speech provider and conflicted with the reader's no-transmission contract. It was removed. The reader now presents ordinary text fields without advertising a separate voice-input feature.
 
 ## Passing Evidence
 
@@ -46,7 +50,7 @@ A human screen-reader pass remains required before claiming complete WCAG confor
 
 ## Privacy Boundary
 
-Responses and passage notes remain in page memory. The implementation must not use local storage, session storage, cookies, analytics, accounts, or network submission. Content leaves the page only when the student explicitly invokes copy or download. The textbook does not request microphone access or invoke a speech provider; students may independently use device-level dictation.
+Responses and passage notes remain in page memory. The implementation must not use local storage, session storage, cookies, analytics, accounts, or network submission. Content leaves the page only when the student explicitly invokes copy or download. The textbook does not provide a voice-input feature or invoke a speech provider.
 
 ## Maintenance
 
