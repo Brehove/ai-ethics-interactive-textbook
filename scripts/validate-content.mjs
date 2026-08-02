@@ -2,7 +2,7 @@
 
 import { lstat, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   extractLeadingTitle,
   normalizeNewlines,
@@ -12,8 +12,6 @@ import {
 } from "./content-model-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const contentRoot = path.join(root, "content");
-const chaptersRoot = path.join(contentRoot, "chapters");
 const requiredChapterFiles = [
   "chapter.md",
   "meta.json",
@@ -29,7 +27,13 @@ function occurrences(source, expression) {
   return [...source.matchAll(expression)].length;
 }
 
-async function main() {
+export function findForbiddenDeploymentHtmlElements(markdown) {
+  return [...markdown.matchAll(/<(?:script|style|form)\b/gi)].map((match) => match[0].slice(1).toLowerCase());
+}
+
+export async function validateContent({ projectRoot = root } = {}) {
+  const contentRoot = path.join(projectRoot, "content");
+  const chaptersRoot = path.join(contentRoot, "chapters");
   const [map, book, baseline] = await Promise.all([
     readJson(path.join(contentRoot, "reconciliation-map.json")),
     readJson(path.join(contentRoot, "book.json")),
@@ -84,6 +88,7 @@ async function main() {
       if (meta.status !== "website-canonical") failures.push(`${expected.id}: status must be website-canonical`);
       if (meta.websiteBaseline.selectedSourceSha256 !== expected.selectedSourceSha256) failures.push(`${expected.id}: selected source lineage mismatch`);
       if (meta.websiteBaseline.canonicalMarkdownSha256 !== sha256(normalizeNewlines(markdown))) failures.push(`${expected.id}: canonical Markdown hash is stale`);
+      if (findForbiddenDeploymentHtmlElements(markdown).length) failures.push(`${expected.id}: forbidden deployment HTML element`);
       for (const sidecar of [annotations, sources, world, rights, reading]) {
         if (sidecar.chapterId !== expected.id) failures.push(`${expected.id}: sidecar chapterId mismatch`);
       }
@@ -144,10 +149,17 @@ async function main() {
     if (!mapByOrder.has(chapter.order)) failures.push(`${chapter.id}: map ordering failure`);
   }
   if (failures.length) throw new Error(failures.join("\n"));
-  process.stdout.write(`Content validation passed: 18 chapters / 6 Parts, ${totals.sections} sections, ${totals.passages} passages; migration baselines and bounded repairs preserved.\n`);
+  return { chapterCount: directories.length, totals };
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error.message}\n`);
-  process.exitCode = 1;
-});
+async function main() {
+  const { chapterCount, totals } = await validateContent();
+  process.stdout.write(`Content validation passed: ${chapterCount} chapters / 6 Parts, ${totals.sections} sections, ${totals.passages} passages; migration baselines and bounded repairs preserved.\n`);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exitCode = 1;
+  });
+}

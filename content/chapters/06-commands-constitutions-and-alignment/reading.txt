@@ -18,7 +18,7 @@ This chapter follows that encounter. Claude's Constitution gives us a public ali
 
 The resulting question is narrower than "Who gets to say what the good is?" When Catholic moral thinkers, including a natural-law scholar, advise an AI lab, what can their participation contribute to alignment, and what remains under corporate control?
 
-Chapter 35 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
+Chapter 5 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
 
 Students in this course will approach natural law from different religious and nonreligious positions. Understanding its contribution does not require adopting Aquinas's metaphysics or Pope Leo's authority. It requires reconstructing the account of human goods being offered, comparing it with Anthropic's stated values, and deciding how much moral weight the consultation should carry.
 
@@ -38,7 +38,7 @@ Seen that way, old philosophical questions now apply to AI governance. Why shoul
 
 What Natural Law Brings to Alignment
 
-Chapter 35 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct.
+Chapter 5 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct.
 
 Key Point: Operational Authority and Moral Authority
 Anthropic can make a principle govern Claude's behavior. Moral authority requires a further argument about the human good that principle protects. Consultation with Catholic moral thinkers, including a natural-law scholar, may improve that argument, but the consultation does not establish that the principle is correct.
@@ -53,7 +53,7 @@ Consider the Constitution's instructions about manipulation and unhealthy relian
 
 The anti-manipulation principle protects recognizable features of human flourishing, so it has moral support beyond Anthropic's authorship. The analysis also creates a new objection. Anthropic still has to decide when influence becomes manipulation, which relationships count as healthy, and what a user's long-term good includes. A company can become paternalistic while claiming to protect wellbeing. Natural law gives the lab a standard richer than user preference, but the standard remains open to disagreement about human goods and their application. Consultation with Catholic moral thinkers can sharpen the reasoning. Green's participation also makes it reasonable to compare the Constitution with natural-law ethics. Neither point removes Anthropic's responsibility for the final interpretation, and the public record does not identify which arguments any adviser advanced.
 
-Chapter 35 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks.
+Chapter 5 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks.
 
 Framework Map: Grounding Versus Method
 Grounding

@@ -4,8 +4,8 @@
   "slug": "commands-constitutions-and-alignment",
   "title": "Commands, Constitutions, and Alignment: Natural Law in the AI Alignment Conversation",
   "language": "en",
-  "sourceSha256": "7d536e0fd64f9207cf51c7864a81c8a9c2668de95a60d9ab49e247591eb3a636",
-  "plainTextSha256": "3378055ae35b3dfa505e8e21ca5bc27903e508305794291517c3c21f4868210f",
+  "sourceSha256": "c31bbda3b4e7c2dbcaf5236631a5fe573d48533f3139127ae009a116a3d1d702",
+  "plainTextSha256": "2419e64e99d63855b13ea45d4479bfa6ce46a90efb31b4d37e8b0f344e33639e",
   "wordCount": 5598,
   "readingMinutes": 25,
   "licenses": {
@@ -93,7 +93,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s001",
       "level": null,
-      "text": "Chapter 35 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document."
+      "text": "Chapter 5 prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document."
     },
     {
       "id": "ch06-p0010",
@@ -163,7 +163,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s003",
       "level": null,
-      "text": "Chapter 35 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct."
+      "text": "Chapter 5 distinguished Plato's question about piety from the later divine-command question about moral obligation. Does a divine command constitute an obligation, or recognize an obligation grounded in the good? The Internet Encyclopedia of Philosophy entry on divine command theory surveys that later debate. A corporation has no divine authority, so divine command theory does not transfer directly to Anthropic. The authority analogy remains useful. Anthropic can make a principle operationally binding within Claude without making the principle morally correct."
     },
     {
       "id": "ch06-p0018",
@@ -212,7 +212,7 @@
       "type": "paragraph",
       "sectionId": "ch06-s003",
       "level": null,
-      "text": "Chapter 35 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks."
+      "text": "Chapter 5 also separated grounding from method. Grounding identifies what makes a moral claim true or binding. Method explains how a reasoner moves from standards and facts toward a judgment. Aquinas grounds natural law in a created order of human goods. Other frameworks may attend to some of the same features while grounding and connecting them differently. A shared concern with dignity, character, or consequences does not erase the disagreement among those frameworks."
     },
     {
       "id": "ch06-p0025",
