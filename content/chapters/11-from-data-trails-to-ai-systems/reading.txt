@@ -267,7 +267,7 @@ A disciplined proxy limits the risk of treating a signal as a full judgment. A l
 
 Affected people need a route to correction or appeal. Contestability matters because data systems make mistakes and because accurate records can still be misleading. Rosa should have some way to explain why the late work happened, correct a wrong record, ask what a label means, or challenge a decision that affects her path.
 
-Visible benefits and burdens also matter. Catherine D'Ignazio and Lauren Klein's Data Feminism gives students a practical question set for this: who has power, who is missing, whose labor is hidden, who benefits, and who can intervene? Linnet Taylor's article on data justice pushes in the same direction by connecting datafication to how people are made visible, represented, and treated.
+It is more defensible when the benefits and burdens are visible. A practical review should ask who benefits, who bears the costs, whose circumstances are overlooked, and whether affected people can intervene. Linnet Taylor's article on data justice connects datafication to how people are made visible, represented, and treated.
 
 These questions do not require students to reject data-driven systems. They require students to judge them at the right level. The issue is rarely one data point by itself. The issue is the path from trace to record to category to proxy to output or action.
 
@@ -333,7 +333,6 @@ Bible Gateway / NRSVUE. Numbers 1, 2 Samuel 24, and 1 Chronicles 21. Used as pri
 Bowker, G. C., & Star, S. L. (1999/2000). Sorting Things Out: Classification and Its Consequences. Used for classification systems, categories, and institutional legibility.
 boyd, d., & Crawford, K. (2012). "Critical Questions for Big Data". Used for caution about big-data mythology and the need to interrogate assumptions and bias.
 Coalition for Content Provenance and Authenticity. C2PA. Used for content provenance and Content Credentials as partial origin/history infrastructure.
-D'Ignazio, C., & Klein, L. F. (2020). Data Feminism. Used for questions about power, missingness, hidden labor, and who can intervene in data systems.
 Federal Trade Commission. (2024). A Look Behind the Screens: Examining the Data Practices of Social Media and Video Streaming Services. Used for platform data trails and large-scale data practices.
 Federal Trade Commission. (2024/2025). Gravy Analytics, Inc., In the Matter of. Used as a current official example of sensitive location-data enforcement involving Gravy Analytics and Venntel.
 Gitelman, L., ed. (2013). "Raw Data" Is an Oxymoron. Used for the premise that data are generated, interpreted, and culturally situated.
