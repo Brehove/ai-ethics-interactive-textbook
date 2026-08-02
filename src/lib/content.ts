@@ -25,7 +25,6 @@ export interface ChapterMeta {
   path: string;
   wordCount: number;
   readingMinutes: number;
-  pressbooksUrl: string;
   status: "website-canonical";
   licenses: {
     prose: "CC-BY-4.0";
@@ -39,18 +38,6 @@ export interface ChapterMeta {
     offlineHtml: boolean;
     readingJson: boolean;
     plainText: boolean;
-  };
-  pressbooks: {
-    id: number;
-    sourceFormat: "gfm+raw-html";
-    compatible: boolean;
-    validated: boolean;
-    publishAuthorized: boolean;
-    priorRelease: {
-      sourceSha256: string;
-      deploymentSha256: string;
-      publishedAt: string;
-    };
   };
   websiteBaseline: {
     selectedSourceSha256: string;
@@ -76,7 +63,6 @@ export type ChapterSummary = Pick<
   | "path"
   | "wordCount"
   | "readingMinutes"
-  | "pressbooksUrl"
 >;
 
 export type Book = CollectionEntry<"book">["data"];
@@ -197,9 +183,8 @@ function toSummary(meta: ChapterMeta): ChapterSummary {
     path,
     wordCount,
     readingMinutes,
-    pressbooksUrl,
   } = meta;
-  return { id, slug, title, subtitle, description, order, part, path, wordCount, readingMinutes, pressbooksUrl };
+  return { id, slug, title, subtitle, description, order, part, path, wordCount, readingMinutes };
 }
 
 function scopedRecord<T extends { chapterId: string }>(records: T[], chapterId: string, label: string): T {

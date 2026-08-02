@@ -17,7 +17,6 @@
   "path": "/chapter/creativity-innovation-and-ai/",
   "wordCount": 10045,
   "readingMinutes": 45,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/creativity-innovation-and-ai/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 54,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",
-      "deploymentSha256": "2b042b5a645ec398d899ade40bc2bd4390a1121090a24bdcc77411bd3f605c3d",
-      "publishedAt": "2026-08-01T09:39:22-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",

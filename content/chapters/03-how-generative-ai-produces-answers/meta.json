@@ -17,7 +17,6 @@
   "path": "/chapter/how-generative-ai-produces-answers/",
   "wordCount": 4528,
   "readingMinutes": 21,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/how-generative-ai-produces-answers/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -34,21 +33,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 26,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "3cb58ba7c69935ccb297b53ffeaabb4b9c3c0282d86307b11cafebe391284eef",
-      "deploymentSha256": "e2822d2d971655d3b67c50549322c02dabab902e1fd46000e45e712977f1d85a",
-      "publishedAt": "2026-07-22T08:17:37-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "3cb58ba7c69935ccb297b53ffeaabb4b9c3c0282d86307b11cafebe391284eef",
-    "canonicalMarkdownSha256": "d253704cb0dca082f0e8e8234c8b8de193781b8f1f7c0c14d223cb0c5b8a36c2",
+    "canonicalMarkdownSha256": "20a640a211953c2fc0b31198ea48b35dc14fa0583a29f37364174cda91f0b858",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

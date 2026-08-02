@@ -17,7 +17,6 @@
   "path": "/chapter/aristotle-character-and-ai-assisted-life/",
   "wordCount": 6568,
   "readingMinutes": 30,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/aristotle-character-and-ai-assisted-life/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 35,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",
-      "deploymentSha256": "d02f5db4fd32cba5c69886be00711a1d6a541e2a2b5605c88c1aa0a2b413ec2a",
-      "publishedAt": "2026-07-17T15:46:01-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",

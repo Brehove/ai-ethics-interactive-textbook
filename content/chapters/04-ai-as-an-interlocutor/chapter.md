@@ -7,7 +7,7 @@ Philosophers often develop ideas through dialogue. A conversation partner can as
 ## How This Chapter Fits the Course
 
 <!-- phil-passage-id: ch04-p0002 -->
-This chapter brings the first three chapters together. [Chapter 1](https://cwi.pressbooks.pub/ethicsandai/chapter/practicing-philosophy/) showed how a visible judgment makes reasons and revisions available for scrutiny. [Chapter 2](https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/) supplied a method for building and pressure-testing arguments. [Chapter 3](https://cwi.pressbooks.pub/ethicsandai/chapter/how-generative-ai-produces-answers/) explained why fluent AI output still requires evaluation. Here you will apply those foundations to the three roles AI can play in PHIL 123: philosophical practice partner, research mapper, and project and build assistant. ABC-R provides a common method for evaluating AI contributions while keeping the final intellectual and ethical decisions in your hands.
+This chapter brings the first three chapters together. [Chapter 1](/chapter/practicing-philosophy/) showed how a visible judgment makes reasons and revisions available for scrutiny. [Chapter 2](/chapter/testing-moral-arguments/) supplied a method for building and pressure-testing arguments. [Chapter 3](/chapter/how-generative-ai-produces-answers/) explained why fluent AI output still requires evaluation. Here you will apply those foundations to the three roles AI can play in PHIL 123: philosophical practice partner, research mapper, and project and build assistant. ABC-R provides a common method for evaluating AI contributions while keeping the final intellectual and ethical decisions in your hands.
 
 <!-- phil-section-id: ch04-s002 -->
 ## Philosophy Is Already Working With AI

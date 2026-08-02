@@ -18,7 +18,7 @@
     "wikimedia:check": "node scripts/sync-wikimedia.mjs --check",
     "wikimedia:validate": "node scripts/validate-wikimedia.mjs",
     "audit:public": "node scripts/audit-public-boundary.mjs",
-    "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && node scripts/validate-pressbooks.mjs && npm run wikimedia:validate",
+    "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && npm run wikimedia:validate",
     "test": "npm run test:editor-auth && npm run test:wikimedia",
     "test:editor-auth": "node --test --test-reporter=spec workers/editor-auth/test/*.test.mjs",
     "test:wikimedia": "node --test --test-reporter=spec scripts/test/wikimedia-sync.test.mjs",

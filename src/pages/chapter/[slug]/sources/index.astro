@@ -29,7 +29,6 @@ const chapterPeople = await resolveChapterPeople(world);
     readingMinutes={meta.readingMinutes}
     headings={headings}
     active="sources"
-    pressbooksUrl={meta.pressbooksUrl}
     previous={previous}
     next={next}
   >
@@ -37,7 +36,7 @@ const chapterPeople = await resolveChapterPeople(world);
     <section class="source-ledger">
       <h2>Chapter source record</h2>
       <p>The complete reference list remains part of the canonical First Read. Structured passage-to-source links will appear here as they pass rights and citation review.</p>
-      <p><a class="action-link" href={meta.pressbooksUrl}>Open the public Pressbooks edition</a></p>
+      <p><a class="action-link" href={meta.path}>Return to the canonical First Read</a></p>
       {sources.length > 0 && <ul>{sources.map((source: any) => <li>{source.title ?? source.id}</li>)}</ul>}
     </section>
     <section class="rights-note">
@@ -51,7 +50,6 @@ const chapterPeople = await resolveChapterPeople(world);
       active="sources"
       people={chapterPeople}
       primarySources={sourceLinks.primarySources}
-      pressbooksUrl={meta.pressbooksUrl}
     />
   </ReaderShell>
 </SiteLayout>

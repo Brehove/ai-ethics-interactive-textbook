@@ -17,7 +17,6 @@
   "path": "/chapter/kantian-deontology/",
   "wordCount": 6406,
   "readingMinutes": 29,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/kantian-deontology/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 40,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "31e60824fa51644fd57517708f1682b54961d565b16774eae995ac82b8b85abc",
-      "deploymentSha256": "b6200bfadd2d83aa7daa24890ec8641415418952a15de9ee6fe653b04720f2c4",
-      "publishedAt": "2026-07-17T15:46:07-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "31e60824fa51644fd57517708f1682b54961d565b16774eae995ac82b8b85abc",

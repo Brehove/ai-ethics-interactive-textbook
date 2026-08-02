@@ -17,7 +17,6 @@
   "path": "/chapter/ai-companions-and-coexistence/",
   "wordCount": 10570,
   "readingMinutes": 47,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/ai-companions-and-coexistence/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 52,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
-      "deploymentSha256": "7440ff73146aeae2dbe97f005b876389d4b0c8743afdc64beb84c0ff3d128d90",
-      "publishedAt": "2026-07-17T15:46:19-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
-    "canonicalMarkdownSha256": "98584b65c8a7dae342e6b0bca9daeaea848471278c9a3991a25cb7a45dad541e",
+    "canonicalMarkdownSha256": "794d48a3fb993b1880cb05ba341f4c01fd545e0a71fa41d3417b282193cf590f",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

@@ -17,7 +17,6 @@
   "path": "/chapter/commands-constitutions-and-alignment/",
   "wordCount": 5653,
   "readingMinutes": 26,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/commands-constitutions-and-alignment/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -32,21 +31,9 @@
     "readingJson": true,
     "plainText": true
   },
-  "pressbooks": {
-    "id": 33,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "1c98f3cf16b6695f705d835b1c6d46167ca1699dd9cab15c3bec51ee9e26e8c9",
-      "deploymentSha256": "c9a6be5edff9c281a92d14dc66a88cb7d3aa1eaec3302d77f73c8bf473568e67",
-      "publishedAt": "2026-07-17T15:45:59-06:00"
-    }
-  },
   "websiteBaseline": {
     "selectedSourceSha256": "1c98f3cf16b6695f705d835b1c6d46167ca1699dd9cab15c3bec51ee9e26e8c9",
-    "canonicalMarkdownSha256": "da16b3f0c52a3d0ddb09bf0e8557a626b4e21857933688f75118c81a993eace5",
+    "canonicalMarkdownSha256": "a714779e9d125b9cadf7e20170002149d7a81fefe5142c53220ff641adb6105e",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

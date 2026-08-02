@@ -459,4 +459,4 @@ Vallor, Shannon. "Virtues in the Digital Age." In Carissa Veliz, ed., The Oxford
 Veliz, Carissa, ed. The Oxford Handbook of Digital Ethics. Oxford University Press, 2024. Used as a digital-ethics canon source, especially for velocity, virtue, automation, value alignment, and existential-risk context.
 Wiener, Norbert. Cybernetics: or Control and Communication in the Animal and the Machine. MIT Press edition page. Used for cybernetics as feedback, control, and communication.
 
-X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before Pressbooks publication. This revised chapter does not use them as direct quoted evidence.
+X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before publication. This revised chapter does not use them as direct quoted evidence.

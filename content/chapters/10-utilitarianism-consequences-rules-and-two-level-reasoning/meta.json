@@ -17,7 +17,6 @@
   "path": "/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
   "wordCount": 7372,
   "readingMinutes": 33,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/utilitarianism-consequences-rules-and-two-level-reasoning/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 42,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",
-      "deploymentSha256": "42b82e8a10f27fea4a3bdd0318e0f06ef6eb4bd8406223841d0615ac7814c926",
-      "publishedAt": "2026-07-17T15:46:09-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "9b478a7cef200a2f5b9231021a5123ab04acd8ef471dcd9b1d99bb96f1d67a00",

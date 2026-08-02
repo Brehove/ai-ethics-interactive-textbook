@@ -28,7 +28,7 @@ This chapter follows that encounter. Claude's Constitution gives us a public ali
 The resulting question is narrower than "Who gets to say what the good is?" When Catholic moral thinkers, including a natural-law scholar, advise an AI lab, what can their participation contribute to alignment, and what remains under corporate control?
 
 <!-- phil-passage-id: ch06-p0009 -->
-[Chapter 35](https://cwi.pressbooks.pub/ethicsandai/chapter/divine-command-natural-law-moral-authority/) prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
+[Chapter 35](/chapter/divine-command-natural-law-moral-authority/) prepared you for this question by distinguishing command from moral grounding. Anthropic has the operational authority to write Claude's rules. Its authorship does not make those rules morally correct. Natural law offers a way to ask whether the rules serve genuine human goods. Consultation may improve the reasoning behind a constitution, but consultation also has limits when the company controls the final document.
 
 <!-- phil-passage-id: ch06-p0010 -->
 Students in this course will approach natural law from different religious and nonreligious positions. Understanding its contribution does not require adopting Aquinas's metaphysics or Pope Leo's authority. It requires reconstructing the account of human goods being offered, comparing it with Anthropic's stated values, and deciding how much moral weight the consultation should carry.
@@ -256,7 +256,7 @@ The audit produces a bounded judgment. Catholic participation, including Green's
 ## From the Audit to an Argument
 
 <!-- phil-passage-id: ch06-p0063 -->
-The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in [Testing Moral Arguments](https://cwi.pressbooks.pub/ethicsandai/chapter/testing-moral-arguments/). In the compact `P1/P2/C` form used elsewhere in the course, `N1` functions as the normative first premise, `F1` supplies the factual content of the second premise, and `B1` makes the disputed connection explicit.
+The audit separates evidence from inference. An argument adds a standard and reaches a limited conclusion. Use the structure introduced in [Testing Moral Arguments](/chapter/testing-moral-arguments/). In the compact `P1/P2/C` form used elsewhere in the course, `N1` functions as the normative first premise, `F1` supplies the factual content of the second premise, and `B1` makes the disputed connection explicit.
 
 <!-- phil-passage-id: ch06-p0064 -->
 Suppose you want to judge whether Catholic participation strengthens the legitimacy of Claude's Constitution. Your first pass might look like this:

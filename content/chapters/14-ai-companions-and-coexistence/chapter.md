@@ -441,7 +441,7 @@ AI companions are ethically difficult because they sit at the border of categori
 ## References
 
 <!-- phil-passage-id: ch14-p0119 -->
-Ken Liu, ["The Perfect Match"](https://www.lightspeedmagazine.com/fiction/the-perfect-match/), *Lightspeed Magazine*, 2012. Copyrighted assigned literature. Link externally; do not reproduce extended text in the Pressbook.
+Ken Liu, ["The Perfect Match"](https://www.lightspeedmagazine.com/fiction/the-perfect-match/), *Lightspeed Magazine*, 2012. Copyrighted assigned literature. Link externally; do not reproduce extended text in the reader.
 
 <!-- phil-passage-id: ch14-p0120 -->
 Herbert H. Clark and Kerstin Fischer, ["Social Robots as Depictions of Social Agents"](https://doi.org/10.1017/S0140525X22000668), *Behavioral and Brain Sciences* 46, 2023.

@@ -19,7 +19,7 @@
 
 ## Publication boundary
 
-- [ ] This pull request does not directly publish to Pressbooks, Canvas, or merge itself to `main`.
+- [ ] This pull request does not modify Canvas or merge itself to `main`.
 - [ ] Any intentional change to the 18-chapter launch allowlist is named and justified here.
 
 ## Notes for reviewers

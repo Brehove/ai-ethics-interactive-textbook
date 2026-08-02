@@ -17,7 +17,6 @@
   "path": "/chapter/algorithmic-bias-and-the-ai-mirror/",
   "wordCount": 9876,
   "readingMinutes": 44,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/algorithmic-bias-and-the-ai-mirror/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 47,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",
-      "deploymentSha256": "0514c0620575dbdf27c70ae07f424145b7d59026e27a823d099dffbe88a050fb",
-      "publishedAt": "2026-08-01T09:39:18-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "cc5db491ff3828a53354e41cfa729d6107f3272b88e79222dd67353b84c69591",

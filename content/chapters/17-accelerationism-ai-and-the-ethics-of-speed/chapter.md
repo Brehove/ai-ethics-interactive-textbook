@@ -653,4 +653,4 @@ AI ethics asks for a reasoned account of which speed serves human judgment and w
 - Wiener, Norbert. [Cybernetics: or Control and Communication in the Animal and the Machine](https://mitpress.mit.edu/9780262537841/cybernetics-or-control-and-communication-in-the-animal-and-the-machine/). MIT Press edition page. Used for cybernetics as feedback, control, and communication.
 
 <!-- phil-passage-id: ch17-p0158 -->
-X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before Pressbooks publication. This revised chapter does not use them as direct quoted evidence.
+X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before publication. This revised chapter does not use them as direct quoted evidence.

@@ -17,7 +17,6 @@
   "path": "/chapter/from-data-trails-to-ai-systems/",
   "wordCount": 8054,
   "readingMinutes": 36,
-  "pressbooksUrl": "https://cwi.pressbooks.pub/ethicsandai/chapter/from-data-trails-to-ai-systems/",
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -31,18 +30,6 @@
     "offlineHtml": true,
     "readingJson": true,
     "plainText": true
-  },
-  "pressbooks": {
-    "id": 45,
-    "sourceFormat": "gfm+raw-html",
-    "compatible": true,
-    "validated": false,
-    "publishAuthorized": false,
-    "priorRelease": {
-      "sourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",
-      "deploymentSha256": "0770e1241014dbdcd502b78c48b8554bbb93c607198bfa297b6578b106b622d5",
-      "publishedAt": "2026-07-17T15:46:11-06:00"
-    }
   },
   "websiteBaseline": {
     "selectedSourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",

@@ -4,9 +4,9 @@
   "slug": "accelerationism-ai-and-the-ethics-of-speed",
   "title": "Accelerationism, AI, and the Ethics of Speed",
   "language": "en",
-  "sourceSha256": "936db192687c59a8a883033c0385c1113c422333243d00ccc4216d1ad258ec20",
-  "plainTextSha256": "05033c356f956a6f21e25dba114f3ccb4eaddd1952850d61c0afa93281dca73c",
-  "wordCount": 11941,
+  "sourceSha256": "9a2d9649e4234d6bfdd5c125b1c9cc36a19560615dfd7ca072f74945712ed931",
+  "plainTextSha256": "2298d45719a7aa89493ea3d54fbf80f97e9e0e23e73dc12de31239488e2434c4",
+  "wordCount": 11940,
   "readingMinutes": 54,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -1262,7 +1262,7 @@
       "type": "paragraph",
       "sectionId": "ch17-s019",
       "level": null,
-      "text": "X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before Pressbooks publication. This revised chapter does not use them as direct quoted evidence."
+      "text": "X posts by Beff, Garry Tan, Vitalik Buterin, Roon, Sam Altman, and others remain evidence-packet leads only. Because X pages are difficult to verify through stable public fetches, any direct quotation from those posts should be re-checked before publication. This revised chapter does not use them as direct quoted evidence."
     }
   ]
 }

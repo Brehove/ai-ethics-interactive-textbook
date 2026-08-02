@@ -323,7 +323,7 @@ Bainbridge, Lisanne. (1983). Ironies of automation90046-8). Used for the monitor
 Beckers, Niek, Luciano Cavalcante Siebert, Merijn Bruijnes, Catholijn Jonker, and David Abbink. (2022). Drivers of partially automated vehicles are blamed for crashes that they cannot reasonably avoid. Scientific Reports, 12, Article 16193. Used for partially automated driving, takeover ability, and responsibility-attribution concerns.
 Bjork, Elizabeth L., and Bjork, Robert A. (2011). Creating desirable difficulties to enhance learning. Used for the distinction between easy performance and durable learning.
 CDC / NIOSH. (2024). Robotics in the workplace: An overview. Used for workplace robotics types, benefits, hazards, and the human-robot-interaction knowledge gap.
-CWI AI Ethics Pressbook. Aristotle and the origins of Western virtue ethics. Used as a course cross-reference for practical wisdom.
+AI & Ethics interactive textbook. Aristotle and the origins of Western virtue ethics. Used as a course cross-reference for practical wisdom.
 Darvishi, Ali, et al. (2023). Impact of AI assistance on student agency. Used for student agency concerns under AI assistance.
 Elish, Madeleine Clare. (2019). Moral crumple zones: Cautionary tales in human-robot interaction. Used for blame concentration in human-machine systems.
 European Parliament and Council of the European Union. (2024). Directive (EU) 2024/2831 on improving working conditions in platform work. Used for contemporary legal framing of algorithmic management, automated monitoring, automated decision-making, explanation, human review, and contestability in platform work.

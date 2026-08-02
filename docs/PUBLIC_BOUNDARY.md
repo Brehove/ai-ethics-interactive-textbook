@@ -15,11 +15,11 @@ Not allowed:
 - symlinks into a private course or project workspace;
 - local filesystem paths or local-file URLs;
 - credentials, tokens, private keys, or copied environment files;
-- Pressbooks rollback bodies, authenticated API responses, private review packets, or internal comments;
+- retired-platform rollback bodies, authenticated API responses, private review packets, or internal comments;
 - operational stewardship and provenance sidecars containing private paths, runtime details, or unpublished contribution records;
 - the excluded optional nineteenth draft unless a later, explicit book decision adds it.
 
-The public reconciliation map requires the source root as a command argument, verifies each selected source hash, applies only transformations with exact expected occurrence counts, and writes ordinary files. The map records the July 17 Pressbooks lineage for the three newer Module 7 website baselines without copying their protected sidecars.
+The public reconciliation map requires the source root as a command argument, verifies each selected source hash, applies only transformations with exact expected occurrence counts, and writes ordinary files. It retains only the migration lineage needed to explain how the website baseline was selected, without copying protected production sidecars.
 
 Run the boundary audit before publishing or deploying:
 

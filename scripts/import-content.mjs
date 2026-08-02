@@ -128,7 +128,6 @@ async function generateChapter(chapter, sourceRoot, rightsRegistry) {
   if (referencedRights.some((record) => !record)) throw new Error(`${chapter.id}: unresolved rights record`);
   const thirdPartyExceptions = referencedRights.filter((record) => record.kind === "license-exception").map((record) => record.id);
 
-  const pressbooksUrl = `https://cwi.pressbooks.pub/ethicsandai/chapter/${chapter.slug}/`;
   const meta = {
     schemaVersion: 1,
     id: chapter.id,
@@ -142,7 +141,6 @@ async function generateChapter(chapter, sourceRoot, rightsRegistry) {
     path: `/chapter/${chapter.slug}/`,
     wordCount: artifacts.reading.wordCount,
     readingMinutes: artifacts.reading.readingMinutes,
-    pressbooksUrl,
     status: "website-canonical",
     licenses: {
       prose: "CC-BY-4.0",
@@ -152,14 +150,6 @@ async function generateChapter(chapter, sourceRoot, rightsRegistry) {
     },
     rightsRecordIds: chapter.rightsRecordIds,
     exports: { print: true, offlineHtml: true, readingJson: true, plainText: true },
-    pressbooks: {
-      id: chapter.pressbooksId,
-      sourceFormat: "gfm+raw-html",
-      compatible: true,
-      validated: false,
-      publishAuthorized: false,
-      priorRelease: chapter.priorRelease,
-    },
     websiteBaseline: {
       selectedSourceSha256: chapter.selectedSourceSha256,
       canonicalMarkdownSha256: sha256(markdown),
