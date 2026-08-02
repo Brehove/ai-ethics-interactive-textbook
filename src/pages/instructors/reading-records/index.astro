@@ -1,0 +1,77 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Designing reading-record prompts" description="Instructor guidance for the three philosophical reflection checkpoints in every AI & Ethics chapter.">
+  <main id="main-content" class="guide site-width">
+    <p class="eyebrow">Instructor guide</p>
+    <h1>How the reading record develops philosophical judgment</h1>
+    <p class="lede">Each chapter interrupts the reading exactly three times. The checkpoints preserve a starting judgment, ask the student to perform the chapter's central reasoning move, and then document what survived serious pressure.</p>
+
+    <nav class="page-path" aria-label="On this page">
+      <a href="#sequence">The sequence</a>
+      <a href="#quality">Prompt quality</a>
+      <a href="#research">Research basis</a>
+      <a href="#privacy">Privacy and submission</a>
+    </nav>
+
+    <section id="sequence">
+      <h2>Three pauses, each doing different work</h2>
+      <ol class="sequence">
+        <li><span>01</span><div><h3>Commit</h3><p>After the opening dilemma, students state a provisional judgment, definition, assumption, or prediction and give a reason before the chapter supplies its complete vocabulary.</p></div></li>
+        <li><span>02</span><div><h3>Work</h3><p>After the conceptual hinge, students perform the chapter's central philosophical operation: reconstruct an argument, identify a warrant, test a contrast case, generate an objection, compare frameworks, or formulate a productive question.</p></div></li>
+        <li><span>03</span><div><h3>Reconcile</h3><p>After the strongest objection or complication, students classify their judgment as changed, qualified, strengthened, or unchanged and explain the best reason and remaining uncertainty.</p></div></li>
+      </ol>
+      <p>Changing one's mind is not treated as evidence of improvement. An unchanged judgment can be rigorous when the student explains why the chapter's strongest pressure did not dislodge it.</p>
+    </section>
+
+    <section id="quality">
+      <h2>What makes a checkpoint philosophical</h2>
+      <div class="criteria">
+        <article><h3>Passage-anchored</h3><p>The prompt appears only after the text has made the requested operation possible. Its location is determined by intellectual timing, not even spacing.</p></article>
+        <article><h3>Constructive</h3><p>A student must generate a reason, inference, distinction, question, case, or judgment that cannot be completed by copying a sentence.</p></article>
+        <article><h3>Open but constrained</h3><p>More than one answer can be defended, while the task and standard for a serious response remain explicit.</p></article>
+        <article><h3>Disciplinary</h3><p>The prompt practices interpretation, argument reconstruction, conceptual analysis, objection, comparison, or considered ethical judgment—not generic reaction or mood reporting.</p></article>
+      </div>
+      <p>Every chapter's structured record includes a reasoning objective, three stable passage anchors, the strategy used at each checkpoint, student-facing language, and an instructor-facing rationale. These records are reviewed as original CC0 metadata in the public repository.</p>
+    </section>
+
+    <section id="research">
+      <h2>Research basis and its limits</h2>
+      <p>The design combines research on explicit critical-thinking instruction, constructive engagement, self-explanation, argument and counterargument integration, metacognitive monitoring, and student-generated questions. Important foundations include:</p>
+      <ul>
+        <li><a href="https://doi.org/10.3102/0034654314551063">Abrami et al. on critical-thinking instruction</a></li>
+        <li><a href="https://doi.org/10.1080/00461520.2014.965823">Chi and Wylie’s ICAP framework</a></li>
+        <li><a href="https://doi.org/10.1207/s15516709cog1803_3">Chi et al. on prompted self-explanation</a></li>
+        <li><a href="https://doi.org/10.3200/JEXE.76.1.59-92">Nussbaum and Schraw on argument-counterargument integration</a></li>
+        <li><a href="https://doi.org/10.1187/cbe.12-03-0033">Tanner on metacognition</a></li>
+        <li><a href="https://doi.org/10.3102/00346543066002181">Rosenshine, Meister, and Chapman on student-generated questions</a></li>
+      </ul>
+      <p>The broad principles have strong support. The exact three-checkpoint distribution in an introductory AI-ethics textbook is a research-informed design hypothesis, not a settled empirical result. Student work and instructor observation should be used to revise it.</p>
+    </section>
+
+    <section id="privacy">
+      <h2>Evidence of reading without surveillance</h2>
+      <p>The textbook neither grades nor transmits responses. Text and notes remain in page memory and disappear on reload. Students explicitly copy or download their reading record and submit it through Canvas as evidence of engaged reading.</p>
+      <p>Students may use device-level dictation while a response field is focused. The textbook does not request microphone access, invoke a speech provider, or receive audio.</p>
+    </section>
+  </main>
+</SiteLayout>
+
+<style>
+  .guide { max-width: 76rem; padding-block: clamp(3rem, 8vw, 7rem); }
+  h1 { max-width: 19ch; margin: 0.5rem 0 1rem; font-size: clamp(2.8rem, 7vw, 5.7rem); font-weight: 500; line-height: 0.97; letter-spacing: -0.045em; }
+  .lede { max-width: 58rem; color: var(--ink-soft); font-size: 1.2rem; line-height: 1.55; }
+  .page-path { display: flex; flex-wrap: wrap; gap: 0.7rem 1.3rem; margin: 2.5rem 0 4rem; padding-block: 1rem; border-block: 1px solid var(--line); font: 700 0.72rem/1.4 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
+  section { max-width: 60rem; margin-top: 4rem; scroll-margin-top: 6rem; }
+  h2 { margin: 0 0 1rem; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 500; line-height: 1.05; }
+  h3 { margin: 0; font-size: 1.25rem; font-weight: 500; }
+  .sequence { list-style: none; margin: 2rem 0; padding: 0; border-top: 1px solid var(--ink); }
+  .sequence li { display: grid; grid-template-columns: 3rem 1fr; gap: 1rem; padding: 1.2rem 0; border-bottom: 1px solid var(--line); }
+  .sequence span { color: var(--rust-dark); font: 700 0.72rem/1.5 var(--sans); }
+  .sequence p { margin: 0.35rem 0 0; }
+  .criteria { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .criteria article { padding: 1.2rem; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper-light); }
+  .criteria p { margin-bottom: 0; }
+  @media (max-width: 700px) { .criteria { grid-template-columns: 1fr; } }
+</style>

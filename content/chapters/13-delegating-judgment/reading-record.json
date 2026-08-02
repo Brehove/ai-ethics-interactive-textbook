@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch13",
+  "reasoningObjective": "By the end of this chapter, students should be better able to evaluate a delegated AI or automated practice for answerable control in order to judge whether a human can genuinely remain responsible for its result.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch13-p0007",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Locate the human role",
+      "trigger": "When a system does most of a task, what is the human still responsible for?",
+      "prompt": "Choose one delegated task, such as supervised driving, AI research, or coding assistance. At this point, is the human mainly directing the work, reviewing it, or merely present after the important work has moved? Defend your provisional answer by naming one human activity that still matters.",
+      "guidance": "Make a claim about the human role and connect it to a specific part of the task, not simply to whether AI was used.",
+      "responseStructure": "prose",
+      "rationale": "The opening question frames the problem before the chapter supplies its handoff, control, capacity, and responsibility vocabulary, requiring an initial accountable judgment."
+    },
+    {
+      "id": "handoff-inference",
+      "passageId": "ch13-p0022",
+      "stage": "Handoff analysis",
+      "strategy": "argument-reconstruction",
+      "title": "Reconstruct the handoff",
+      "trigger": "Why can the same visible output hide a changed practice?",
+      "prompt": "In your own words, state the chapter's conclusion about why a handoff cannot be judged only by whether the output looks the same. Then name one unstated premise that must be true for the shift in authority, skill, or responsibility to matter ethically.",
+      "guidance": "Distinguish the visible result from the practice that produced it, and make your unstated premise a reason that could support or weaken the conclusion.",
+      "responseStructure": "prose",
+      "rationale": "This passage explicitly introduces the central handoff inference: preserving an output can still transform authority, visibility, responsibility, objection, and skill."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch13-p0109",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "State the condition for delegation",
+      "trigger": "What would make your initial judgment about delegation more or less defensible now?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then state the strongest condition of answerable control that now supports your view, and name the most serious remaining uncertainty or objection about the case you chose.",
+      "guidance": "Identify the passage's specific condition—such as inspectable feedback, retained skill, traceable responsibility, or real authority—and explain why it moved or failed to move your judgment.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter's synthesis states the conditions of good delegation after pressure from deskilling, responsibility gaps, and merely formal human review."
+    }
+  ]
+}

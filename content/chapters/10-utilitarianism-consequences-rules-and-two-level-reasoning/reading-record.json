@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch10",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to compare the expected welfare effects of rival AI policies in order to defend a provisional utilitarian judgment under uncertainty.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch10-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Choose a starting policy",
+      "trigger": "Which transcript policy seems most defensible now?",
+      "prompt": "Make a provisional judgment: keep default storage, require informed opt-in, or require deletion after a set window. Identify one benefit or harm that should carry the most weight in your judgment and explain why.",
+      "guidance": "Commit before the chapter supplies its utilitarian distinctions. Name an affected group and a consequence rather than appealing generally to student success or privacy.",
+      "responseStructure": "prose",
+      "rationale": "The opening case supplies three live policies and real stakes but has not yet explained how utilitarianism compares welfare, uncertainty, and distribution."
+    },
+    {
+      "id": "welfare-warrant",
+      "passageId": "ch10-p0056",
+      "stage": "Critical-level comparison",
+      "strategy": "evidence-warrant",
+      "title": "Warrant the provisional verdict",
+      "trigger": "What makes limited-retention opt-in a welfare claim rather than a slogan?",
+      "prompt": "Identify one stated consequence of limited-retention opt-in and the welfare claim it is meant to support. Explain the warrant connecting the two, then name one uncertainty that could weaken or reverse the provisional verdict.",
+      "guidance": "Separate the observed or stipulated effect from the conclusion about overall welfare. Use a concrete stakeholder or risk instead of saying only that the policy helps more people.",
+      "responseStructure": "prose",
+      "rationale": "This passage completes the chapter's worked two-level comparison and explicitly offers a tentative opt-in verdict, making the evidence-to-welfare bridge and its uncertainty available for inspection."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch10-p0067",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Reconcile welfare and protection",
+      "trigger": "Would your policy still protect the vulnerable person?",
+      "prompt": "Classify your opening judgment as changed, qualified, strengthened, or unchanged. Identify the consequence comparison or objection that caused—or failed to cause—that movement, give your strongest utilitarian reason now, and state the most serious remaining worry about concentrated harm or the separateness of persons.",
+      "guidance": "An unchanged policy can be defensible if you explain why its welfare case survives the strongest objection. Do not treat the aggregate alone as an answer to the objection.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "After Rawls's separateness-of-persons objection and the utilitarian reply through rules, trust, and subgroup analysis, students can state a considered but non-final policy judgment."
+    }
+  ]
+}

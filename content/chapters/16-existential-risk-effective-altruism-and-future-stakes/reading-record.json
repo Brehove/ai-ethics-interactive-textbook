@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch16",
+  "reasoningObjective": "By the end of this chapter, students should be better able to weigh future-stakes arguments under uncertainty in order to judge when safeguards are warranted without displacing present people or public accountability.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch16-p0022",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Set a first threshold",
+      "trigger": "When should an uncertain future risk change what we do now?",
+      "prompt": "At this point, should a serious but uncertain future AI harm justify slowing, limiting, or redesigning a current system? State your provisional threshold and give one reason for it.",
+      "guidance": "Name the kind of evidence, scale, reversibility, or severity that would make precaution proportionate rather than automatic.",
+      "responseStructure": "prose",
+      "rationale": "The early distinction between forecasts, scenarios, and thresholds frames the chapter's practical problem before its competing genealogies and critiques are fully developed."
+    },
+    {
+      "id": "contestability-repair",
+      "passageId": "ch16-p0172",
+      "stage": "Contestability hinge",
+      "strategy": "objection-repair",
+      "title": "Repair the future-stakes claim",
+      "trigger": "How can future-oriented caution avoid becoming unchecked authority?",
+      "prompt": "State the strongest objection that future-stakes reasoning can displace present harms or concentrate power in experts and labs. Then explain whether contestability defeats that objection, narrows the claim, or requires a new condition for using the lens.",
+      "guidance": "Present the objection in a form its defender would accept, and make your reply depend on a concrete accountability condition rather than on trust alone.",
+      "responseStructure": "prose",
+      "rationale": "The chapter offers constrained future-stakes responsibility only after the critique of present-harm displacement and elite substitution, so students can test the proposed repair."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch16-p0232",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "State a constrained precaution",
+      "trigger": "What condition now governs your first threshold for acting on future risk?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then identify the claim or objection that most affected your threshold, give the strongest reason for it now, and name one remaining uncertainty or contestability requirement.",
+      "guidance": "Show how your position accounts for both a concrete future dependency or irreversible harm and the people who need power to question the response.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The pre-reference conclusion condenses the chapter's final position: take serious future harms seriously without allowing speculative scale to erase present accountability."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch06",
+  "reasoningObjective": "By the end of this chapter, students should be better able to distinguish documented consultation from inferred influence and assess its relevance to legitimacy in order to form a limited judgment about AI governance.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch06-p0008",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Judge the Consultation",
+      "trigger": "What moral weight should Catholic advisers' participation carry in judging Claude's Constitution?",
+      "prompt": "State a provisional judgment about whether the advisers' participation strengthens the Constitution's moral legitimacy. Give one reason based on what consultation might contribute or what corporate control might limit.",
+      "guidance": "Commit to a limited judgment about this case and identify a reason, rather than treating either religious participation or company authorship as conclusive by itself.",
+      "responseStructure": "prose",
+      "rationale": "The opening presents the documented encounter and the question of contribution versus control before the chapter distinguishes kinds and limits of evidence."
+    },
+    {
+      "id": "influence-evidence-hinge",
+      "passageId": "ch06-p0037",
+      "stage": "Separate evidence from inference",
+      "strategy": "evidence-warrant",
+      "title": "Set the Limit of the Evidence",
+      "trigger": "What does the public record establish, and what does it leave unsupported?",
+      "prompt": "Choose one claim from the three levels of influence in this passage. Explain what evidence supports it and whether that evidence also supports the stronger claim that a particular adviser shaped a particular clause of the Constitution.",
+      "guidance": "Name the inferential bridge between the evidence and the stronger claim, and say whether the available record supplies that bridge.",
+      "responseStructure": "prose",
+      "rationale": "The caution box explicitly distinguishes documented participation, reported broad influence, and claims the public evidence does not establish, enabling a focused warrant analysis."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch06-p0067",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Reconcile Consultation and Control",
+      "trigger": "After the audit and argument, how much legitimacy does consultation add?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Identify the evidence, standard, or objection that most affected it, state your strongest present reason about consultation's contribution to legitimacy, and name the most serious remaining uncertainty about influence or control.",
+      "guidance": "Keep the conclusion within what the public record supports; explain why the unresolved evidence does or does not limit your judgment.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter's model argument and competing objections culminate in a deliberately middle verdict: documented participation warrants comparison and scrutiny, but not an inference of clause-level natural-law control."
+    }
+  ]
+}

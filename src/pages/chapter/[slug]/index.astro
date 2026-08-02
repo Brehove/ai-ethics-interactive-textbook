@@ -1,8 +1,7 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 import ReaderShell from "../../../components/ReaderShell.astro";
-import ScholarlyDock from "../../../components/ScholarlyDock.astro";
-import JudgmentLens from "../../../components/JudgmentLens.astro";
+import ReadingRecord from "../../../components/ReadingRecord.astro";
 import InlineScholarFigures from "../../../components/InlineScholarFigures.astro";
 import InlineArtifacts from "../../../components/InlineArtifacts.astro";
 import InlineConceptDiagrams from "../../../components/InlineConceptDiagrams.astro";
@@ -15,11 +14,10 @@ export async function getStaticPaths() {
 }
 
 const chapter = await requireChapter(Astro.params.slug!);
-const { meta, Content, headings, world, sourceLinks, previous, next } = chapter;
+const { meta, Content, headings, world, sourceLinks, readingRecord, previous, next } = chapter;
 const chapterPeople = await resolveChapterPeople(world);
 const chapterArtifacts = await getChapterArtifacts(meta.id);
 const chapterDiagrams = getChapterDiagrams(meta.id);
-const hasJudgmentLens = meta.id === "ch07";
 ---
 
 <SiteLayout title={meta.title} description={meta.description} chapterNumber={meta.order} canonicalPath={meta.path}>
@@ -40,26 +38,14 @@ const hasJudgmentLens = meta.id === "ch07";
       <InlineArtifacts artifacts={chapterArtifacts} />
       <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
     </div>
-    {hasJudgmentLens ? (
-      <JudgmentLens
-        slot="scholarly-dock"
-        passageId="ch07-p0004"
-        prompt="What sort of person does this practice shape?"
-        question="Did the AI preserve your ethical practice, or replace it?"
-        complication="The apology repaired the friendship—but you avoided the difficult practice of finding the words yourself."
-        comparisonHref="/people/aristotle/"
-        comparisonLabel="Compare with Aristotle"
-      />
-    ) : (
-      <ScholarlyDock
-        slot="scholarly-dock"
-        slug={meta.slug}
-        active="first"
-        people={chapterPeople}
-        primarySources={sourceLinks.primarySources}
-        inlineFeatured
-      />
-    )}
+    <ReadingRecord
+      slot="scholarly-dock"
+      chapterNumber={meta.order}
+      chapterTitle={meta.title}
+      chapterPath={meta.path}
+      chapterVersion={meta.websiteBaseline.canonicalMarkdownSha256.slice(0, 12)}
+      prompts={readingRecord.checkpoints}
+    />
   </ReaderShell>
 </SiteLayout>
 

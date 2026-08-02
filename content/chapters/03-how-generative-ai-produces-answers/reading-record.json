@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch03",
+  "reasoningObjective": "By the end of this chapter, students should be better able to distinguish fluent coherence from warranted trust by locating the kind of check an AI-generated claim needs in order to decide how much reliance is justified.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch03-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Set a Trust Level",
+      "trigger": "How much should a student rely on this polished answer about arguments?",
+      "prompt": "State whether you would use the chatbot's answer as-is, use it only as a starting point, or not rely on it for PHIL 123. Give the feature of the answer that most supports your choice.",
+      "guidance": "Make a provisional use decision and justify it with a feature of the response or course task, not with the answer's tone alone.",
+      "responseStructure": "prose",
+      "rationale": "The initial generic answer is plausible and partly accurate, while its lack of fit with the course has just become visible but not yet explained mechanistically."
+    },
+    {
+      "id": "warrant-hinge",
+      "passageId": "ch03-p0018",
+      "stage": "Separate coherence from warrant",
+      "strategy": "self-explanation",
+      "title": "Explain the Gap",
+      "trigger": "Why can a response sound coherent without yet earning trust?",
+      "prompt": "Explain why next-token fit can produce a coherent answer without showing that a claim is true or fits PHIL 123. Name one check that would supply the missing warrant for a claim you might use.",
+      "guidance": "Connect the generation mechanism to a specific checking practice; do not simply define coherence or evidence separately.",
+      "responseStructure": "prose",
+      "rationale": "This passage explicitly distinguishes probable continuation, truth, course fit, and warranted acceptance after the chapter has made the generation mechanism available."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch03-p0052",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Revise Your Reliance Rule",
+      "trigger": "Has the chapter changed how you would use the opening answer?",
+      "prompt": "Mark your opening use decision as Changed, Qualified, Strengthened, or Unchanged. Identify the distinction, example, or failure mode that most affected it, state the strongest reason for your present level of reliance, and name one uncertainty that remains.",
+      "guidance": "Tie your response to the kind of claim and the depth of checking it requires; an unchanged decision still needs an account of why the chapter's pressure did not dislodge it.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter has applied the account to hallucination, source mismatch, course grounding, and use-proportionate checking before asking students to state a considered reliance judgment."
+    }
+  ]
+}

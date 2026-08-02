@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch01",
+  "reasoningObjective": "By the end of this chapter, students should be better able to pressure-test a moral judgment by making its principle, relevant facts, and objections visible in order to defend a considered response to an AI-mediated dilemma.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch01-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Commit to a Recording Policy",
+      "trigger": "What should Ashley do before the chapter supplies an ethical framework?",
+      "prompt": "Judge whether Ashley should record without asking, ask first, or use the tool only as a backup. Name the feature of the case that gives your judgment its strongest reason.",
+      "guidance": "State a definite provisional policy and explain why that feature matters morally, rather than merely naming a preference.",
+      "responseStructure": "prose",
+      "rationale": "The opening dilemma is fully specified but precedes the chapter's vocabulary for moral relevance, plural values, and reflective equilibrium, so it preserves a genuine starting judgment."
+    },
+    {
+      "id": "equilibrium-hinge",
+      "passageId": "ch01-p0018",
+      "stage": "Pressure-test the judgment",
+      "strategy": "argument-reconstruction",
+      "title": "Trace the Revision",
+      "trigger": "How does a privacy objection change more than one isolated opinion?",
+      "prompt": "Reconstruct Ashley's move from her initial recording principle to the revised, limited-use principle. Identify the objection that creates the pressure and explain how the revised principle changes what she should do.",
+      "guidance": "Make the connection between judgment, principle, objection, and revised judgment explicit; do not simply summarize the sequence.",
+      "responseStructure": "prose",
+      "rationale": "This passage names reflective equilibrium after showing its full movement from a first judgment through an objection to a revised principle and application."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch01-p0024",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Record the Pressure That Counts",
+      "trigger": "Has the chapter changed how you would justify Ashley's policy?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then identify the claim, objection, or evidence that most affected it, give your strongest present reason, and name one serious uncertainty or objection that remains.",
+      "guidance": "Explain why the pressure did or did not move your reasoning; retaining a view is serious only when you show how it survived the challenge.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "After the initial-credibility problem and the case for outward corrective inquiry, students can assess both their conclusion and the quality of the inputs supporting it."
+    }
+  ]
+}

@@ -71,6 +71,7 @@ export type ChapterSourceLinks = CollectionEntry<"chapterSources">["data"];
 export type ChapterWorld = CollectionEntry<"chapterWorld">["data"];
 export type ChapterRights = CollectionEntry<"chapterRights">["data"];
 export type ChapterReading = CollectionEntry<"chapterReading">["data"];
+export type ChapterReadingRecord = CollectionEntry<"chapterReadingRecords">["data"];
 export type Person = CollectionEntry<"people">["data"];
 export type PersonWikimedia = CollectionEntry<"peopleWikimedia">["data"];
 export type PersonMedia = CollectionEntry<"media">["data"];
@@ -116,6 +117,7 @@ export interface ChapterBundle {
   world: ChapterWorld;
   rights: ChapterRights;
   reading: ChapterReading;
+  readingRecord: ChapterReadingRecord;
   previous: ChapterSummary | null;
   next: ChapterSummary | null;
 }
@@ -129,6 +131,7 @@ interface ContentIndex {
   world: CollectionEntry<"chapterWorld">[];
   rights: CollectionEntry<"chapterRights">[];
   reading: CollectionEntry<"chapterReading">[];
+  readingRecords: CollectionEntry<"chapterReadingRecords">[];
   people: CollectionEntry<"people">[];
   peopleWikimedia: CollectionEntry<"peopleWikimedia">[];
   media: CollectionEntry<"media">[];
@@ -147,11 +150,12 @@ async function loadContentIndex(): Promise<ContentIndex> {
     getCollection("chapterWorld"),
     getCollection("chapterRights"),
     getCollection("chapterReading"),
+    getCollection("chapterReadingRecords"),
     getCollection("people"),
     getCollection("peopleWikimedia"),
     getCollection("media"),
     getCollection("mediaWikimedia"),
-  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading, people, peopleWikimedia, media, mediaWikimedia]) => {
+  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading, readingRecords, people, peopleWikimedia, media, mediaWikimedia]) => {
     if (books.length !== 1) throw new Error(`Expected one book record; found ${books.length}`);
     return {
       book: books[0],
@@ -162,6 +166,7 @@ async function loadContentIndex(): Promise<ContentIndex> {
       world,
       rights,
       reading,
+      readingRecords,
       people,
       peopleWikimedia,
       media,
@@ -236,6 +241,7 @@ export async function getChapter(slug: string): Promise<ChapterBundle | undefine
     world: scopedRecord(index.world.map((item) => item.data), meta.id, "world"),
     rights: scopedRecord(index.rights.map((item) => item.data), meta.id, "rights"),
     reading: scopedRecord(index.reading.map((item) => item.data), meta.id, "reading"),
+    readingRecord: scopedRecord(index.readingRecords.map((item) => item.data), meta.id, "reading record"),
     previous,
     next,
   };

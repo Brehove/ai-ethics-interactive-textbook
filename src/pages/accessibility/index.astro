@@ -1,0 +1,61 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Accessibility" description="Accessibility commitments, audit results, known limitations, and contact guidance for the AI & Ethics interactive textbook.">
+  <main id="main-content" class="accessibility site-width">
+    <p class="eyebrow">Accessibility</p>
+    <h1>Reading should not depend on a particular body, device, or interface.</h1>
+    <p class="lede">The reader targets WCAG 2.2 Level AA. Required chapter prose remains available without JavaScript, and every chapter can be printed, saved as PDF, or downloaded as self-contained HTML.</p>
+
+    <section>
+      <h2>Current support</h2>
+      <ul>
+        <li>Semantic headings, landmarks, skip navigation, and meaningful link and control names</li>
+        <li>Keyboard operation with visible focus and focus return from drawers and dialogs</li>
+        <li>Responsive reflow without horizontal scrolling at a 320-pixel viewport</li>
+        <li>Text enlargement, reduced-motion support, print styles, and offline reading copies</li>
+        <li>Alternative text and item-level rights records for reviewed images</li>
+        <li>Typed input plus compatibility with device-level dictation without a site microphone request</li>
+        <li>Page-local reflection and annotation tools that do not require an account or transmit student writing</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Audit record</h2>
+      <p>The Aristotle reading-record pilot was audited on August 2, 2026 with Lighthouse, DOM and contrast inspection, desktop and mobile reflow checks, keyboard interaction, validation-error behavior, enlarged text, console inspection, and the self-contained offline chapter.</p>
+      <dl>
+        <dt>Automated result</dt><dd>Lighthouse reported 100 for the live chapter and offline copy. An unweighted Label-in-Name failure on the “In this chapter” control was also identified and repaired.</dd>
+        <dt>Interaction result</dt><dd>The reading-record pane opens with useful focus, contains focus when modal on small screens, closes with Escape, returns focus to its trigger, and announces validation errors.</dd>
+        <dt>Reflow result</dt><dd>The chapter and modal pane reflowed at 320 pixels without horizontal page overflow, including enlarged reading text.</dd>
+        <dt>Console and offline result</dt><dd>No relevant browser warnings or errors appeared. The offline chapter contained semantic page structure and no scripts.</dd>
+      </dl>
+      <p>The repository retains the detailed audit and remediation history. Automated scores do not establish complete conformance.</p>
+    </section>
+
+    <section>
+      <h2>Known limits and continuing review</h2>
+      <p>A human screen-reader review remains part of each major release gate because automated tools cannot establish announcement quality, useful reading order, pronunciation, or the coherence of an interaction when heard rather than seen.</p>
+      <p>Device-level dictation varies by browser, operating system, language, and permission policy. Students can always type. The textbook does not request microphone access or receive audio.</p>
+      <p>Third-party source pages linked from the textbook have their own accessibility practices and are not controlled by this project.</p>
+    </section>
+
+    <section>
+      <h2>Report a barrier</h2>
+      <p>If a chapter, control, image description, download, or reading-record workflow creates a barrier, report the chapter address, the control or passage involved, the browser and assistive technology used, and what you expected to happen. That information is more useful than an automated score alone.</p>
+    </section>
+  </main>
+</SiteLayout>
+
+<style>
+  .accessibility { max-width: 72rem; padding-block: clamp(3rem, 8vw, 7rem); }
+  h1 { max-width: 17ch; margin: 0.5rem 0 1rem; font-size: clamp(2.7rem, 7vw, 5.4rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.045em; }
+  .lede { max-width: 56rem; color: var(--ink-soft); font-size: 1.2rem; line-height: 1.55; }
+  section { max-width: 58rem; margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+  h2 { margin: 0 0 0.9rem; font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 500; line-height: 1.08; }
+  li { margin-bottom: 0.55rem; }
+  dl { display: grid; grid-template-columns: minmax(10rem, 0.35fr) 1fr; margin-top: 1.5rem; border-top: 1px solid var(--line); }
+  dt, dd { margin: 0; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+  dt { color: var(--rust-dark); font: 700 0.72rem/1.4 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+  @media (max-width: 650px) { dl { grid-template-columns: 1fr; } dt { padding-bottom: 0; border-bottom: 0; } dd { padding-top: 0.25rem; } }
+</style>

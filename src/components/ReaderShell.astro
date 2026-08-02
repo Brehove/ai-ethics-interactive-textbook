@@ -59,7 +59,7 @@ const displayTitle = splitDisplayTitle(title);
       type="button"
       aria-controls="chapter-outline"
       aria-expanded="false"
-      aria-label="Open chapter outline"
+      aria-label="In this chapter: open chapter outline"
       data-outline-open
     >
       <span>In this chapter</span><b aria-hidden="true">›</b>
@@ -160,7 +160,19 @@ const displayTitle = splitDisplayTitle(title);
     openOutline?.addEventListener("click", () => setOutline(true));
     closeOutline?.addEventListener("click", () => setOutline(false));
     scrim?.addEventListener("click", () => setOutline(false));
-    outline?.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => setOutline(false)));
+    outline?.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => link.addEventListener("click", () => {
+      const targetId = decodeURIComponent(link.hash.slice(1));
+      outlineReturnFocus = null;
+      setOutline(false);
+      requestAnimationFrame(() => {
+        const destination = document.getElementById(targetId);
+        if (!destination) return;
+        const hadTabIndex = destination.hasAttribute("tabindex");
+        if (!hadTabIndex) destination.setAttribute("tabindex", "-1");
+        destination.focus({ preventScroll: false });
+        if (!hadTabIndex) destination.addEventListener("blur", () => destination.removeAttribute("tabindex"), { once: true });
+      });
+    }));
 
     shell.addEventListener("click", (event) => {
       const target = event.target instanceof Element ? event.target : null;
