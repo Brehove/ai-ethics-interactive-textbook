@@ -59,17 +59,17 @@ const displayTitle = splitDisplayTitle(title);
       type="button"
       aria-controls="chapter-outline"
       aria-expanded="false"
-      aria-label="In this chapter: open chapter outline"
+      aria-label="Chapter contents: open chapter outline"
       data-outline-open
     >
-      <span>In this chapter</span><b aria-hidden="true">›</b>
+      <span>Chapter contents</span><b aria-hidden="true">›</b>
     </button>
   )}
 
   {hasOutline && (
     <nav id="chapter-outline" class="reading-rail interactive-only" aria-label="Chapter path" aria-hidden="true" inert data-chapter-outline>
       <header>
-        <div><p class="eyebrow">In this chapter</p><p>{title}</p></div>
+        <div><p class="eyebrow">Chapter contents</p><p>{title}</p></div>
         <button type="button" aria-label="Close chapter outline" data-outline-close>×</button>
       </header>
       <ol>
@@ -87,7 +87,7 @@ const displayTitle = splitDisplayTitle(title);
         .outline-toggle, .reading-rail, .outline-scrim { display: none !important; }
       </style>
       <nav class="reading-rail-noscript" aria-label="Chapter path">
-        <p class="eyebrow">In this chapter</p>
+        <p class="eyebrow">Chapter contents</p>
         <ol>
           {chapterHeadings.map((heading, index) => (
             <li><a href={`#${heading.slug}`}><span>{String(index + 1).padStart(2, "0")}</span>{heading.text}</a></li>
@@ -316,11 +316,38 @@ const displayTitle = splitDisplayTitle(title);
     .reader-main { padding-inline: clamp(2rem, 4vw, 3.4rem); }
   }
   @media (max-width: 900px) {
-    .reader-shell { grid-template-columns: var(--chapter-rail) minmax(0, 1fr); padding-inline: var(--frame-size); }
-    .reader-main { grid-column: 2; min-height: 0; padding: 0 1.35rem 3rem; }
-    .outline-toggle { grid-column: 1; width: 100%; min-height: 9.5rem; }
+    .reader-shell,
+    .reader-shell[data-context-closed] {
+      grid-template-columns: minmax(0, 1fr);
+      padding-inline: var(--frame-size);
+    }
+    .reader-main { grid-column: 1; grid-row: 2; min-height: 0; padding: 0 1.35rem 3rem; }
+    .outline-toggle {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      width: 100%;
+      min-height: 3.25rem;
+      justify-content: space-between;
+      border: 0;
+      border-bottom: 1px solid var(--frame-line);
+      padding: 0.7rem 1rem;
+    }
+    .outline-toggle span {
+      writing-mode: horizontal-tb;
+      font: 700 0.67rem/1.3 var(--sans);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .outline-toggle b { transform: rotate(90deg); transition: transform 180ms ease; }
+    .outline-toggle[aria-expanded="true"] b { transform: rotate(-90deg); }
+    .reading-rail {
+      left: var(--frame-size);
+      width: calc(100vw - var(--frame-size) - var(--frame-size));
+      border-inline: 0;
+    }
     .pane-gutter { display: none; }
-    .source-dock { position: static; grid-column: 2; height: auto; margin-top: var(--pane-gutter); border: 0; }
+    .source-dock { position: static; grid-column: 1; height: auto; margin-top: var(--pane-gutter); border: 0; }
     .chapter-footer nav { grid-template-columns: 1fr; }
     .chapter-footer nav a:last-child { text-align: left; }
   }

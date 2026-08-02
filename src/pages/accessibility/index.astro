@@ -16,7 +16,6 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
         <li>Responsive reflow without horizontal scrolling at a 320-pixel viewport</li>
         <li>Text enlargement, reduced-motion support, print styles, and offline reading copies</li>
         <li>Alternative text and item-level rights records for reviewed images</li>
-        <li>Typed input plus compatibility with device-level dictation without a site microphone request</li>
         <li>Page-local reflection and annotation tools that do not require an account or transmit student writing</li>
       </ul>
     </section>
@@ -25,7 +24,7 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
       <h2>Audit record</h2>
       <p>The Aristotle reading-record pilot was audited on August 2, 2026 with Lighthouse, DOM and contrast inspection, desktop and mobile reflow checks, keyboard interaction, validation-error behavior, enlarged text, console inspection, and the self-contained offline chapter.</p>
       <dl>
-        <dt>Automated result</dt><dd>Lighthouse reported 100 for the live chapter and offline copy. An unweighted Label-in-Name failure on the “In this chapter” control was also identified and repaired.</dd>
+        <dt>Automated result</dt><dd>Lighthouse reported 100 for the live chapter and offline copy. An unweighted Label-in-Name failure on the former chapter-outline control was also identified and repaired.</dd>
         <dt>Interaction result</dt><dd>The reading-record pane opens with useful focus, contains focus when modal on small screens, closes with Escape, returns focus to its trigger, and announces validation errors.</dd>
         <dt>Reflow result</dt><dd>The chapter and modal pane reflowed at 320 pixels without horizontal page overflow, including enlarged reading text.</dd>
         <dt>Console and offline result</dt><dd>No relevant browser warnings or errors appeared. The offline chapter contained semantic page structure and no scripts.</dd>
@@ -36,7 +35,7 @@ import SiteLayout from "../../layouts/SiteLayout.astro";
     <section>
       <h2>Known limits and continuing review</h2>
       <p>A human screen-reader review remains part of each major release gate because automated tools cannot establish announcement quality, useful reading order, pronunciation, or the coherence of an interaction when heard rather than seen.</p>
-      <p>Device-level dictation varies by browser, operating system, language, and permission policy. Students can always type. The textbook does not request microphone access or receive audio.</p>
+      <p>The textbook provides text fields for responses and notes. It does not provide or advertise a separate voice-input feature.</p>
       <p>Third-party source pages linked from the textbook have their own accessibility practices and are not controlled by this project.</p>
     </section>
 
