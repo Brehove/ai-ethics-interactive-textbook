@@ -15,8 +15,8 @@
     "slug": "data-bias-and-delegated-judgment"
   },
   "path": "/chapter/delegating-judgment/",
-  "wordCount": 10604,
-  "readingMinutes": 48,
+  "wordCount": 10566,
+  "readingMinutes": 47,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "101ed6e2f48dbd40a93b378a6009bf20669ea35d65b47590f5b41489b1c58991",
-    "canonicalMarkdownSha256": "8d400c32d45b8d1af7194e1cdffca1d798ed23d6265e5714652ff36459820a90",
+    "canonicalMarkdownSha256": "548dbb368ee965ca9bd6817603c0c3aea0ca7e75641ce0b4eaaffe5bfa4169cd",
     "reconciliationTransformations": [
       {
         "kind": "replace-exact",

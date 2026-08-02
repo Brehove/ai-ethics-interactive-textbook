@@ -85,7 +85,7 @@ Mill also takes moral rules more seriously than a caricature of utilitarianism s
 
 Because Mill puts so much weight on rules, rights, justice, and liberty, later philosophers sometimes call him a rule utilitarian. The reading captures something real. Mill has strong rule-utilitarian and indirect-utilitarian tendencies, and his treatment of justice in Chapter V of Utilitarianism pushes hard in that direction. It is safer to say Mill has those tendencies than to flatly call him a rule utilitarian, because his theory still uses welfare as the ultimate ground for the rules. Their moral force comes from the goods they protect. The IEP entry on Mill's ethics sorts through the interpretive dispute in more detail.
 
-For our purposes, Mill leaves us with a richer utilitarianism than Bentham's. Happiness remains the ultimate standard, while dignity, higher human capacities, justice, individual liberty, and stable secondary principles play a larger role in moral reasoning.
+Mill leaves us with a richer utilitarianism than Bentham's. Happiness remains the ultimate standard, while dignity, higher human capacities, justice, individual liberty, and stable secondary principles play a larger role in moral reasoning.
 
 Why Act-By-Act Calculation Breaks Down
 
@@ -99,7 +99,7 @@ A second strain is demandingness. If every action is judged against every availa
 
 A third strain is that maximizing aggregate welfare can license doing serious harm to a small group in exchange for small benefits spread across many. Taken alone, act utilitarianism has trouble ruling out stipulated pressure cases in which sacrificing one person produces the highest total. We will develop that objection more fully later in the chapter.
 
-A helpful move at this point is to separate two questions. The criterion of rightness identifies which action would in fact be morally right. A decision procedure guides ordinary agents who must choose before they know the actual consequences. Bentham concedes that strict felicific calculation need not precede every judgment. Practical guidance under uncertainty can therefore rely on simpler procedures even while the underlying criterion remains exposed to the demandingness and concentrated-harm objections.
+The criterion of rightness and the decision procedure need to be separated. The criterion of rightness identifies which action would in fact be morally right. A decision procedure guides ordinary agents who must choose before they know the actual consequences. Bentham concedes that strict felicific calculation need not precede every judgment. Practical guidance under uncertainty can therefore rely on simpler procedures even while the underlying criterion remains exposed to the demandingness and concentrated-harm objections.
 
 Rules As Consequence-Protecting Practices
 
@@ -129,7 +129,7 @@ When the Rule Is Not Enough
 
 R. M. Hare (1919–2002) offered a version of utilitarianism that gives useful guidance for PHIL 123 and for AI ethics generally. In Moral Thinking, Hare distinguishes two kinds of moral thinking a competent agent uses in different situations. The SEP entry on Hare sets out the broader philosophical context.
 
-The intuitive level is where most of your moral life happens. At this level, you rely on stable moral principles you have already internalized, including honesty, promise-keeping, respect for trust, and protection of people who cannot easily protect themselves. These principles do good work over the long run because they are stable, learnable, and reliable enough for other people to depend on. They also spare you the cognitive load and temptations of calculating every choice from scratch. Bentham's practical concession and Mill's secondary principles are historical precursors to this account, though Hare gives intuitive principles a more substantial role than disposable rules of thumb.
+The intuitive level is where most of your moral life happens. At this level, you rely on stable moral principles you have already internalized, including honesty, promise-keeping, respect for trust, and protection of people who cannot easily protect themselves. These principles protect welfare over the long run because they are stable, learnable, and reliable enough for other people to depend on. They also spare you the cognitive load and temptations of calculating every choice from scratch. Bentham's practical concession and Mill's secondary principles are historical precursors to this account, though Hare gives intuitive principles a more substantial role than disposable rules of thumb.
 
 The critical level is where you shift when the intuitive level cannot settle the case. Two ordinary principles may conflict, forcing you to decide which claim is more serious. An inherited principle may have been built for a situation that no longer matches the case in front of you. Available evidence may also give you serious reason to think the principle will misfire. High stakes should make you slow down and review the evidence, but they do not by themselves show that a principle should be overridden. Hare's critical thinking weighs preferences impartially, selects and revises principles for intuitive use, and governs their application. PHIL 123 translates that distinction into four practical triggers; Hare develops the levels in a different form.
 
@@ -143,7 +143,7 @@ The pilot chair might press back. She might say the case is genuinely unusual an
 
 At the critical level, the committee has to reason directly about consequences. Default storage may help faculty identify common misunderstandings, but it creates concentrated risks for students whose speech is identifiable or whose classmates are audible in the background. A rule prohibiting institutional storage reduces those risks while removing a source of instructional evidence. Limited-retention opt-in preserves some faculty access after informed consent, restricted access, and scheduled deletion. Its costs include administrative work and an incomplete sample if many students decline.
 
-The decisive comparison concerns trust, instructional value, and enforceability under general adoption. Limited-retention opt-in appears to have the strongest expected welfare balance on the stipulated evidence because it reduces concentrated privacy risk while preserving a bounded route to instructional review. That verdict depends on understandable consent, enforced access rules, and full support for students who decline. New evidence about participation, enforcement, learning gains, or privacy risk could change the comparison.
+The committee must compare trust, instructional value, and enforceability under general adoption. Limited-retention opt-in appears to have the strongest expected welfare balance on the stipulated evidence because it reduces concentrated privacy risk while preserving a bounded route to instructional review. That verdict depends on understandable consent, enforced access rules, and full support for students who decline. New evidence about participation, enforcement, learning gains, or privacy risk could change the comparison.
 
 The conclusion remains provisional because the case supplies limited evidence. A competent agent should be able to defend the judgment from the information available now and revise it when the expected consequences change.
 
@@ -173,7 +173,7 @@ The criterion of rightness and the decision procedure can also be separated. Eve
 
 The reply handles many practical cases in which fuller consequence counting reverses an apparently efficient policy. It does not dissolve Rawls's objection. A Kantian can add that protecting a person only because protection improves the aggregate gives the wrong form of justification. On that view, a person should be protected because other people do not get to trade away that person's welfare for their own benefit. Utilitarian and Kantian reasoning often converge on a policy while continuing to disagree about why the policy is justified and what should happen if the aggregate calculation changes.
 
-Carry one unresolved question into the Kant chapter and the framework comparison: would the vulnerable person remain protected if sacrificing them produced the better aggregate? Utilitarianism protects through welfare-promoting rules and decision procedures. Kantian ethics treats the person's rational agency and dignity as grounds the aggregate cannot replace.
+Keep one unresolved question in view: would the vulnerable person remain protected if sacrificing them produced the better aggregate? Utilitarianism protects through welfare-promoting rules and decision procedures. Kantian ethics treats the person's rational agency and dignity as grounds the aggregate cannot replace.
 
 How Far the Circle Reaches
 

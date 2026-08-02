@@ -94,7 +94,7 @@ Return to Tesla. The visible task is driving from one place to another. When FSD
 That is harder than it sounds. A person actively steering a car receives constant feedback through hands, feet, eyes, balance, sound, and traffic flow. A person supervising automation may receive less practice and less immediate feedback. The handoff changes the texture of attention. The person is still in the task, but not in the same way.
 
 <!-- phil-passage-id: ch13-p0025 -->
-The agentic research example works the same way. Suppose a student asks Copilot or ChatGPT to create a literature review on AI in nursing. The tool searches, summarizes, and drafts. The visible output may be better organized than the student's first attempt would have been. The handoff question asks what moved. Did the student hand off source discovery? Reading? Synthesis? Citation judgment? Field vocabulary? The first rough attempt? The recognition of gaps? If the student cannot explain which sources were strong, which claims were uncertain, or why the final focus changed, the tool did more than help. It changed the student's relation to the knowledge.
+The agentic research example works the same way. Suppose a student asks Copilot or ChatGPT to create a literature review on AI in nursing. The tool searches, summarizes, and drafts. The visible output may be better organized than the student's first attempt would have been. The handoff question asks whether the student gave the tool source discovery, reading, synthesis, citation judgment, field vocabulary, the first rough attempt, or the recognition of gaps. If the student cannot explain which sources were strong, which claims were uncertain, or why the final focus changed, the tool did more than help. It changed the student's relation to the knowledge.
 
 <!-- phil-passage-id: ch13-p0026 -->
 The coding-agent example gives the sharpest version. A developer assigns an issue. The agent reads the project, changes files, runs tests, and creates a pull request. A human review remains. The handoff question asks what the review is reviewing. Is the human reviewing a small suggestion the person already understands? Or is the human approving a chain of work the agent assembled across files, dependencies, tests, and assumptions? In the first case, the tool extends the person's action. In the second, the person may be reviewing after the core reasoning has already moved.
@@ -199,7 +199,7 @@ That virtue-ethics angle changes the chapter. If we evaluate automation only by 
 Support and interference depend on what AI use does to practice. A student who uses AI to quiz themselves after reading may be building retrieval and explanation. A student who uses AI to replace reading may be bypassing the same capacities. A developer who asks an agent to explain legacy code before making a change may be increasing understanding. A developer who accepts a large generated patch without reading it may be trading understanding for throughput. The moral difference lies in what happens to skill.
 
 <!-- phil-passage-id: ch13-p0056 -->
-Consider a student using AI to begin the Module 5-6 research process. One student asks for a report, skims the result, and copies the best-looking claims into a slide deck. That student may have a product, but the student has not practiced the intellectual skills the project requires. Another student asks for a starting map, chooses one claim, opens a source, checks whether the source supports the claim, revises the focus, and writes a short note about what the AI got wrong or missed. That student used AI too. The difference is that the second student kept practice inside the process.
+Consider two students beginning a research project with AI. One asks for a report, skims the result, and copies the best-looking claims into a slide deck. That student may have a finished product but has not practiced the intellectual skills the research requires. The other asks for a starting map, chooses one claim, opens a source, checks whether the source supports the claim, revises the focus, and writes a short note about what the AI got wrong or missed. Both students used AI. The second kept practice inside the process.
 
 <!-- phil-passage-id: ch13-p0057 -->
 Recent research on generative AI and learning supports this caution, though it should not be overstated. Hao-Ping Lee and colleagues' 2025 study on [generative AI and critical thinking](https://www.microsoft.com/en-us/research/publication/the-impact-of-generative-ai-on-critical-thinking-self-reported-reductions-in-cognitive-effort-and-confidence-effects-from-a-survey-of-knowledge-workers/) reports that knowledge workers often experience critical thinking as shifting toward verification, integration, and task stewardship when AI is involved. Studies such as Ali Darvishi and colleagues' work on [AI assistance and student agency](https://www.sciencedirect.com/science/article/pii/S0360131523002440) and Yizhou Fan and colleagues' work on [metacognitive laziness](https://bera-journals.onlinelibrary.wiley.com/doi/10.1111/bjet.13544) point toward a similar concern: assistance can improve immediate performance while weakening monitoring, agency, or learning if the human stops practicing the skills those activities require.
@@ -265,7 +265,7 @@ Robotics therefore strengthens the chapter's central frame. The question is stil
 Different ethical frameworks enter the chapter at different points. Consequentialist reasoning asks what automation changes in outcomes, error patterns, safety, productivity, and who bears risk. Virtue ethics asks what capacities automation trains or weakens. Deontological and autonomy-based reasoning asks whether a person remains an agent who can understand and answer for the action. Care ethics asks whether automation preserves attention to vulnerable people in context. Institutional ethics follows responsibility through the whole system so the nearest human is not treated as the only answerable person.
 
 <!-- phil-passage-id: ch13-p0074 -->
-Student projects need this layering. A student studying AI in nursing might begin with consequences: does the system reduce charting time or medication errors? The same student should also ask virtue-ethics questions about clinical judgment, care-ethics questions about patient attention, autonomy questions about patient consent and clinician override, and institutional-responsibility questions about who answers when the workflow fails. The frameworks give students several angles on the same delegated-action problem.
+A layered analysis of AI in nursing might begin with consequences: does the system reduce charting time or medication errors? It should also ask virtue-ethics questions about clinical judgment, care-ethics questions about patient attention, autonomy questions about patient consent and clinician override, and institutional-responsibility questions about who answers when the workflow fails. These frameworks reveal several dimensions of the same delegated-action problem.
 
 <!-- phil-section-id: ch13-s007 -->
 ## Responsibility: Who Can Answer For The Result?
@@ -396,7 +396,7 @@ The same framework transfers to other fields. In healthcare, an AI-drafted messa
 This brings us back to practical wisdom. Meaningful human control is both a policy condition and a human-capacity condition. People cannot govern systems responsibly if they no longer practice the skills needed to understand, evaluate, repair, and challenge those systems. Vallor's account of technomoral wisdom and Santoni de Sio and van den Hoven's account of meaningful human control meet here: responsible systems need structures that preserve answerability, and responsible people need habits that make answerability possible.
 
 <!-- phil-passage-id: ch13-p0109 -->
-For this reason, the chapter ends with a demand for better delegation. Good delegation keeps human purposes visible, leaves the feedback loop inspectable enough for correction, protects the skills needed for review, makes responsibility traceable to people and institutions with real authority, and gives students a way to use AI while preserving their own judgment.
+Good delegation keeps human purposes visible, leaves the feedback loop inspectable enough for correction, protects the skills needed for review, makes responsibility traceable to people and institutions with real authority, and allows people to use AI while preserving their own judgment.
 
 <!-- phil-passage-id: ch13-p0110 -->
 <aside class="textbox shaded" role="note" aria-labelledby="common-mistakes-delegated-judgment">
@@ -420,7 +420,7 @@ For this reason, the chapter ends with a demand for better delegation. Good dele
 ## A Delegated-Action Audit
 
 <!-- phil-passage-id: ch13-p0111 -->
-The chapter ends with a short audit students can use on their own AI-assisted work. It also works for self-driving cars, chatbots, coding agents, mobile robots, student-success models, automated hiring screens, medical triage systems, and algorithmic management systems.
+The delegated-action audit works for personal AI-assisted work as well as self-driving cars, chatbots, coding agents, mobile robots, student-success models, automated hiring screens, medical triage systems, and algorithmic management systems.
 
 <!-- phil-passage-id: ch13-p0112 -->
 Start with the handoff. What activity moved into the system? Be specific. "It used AI" is too vague. Did the system search, rank, draft, summarize, decide, recommend, classify, route, monitor, assign, evaluate, discipline, or approve? Did it replace a first attempt, a final check, an expert review, a routine step, a safety judgment, or a management decision?
@@ -440,7 +440,7 @@ Finally, ask who can answer for the result. Who has the knowledge, authority, in
 <!-- phil-passage-id: ch13-p0117 -->
 <aside class="textbox exercises" aria-labelledby="try-it-delegated-action-audit">
 <h3 id="try-it-delegated-action-audit">Try It: Delegated-Action Audit</h3>
-<p>For your own AI use in this course, the audit can be short:</p>
+<p>For an AI-assisted task, the audit can be short:</p>
 <p>I handed off ______.</p>
 <p>The system seemed to be steered by ______.</p>
 <p>I kept ______ in my own hands so I could learn, verify, revise, or answer for it.</p>
@@ -478,7 +478,7 @@ Here is a workplace robotics example:
 The audit makes judgment visible. Humans always delegate, and ethical delegation preserves the understanding, practice, and responsibility that make human judgment possible.
 
 <!-- phil-passage-id: ch13-p0123 -->
-The audit leaves one design demand:
+Responsible delegation depends on how a design distributes judgment, contestability, and accountability.
 
 <!-- phil-passage-id: ch13-p0124 -->
 <aside class="textbox shaded" role="note" aria-labelledby="build-like-philosopher">

@@ -19,7 +19,7 @@ Wanting to help earlier is a legitimate institutional goal. The question this ch
 The dashboard can also be wrong in more than one way. Diego may receive **misdirected attention**: the system notices him, but under the wrong description, as if his life constraints were evidence of disengagement. Kai may receive **missing attention**: the system misses her because the distress that matters does not appear in the features it measures. Diego shows a distorted positive. Kai shows a false negative. Together they show why algorithmic bias is not only about whether a model is “accurate overall.” It is about what the system sees, what it misses, how it describes people, who bears error, and what the institution does next.
 
 <!-- phil-passage-id: ch12-p0006 -->
-That flip is where algorithmic bias becomes a philosophical problem. A model can be accurate about the average case and still be ethically defective in how it treats particular people, how it distributes opportunity over time, whose errors it hides, and whether the people it labels can answer back. In PHIL 123, the point is not to say “the system is biased” and stop. The point is to name what kind of wrong is at stake, what evidence supports that diagnosis, and what kind of repair would actually address it.
+Algorithmic bias becomes a philosophical problem when an accurate model distributes opportunity, errors, or power unjustly. A model can be accurate about the average case and still be ethically defective in how it treats particular people, how it distributes opportunity over time, whose errors it hides, and whether the people it labels can answer back. In PHIL 123, students should name the wrong at stake, support the diagnosis with evidence, and identify a repair that addresses it.
 
 <!-- phil-passage-id: ch12-p0007 -->
 <aside class="textbox shaded" role="note" aria-labelledby="key-point-prediction-gate">
@@ -93,7 +93,7 @@ Here is the chapter’s basic map:
 </table>
 
 <!-- phil-passage-id: ch12-p0015 -->
-This chapter builds toward a **Bias Judgment Audit**. The audit is a tool for your Module 5 and final-project work. To build like a philosopher, you do not merely ask whether a system works. You ask what it is for, what it assumes, whom it burdens, what kind of wrong it could produce, and what an institution would have to change to make the system answerable.
+This chapter builds toward a **Bias Judgment Audit**, a short routine for examining an algorithmic system. To build like a philosopher, you do not merely ask whether a system works. You ask what it is for, what it assumes, whom it burdens, what kind of wrong it could produce, and what an institution would have to change to make the system answerable.
 
 <!-- phil-section-id: ch12-s003 -->
 ## From Data Mirror To Opportunity Gate
@@ -102,16 +102,16 @@ This chapter builds toward a **Bias Judgment Audit**. The audit is a tool for yo
 Shannon Vallor calls modern AI systems a kind of mirror. In [*The AI Mirror*](https://academic.oup.com/book/56292), she argues that machine-learning systems are trained on records of what human beings have already done, written, said, ranked, purchased, hired, arrested, treated, or ignored. The output looks like a fresh judgment. What it actually returns is a compressed reflection of past human and institutional behavior. The system does not know the world as a human participant knows it. It has learned patterns in how people and institutions have recorded the world.
 
 <!-- phil-passage-id: ch12-p0017 -->
-Vallor’s metaphor sharpens the usual claim that AI is trained on data. A mirror shows the room selectively. It reflects some things clearly, blurs others, distorts near the edges, and hides whatever is not standing in front of it. A dashboard trained on students who succeeded at the college in past years learns those students’ patterns of logging in, completing assignments, and asking for help. It learns less about the students who never enrolled, who dropped in the first two weeks, who paid for a semester and vanished, who succeeded through paths the college did not record, or who were discouraged by institutional practices before they became data points. The mirror is partial by design.
+Vallor’s metaphor sharpens the usual claim that AI is trained on data. A mirror shows the room selectively. It reflects some things clearly, blurs others, distorts near the edges, and hides whatever is not standing in front of it. A dashboard trained on students who succeeded at the college in past years learns those students’ patterns of logging in, completing assignments, and asking for help. It learns less about the students who never enrolled, who dropped in the first two weeks, who paid for a semester and vanished, who succeeded through paths the college did not record, or who were discouraged by institutional practices before they became data points. The dashboard cannot represent students or paths the college did not record.
 
 <!-- phil-passage-id: ch12-p0018 -->
 The mirror metaphor should not be misunderstood. AI does not mirror reality itself. It mirrors a record of what institutions chose to measure, preserve, label, ignore, and reward. A system can reproduce an institution’s habits while sounding like an independent judge.
 
 <!-- phil-passage-id: ch12-p0019 -->
-Vallor’s second move changes the ethical stakes. A mirror can be treated as though it were the room itself. The student-success dashboard gives the adviser an incomplete reflection, and the college treats that reflection as objective evidence. An adviser looks at Diego’s risk score and reads it as a fact about Diego, even though the score summarizes what the model has learned to associate with sparse LMS activity. The mirror has become a fact.
+Vallor’s second move changes the ethical stakes. A mirror can be treated as though it were the room itself. The student-success dashboard gives the adviser an incomplete reflection, and the college treats that reflection as objective evidence. An adviser looks at Diego’s risk score and reads it as a fact about Diego, even though the score summarizes what the model has learned to associate with sparse LMS activity. The college has treated that incomplete reflection as factual evidence about Diego.
 
 <!-- phil-passage-id: ch12-p0020 -->
-At the same time, the mirror decides something. The adviser has three hours on Monday. Those three hours are a scarce good. So is a scholarship email. So is a warning that lets a student catch a failing grade before the withdrawal deadline. So is a referral to tutoring, disability services, emergency aid, a food pantry, or a faculty mentor. When the model helps allocate those goods, the dashboard has stopped being only a mirror. It has become a gate.
+At the same time, the mirror decides something. The adviser has three hours on Monday. Those three hours are a scarce good. So is a scholarship email. So is a warning that lets a student catch a failing grade before the withdrawal deadline. So is a referral to tutoring, disability services, emergency aid, a food pantry, or a faculty mentor. When the model helps allocate those goods, the dashboard directs access to them and becomes an opportunity gate.
 
 <!-- phil-passage-id: ch12-p0021 -->
 Lisa Herzog develops this line in [“Algorithmic Bias and Access to Opportunities”](https://research.rug.nl/en/publications/algorithmic-bias-and-access-to-opportunities/) in *The Oxford Handbook of Digital Ethics*. Her argument is that algorithmic systems become especially serious when they mediate access to important goods: jobs, credit, care, education, housing, support, credibility, safety, benefits, and political voice. Bias in a movie recommender is annoying. Bias in a hiring screen, hospital triage system, benefits tool, or college advising dashboard can shape a life.
@@ -153,7 +153,7 @@ Obermeyer’s team showed why that proxy was ethically dangerous. At a given ris
 Notice what this case shows. The model did not simply malfunction. It was accurate about its target. Predicted spending really did track spending. The problem was that spending had been chosen as a proxy for need, and the proxy carried unequal history forward. A sick Black patient could look lower risk because the system had historically spent less on that patient’s care.
 
 <!-- phil-passage-id: ch12-p0032 -->
-The researchers showed that using health-based labels rather than cost-based labels could substantially reduce the disparity. That is an important lesson. The right response was not “algorithms are always bad.” The right response was “the target has to be examined morally, not merely optimized technically.”
+The researchers showed that using health-based labels rather than cost-based labels could substantially reduce the disparity. The lesson is to examine the target morally before optimizing it technically.
 
 <!-- phil-passage-id: ch12-p0033 -->
 The same structure appears in the dashboard case. The college is not indifferent to Diego’s learning. It has chosen LMS clicks as a proxy for engagement because clicks are easy to measure. If the college’s real concern is whether Diego is learning, clicks are a poor stand-in for a student whose reading and thinking mostly happen off the platform.
@@ -176,7 +176,7 @@ The same structure appears in the dashboard case. The college is not indifferent
 </aside>
 
 <!-- phil-passage-id: ch12-p0035 -->
-The [Fairness and Machine Learning](https://fairmlbook.org/) online book by Solon Barocas, Moritz Hardt, and Arvind Narayanan makes the general form of this problem visible. Predictive models optimize the target you give them. The target is a definition of the problem, and the definition of the problem is a normative choice about what counts and what does not. When the choice is between a clean target the model can hit and a messier concept the institution actually cares about, the clean target usually wins. The messier concept quietly gets replaced.
+The [Fairness and Machine Learning](https://fairmlbook.org/) online book by Solon Barocas, Moritz Hardt, and Arvind Narayanan makes the general form of this problem visible. Predictive models optimize the target you give them. The target is a definition of the problem, and the definition of the problem is a normative choice about what counts and what does not. When the choice is between a clean target the model can hit and a messier concept the institution actually cares about, the clean target usually wins. The institution then evaluates the clean target while the fuller human concern it meant to assess drops from view.
 
 <!-- phil-passage-id: ch12-p0036 -->
 The [Stanford Encyclopedia of Philosophy entry on algorithmic fairness](https://plato.stanford.edu/entries/algorithmic-fairness/) treats this as the proxy problem, and it treats it as one of the central issues in the philosophy of fair prediction. Once a proxy replaces the person, you can be accurate about the proxy and still be wrong about the person. That is what Obermeyer’s team documented in health care. It is also what the dashboard risks doing when it treats a click pattern as engagement, when a lender treats a zip code as creditworthiness, when a hiring model treats a resume gap as reliability, when a language tool treats accent as comprehensibility, or when a moderation system treats political or religious language as toxicity without enough context.
@@ -220,7 +220,7 @@ Here is a practical map:
 </aside>
 
 <!-- phil-passage-id: ch12-p0043 -->
-Three labels are especially useful for PHIL 123 projects.
+Three labels distinguish where bias enters a system.
 
 <!-- phil-passage-id: ch12-p0044 -->
 **Latent or system bias** is built into the data, labels, categories, target, or model before a particular decision is made. Obermeyer’s cost proxy is a system-level problem. The issue was not one doctor’s prejudice. The target carried unequal history.
@@ -232,7 +232,7 @@ Three labels are especially useful for PHIL 123 projects.
 **Interaction risk** appears when humans respond to the system. Staff may overtrust scores, ignore students who are not flagged, treat risk labels as character judgments, or use the dashboard to justify resource cuts. A model can change human attention even when the model’s output is advisory.
 
 <!-- phil-passage-id: ch12-p0047 -->
-This map matters because different locations of bias require different repairs. A representation problem may need better data. A proxy problem may need a different target. A deployment mismatch may need local validation. A contestability problem may need appeal rights. A structural opportunity problem may require changing the institution, not the model.
+Different locations of bias require different repairs. A representation problem may need better data. A proxy problem may need a different target. A deployment mismatch may need local validation. A contestability problem may need appeal rights. A structural opportunity problem may require changing the institution, not the model.
 
 <!-- phil-passage-id: ch12-p0048 -->
 <aside class="textbox shaded" role="note" aria-labelledby="key-point-locate-bias">
@@ -277,16 +277,16 @@ The dashboard case can be described a second way that does not run primarily thr
 Iris Marion Young’s [social connection model](https://academic.oup.com/book/4381/chapter/146336683), from *Responsibility for Justice*, argues that many serious harms in modern life are not produced by one identifiable wrongdoer. They are produced by the ordinary functioning of institutions whose rules, defaults, incentives, categories, and feedback loops leave some groups reliably worse off. Young calls this structural injustice. Nobody at the college is malicious. The adviser wants to help. The vendor sold a product intended to save at-risk students. The IT staff followed procurement rules. The problem can still be structural if the system repeatedly routes some students into thin, stigmatizing, or ineffective forms of attention while missing other students whose need does not match the data trail.
 
 <!-- phil-passage-id: ch12-p0059 -->
-This fixes the Diego/Kai case. Diego is not simply receiving less attention. He may receive the wrong kind of attention: a risk label built from thin proxies rather than a serious understanding of work, childcare, commuting, disability, shared-device access, language, family obligation, or financial pressure. Kai shows the opposite danger: a student can look fine to the dashboard while needing help the system does not know how to see. A biased system can over-detect some students under the wrong description and under-detect others because their need is invisible to the measured features.
+This structural account clarifies the Diego/Kai case. Diego is not simply receiving less attention. He may receive the wrong kind of attention: a risk label built from thin proxies rather than a serious understanding of work, childcare, commuting, disability, shared-device access, language, family obligation, or financial pressure. Kai shows the opposite danger: a student can look fine to the dashboard while needing help the system does not know how to see. A biased system can over-detect some students under the wrong description and under-detect others because their need is invisible to the measured features.
 
 <!-- phil-passage-id: ch12-p0060 -->
-Herzog applies Young’s structural injustice frame directly to algorithmic bias. When a college, hospital, bank, landlord, employer, or public agency uses a model to decide who gets in, the model becomes part of the institutional machinery that shapes opportunity. If the model reflects a history of unequal access, the resulting decisions can reproduce and intensify that history. Herzog uses Robert Merton’s language of **Matthew effects** to describe the pattern. Small advantages compound. A student flagged as promising gets attention, which produces engagement data, which confirms the flag. A student flagged as risky gets generic warning messages, which feel like being watched, which reduce engagement, which confirms the flag. The prediction has helped make itself true.
+Herzog applies Young’s structural injustice frame directly to algorithmic bias. When a college, hospital, bank, landlord, employer, or public agency uses a model to decide who gets in, the model becomes part of the institutional machinery that shapes opportunity. If the model reflects a history of unequal access, the resulting decisions can reproduce and intensify that history. Herzog uses Robert Merton’s language of **Matthew effects** to describe the pattern. Small advantages compound. A student flagged as promising gets attention, which produces engagement data, which confirms the flag. A student flagged as risky gets generic warning messages, which feel like being watched, which reduce engagement, which confirms the flag. The later data can appear to confirm the original flag because the flag helped shape the conditions it records.
 
 <!-- phil-passage-id: ch12-p0061 -->
 Feedback loops are central here. A biased system can create a record that later systems treat as evidence. If Diego is repeatedly marked as risky, receives generic interventions, misses human advising, or is routed into narrower options, later records may confirm the system’s original picture. If Kai is repeatedly missed, her need may only appear after the situation becomes a crisis. Bias becomes self-reinforcing when the output of one decision becomes the input for the next.
 
 <!-- phil-passage-id: ch12-p0062 -->
-Kathleen Creel and Deborah Hellman push the point further in [“The Algorithmic Leviathan”](https://www.cambridge.org/core/journals/canadian-journal-of-philosophy/article/algorithmic-leviathan-arbitrariness-fairness-and-opportunity-in-algorithmic-decisionmaking-systems/3AA0ECA77F8622488E9DB0834287215B). Their argument is that a single algorithmic decision may not obviously wrong someone. What changes is scale and repetition. When college applications, loan applications, job screens, insurance rates, rental applications, and benefits checks all use similar systems with similar proxies and similar assumptions, a person who scores badly on one is likely to score badly on many. Being flagged is no longer a local event. It becomes an institutional condition.
+Kathleen Creel and Deborah Hellman push the point further in [“The Algorithmic Leviathan”](https://www.cambridge.org/core/journals/canadian-journal-of-philosophy/article/algorithmic-leviathan-arbitrariness-fairness-and-opportunity-in-algorithmic-decisionmaking-systems/3AA0ECA77F8622488E9DB0834287215B). Their argument is that a single algorithmic decision may not obviously wrong someone. What changes is scale and repetition. When college applications, loan applications, job screens, insurance rates, rental applications, and benefits checks all use similar systems with similar proxies and similar assumptions, a person who scores badly on one is likely to score badly on many. Repeated scoring across these systems can turn a local flag into a durable barrier across institutions.
 
 <!-- phil-passage-id: ch12-p0063 -->
 The FAccT paper [“Algorithmic Pluralism”](https://arxiv.org/abs/2305.08157), by Shomik Jain, Vinith Suriyakumar, Kathleen Creel, and Ashia Wilson, offers a related move by extending Joseph Fishkin’s theory of opportunity bottlenecks into algorithmic decision-making. Fishkin argues that fair opportunity depends on there being many routes through life’s bottlenecks. If one narrow gate controls whether you can become a nurse, homeowner, engineer, teacher, or small-business owner, then anyone screened out at that gate loses more than one opportunity. Algorithmic systems can narrow gates when many institutions rely on similar screening logic. A single gate can be dangerous even when it is accurate, because it has no redundancy. If it misjudges a person, the person has nowhere else to go.
@@ -341,7 +341,7 @@ The [Stanford Encyclopedia entry on algorithmic fairness](https://plato.stanford
 Choosing a fairness metric is not only a math choice. It is a moral choice about which kind of wrong matters most in the context.
 
 <!-- phil-passage-id: ch12-p0073 -->
-You can feel the trouble coming. Suppose a lender wants applicants from two regions to have the same repayment likelihood at the same score, wants borrowers who would repay to be approved at the same rate in both regions, and wants the same overall approval rate in both places. The mathematics will not always cooperate. In many real settings, especially when base rates differ and predictions are imperfect, several appealing fairness criteria cannot all be satisfied at once. This does not mean fairness is impossible. It means fairness criteria answer different moral questions, and institutions have to decide which tradeoff they can defend.
+Suppose a lender wants applicants from two regions to have the same repayment likelihood at the same score, wants borrowers who would repay to be approved at the same rate in both regions, and wants the same overall approval rate in both places. The mathematics will not always cooperate. In many real settings, especially when base rates differ and predictions are imperfect, several appealing fairness criteria cannot all be satisfied at once. This does not mean fairness is impossible. It means fairness criteria answer different moral questions, and institutions have to decide which tradeoff they can defend.
 
 <!-- phil-passage-id: ch12-p0074 -->
 Selbst and colleagues make a related but distinct point in [“Fairness and Abstraction in Sociotechnical Systems”](https://doi.org/10.1145/3287560.3287598). Even when a fairness metric is picked and a model is tuned to satisfy it, the metric is defined at the level of the model. The world the model enters is not the world the metric described. A hiring model that is calibrated on training data can still produce unfair results once it is deployed inside an actual workplace, with actual managers, applicant behavior, incentives, and downstream consequences. Their warning is that treating fairness as a property of the model alone hides the parts of the problem that live outside the model’s boundary.
@@ -350,7 +350,7 @@ Selbst and colleagues make a related but distinct point in [“Fairness and Abst
 The same structure appears when the scarce good is speech, visibility, or credibility. In ACL 2024, Bang, Chen, Lee, and Fung’s [“Measuring Political Bias in Large Language Models”](https://aclanthology.org/2024.acl-long.600/) argues that political bias can appear in both what a model says and how it says it. A 2024 FAccT paper on [algorithmic arbitrariness in content moderation](https://arxiv.org/html/2402.16979v1) shows a related risk in moderation systems: different classifiers can perform similarly on average while assigning conflicting toxicity labels to the same content. A 2026 *npj Artificial Intelligence* study by Maarten Buyl and colleagues, [“Large language models reflect the ideology of their creators”](https://www.nature.com/articles/s44387-025-00048-0), finds that LLM outputs can reflect differences across regions, languages, and design choices. These examples broaden the chapter’s frame. Automated systems can classify beliefs, speech, religion, politics, or worldview through rules the affected people may not see.
 
 <!-- phil-passage-id: ch12-p0076 -->
-Keep this part compact. The chapter is not mainly about political bias in chatbots. The lesson is that algorithmic bias can involve worldview as well as demographic categories. A system can distribute credibility, visibility, or suspicion in ways that matter even when no one is denied a loan or a job.
+Political bias in chatbots is one illustration. Algorithmic bias can involve worldview as well as demographic categories. A system can distribute credibility, visibility, or suspicion in ways that matter even when no one is denied a loan or a job.
 
 <!-- phil-passage-id: ch12-p0077 -->
 Return to the dashboard. Suppose the college wants its risk scores to satisfy predictive parity. Students at the same score complete at the same rate across every group. That sounds reassuring. It is still compatible with the model concentrating false-negative errors on working-adult students, so that the students most likely to be missed by the system are the ones already fighting the hardest to stay in school. Predictive parity is a real fairness property, and it is not always the property that helps the person the model gets wrong.
@@ -420,7 +420,7 @@ Creel and Hellman’s structural argument explains the same problem at ecosystem
 </table>
 
 <!-- phil-passage-id: ch12-p0092 -->
-Contestability also asks about the human loop. A system with a nominal human reviewer who has three seconds per case and no authority to reverse the model is not a contested system. It is an automated system dressed up as a supervised one. A real human loop requires time, training, standing to override, and consequences when the override is ignored. A loop without those elements does not function as oversight; it functions as a stamp.
+Contestability also asks about the human loop. A system with a nominal human reviewer who has three seconds per case and no authority to reverse the model is not a contested system. It is an automated system dressed up as a supervised one. A real human loop requires time, training, standing to override, and consequences when the override is ignored. Without those elements, the loop cannot provide oversight; it merely validates the model's decision.
 
 <!-- phil-passage-id: ch12-p0093 -->
 Return once more to Diego. Suppose the dashboard is well tuned. Suppose the college has thought about individual respect, structural opportunity, and error distribution. Suppose the model has been calibrated and the proxy has been revised. Diego still might have no idea he was scored. He might have no idea what pushed him to the top of the outreach queue. If an adviser lets slip that the system had him flagged as high risk, he might have no way to see the flag, correct the record, or ask what would make it change. On the four-wrongs map, that is the procedural wrong. Even if the outreach helps him, the invisibility of the scoring erodes his standing as someone who can answer for himself in the institution making decisions about him.
@@ -432,7 +432,7 @@ NIST’s report points institutions toward this kind of accountability. It treat
 ## Technical Repair, Moral Repair, And Refusal
 
 <!-- phil-passage-id: ch12-p0095 -->
-A student who sees a biased system often asks, “How do we fix the model?” That is a good question. It is not always the whole question. Technical repair is not always moral repair.
+A student who sees a biased system often asks, “How do we fix the model?” A technical repair may correct a model while leaving the institution's proxy, workflow, or opportunity gate unchanged.
 
 <!-- phil-passage-id: ch12-p0096 -->
 <aside class="textbox shaded textbox--framework-map" role="note" aria-labelledby="framework-map-repair-options">
@@ -457,13 +457,13 @@ This table helps avoid a common mistake. A model can be technically repaired whi
 The reverse can also happen. An institution may make a moral repair that does not look like a model update. A college might decide that the dashboard can suggest outreach but cannot label students in advising notes. It might require advisers to ask students about work, childcare, device access, disability, and transportation before treating a risk score as evidence. It might give students a way to see and correct records. It might hire more advisers instead of using the model to ration attention more efficiently. Those are repairs to the institution, not only to the code.
 
 <!-- phil-passage-id: ch12-p0099 -->
-Building like a philosopher means matching the repair to the wrong. If the wrong is a bad proxy, revise the proxy. If the wrong is unequal error burden, inspect errors and change thresholds. If the wrong is disrespect, change how people are classified and heard. If the wrong is structural opportunity, create alternative routes and reduce bottlenecks. If the wrong is procedural, make the system contestable. If the wrong cannot be repaired without making people subject to an illegitimate gate, refuse the system.
+Building like a philosopher means matching the repair to the wrong: revise a bad proxy; inspect errors and change thresholds for unequal error burdens; change classifications and hearing processes for disrespect; create alternative routes and reduce bottlenecks for structural opportunity; make procedural systems contestable; and refuse a system that cannot be repaired without making people subject to an illegitimate gate.
 
 <!-- phil-section-id: ch12-s012 -->
 ## A Bias Judgment Audit
 
 <!-- phil-passage-id: ch12-p0100 -->
-You can carry the chapter’s work into your Applied Ethics Case Briefing as a short judgment routine. When you find an algorithmic system in a documented case, walk through these questions in order and write short answers. The strongest answers can help you decide whether the case is ready for your Module 5 Case Dossier and what evidence belongs in your Module 6 Evidence and Comparison Record.
+Use the **Bias Judgment Audit** when you examine an algorithmic system in a documented case. Walk through these questions in order and write short answers. The answers identify the question requiring judgment and the evidence needed to answer it.
 
 <!-- phil-passage-id: ch12-p0101 -->
 1. **The gate.** What scarce good does this system allocate? Attention, jobs, credit, care, housing, benefits, information, credibility, safety, mobility, education, visibility, or discipline?
@@ -527,7 +527,7 @@ You can carry the chapter’s work into your Applied Ethics Case Briefing as a s
 <!-- phil-passage-id: ch12-p0104 -->
 <aside class="textbox exercises" aria-labelledby="try-it-bias-judgment-audit">
 <h3 id="try-it-bias-judgment-audit">Try It: Bias Judgment Audit</h3>
-<p>Pick one algorithmic system in your field. Answer the audit questions in one or two sentences each. Then finish this sentence in one paragraph: “The central ethical wrong in this system is best described as ______, because ______, and the institution should ______.” Bring your answer to Module 5 discussion and be ready to defend which wrong you named.</p>
+<p>Pick one algorithmic system in your field. Answer the audit questions in one or two sentences each. Then finish this sentence in one paragraph: “The central ethical wrong in this system is best described as ______, because ______, and the institution should ______.” Explain why the wrong you name is central.</p>
 </aside>
 
 <!-- phil-passage-id: ch12-p0105 -->
@@ -552,10 +552,10 @@ You do not need to have every answer. You do need to be able to say which wrong 
 Institutions have several repair paths. They can improve models, revise proxies, rebalance error burdens, tune fairness metrics, build in appeal, create alternative routes, or refuse to deploy a system when its use cannot be justified. Different wrongs call for different repairs, and the wrongs are not always the same in different fields. A hiring gate wrongs people in one way. A hospital triage system wrongs them in another. A dashboard in an advising office wrongs them in a third. Bringing philosophy to these systems means naming the wrong precisely enough that repair has somewhere to start.
 
 <!-- phil-passage-id: ch12-p0108 -->
-Diego and Kai are still on that Monday-morning list, sorted and unsorted by a model built with good intentions. Whether the college owes them something different depends on which wrong you find in the case and whether you can defend the diagnosis when someone at the college pushes back. Maybe the dashboard should be redesigned. Maybe it should be used only as a weak signal. Maybe students should be told and given a way to correct their records. Maybe more advising capacity is the real repair. Maybe the system should not be used for some decisions at all.
+Diego and Kai are still on that Monday-morning list, sorted and unsorted by a model built with good intentions. Whether the college owes them something different depends on which wrong you find in the case and whether you can defend the diagnosis when someone at the college pushes back. Possible repairs include redesigning the dashboard, using it only as a weak signal, giving students notice and a way to correct their records, adding advising capacity, or withdrawing it from some decisions.
 
 <!-- phil-passage-id: ch12-p0109 -->
-The point is not to reject every algorithmic system. The point is to stop treating prediction as morally neutral once it becomes an opportunity gate. A philosopher asks what the system reflects, what it measures, whom it misdescribes, who bears error, who can answer back, and what kind of repair would actually address the wrong.
+Prediction becomes morally non-neutral when an institution treats it as an opportunity gate. A philosopher asks what the system reflects, what it measures, whom it misdescribes, who bears error, who can answer back, and what kind of repair would actually address the wrong.
 
 <!-- phil-section-id: ch12-s013 -->
 ## References

@@ -15,7 +15,7 @@
     "slug": "philosophical-practice-and-ai"
   },
   "path": "/chapter/ai-as-an-interlocutor/",
-  "wordCount": 4373,
+  "wordCount": 4368,
   "readingMinutes": 20,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "059f059bb95e9a1f4d22884272c96fec252bd4b1a29a0bc423f2f62fb012c88c",
-    "canonicalMarkdownSha256": "f145d181b1f34d01ff6fb0b77ddd568039fdf7d75afc10814887b2654a6b2e29",
+    "canonicalMarkdownSha256": "2b818bd4f2552d5b6e6d20273256e6b48de72e859095f98d1f52a3f9b8a03ad9",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

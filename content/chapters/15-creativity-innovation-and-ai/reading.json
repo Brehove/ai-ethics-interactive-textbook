@@ -4,9 +4,9 @@
   "slug": "creativity-innovation-and-ai",
   "title": "Creativity, Innovation, and AI: Authorship, Judgment, and the Ethics of Generated Work",
   "language": "en",
-  "sourceSha256": "d66cdf9e2a4dfd7a34c707d81267f9ef3588005d720b1b0737bc55d319a58344",
-  "plainTextSha256": "07bdfbd68bf7e25f9da82c90ebf509d33ff0a71816cf70bfc9c6a1497c3b7b5b",
-  "wordCount": 10045,
+  "sourceSha256": "67d0d219a068aaedb8a9b4fed0b93de4cd083769403000416183be1fad7dcb19",
+  "plainTextSha256": "6c9ab678f1c67bd483486d7a82204d5727833b3c7cbc9aedc23af43583bd4b68",
+  "wordCount": 9995,
   "readingMinutes": 45,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -58,7 +58,7 @@
       "type": "paragraph",
       "sectionId": null,
       "level": null,
-      "text": "That is why this chapter belongs in PHIL 123. To build like a philosopher in a creative or innovative field is to design a practice with visible assumptions, clear standards, accountable judgment, and responsibility to affected people. Students, designers, clinics, publishers, and scientific teams all face the same broad demand when AI enters the work: describe the practice before defending it."
+      "text": "To build like a philosopher in a creative or innovative field is to design a practice with visible assumptions, clear standards, accountable judgment, and responsibility to affected people. Designers, clinics, publishers, scientific teams, and other AI users all face the same broad demand when AI enters the work: describe the practice before defending it."
     },
     {
       "id": "ch15-s001",
@@ -121,14 +121,14 @@
       "type": "paragraph",
       "sectionId": "ch15-s001",
       "level": null,
-      "text": "The chapter gives a conceptual genealogy of the debate. Older discussions of creativity often focused on inspiration, genius, originality, or the artwork itself. Contemporary philosophy of creativity asks more carefully whether creativity belongs to a product, process, person, or practice. Margaret Boden gives a process vocabulary. Berys Gaut gives a value-and-agency vocabulary. Copyright and authorship debates ask what kind of human judgment belongs in a work. Labor and training-data debates ask whose prior work made the system useful. Scientific innovation cases such as AlphaFold ask how AI can extend inquiry inside a validated practice. Responsible innovation asks how new capabilities should be steered."
+      "text": "Older discussions of creativity often focused on inspiration, genius, originality, or the artwork itself. Contemporary philosophy of creativity asks more carefully whether creativity belongs to a product, process, person, or practice. Margaret Boden gives a process vocabulary. Berys Gaut gives a value-and-agency vocabulary. Copyright and authorship debates ask what kind of human judgment belongs in a work. Labor and training-data debates ask whose prior work made the system useful. Scientific innovation cases such as AlphaFold ask how AI can extend inquiry inside a validated practice. Responsible innovation asks how new capabilities should be steered."
     },
     {
       "id": "ch15-p0014",
       "type": "paragraph",
       "sectionId": "ch15-s001",
       "level": null,
-      "text": "The chapter follows that chain: sameness and slop, Boden and Gaut, human judgment, labor and copyright, AlphaFold as a positive innovation case, and a practical framework students can use in their own fields."
+      "text": "Together, these approaches connect apparent novelty to process, human judgment, labor, copyright, validated innovation, and responsible practice."
     },
     {
       "id": "ch15-s002",
@@ -415,7 +415,7 @@
       "type": "paragraph",
       "sectionId": "ch15-s004",
       "level": null,
-      "text": "For PHIL 123, Gaut's lesson can be turned into four questions:"
+      "text": "Gaut's account yields four questions:"
     },
     {
       "id": "ch15-p0053",
@@ -933,14 +933,14 @@
       "type": "paragraph",
       "sectionId": "ch15-s009",
       "level": null,
-      "text": "The same analysis works for a student project. In graphic design, evaluate the creative process the generated logo supports, whether it imitates living artists, what the client understands, whether the designer can explain the choices, and how the field changes when clients expect dozens of instant options. In education, evaluate whether the tutor supports learning or replaces practice, what students disclose, what teachers can evaluate, and what skills might atrophy. In science, evaluate the validation, access, credit, and uncertainty practices that make a useful prediction part of responsible inquiry."
+      "text": "The same analysis travels across fields. In graphic design, evaluate the creative process the generated logo supports, whether it imitates living artists, what the client understands, whether the designer can explain the choices, and how the field changes when clients expect dozens of instant options. In education, evaluate whether the tutor supports learning or replaces practice, what students disclose, what teachers can evaluate, and what skills might atrophy. In science, evaluate the validation, access, credit, and uncertainty practices that make a useful prediction part of responsible inquiry."
     },
     {
       "id": "ch15-p0122",
       "type": "paragraph",
       "sectionId": "ch15-s009",
       "level": null,
-      "text": "By the end of that analysis, the student claim should connect the process the tool supports, the human judgment that remains visible, and the field conditions that make the use responsible or irresponsible. A claim that lacks one of those pieces is too thin for PHIL 123."
+      "text": "A defensible claim connects the process the tool supports, the human judgment that remains visible, and the field conditions that make the use responsible or irresponsible. Without those pieces, the claim is too thin to support an ethical judgment."
     },
     {
       "id": "ch15-p0123",
@@ -968,7 +968,7 @@
       "type": "paragraph",
       "sectionId": "ch15-s009",
       "level": null,
-      "text": "A responsible account can say both sides plainly. AI can extend creativity and innovation when it helps people explore, test, validate, or communicate within a responsible practice. It can degrade a field when it hides labor, weakens learning, floods attention systems, or produces outputs no one has properly judged. In a project, students should identify the tool and field standard, show where human judgment appears, and explain who is affected and how the practice can respond."
+      "text": "A responsible account can say both sides plainly. AI can extend creativity and innovation when it helps people explore, test, validate, or communicate within a responsible practice. It can degrade a field when it hides labor, weakens learning, floods attention systems, or produces outputs no one has properly judged. A responsible analysis identifies the tool and field standard, shows where human judgment appears, and explains who is affected and how the practice can respond."
     },
     {
       "id": "ch15-s010",

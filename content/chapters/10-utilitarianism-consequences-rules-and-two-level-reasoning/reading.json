@@ -4,9 +4,9 @@
   "slug": "utilitarianism-consequences-rules-and-two-level-reasoning",
   "title": "Utilitarianism: Consequences, Rules, and Two-Level Reasoning",
   "language": "en",
-  "sourceSha256": "e8cc8654d71b43829ae9085026188eb4dc6be30ceb878f6151b7f655775c32a3",
-  "plainTextSha256": "f77cba3ba775b70bf64a8482fb22063647908eebc356af17348c67172f962cf3",
-  "wordCount": 7372,
+  "sourceSha256": "821280319ebf4d087d331adba74de148bd92ad553f092aa6ea0f8e6d9cf7a662",
+  "plainTextSha256": "c700c067d7afcc89394d681465cbde27eb0e3eb3ae67052be86df185853b3cd6",
+  "wordCount": 7363,
   "readingMinutes": 33,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -296,7 +296,7 @@
       "type": "paragraph",
       "sectionId": "ch10-s006",
       "level": null,
-      "text": "For our purposes, Mill leaves us with a richer utilitarianism than Bentham's. Happiness remains the ultimate standard, while dignity, higher human capacities, justice, individual liberty, and stable secondary principles play a larger role in moral reasoning."
+      "text": "Mill leaves us with a richer utilitarianism than Bentham's. Happiness remains the ultimate standard, while dignity, higher human capacities, justice, individual liberty, and stable secondary principles play a larger role in moral reasoning."
     },
     {
       "id": "ch10-s007",
@@ -345,7 +345,7 @@
       "type": "paragraph",
       "sectionId": "ch10-s007",
       "level": null,
-      "text": "A helpful move at this point is to separate two questions. The criterion of rightness identifies which action would in fact be morally right. A decision procedure guides ordinary agents who must choose before they know the actual consequences. Bentham concedes that strict felicific calculation need not precede every judgment. Practical guidance under uncertainty can therefore rely on simpler procedures even while the underlying criterion remains exposed to the demandingness and concentrated-harm objections."
+      "text": "The criterion of rightness and the decision procedure need to be separated. The criterion of rightness identifies which action would in fact be morally right. A decision procedure guides ordinary agents who must choose before they know the actual consequences. Bentham concedes that strict felicific calculation need not precede every judgment. Practical guidance under uncertainty can therefore rely on simpler procedures even while the underlying criterion remains exposed to the demandingness and concentrated-harm objections."
     },
     {
       "id": "ch10-s008",
@@ -429,7 +429,7 @@
       "type": "paragraph",
       "sectionId": "ch10-s009",
       "level": null,
-      "text": "The intuitive level is where most of your moral life happens. At this level, you rely on stable moral principles you have already internalized, including honesty, promise-keeping, respect for trust, and protection of people who cannot easily protect themselves. These principles do good work over the long run because they are stable, learnable, and reliable enough for other people to depend on. They also spare you the cognitive load and temptations of calculating every choice from scratch. Bentham's practical concession and Mill's secondary principles are historical precursors to this account, though Hare gives intuitive principles a more substantial role than disposable rules of thumb."
+      "text": "The intuitive level is where most of your moral life happens. At this level, you rely on stable moral principles you have already internalized, including honesty, promise-keeping, respect for trust, and protection of people who cannot easily protect themselves. These principles protect welfare over the long run because they are stable, learnable, and reliable enough for other people to depend on. They also spare you the cognitive load and temptations of calculating every choice from scratch. Bentham's practical concession and Mill's secondary principles are historical precursors to this account, though Hare gives intuitive principles a more substantial role than disposable rules of thumb."
     },
     {
       "id": "ch10-p0050",
@@ -478,7 +478,7 @@
       "type": "paragraph",
       "sectionId": "ch10-s009",
       "level": null,
-      "text": "The decisive comparison concerns trust, instructional value, and enforceability under general adoption. Limited-retention opt-in appears to have the strongest expected welfare balance on the stipulated evidence because it reduces concentrated privacy risk while preserving a bounded route to instructional review. That verdict depends on understandable consent, enforced access rules, and full support for students who decline. New evidence about participation, enforcement, learning gains, or privacy risk could change the comparison."
+      "text": "The committee must compare trust, instructional value, and enforceability under general adoption. Limited-retention opt-in appears to have the strongest expected welfare balance on the stipulated evidence because it reduces concentrated privacy risk while preserving a bounded route to instructional review. That verdict depends on understandable consent, enforced access rules, and full support for students who decline. New evidence about participation, enforcement, learning gains, or privacy risk could change the comparison."
     },
     {
       "id": "ch10-p0057",
@@ -562,7 +562,7 @@
       "type": "paragraph",
       "sectionId": "ch10-s010",
       "level": null,
-      "text": "Carry one unresolved question into the Kant chapter and the framework comparison: would the vulnerable person remain protected if sacrificing them produced the better aggregate? Utilitarianism protects through welfare-promoting rules and decision procedures. Kantian ethics treats the person's rational agency and dignity as grounds the aggregate cannot replace."
+      "text": "Keep one unresolved question in view: would the vulnerable person remain protected if sacrificing them produced the better aggregate? Utilitarianism protects through welfare-promoting rules and decision procedures. Kantian ethics treats the person's rational agency and dignity as grounds the aggregate cannot replace."
     },
     {
       "id": "ch10-s011",

@@ -4,10 +4,10 @@
   "slug": "practical-wisdom-after-aristotle",
   "title": "Practical Wisdom After Aristotle: Vallor, Askell, and the Problem of Machine Judgment",
   "language": "en",
-  "sourceSha256": "8e8fa2c2afcfe25b345a410f84a8b04ad22295b7a59ae4ff9a324e317a9b6be0",
-  "plainTextSha256": "ff2900850efacfdc649da6e514a83297b1068dce392c9e91d9cae8e394187ade",
-  "wordCount": 6805,
-  "readingMinutes": 31,
+  "sourceSha256": "647d7b7cd4690bff360089575a525fecb41cf54d429d53fe285e2677f6216320",
+  "plainTextSha256": "f6b5333792cfa150e4da677408e4a14e73f5f3f6f9c61e0174488655af4839ae",
+  "wordCount": 6678,
+  "readingMinutes": 30,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -86,7 +86,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s001",
       "level": null,
-      "text": "The chapter's task is to hold those adaptations together long enough to see what they share, and then to mark carefully where the analogy breaks. Because a lot depends on whether we let it break."
+      "text": "The chapter compares those adaptations long enough to see what they share, then marks where the analogy breaks. The comparison only works if it stops where the analogy fails."
     },
     {
       "id": "ch08-s002",
@@ -100,7 +100,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s002",
       "level": null,
-      "text": "The previous chapter walked you through Aristotle's virtue ethics in detail. A short reminder is enough here."
+      "text": "Aristotle's virtue ethics needs only a short reminder here."
     },
     {
       "id": "ch08-p0010",
@@ -128,14 +128,14 @@
       "type": "paragraph",
       "sectionId": "ch08-s002",
       "level": null,
-      "text": "Two features of Aristotle's account are worth carrying forward. First, practical wisdom takes time. It is cultivated through repeated action, in the company of models who already have some of it, inside communities that recognize what a good life looks like. Second, practical wisdom is not the property of any single virtue. It is the connective tissue that lets courage, honesty, care, and self-control show up rightly in the moment. Without it, courage tips into recklessness and honesty tips into cruelty."
+      "text": "Practical wisdom takes time. It is cultivated through repeated action, in the company of models who already have some of it, inside communities that recognize what a good life looks like. Practical wisdom is not the property of any single virtue. It is the connective tissue that lets courage, honesty, care, and self-control show up rightly in the moment. Without it, courage tips into recklessness and honesty tips into cruelty."
     },
     {
       "id": "ch08-p0014",
       "type": "paragraph",
       "sectionId": "ch08-s002",
       "level": null,
-      "text": "Aristotle assumed all of this was happening in a human being who was becoming something over a lifetime. That assumption is doing quiet work in his account. Later in the chapter it will start to matter loudly."
+      "text": "Aristotle assumed that all of this unfolded in a human being across a lifetime. That assumption makes the comparison with a trained model difficult."
     },
     {
       "id": "ch08-s003",
@@ -177,7 +177,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s003",
       "level": null,
-      "text": "That updating happens along five interconnected lines. Each one describes something technology does to human moral life that Aristotle could recognize as a problem, even if the specific tools would surprise him."
+      "text": "Vallor identifies five ways technology changes human moral life. Aristotle could recognize each problem even though the particular tools would surprise him."
     },
     {
       "id": "ch08-s004",
@@ -198,7 +198,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s004",
       "level": null,
-      "text": "Technologies shape moral attention because they foreground some features of a situation and hide others. This is not a conspiracy. It is a design consequence."
+      "text": "Technologies shape moral attention because they foreground some features of a situation and hide others. The effect follows from interface design."
     },
     {
       "id": "ch08-p0022",
@@ -485,7 +485,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s009",
       "level": null,
-      "text": "Something odd starts to happen when the same vocabulary shows up on the other side of the interface."
+      "text": "The vocabulary of practical wisdom is also being applied to the AI system itself."
     },
     {
       "id": "ch08-p0058",
@@ -534,7 +534,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s010",
       "level": null,
-      "text": "Two features of the Constitution are worth attending to for the chapter's purposes."
+      "text": "The Constitution uses virtue-ethical vocabulary and explains when Anthropic expects rules or judgment to guide Claude."
     },
     {
       "id": "ch08-p0064",
@@ -555,14 +555,14 @@
       "type": "paragraph",
       "sectionId": "ch08-s010",
       "level": null,
-      "text": "You can already hear an echo. Aristotle thought practical wisdom was needed where rules ran out. Vallor thought technomoral wisdom was needed because rigid procedures cannot track novel technosocial cases. Anthropic is now saying, about Claude, that something like judgment is needed because rules cannot cover every situation the model will face, and that hard constraints backstop the judgment for the cases where the stakes leave no room for error."
+      "text": "Each account treats rules as incomplete in some situations. Aristotle thought practical wisdom was needed where rules ran out. Vallor thought technomoral wisdom was needed because rigid procedures cannot track novel technosocial cases. Anthropic is now saying, about Claude, that something like judgment is needed because rules cannot cover every situation the model will face, and that hard constraints backstop the judgment for the cases where the stakes leave no room for error."
     },
     {
       "id": "ch08-p0067",
       "type": "paragraph",
       "sectionId": "ch08-s010",
       "level": null,
-      "text": "The parallel has evidence behind it. Anthropic's public materials about Claude's Constitution and character use virtue-ethical vocabulary to describe what the company wants Claude to become behaviorally. Something Aristotelian is being tried at model scale."
+      "text": "The parallel has evidence behind it. Anthropic's public materials about Claude's Constitution and character use virtue-ethical vocabulary to describe what the company wants Claude to become behaviorally. That evidence does not establish that Claude has Aristotelian virtue."
     },
     {
       "id": "ch08-p0068",
@@ -611,7 +611,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s011",
       "level": null,
-      "text": "Both projects are gambles. Both projects also make sense in a broadly virtue-ethical vocabulary. Aristotle would recognize the difference between someone who does the right thing because they have been told to, and someone who does the right thing because they understand what makes it right. Vallor would recognize the difference between habituated moral skill and rote compliance. Anthropic is trying to move Claude away from compliance-mimicking behavior and toward something that looks more like judgment guided by internalized values."
+      "text": "These two projects use a broadly virtue-ethical vocabulary. Aristotle would recognize the difference between someone who does the right thing because they have been told to, and someone who does the right thing because they understand what makes it right. Vallor would recognize the difference between habituated moral skill and rote compliance. Anthropic is trying to move Claude away from compliance-mimicking behavior and toward something that looks more like judgment guided by internalized values."
     },
     {
       "id": "ch08-p0074",
@@ -625,7 +625,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s011",
       "level": null,
-      "text": "This is where the difference between constitution-as-document and model-as-behavior becomes philosophically important. A constitution can articulate what character Anthropic hopes Claude will have. Training can push the model in that direction. Evaluation can measure how far it has moved. But the character, if that is even the right word, is a property of the trained system, and the trained system is not the document. Reading the Constitution tells you what Anthropic aspires to. It does not tell you what Claude actually does in any given interaction."
+      "text": "A constitution can articulate what character Anthropic hopes Claude will have. Training can push the model in that direction. Evaluation can measure how far it has moved. But the character, if that is even the right word, is a property of the trained system, and the trained system is not the document. Reading the Constitution tells you what Anthropic aspires to. It does not tell you what Claude actually does in any given interaction."
     },
     {
       "id": "ch08-p0076",
@@ -674,14 +674,14 @@
       "type": "paragraph",
       "sectionId": "ch08-s012",
       "level": null,
-      "text": "The Aristotelian vocabulary can describe some of what Anthropic is trying to build without settling the question of whether Claude is a subject of virtue at all. Anthropic is trying to shape Claude's dispositions. Anthropic is trying to give Claude something like values that generalize. Anthropic is trying to make Claude's behavior context-sensitive in a way that resembles judgment. All of that is language a virtue ethicist can use to describe an engineering project. None of it settles the metaphysical question of whether the resulting system is a moral agent with character, or whether it is a very sophisticated behavior-producer that happens to be describable in character-shaped language."
+      "text": "The Aristotelian vocabulary can describe some of what Anthropic is trying to build without settling the question of whether Claude is a subject of virtue at all. Anthropic is trying to shape Claude's dispositions and to give Claude something like values that generalize across cases; it also seeks behavior that responds to context in a way that resembles judgment. A virtue ethicist can use that language to describe an engineering project. That description does not settle the metaphysical question of whether the resulting system is a moral agent with character, or whether it is a very sophisticated behavior-producer that happens to be describable in character-shaped language."
     },
     {
       "id": "ch08-p0082",
       "type": "paragraph",
       "sectionId": "ch08-s012",
       "level": null,
-      "text": "For the purposes of this chapter, three things are worth marking clearly."
+      "text": "The analogy has three limits."
     },
     {
       "id": "ch08-p0083",
@@ -716,7 +716,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s012",
       "level": null,
-      "text": "The analogy break sets the comparison's limit."
+      "text": "These differences keep the analogy from establishing that Claude has practical wisdom."
     },
     {
       "id": "ch08-s013",
@@ -765,7 +765,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s013",
       "level": null,
-      "text": "Human beings shape human character through parents, friends, teachers, communities, institutions, texts, examples, and slow habituation. All of that is contested. All of that is political. Machine character is being shaped in a smaller, more concentrated way, on faster timelines, by fewer people, using tools those people are still figuring out. If the analogy to human virtue has any purchase at all here, then the analogy to the politics of human character formation has some purchase too. That is a good place for philosophy students to be paying attention."
+      "text": "Parents, friends, teachers, communities, institutions, texts, examples, and slow habituation shape human character, and those processes are contested and political. A smaller group shapes the behavior of AI systems on faster timelines, using tools they are still figuring out. The comparison directs attention to who has the power to form AI behavior and how that power should be held accountable."
     },
     {
       "id": "ch08-s014",
@@ -779,14 +779,14 @@
       "type": "paragraph",
       "sectionId": "ch08-s014",
       "level": null,
-      "text": "Return one last time to the student essay."
+      "text": "Maya's personal statement makes this difference concrete."
     },
     {
       "id": "ch08-p0095",
       "type": "paragraph",
       "sectionId": "ch08-s014",
       "level": null,
-      "text": "Maya has read this chapter and has to make her decisions. She has to write her personal statement. She has to figure out what she wants Claude's help to look like. She has to decide about disclosure. She has to notice what her use of Claude is doing to her own writing practice across the semester. She has to notice who is in the room she is not seeing."
+      "text": "Maya has read this chapter and has decisions to make. She must write the personal statement, determine what role Claude's help will have, and decide about disclosure. She also has to notice how her use of Claude is affecting her writing practice across the semester and who the tool leaves out of her attention."
     },
     {
       "id": "ch08-p0096",
@@ -814,7 +814,7 @@
       "type": "paragraph",
       "sectionId": "ch08-s014",
       "level": null,
-      "text": "The point of the chapter is to leave her, and you, better prepared to notice what the environment is doing, to name what the tool is doing, and to keep the human work of judgment where it belongs."
+      "text": "The practice is to notice how the environment and the tool shape a decision, then leave the ethical judgment with the person whose life it affects."
     },
     {
       "id": "ch08-p0100",

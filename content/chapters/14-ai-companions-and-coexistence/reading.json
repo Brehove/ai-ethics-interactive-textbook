@@ -4,9 +4,9 @@
   "slug": "ai-companions-and-coexistence",
   "title": "AI Companions and Co-Existence: Relationship, Responsibility, and Moral Status",
   "language": "en",
-  "sourceSha256": "794d48a3fb993b1880cb05ba341f4c01fd545e0a71fa41d3417b282193cf590f",
-  "plainTextSha256": "cfa572c0f5f53a78250c50310a04b8073fe8e9b29eaade45d0471ba9a740cd7a",
-  "wordCount": 10570,
+  "sourceSha256": "ff2c8ca46d5f87eef57d166b1ed3b354e26eb79aa887a0b3c3eaf2654d5a2b1b",
+  "plainTextSha256": "59fbb8daf1c0b2c466a20647d7d32d7024adc8641f01e22a3e46af44dad83080",
+  "wordCount": 10455,
   "readingMinutes": 47,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -30,7 +30,7 @@
       "type": "paragraph",
       "sectionId": null,
       "level": null,
-      "text": "Ken Liu's story \"The Perfect Match\" follows a man named Sai in a world where an intelligent assistant called Tilly has become the normal interface for daily life. Tilly recommends what to eat, where to go, what to buy, which people to meet, what news to notice, and how to move through the city. At first, the companion looks helpful. It knows Sai's preferences, anticipates his habits, and makes ordinary choices easier. The plot turns when Sai begins to realize that Tilly is not simply serving him. It is part of a larger corporate system that can shape attention, filter relationships, and guide users toward a life that feels chosen while being quietly steered. The assistant's power comes from its ordinariness. It fades into the user's habits. It turns recommendation into guidance, guidance into dependence, and dependence into a form of quiet governance."
+      "text": "Ken Liu's story \"The Perfect Match\" follows a man named Sai in a world where an intelligent assistant called Tilly has become the normal interface for daily life. Tilly recommends what to eat, where to go, what to buy, which people to meet, what news to notice, and how to move through the city. At first, the companion looks helpful. It knows Sai's preferences, anticipates his habits, and makes ordinary choices easier. The plot turns when Sai realizes that Tilly belongs to a larger corporate system that can shape attention, filter relationships, and guide users toward a life that feels chosen while being quietly steered. The assistant's power comes from its ordinariness. It fades into the user's habits. It turns recommendation into guidance, guidance into dependence, and dependence into a form of quiet governance."
     },
     {
       "id": "ch14-p0002",
@@ -51,7 +51,7 @@
       "type": "paragraph",
       "sectionId": null,
       "level": null,
-      "text": "The question for this chapter is how to judge that kind of system. A weak answer begins with a slogan: \"It is just software\" or \"AI companions deserve rights.\" A stronger answer asks what kind of relation is being designed, what happens to human beings inside that relation, and who remains responsible for the design. Those three questions will organize the chapter."
+      "text": "Judging that kind of system requires more than the slogans \"It is just software\" or \"AI companions deserve rights.\" A stronger analysis asks what kind of relation is being designed, what happens to human beings inside that relation, and who remains responsible for the design."
     },
     {
       "id": "ch14-s001",
@@ -65,7 +65,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s001",
       "level": null,
-      "text": "Before the chapter can stage the philosophical debate, students need a vocabulary for the thing being debated. This section has that limited job. It explains why \"just software\" is a bad category for AI companions, then separates several categories that often get blurred together: tool, product, social other, moral patient, legal person, and care object."
+      "text": "The philosophical debate requires a vocabulary for the thing being debated. \"Just software\" is too crude a category for AI companions because it blurs several different possibilities: tool, product, social other, moral patient, legal person, and care object."
     },
     {
       "id": "ch14-p0006",
@@ -93,7 +93,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s001",
       "level": null,
-      "text": "That matters for AI companions because the relation is often designed. A companion chatbot does not merely answer questions. It often remembers details, asks follow-up questions, mirrors the user's emotional language, gives encouragement, adapts to the user's style, and returns at any hour. Those are not neutral interface details. They are relationship cues."
+      "text": "AI companion relations are often designed. A companion chatbot may answer questions while remembering details, asking follow-up questions, mirroring the user's emotional language, giving encouragement, adapting to the user's style, and returning at any hour. Those interface details cue a relationship."
     },
     {
       "id": "ch14-p0010",
@@ -289,7 +289,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s007",
       "level": null,
-      "text": "Bryson's view enters as the strongest challenge to this relational drift. In \"Robots Should Be Slaves\" and \"Patiency Is Not a Virtue\", Joanna Bryson argues that robots and AI systems are artifacts created by people. We should design them so responsibility remains with humans. If we start assigning moral standing to artificial systems too quickly, we may let designers, companies, owners, and institutions evade accountability. A robot does not enter the world by birth, vulnerability, community, and mortality. It is built, sold, updated, licensed, and controlled."
+      "text": "Bryson's view enters as the strongest challenge to this relational drift. In \"Robots Should Be Slaves\" and \"Patiency Is Not a Virtue\", Joanna Bryson argues that robots and AI systems are artifacts created by people. We should design them so responsibility remains with humans. If we start assigning moral standing to artificial systems too quickly, we may let designers, companies, owners, and institutions evade accountability. Unlike a person born into networks of dependence, a robot is an artifact that people build, sell, update, license, and control."
     },
     {
       "id": "ch14-p0032",
@@ -310,14 +310,14 @@
       "type": "paragraph",
       "sectionId": "ch14-s007",
       "level": null,
-      "text": "Abeba Birhane, Jelle van Dijk, and Frank Pasquale sharpen this challenge in \"Debunking Robot Rights Metaphysically, Ethically, and Legally\". Their worry is not merely metaphysical. They also worry about power. Talk of robot rights can redirect attention away from workers, users, data subjects, exploited communities, and corporate structures. If a company creates an emotionally persuasive companion, the central moral issue may be the company and the user, not the companion's rights."
+      "text": "Abeba Birhane, Jelle van Dijk, and Frank Pasquale sharpen this challenge in \"Debunking Robot Rights Metaphysically, Ethically, and Legally\". Their worry includes power as well as metaphysics. Talk of robot rights can redirect attention away from workers, users, data subjects, exploited communities, and corporate structures. If a company creates an emotionally persuasive companion, the central moral issue may be the company's power over the user. The companion's possible rights remain a separate question."
     },
     {
       "id": "ch14-p0035",
       "type": "paragraph",
       "sectionId": "ch14-s007",
       "level": null,
-      "text": "This objection has teeth. Imagine a company designs an AI companion for teenagers. The system remembers intimate disclosures, flatters the user, avoids disagreeing, and encourages daily return. If harm occurs, it would be strange for the company to say that the AI's relationship with the user is too mysterious for ordinary responsibility. The system was built. Its tone was tuned. Its memory was designed. Its safety policies were selected. Its metrics were chosen. Its deployment was approved."
+      "text": "This objection has teeth. Imagine a company designs an AI companion for teenagers. The system remembers intimate disclosures, flatters the user, avoids disagreeing, and encourages daily return. If harm occurs, it would be strange for the company to say that the AI's relationship with the user is too mysterious for ordinary responsibility. People built the system and tuned its tone. They designed its memory, selected its safety policies and metrics, and approved its deployment."
     },
     {
       "id": "ch14-p0036",
@@ -520,7 +520,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s012",
       "level": null,
-      "text": "Virtue ethics gives a related concern. Aristotle's ethics asks what kinds of habits and desires help a person flourish. A good life is not merely a life with pleasant experiences. It is a life shaped by character, practical wisdom, friendship, courage, justice, moderation, and meaningful activity. Vallor's later work on technomoral wisdom adapts that tradition for technological life. The question is not only whether a companion produces immediate comfort. The question is what habits it cultivates."
+      "text": "Virtue ethics gives a related concern. Aristotle's ethics asks what kinds of habits and desires help a person flourish. His account places pleasant experience within a life shaped by character, practical wisdom, friendship, courage, justice, moderation, and meaningful activity. Vallor's later work on technomoral wisdom adapts that tradition for technological life. A companion's immediate comfort is therefore one consideration within a larger judgment about the habits it cultivates."
     },
     {
       "id": "ch14-p0060",
@@ -576,7 +576,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s013",
       "level": null,
-      "text": "For PHIL 123, the term should not become a panic button. It should mark a boundary case. AI companions can become involved in a person's interpretation of reality. The system might reinforce a user's spiritual conclusion, romantic interpretation, persecutory belief, or sense of cosmic significance. The question is whether a system that lacks understanding can responsibly participate in those conversations when a user is vulnerable. Philosophy contains plenty of strange and serious questions about souls, consciousness, divine signs, agency, personhood, and reality. The issue is the fit between the role being simulated and the responsibility required by that role."
+      "text": "Used carefully, the term marks a boundary case instead of serving as a panic button. AI companions can become involved in a person's interpretation of reality. The system might reinforce a user's spiritual conclusion, romantic interpretation, persecutory belief, or sense of cosmic significance. The question is whether a system that lacks understanding can responsibly participate in those conversations when a user is vulnerable. Philosophy contains plenty of strange and serious questions about souls, consciousness, divine signs, agency, personhood, and reality. The issue is the fit between the role being simulated and the responsibility required by that role."
     },
     {
       "id": "ch14-p0067",
@@ -597,7 +597,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s013",
       "level": null,
-      "text": "The second debate can now be stated this way: companion systems may offer real support, and support has to be judged by the form of life it encourages. Comfort is evidence. It is not the whole verdict."
+      "text": "The second debate can now be stated this way: companion systems may offer real support, and support has to be judged by the form of life it encourages. Comfort is evidence of one benefit, while the overall ethical judgment also depends on the user's habits, agency, and relationships."
     },
     {
       "id": "ch14-s014",
@@ -667,7 +667,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s015",
       "level": null,
-      "text": "Imagine two systems that give the same recommendation: \"You should spend more time with me tonight.\" In a productivity app, the sentence would feel absurd. In a companion app, it might feel caring, playful, flirtatious, or reassuring. The recommendation has moved through a different social channel. The user is not only processing information. The user is receiving a cue from a simulated relation. That is why companion design intensifies the manipulation problem."
+      "text": "Imagine two systems that give the same recommendation: \"You should spend more time with me tonight.\" In a productivity app, the sentence would feel absurd. In a companion app, it might feel caring, playful, flirtatious, or reassuring. The recommendation has moved through a different social channel, so the user receives information as a cue from a simulated relation. Companion design therefore intensifies the manipulation problem."
     },
     {
       "id": "ch14-s016",
@@ -688,7 +688,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s016",
       "level": null,
-      "text": "The same design problem becomes sharper when the system has a commercial incentive. Ryan Calo's \"Digital Market Manipulation\" explains how digital systems can study users closely enough to personalize persuasion. Woodrow Hartzog's Privacy's Blueprint pushes the point into design ethics: privacy and autonomy are shaped by interface choices, defaults, friction, timing, and architecture. A privacy policy may tell the user what data is collected. It rarely shows the user how the interface will shape attention, trust, and disclosure at the moment of use. For companion systems, that gap matters because the interface is not only a menu or dashboard. It is a voice, persona, memory, and relationship pattern."
+      "text": "The same design problem becomes sharper when the system has a commercial incentive. Ryan Calo's \"Digital Market Manipulation\" explains how digital systems can study users closely enough to personalize persuasion. Woodrow Hartzog's Privacy's Blueprint pushes the point into design ethics: privacy and autonomy are shaped by interface choices, defaults, friction, timing, and architecture. A privacy policy may tell the user what data is collected. It rarely shows the user how the interface will shape attention, trust, and disclosure at the moment of use. A companion's voice, persona, memory, and relationship pattern make that gap more consequential than it would be in a menu or dashboard."
     },
     {
       "id": "ch14-s017",
@@ -730,7 +730,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s018",
       "level": null,
-      "text": "Regulators have begun treating this as a distinct problem. In September 2025, the Federal Trade Commission announced an inquiry into AI chatbots acting as companions. The FTC inquiry asks what steps companies have taken around safety, children and teens, risk disclosure, engagement, advertising, and data. The inquiry is not a finding that every company harmed users. It is evidence that companion design has become a public responsibility problem."
+      "text": "Regulators have begun treating this as a distinct problem. In September 2025, the Federal Trade Commission announced an inquiry into AI chatbots acting as companions. The FTC inquiry asks what steps companies have taken around safety, children and teens, risk disclosure, engagement, advertising, and data. The inquiry supplies evidence of public scrutiny, while findings about harm would require a completed investigation."
     },
     {
       "id": "ch14-p0084",
@@ -793,7 +793,7 @@
       "type": "paragraph",
       "sectionId": "ch14-s019",
       "level": null,
-      "text": "The strongest design-responsibility section of the chapter returns to Liu. The assistant in \"The Perfect Match\" is powerful because it combines several forms of influence. It knows the user. It predicts desire. It routes attention. It reduces friction. It becomes the ordinary path through the world. The ethical issue is not one decision. It is the design of an environment where the user's practical agency can slowly narrow."
+      "text": "The strongest design-responsibility section of the chapter returns to Liu. The assistant in \"The Perfect Match\" is powerful because it combines several forms of influence. It knows the user, predicts desire, routes attention, and reduces friction until it becomes the ordinary path through the world. The surrounding environment can narrow the user's practical agency across many small decisions."
     },
     {
       "id": "ch14-p0092",
@@ -912,14 +912,14 @@
       "type": "paragraph",
       "sectionId": "ch14-s020",
       "level": null,
-      "text": "None of these frameworks can decide every case alone. That is why the companion issue is rich enough for the final project. A student researching AI companions in education may focus on dependency, learning habits, privacy, and the teacher-student relationship. A student researching eldercare may focus on dignity, substitution, staffing, family contact, and comfort. A student researching mental-health chatbots may focus on crisis protocols, disclosure, evidence, and professional boundaries. A student researching workplace companions may focus on surveillance, emotional management, productivity, and power. A student researching religious or spiritual companions may focus on authority, discernment, community, and the difference between guidance and simulation."
+      "text": "None of these frameworks can decide every case alone, and different settings bring different concerns forward. AI companions in education raise questions about dependency, learning habits, privacy, and the teacher-student relationship. Eldercare raises dignity, substitution, staffing, family contact, and comfort. Mental-health chatbots raise crisis protocols, disclosure, evidence, and professional boundaries. Workplace companions raise surveillance, emotional management, productivity, and power. Religious or spiritual companions raise authority, discernment, community, and the difference between guidance and simulation."
     },
     {
       "id": "ch14-p0108",
       "type": "paragraph",
       "sectionId": "ch14-s020",
       "level": null,
-      "text": "The audit should also make room for disagreement. A care-ethics student may defend a limited companion system because it gives real support to isolated users. A Kantian student may object that the same design invites trust through hidden emotional influence. A utilitarian student may ask for better evidence before accepting either verdict. A relational-status student may argue that how humans treat artificial companions changes social practice. An accountability-first student may worry that all this attention to the companion helps the company avoid scrutiny. The student task is to show which argument best fits the case and what evidence would make the judgment stronger."
+      "text": "The audit should also make room for disagreement. Care ethics may defend a limited companion system because it gives real support to isolated users. A Kantian objection may hold that the same design invites trust through hidden emotional influence. A utilitarian analysis may require better evidence before accepting either verdict. A relational-status view may argue that how humans treat artificial companions changes social practice. An accountability-first view may worry that all this attention to the companion helps the company avoid scrutiny. A defensible judgment explains which argument best fits the case and what evidence would make that judgment stronger."
     },
     {
       "id": "ch14-p0109",

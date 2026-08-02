@@ -15,8 +15,8 @@
     "slug": "moral-authority-character-and-practical-wisdom"
   },
   "path": "/chapter/practical-wisdom-after-aristotle/",
-  "wordCount": 6805,
-  "readingMinutes": 31,
+  "wordCount": 6678,
+  "readingMinutes": 30,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "b97f34feb63d36a83e02543a5d99918b139a6d818998f20504b17113715fcf44",
-    "canonicalMarkdownSha256": "8e8fa2c2afcfe25b345a410f84a8b04ad22295b7a59ae4ff9a324e317a9b6be0",
+    "canonicalMarkdownSha256": "647d7b7cd4690bff360089575a525fecb41cf54d429d53fe285e2677f6216320",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

@@ -13,7 +13,7 @@ AI ethics has to hold those layers together. The image can be visually interesti
 This chapter argues that AI creativity cannot be judged by asking once and for all whether machines are creative. Responsible judgment asks what kind of practice a tool helps build. It looks at the output, the process, the human contribution, the prior labor and data, the audience's trust, the field-level effects, and the system's ability to respond when harm appears.
 
 <!-- phil-passage-id: ch15-p0005 -->
-That is why this chapter belongs in PHIL 123. To build like a philosopher in a creative or innovative field is to design a practice with visible assumptions, clear standards, accountable judgment, and responsibility to affected people. Students, designers, clinics, publishers, and scientific teams all face the same broad demand when AI enters the work: describe the practice before defending it.
+To build like a philosopher in a creative or innovative field is to design a practice with visible assumptions, clear standards, accountable judgment, and responsibility to affected people. Designers, clinics, publishers, scientific teams, and other AI users all face the same broad demand when AI enters the work: describe the practice before defending it.
 
 <!-- phil-section-id: ch15-s001 -->
 ## What Are We Judging?
@@ -66,10 +66,10 @@ Return to *Théâtre D'opéra Spatial*. Product judgment asks whether the image 
 An AI-generated or AI-assisted output can be impressive while the practice behind it remains ethically thin. A modest output can also come from a careful, disclosed, responsible practice. In this chapter, creativity and innovation are judged across product, process, person, prior labor, audience, field, and accountability.
 
 <!-- phil-passage-id: ch15-p0013 -->
-The chapter gives a conceptual genealogy of the debate. Older discussions of creativity often focused on inspiration, genius, originality, or the artwork itself. Contemporary philosophy of creativity asks more carefully whether creativity belongs to a product, process, person, or practice. Margaret Boden gives a process vocabulary. Berys Gaut gives a value-and-agency vocabulary. Copyright and authorship debates ask what kind of human judgment belongs in a work. Labor and training-data debates ask whose prior work made the system useful. Scientific innovation cases such as AlphaFold ask how AI can extend inquiry inside a validated practice. Responsible innovation asks how new capabilities should be steered.
+Older discussions of creativity often focused on inspiration, genius, originality, or the artwork itself. Contemporary philosophy of creativity asks more carefully whether creativity belongs to a product, process, person, or practice. Margaret Boden gives a process vocabulary. Berys Gaut gives a value-and-agency vocabulary. Copyright and authorship debates ask what kind of human judgment belongs in a work. Labor and training-data debates ask whose prior work made the system useful. Scientific innovation cases such as AlphaFold ask how AI can extend inquiry inside a validated practice. Responsible innovation asks how new capabilities should be steered.
 
 <!-- phil-passage-id: ch15-p0014 -->
-The chapter follows that chain: sameness and slop, Boden and Gaut, human judgment, labor and copyright, AlphaFold as a positive innovation case, and a practical framework students can use in their own fields.
+Together, these approaches connect apparent novelty to process, human judgment, labor, copyright, validated innovation, and responsible practice.
 
 <!-- phil-section-id: ch15-s002 -->
 ## When Novelty Becomes Sameness or Slop
@@ -192,7 +192,7 @@ This also means creativity can be ethically mixed. A manipulative phishing email
 The phrase "good of its kind" helps here. A horror story can be good as a horror story even if it is not comforting. A medical handout can be good if it is accurate, readable, culturally appropriate, and clinically reviewed, even if it is not artistically daring. A phishing email can be good as a phishing email because it deceives effectively, but that only shows technical or strategic success within a bad practice. Students should not confuse local success with moral justification. Ask what kind of thing the work is, what standard it is supposed to meet, and whether the practice itself deserves support.
 
 <!-- phil-passage-id: ch15-p0052 -->
-For PHIL 123, Gaut's lesson can be turned into four questions:
+Gaut's account yields four questions:
 
 <!-- phil-passage-id: ch15-p0053 -->
 1. What is new here, and new to whom?
@@ -434,10 +434,10 @@ Those questions should not produce one universal AI rule. They should produce a 
 Suppose a community clinic wants to use AI to draft a one-page diabetes-management handout for patients. The product standard is accuracy, readability, cultural fit, accessibility, and clinical usefulness. The process might involve AI generating a first draft, but that does not make the practice responsible by itself. Human judgment needs to appear in clinical review, source checking, language access review, and final approval by qualified staff. Prior labor appears in medical research, public-health writing, translation work, and the training data that made the model fluent. The audience trust question is more specific than "was AI used?" A patient needs to know whether the handout was clinically reviewed, when it was last updated, and who is responsible for the information. The field-level risk is that clinics may publish fluent but inaccurate materials faster than staff can review them. The field-level benefit is that small clinics may gain capacity to produce clearer, more accessible resources. Responsible innovation would require clinicians and patients in the review process, attention to care rather than mere speed, and a way to revise the material when errors or access problems appear.
 
 <!-- phil-passage-id: ch15-p0121 -->
-The same analysis works for a student project. In graphic design, evaluate the creative process the generated logo supports, whether it imitates living artists, what the client understands, whether the designer can explain the choices, and how the field changes when clients expect dozens of instant options. In education, evaluate whether the tutor supports learning or replaces practice, what students disclose, what teachers can evaluate, and what skills might atrophy. In science, evaluate the validation, access, credit, and uncertainty practices that make a useful prediction part of responsible inquiry.
+The same analysis travels across fields. In graphic design, evaluate the creative process the generated logo supports, whether it imitates living artists, what the client understands, whether the designer can explain the choices, and how the field changes when clients expect dozens of instant options. In education, evaluate whether the tutor supports learning or replaces practice, what students disclose, what teachers can evaluate, and what skills might atrophy. In science, evaluate the validation, access, credit, and uncertainty practices that make a useful prediction part of responsible inquiry.
 
 <!-- phil-passage-id: ch15-p0122 -->
-By the end of that analysis, the student claim should connect the process the tool supports, the human judgment that remains visible, and the field conditions that make the use responsible or irresponsible. A claim that lacks one of those pieces is too thin for PHIL 123.
+A defensible claim connects the process the tool supports, the human judgment that remains visible, and the field conditions that make the use responsible or irresponsible. Without those pieces, the claim is too thin to support an ethical judgment.
 
 <!-- phil-passage-id: ch15-p0123 -->
 That argument will not settle every case, but it blocks the most common shortcuts. Students cannot say "AI made it, so it is fake" without looking at the human practice. They cannot say "a human prompted it, so it is authored" without looking at control, disclosure, and contribution. They cannot call a system innovative when it mainly produces low-value content at scale. They cannot treat legality as if it exhausts fairness. They also cannot treat a high-value case like AlphaFold as proof that every AI tool deserves the same trust.
@@ -452,7 +452,7 @@ That argument will not settle every case, but it blocks the most common shortcut
 AI will continue to affect creative and innovative fields. The hard cases will rarely announce themselves as hard. They will appear as convenient tools, impressive outputs, new markets, cheaper workflows, faster prototypes, and exciting breakthroughs. The task is to ask what kind of practice is being built around those tools. Creativity and innovation remain human concerns because humans decide what to value, disclose, protect, validate, refuse, and help create.
 
 <!-- phil-passage-id: ch15-p0126 -->
-A responsible account can say both sides plainly. AI can extend creativity and innovation when it helps people explore, test, validate, or communicate within a responsible practice. It can degrade a field when it hides labor, weakens learning, floods attention systems, or produces outputs no one has properly judged. In a project, students should identify the tool and field standard, show where human judgment appears, and explain who is affected and how the practice can respond.
+A responsible account can say both sides plainly. AI can extend creativity and innovation when it helps people explore, test, validate, or communicate within a responsible practice. It can degrade a field when it hides labor, weakens learning, floods attention systems, or produces outputs no one has properly judged. A responsible analysis identifies the tool and field standard, shows where human judgment appears, and explains who is affected and how the practice can respond.
 
 <!-- phil-section-id: ch15-s010 -->
 ## References

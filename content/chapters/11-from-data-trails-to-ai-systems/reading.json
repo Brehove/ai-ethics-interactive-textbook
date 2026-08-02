@@ -4,9 +4,9 @@
   "slug": "from-data-trails-to-ai-systems",
   "title": "From Data Trails to AI Systems: How Human Activity Becomes Prediction, Automation, and Generation",
   "language": "en",
-  "sourceSha256": "2d423258c9bbca407fe17efa27e6431bfcac3ba1b3fa3d21b73907fd408b7087",
-  "plainTextSha256": "84783f5c674aac69e7b2bd2449f5965b564866aa620f2cfc8025c2810efc8c6a",
-  "wordCount": 8054,
+  "sourceSha256": "4164121ecb6ec346dadbbe8fc2eedb6c614d128300a1e700a115fc0c6aa004a7",
+  "plainTextSha256": "59d8a91e62b24e75fb6a6f140fec1434c8a6b17c63a3d25378352c6ec9a05861",
+  "wordCount": 7980,
   "readingMinutes": 36,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
@@ -121,14 +121,14 @@
       "type": "paragraph",
       "sectionId": "ch11-s001",
       "level": null,
-      "text": "That double edge is the center of this chapter. Datafication is a capability amplifier. It gives institutions, companies, researchers, governments, and AI systems more ways to see and act. That added capacity can support care, discovery, creativity, accountability, access, and coordination. It can also make bad categories, weak proxies, hidden labor, and unequal power easier to automate."
+      "text": "Datafication gives institutions, companies, researchers, governments, and AI systems more ways to see and act. That added capacity can support care, discovery, creativity, accountability, access, and coordination. It can also make bad categories, weak proxies, hidden labor, and unequal power easier to automate."
     },
     {
       "id": "ch11-p0014",
       "type": "paragraph",
       "sectionId": "ch11-s001",
       "level": null,
-      "text": "The chapter will keep returning to Rosa's week because it is ordinary. Most AI ethics problems do not start with a movie-style robot or a spectacular scandal. They start with records. They start when some part of a person's life becomes legible to a system."
+      "text": "The chapter returns to Rosa's week because it is ordinary. These problems begin with records. They begin when some part of a person's life becomes legible to a system."
     },
     {
       "id": "ch11-s002",
@@ -282,7 +282,7 @@
       "type": "paragraph",
       "sectionId": "ch11-s003",
       "level": null,
-      "text": "This is the bridge to modern big data. Digital records are cheap to copy, search, combine, and reuse. Platforms turned ordinary life into streams of observed behavior: searches, clicks, pauses, likes, locations, purchases, uploads, messages, prompts, ratings, and watch histories. Some data is volunteered. Some is observed. Some is inferred. Some is purchased, joined with other records, and sold downstream. The FTC's 2024 staff report on social media and video-streaming services makes this platform pattern concrete: selected major services collected, retained, shared, and monetized extensive user data, while safeguards were weak in several areas."
+      "text": "This is the bridge to modern big data. Digital records are cheap to copy, search, combine, and reuse. Platforms turned ordinary life into streams of observed behavior: searches, clicks, pauses, likes, locations, purchases, uploads, messages, prompts, ratings, and watch histories. Data may be volunteered, observed, inferred, or purchased, joined with other records, and sold downstream. The FTC's 2024 staff report on social media and video-streaming services makes this platform pattern concrete: selected major services collected, retained, shared, and monetized extensive user data, while safeguards were weak in several areas."
     },
     {
       "id": "ch11-p0035",
@@ -296,14 +296,14 @@
       "type": "paragraph",
       "sectionId": "ch11-s003",
       "level": null,
-      "text": "The genealogy matters because it blocks two lazy stories. One says datafication is simply surveillance and should be rejected wherever it appears. That misses the public goods that records can support: representation, health, safety, access, institutional memory, research, accessibility, planning, and care. The other says datafication is neutral because records are only facts. That misses how records are made, categorized, preserved, combined, inferred from, and used by institutions with unequal power."
+      "text": "The genealogy shows the limits of two simple stories. One says datafication is simply surveillance and should be rejected wherever it appears. That misses the public goods that records can support: representation, health, safety, access, institutional memory, research, accessibility, planning, and care. The other says datafication is neutral because records are only facts. That misses how records are made, categorized, preserved, combined, inferred from, and used by institutions with unequal power."
     },
     {
       "id": "ch11-p0037",
       "type": "paragraph",
       "sectionId": "ch11-s003",
       "level": null,
-      "text": "The better habit is to trace the data path. Ask what was counted, what category made it usable, what institution gained capacity, what context was dropped, what later use became possible, and who could inspect or challenge the result. Rosa's Canvas record is new in its medium, but not in its moral structure. A life becomes legible to a system. The system becomes more capable. The question is what that capacity is for, how bounded it is, and whether the people made legible can answer back."
+      "text": "Trace the data path. Ask what was counted, what category made it usable, what institution gained capacity, what context was dropped, what later use became possible, and who could inspect or challenge the result. Rosa's Canvas record is new in its medium, but not in its moral structure. A life becomes legible to a system. The system becomes more capable. The question is what that capacity is for, how bounded it is, and whether the people made legible can answer back."
     },
     {
       "id": "ch11-s004",
@@ -352,7 +352,7 @@
       "type": "paragraph",
       "sectionId": "ch11-s004",
       "level": null,
-      "text": "Rosa becomes legible through categories: enrolled, active, late, incomplete, aided, on track, at risk, full time, part time, first generation, online, in person. Some categories may help her. Some may harm her. Most are incomplete."
+      "text": "Rosa becomes legible through categories: enrolled, active, late, incomplete, aided, on track, at risk, full time, part time, first generation, online, in person. Some categories may help her. Some may harm her. No category captures Rosa's situation completely."
     },
     {
       "id": "ch11-p0044",
@@ -499,7 +499,7 @@
       "type": "paragraph",
       "sectionId": "ch11-s005",
       "level": null,
-      "text": "This section sets up later chapters. Chapter 102 will ask what happens when proxies become opportunity gates. Chapter 315 will ask what happens when proxies steer delegated action. Chapter 319 will ask what happens when prior human work becomes training material for new outputs. Each question starts here, with the discipline of asking what the system is treating as evidence."
+      "text": "The same discipline becomes necessary when a proxy turns into an opportunity gate, a system delegates action, or prior human work becomes training material for generated outputs. In each case, begin by asking what the system is treating as evidence."
     },
     {
       "id": "ch11-s006",
@@ -597,7 +597,7 @@
       "type": "paragraph",
       "sectionId": "ch11-s008",
       "level": null,
-      "text": "Records can sit quietly in a file. They can also become action."
+      "text": "Records can sit quietly in a file. They can also support decisions made later."
     },
     {
       "id": "ch11-p0075",
@@ -660,14 +660,14 @@
       "type": "paragraph",
       "sectionId": "ch11-s008",
       "level": null,
-      "text": "The chapters that follow will slow down at different points along this path. Chapter 102 asks how data-driven gates become biased or unjust. Chapter 315 asks what happens when systems delegate action to automated loops, agents, robots, and dashboards. Chapter 319 asks how cultural and creative work becomes training material for generated outputs."
+      "text": "Different stages of the path raise different questions. A data-driven gate can become biased or unjust. Automated loops, agents, robots, and dashboards can delegate action. Cultural and creative work can become training material for generated outputs."
     },
     {
       "id": "ch11-p0084",
       "type": "paragraph",
       "sectionId": "ch11-s008",
       "level": null,
-      "text": "Chapter 91 gives the first move. Do not start with the final output. Start with the path."
+      "text": "Begin by tracing the path that produced the output."
     },
     {
       "id": "ch11-s009",
@@ -758,7 +758,7 @@
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "Several ethical stakes now come into view."
+      "text": "Datafication raises questions about knowledge, power, agency, justice, and care."
     },
     {
       "id": "ch11-p0096",
@@ -800,35 +800,35 @@
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "Datafication is more defensible when the purpose is clear. If a college collects activity data to help instructors identify confusing parts of a course, that purpose is easier to evaluate than a vague claim about \"improving student success\" with no limits. Datafication is more defensible when the data collected is proportionate to that purpose. A reminder system may need deadlines and submission status. It probably does not need every unrelated student trace a vendor can collect."
+      "text": "A clear purpose makes datafication easier to evaluate. If a college collects activity data to help instructors identify confusing parts of a course, that purpose is easier to evaluate than a vague claim about \"improving student success\" with no limits. The data collected should be proportionate to that purpose. A reminder system may need deadlines and submission status. It probably does not need every unrelated student trace a vendor can collect."
     },
     {
       "id": "ch11-p0102",
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "It is more defensible when the data path respects context. Advising data should not silently become advertising data. Health-related searches should not casually become marketing profiles. A public forum post should not be treated as if every future use is equally expected. Context allows information to move while keeping the original relationship and purpose ethically visible."
+      "text": "Respect for context also makes a data path easier to defend. Advising data should not silently become advertising data. Health-related searches should not casually become marketing profiles. A public forum post should not be treated as if every future use is equally expected. Context allows information to move while keeping the original relationship and purpose ethically visible."
     },
     {
       "id": "ch11-p0103",
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "It is more defensible when the proxy is disciplined. A login can be a signal for outreach. It should not become a full judgment about motivation. A grade can be a signal for mastery. It should not become the whole story of a student's ability. A model's fluency can be a signal that the answer is readable. It should not become proof that the answer is true."
+      "text": "A disciplined proxy limits the risk of treating a signal as a full judgment. A login can be a signal for outreach. It should not become a full judgment about motivation. A grade can be a signal for mastery. It should not become the whole story of a student's ability. A model's fluency can be a signal that the answer is readable. It should not become proof that the answer is true."
     },
     {
       "id": "ch11-p0104",
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "It is more defensible when the affected person has some route to correction or appeal. Contestability matters because data systems make mistakes and because accurate records can still be misleading. Rosa should have some way to explain why the late work happened, correct a wrong record, ask what a label means, or challenge a decision that affects her path."
+      "text": "Affected people need a route to correction or appeal. Contestability matters because data systems make mistakes and because accurate records can still be misleading. Rosa should have some way to explain why the late work happened, correct a wrong record, ask what a label means, or challenge a decision that affects her path."
     },
     {
       "id": "ch11-p0105",
       "type": "paragraph",
       "sectionId": "ch11-s010",
       "level": null,
-      "text": "It is more defensible when the benefits and burdens are visible. Catherine D'Ignazio and Lauren Klein's Data Feminism gives students a practical question set for this: who has power, who is missing, whose labor is hidden, who benefits, and who can intervene? Linnet Taylor's article on data justice pushes in the same direction by connecting datafication to how people are made visible, represented, and treated."
+      "text": "Visible benefits and burdens also matter. Catherine D'Ignazio and Lauren Klein's Data Feminism gives students a practical question set for this: who has power, who is missing, whose labor is hidden, who benefits, and who can intervene? Linnet Taylor's article on data justice pushes in the same direction by connecting datafication to how people are made visible, represented, and treated."
     },
     {
       "id": "ch11-p0106",
@@ -877,7 +877,7 @@
       "type": "aside",
       "sectionId": "ch11-s011",
       "level": null,
-      "text": "Try It: One Data Path\nDo not begin by saying the system is good or bad. Begin with the path. One strong sentence can do a lot: \"This system turns into data, uses as a proxy for , and then supports .\" After that, your ethical judgment will be sharper."
+      "text": "Try It: One Data Path\nDo not begin by saying the system is good or bad. Begin with the path. A clear sentence can trace the full path: \"This system turns into data, uses as a proxy for , and then supports .\" After that, your ethical judgment will be sharper."
     },
     {
       "id": "ch11-p0112",
@@ -912,14 +912,14 @@
       "type": "paragraph",
       "sectionId": "ch11-s011",
       "level": null,
-      "text": "This kind of tracing does not settle the case. It gives students a better starting point for judgment."
+      "text": "This kind of tracing clarifies what needs judgment, but it does not settle the case."
     },
     {
       "id": "ch11-p0117",
       "type": "paragraph",
       "sectionId": "ch11-s011",
       "level": null,
-      "text": "The goal is disciplined trust. A data system can help people see what they would otherwise miss. It can also make the wrong thing easier to act on. Ethical data systems should make people, institutions, and decisions visible to one another in ways that can be questioned."
+      "text": "Use the data path to judge whether people affected can question the records, institutional uses, and decisions made about them. A data system can help people see what they would otherwise miss. It can also make the wrong thing easier to act on. Ethical data systems should make people, institutions, and decisions visible to one another in ways that can be questioned."
     },
     {
       "id": "ch11-s012",

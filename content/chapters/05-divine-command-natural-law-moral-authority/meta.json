@@ -15,8 +15,8 @@
     "slug": "moral-authority-character-and-practical-wisdom"
   },
   "path": "/chapter/divine-command-natural-law-moral-authority/",
-  "wordCount": 7006,
-  "readingMinutes": 32,
+  "wordCount": 6955,
+  "readingMinutes": 31,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "ee247cdffa3c204cf68ac1ffcdff8c385074c0bc478694b6310b03e65e674791",
-    "canonicalMarkdownSha256": "e136b422e94b6472ef333e18ee86d2b97e8bbd26b2e6452e258d41a09d337a87",
+    "canonicalMarkdownSha256": "e4acb6fbc9d7c720c58cfa77d00cd595bcbe2ffe0bb7128abc5b9facfefd026f",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

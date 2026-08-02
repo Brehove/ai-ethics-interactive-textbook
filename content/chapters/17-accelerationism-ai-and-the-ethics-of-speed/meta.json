@@ -15,8 +15,8 @@
     "slug": "future-stakes-and-technological-movements"
   },
   "path": "/chapter/accelerationism-ai-and-the-ethics-of-speed/",
-  "wordCount": 11940,
-  "readingMinutes": 54,
+  "wordCount": 11854,
+  "readingMinutes": 53,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "4f6f756f4449bcc07931f1417f57c081336a2a7b62288e30c98bde2acdf0cece",
-    "canonicalMarkdownSha256": "9a2d9649e4234d6bfdd5c125b1c9cc36a19560615dfd7ca072f74945712ed931",
+    "canonicalMarkdownSha256": "31026f43d5c88a005aead068a27e3b88dbf6ca265f690c3d55f953682d7a5731",
     "reconciliationTransformations": [],
     "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This website chapter is the active canonical edition."
   }

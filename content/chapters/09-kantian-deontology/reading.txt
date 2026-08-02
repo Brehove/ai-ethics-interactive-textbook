@@ -46,7 +46,7 @@ Kant makes that distinction so sharp because the right action can coincide with 
 
 Kant's claim does not require a cold or emotionless moral life. A person may care about buyers and take satisfaction in acting honestly. The disputed question is which reason has final authority when motives conflict. On one influential interpretation, an action expresses good will when the agent would refuse deception because it is wrong, even if feelings or self-interest changed. Critics argue that Kant gives duty too much priority over love and concern. His defenders reply that affection may cooperate with duty as long as the moral requirement remains decisive.
 
-You may recall that Aquinas used the term "law" in his Summa Theologica. It's important to understand the difference between his idea of natural law vs. Kant's moral law. Aquinas's account of natural law begins with God's created order. Human reason can recognize the goods and purposes built into human nature. It then judges actions by whether they support the flourishing proper to that nature. Virtues help a person choose those goods consistently.
+You may recall that Aquinas used the term "law" in his Summa Theologica. Aquinas's natural law and Kant's moral law use "law" differently. Aquinas's account of natural law begins with God's created order. Human reason can recognize the goods and purposes built into human nature. It then judges actions by whether they support the flourishing proper to that nature. Virtues help a person choose those goods consistently.
 
 The Groundwork begins elsewhere, with rational agency. Rational beings can step back from impulse and ask which principle should govern their choice. When self-interest or another person's command supplies the rule, Kant calls the will heteronomous. A moral principle must be one the agent can justify through reason for rational agents generally.
 
@@ -225,13 +225,13 @@ The mere-means objection works differently. It targets the bridge from facts to 
 
 What You Retain for Yourself
 
-In the discussion and midterm ahead, you will build Kantian arguments about your own dilemmas and cross-examine arguments made by classmates. A chatbot may help generate candidate maxims, bridges, or objections. Each output remains a proposal until you test it against the chapter and your case.
+When you build a Kantian argument about a dilemma, you need to cross-examine its maxims, bridges, and objections. A chatbot may help generate candidate maxims, bridges, or objections. Each output remains a proposal until you test it against the chapter and your case.
 
 A fluent objection may attack a maxim you are not using. It may confuse an unfavorable consequence with a contradiction in the maxim. It may call every use of another person a mere-means violation. Before accepting the output, identify its move. Does it challenge a premise, challenge the inference, or offer a counterexample? Then point to the exact line in your argument that receives the pressure.
 
 The chatbot does not know whether your maxim honestly represents your reason for acting. It cannot settle whether a counterexample is close enough to matter or whether the relevant people retain meaningful agency. Those judgments require your knowledge of the dilemma and your understanding of Kant. The output can make a possible weakness visible. You decide whether the weakness is genuine and what the argument should become.
 
-For the midterm, write the compact argument first. Open it if P2 hides a maxim, bridge, prediction, or moral classification. Ask the chatbot for a strong objection, then verify that objection against the Kantian concepts in this chapter. Decide whether to defend, revise, narrow, or concede part of the argument. Record what you changed and why. If the objection misstates your maxim or substitutes consequence-counting for Kantian reasoning, reject it and explain the error.
+Write the compact argument first. Expand it if P2 hides a maxim, bridge, prediction, or moral classification. Ask the chatbot for a strong objection, then verify that objection against the Kantian concepts in this chapter. Decide whether to defend, revise, narrow, or concede part of the argument. Record what you changed and why. If the objection misstates your maxim or substitutes consequence-counting for Kantian reasoning, reject it and explain the error.
 
 Keep a short record of the exchange. Note the argument line the chatbot challenged, the chapter concept used to evaluate that challenge, and the revision you accepted or rejected. This record makes your judgment visible. It also lets you notice whether the chatbot helped expose a real weakness or merely supplied polished philosophical vocabulary.
 

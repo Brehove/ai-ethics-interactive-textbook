@@ -5,7 +5,7 @@
   "slug": "commands-constitutions-and-alignment",
   "title": "Commands, Constitutions, and Alignment: Natural Law in the AI Alignment Conversation",
   "subtitle": null,
-  "description": "Anthropic is the company behind Claude and a major AI lab. In early 2026, it published Claude's Constitution, a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder…",
+  "description": "Anthropic is the company behind Claude. In early 2026, it published Claude's Constitution, a long document that tells Claude how to weigh safety, helpfulness, honesty, manipulation, stakeholder demands, and its own…",
   "order": 6,
   "part": {
     "id": "part-02",
@@ -15,8 +15,8 @@
     "slug": "moral-authority-character-and-practical-wisdom"
   },
   "path": "/chapter/commands-constitutions-and-alignment/",
-  "wordCount": 5653,
-  "readingMinutes": 26,
+  "wordCount": 5598,
+  "readingMinutes": 25,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "1c98f3cf16b6695f705d835b1c6d46167ca1699dd9cab15c3bec51ee9e26e8c9",
-    "canonicalMarkdownSha256": "a714779e9d125b9cadf7e20170002149d7a81fefe5142c53220ff641adb6105e",
+    "canonicalMarkdownSha256": "7d536e0fd64f9207cf51c7864a81c8a9c2668de95a60d9ab49e247591eb3a636",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

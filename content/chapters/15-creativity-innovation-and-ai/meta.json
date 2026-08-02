@@ -15,7 +15,7 @@
     "slug": "relationships-creativity-and-coexistence"
   },
   "path": "/chapter/creativity-innovation-and-ai/",
-  "wordCount": 10045,
+  "wordCount": 9995,
   "readingMinutes": 45,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "d624c8f337555f67c82da77aabcd0a38c6382abffdbe1b41a235eac5b005b0c6",
-    "canonicalMarkdownSha256": "d66cdf9e2a4dfd7a34c707d81267f9ef3588005d720b1b0737bc55d319a58344",
+    "canonicalMarkdownSha256": "67d0d219a068aaedb8a9b4fed0b93de4cd083769403000416183be1fad7dcb19",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

@@ -15,7 +15,7 @@
     "slug": "duty-consequences-and-moral-choice"
   },
   "path": "/chapter/kantian-deontology/",
-  "wordCount": 6406,
+  "wordCount": 6394,
   "readingMinutes": 29,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "31e60824fa51644fd57517708f1682b54961d565b16774eae995ac82b8b85abc",
-    "canonicalMarkdownSha256": "b29fd19c3f41a9a95761611c9f3acaaa815cbc1fa5881548f8f5eece1468a178",
+    "canonicalMarkdownSha256": "d4bdc85fa3d6ae13a6790bf9292a147da534175638c77521c9d2a6224a2a419d",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

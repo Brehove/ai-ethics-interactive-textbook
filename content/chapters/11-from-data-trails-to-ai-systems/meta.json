@@ -15,7 +15,7 @@
     "slug": "data-bias-and-delegated-judgment"
   },
   "path": "/chapter/from-data-trails-to-ai-systems/",
-  "wordCount": 8054,
+  "wordCount": 7980,
   "readingMinutes": 36,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "343487f1e4538f34b951028744c4b6cb007766f02594a06502f6302668ab4b97",
-    "canonicalMarkdownSha256": "2d423258c9bbca407fe17efa27e6431bfcac3ba1b3fa3d21b73907fd408b7087",
+    "canonicalMarkdownSha256": "4164121ecb6ec346dadbbe8fc2eedb6c614d128300a1e700a115fc0c6aa004a7",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

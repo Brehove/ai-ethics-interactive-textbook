@@ -4,10 +4,10 @@
   "slug": "aristotle-character-and-ai-assisted-life",
   "title": "What Are You Becoming? Aristotle, Character, and AI-Assisted Life",
   "language": "en",
-  "sourceSha256": "4cacf8fd64d436bbe59e94ad689c22383118c3c2df6fd1adbd0a6dde16ac5ba8",
-  "plainTextSha256": "b18094952bc09cac6dd76d6bd959ebdfcd7607ccb6a08fa8a5d3fb89656f1987",
-  "wordCount": 6568,
-  "readingMinutes": 30,
+  "sourceSha256": "b0ce3f66d3b43127fb9272ff6027ab80017b718bf01f421eca100bab84605145",
+  "plainTextSha256": "9505f6bcc6a374c69c3f780bbeab2f892624477e8a1ae200dc64efa2fa12ecb2",
+  "wordCount": 6509,
+  "readingMinutes": 29,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -135,14 +135,14 @@
       "type": "paragraph",
       "sectionId": "ch07-s003",
       "level": null,
-      "text": "Aristotle also insists that eudaimonia is active. He describes it as an activity of the soul in accordance with virtue, across a complete life (NE I.7, 1098a). You flourish by doing things well, using the capacities that are distinctively yours, in the situations you actually face. A person who is fed, entertained, and untroubled but who never exercises judgment or care or courage may be comfortable. They are also being handled."
+      "text": "Aristotle also insists that eudaimonia is active. He describes it as an activity of the soul in accordance with virtue, across a complete life (NE I.7, 1098a). You flourish by doing things well, using the capacities that are distinctively yours, in the situations you actually face. A person who is fed, entertained, and untroubled but who never exercises judgment, care, or courage may be comfortable. Aristotle would not describe that life as flourishing, because those capacities remain unused."
     },
     {
       "id": "ch07-p0014",
       "type": "paragraph",
       "sectionId": "ch07-s003",
       "level": null,
-      "text": "That warning is worth keeping close as you work through AI-mediated life. Comfort and outcome quality are real goods. They are not the same as flourishing. A system that reliably produces smoother outputs while quietly eroding your capacity to produce them yourself is trading one kind of good for another, and the trade may not be obvious for a long time."
+      "text": "Keep that warning close as you work through AI-mediated life. Comfort and outcome quality are real goods. They are not the same as flourishing. A system that reliably produces smoother outputs while quietly eroding your capacity to produce them yourself is trading one kind of good for another, and the trade may not be obvious for a long time."
     },
     {
       "id": "ch07-p0015",
@@ -191,7 +191,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s004",
       "level": null,
-      "text": "Applied to the AI apology, this vocabulary changes what you notice. The message repaired the friendship, which is a real good. And the practice of apology draws on capacities that are the ergon of a friend: paying attention to how you hurt someone, tolerating the discomfort of admission, forming words that fit both what happened and who you are, choosing a moment to send. If a machine performs all of those steps for you, the outcome may still occur, but the human activity behind it thins out. Aristotle's framework asks whether your capacities are being exercised or bypassed. Bypass, over time, is a kind of atrophy."
+      "text": "Applied to the AI apology, this vocabulary changes what you notice. The message repaired the friendship, which is a real good. And the practice of apology draws on capacities that are the ergon of a friend: paying attention to how you hurt someone, tolerating the discomfort of admission, forming words that fit both what happened and who you are, choosing a moment to send. If a machine performs all of those steps for you, the outcome may still occur, but the human activity behind it thins out. Aristotle's framework asks whether your capacities are being exercised or bypassed. Over time, bypassing those capacities can leave a person less able to use them."
     },
     {
       "id": "ch07-p0021",
@@ -387,7 +387,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s008",
       "level": null,
-      "text": "This distinction matters for how students actually experience AI-mediated life. Consider the assignment due in an hour. You did not budget your time well, your job ran late, and you are staring at a blank document. You use AI to complete the assignment. In the moment, the choice is voluntary. You could have accepted a lower grade or a missing submission. And yet the pressure is real, the alternatives feel bad, and the choice is not the free deliberation of someone with the whole afternoon. Aristotle's framework lets you take the pressure seriously as a mitigating condition while still calling the choice yours."
+      "text": "Aristotle's distinction between voluntary, involuntary, and mixed action helps explain how students experience AI-mediated life under pressure. Consider the assignment due in an hour. You did not budget your time well, your job ran late, and you are staring at a blank document. You use AI to complete the assignment. In the moment, the choice is voluntary. You could have accepted a lower grade or a missing submission. And yet the pressure is real, the alternatives feel bad, and the choice is not the free deliberation of someone with the whole afternoon. Aristotle's framework lets you take the pressure seriously as a mitigating condition while still calling the choice yours."
     },
     {
       "id": "ch07-p0045",
@@ -422,7 +422,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s009",
       "level": null,
-      "text": "At this point you have enough of the framework to build an argument. When PHIL 123 asks you to make a virtue-ethics case about a digital or AI dilemma, a defensible argument runs like this:"
+      "text": "You can now build a virtue-ethics argument about a digital or AI dilemma. A defensible argument runs like this:"
     },
     {
       "id": "ch07-p0049",
@@ -471,7 +471,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s009",
       "level": null,
-      "text": "The same argument structure can be run for the one-hour assignment case, the location-tracking case, or any of the other digital dilemmas you are considering for the midterm. In each case, the strongest arguments will resist two temptations: they will avoid the moderation reading of the mean, and they will avoid inferring settled character from one action. They will instead name what a pattern of use trains, and evaluate the practice on that basis."
+      "text": "The same argument structure can evaluate any repeated digital practice, from AI-assisted apologies to location tracking. In each case, the strongest arguments will resist two temptations: they will avoid the moderation reading of the mean, and they will avoid inferring settled character from one action. They will instead name what a pattern of use trains, and evaluate the practice on that basis."
     },
     {
       "id": "ch07-p0056",
@@ -485,14 +485,14 @@
       "type": "heading",
       "sectionId": "ch07-s010",
       "level": 2,
-      "text": "Objections Worth Taking Seriously"
+      "text": "Limits and Objections"
     },
     {
       "id": "ch07-p0057",
       "type": "paragraph",
       "sectionId": "ch07-s010",
       "level": null,
-      "text": "Every ethical framework has weaknesses, and any argument you build in Module 2 has to name the vulnerability in your own reasoning. Four objections come up so often in the literature that you should be able to state and answer each one."
+      "text": "Every ethical framework has weaknesses, and a virtue-ethics argument needs to name the vulnerability in its own reasoning. Four objections recur often enough in the literature that you should be able to state and answer each one."
     },
     {
       "id": "ch07-p0058",
@@ -520,28 +520,28 @@
       "type": "paragraph",
       "sectionId": "ch07-s010",
       "level": null,
-      "text": "The fourth is the self-centeredness objection. Critics worry that virtue ethics focuses so much on what practices form the agent that it can look like a project of self-improvement. If the reason you should tell the truth is that it makes you the kind of person you want to be, the concern is that other people become props in your character-building project. The reply, put most clearly in modern virtue ethics literature such as the SEP entry, is that many virtues are essentially other-directed. Justice, friendship, generosity, care, and honesty cannot be practiced without genuinely orienting toward other people. A person who \"helps\" others only to build their own resume is performing resume management in generous clothing. Still, this objection has bite, and it is worth naming when your argument leans heavily on what a practice does to the agent. Add a sentence about what the practice does to the friend, the community, or the wider set of stakeholders. That balances the account."
+      "text": "The fourth is the self-centeredness objection. Critics worry that virtue ethics focuses so much on what practices form the agent that it can look like a project of self-improvement. If the reason you should tell the truth is that it makes you the kind of person you want to be, the concern is that other people become props in your character-building project. The reply, put most clearly in modern virtue ethics literature such as the SEP entry, is that many virtues are essentially other-directed. Justice, friendship, generosity, care, and honesty cannot be practiced without genuinely orienting toward other people. A person who \"helps\" others only to build their own resume is performing resume management in generous clothing. Still, this objection has bite when your argument leans heavily on what a practice does to the agent. Add a sentence about what the practice does to the friend, the community, or the wider set of stakeholders. That balances the account."
     },
     {
       "id": "ch07-p0062",
       "type": "paragraph",
       "sectionId": "ch07-s010",
       "level": null,
-      "text": "None of these objections destroys the framework. Each one identifies a real limit or a place where the argument can be misused. A strong Module 2 argument states the objection you consider most dangerous to your own case, and gives a genuine reply. Weak arguments pick a soft objection they can easily dismiss. Do not do that. Pick the one that scares you the most, and respond honestly."
+      "text": "None of these objections destroys the framework. Each one identifies a real limit or a place where the argument can be misused. A strong virtue-ethics argument states the objection you consider most dangerous to your own case, and gives a genuine reply. Weak arguments pick a soft objection they can easily dismiss. Do not do that. Pick the one that scares you the most, and respond honestly."
     },
     {
       "id": "ch07-s011",
       "type": "heading",
       "sectionId": "ch07-s011",
       "level": 2,
-      "text": "Returning to the DCT and Natural Law Conversation"
+      "text": "Virtue Ethics, Divine Command Theory, and Natural Law"
     },
     {
       "id": "ch07-p0063",
       "type": "paragraph",
       "sectionId": "ch07-s011",
       "level": null,
-      "text": "In Module 2 you are asked to compare virtue ethics with divine command theory and natural law reasoning. It is worth being precise about what the frameworks are actually doing when they look at the same case."
+      "text": "Comparing virtue ethics with divine command theory and natural law reasoning requires precision about what the frameworks are actually doing when they look at the same case."
     },
     {
       "id": "ch07-p0064",
@@ -569,7 +569,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s011",
       "level": null,
-      "text": "That difference in question is why the three frameworks can appear to agree on a verdict and still be doing different work. All three might agree that repeatedly outsourcing personal apologies to a chatbot is ethically risky in close friendships. DCT would ground the risk in a divine command about honesty or love of neighbor. Natural law would ground it in the natural goods of friendship and truthful speech. Virtue ethics would ground it in the character being formed by the practice and in the erosion of the phronesis required to sustain an intimate relationship. When you write your Module 2 discussion, do not blur these into one voice. Let each framework do its own kind of work. That is what makes a real comparison possible, and it is what will make your own argument stronger, because you will be able to say more precisely what virtue ethics catches that the others do not, and what the others catch that virtue ethics can miss."
+      "text": "That difference in question is why the three frameworks can appear to agree on a verdict while reaching it through different lines of reasoning. All three might agree that repeatedly outsourcing personal apologies to a chatbot is ethically risky in close friendships. DCT would ground the risk in a divine command about honesty or love of neighbor. Natural law would ground it in the natural goods of friendship and truthful speech. Virtue ethics would ground it in the character being formed by the practice and in the erosion of the phronesis required to sustain an intimate relationship. Do not blur these into one voice. Let each framework reason from its own central concern. A real comparison can then say more precisely what virtue ethics catches that the others do not, and what the others catch that virtue ethics can miss."
     },
     {
       "id": "ch07-p0068",
@@ -590,7 +590,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s012",
       "level": null,
-      "text": "If any of this framework grabbed you, the primary text is worth touching. The most-cited passages for this chapter are in Books I, II, III, and VI of the Nicomachean Ethics. Book I develops eudaimonia and the function argument. Book II lays out virtue as a stable disposition, habituation, and the mean. Book III handles voluntary action and responsibility. Book VI develops phronesis. A public-domain translation by F. H. Peters is available through the Liberty Fund Online Library of Liberty, and W. D. Ross's public-domain translation is at MIT Classics."
+      "text": "If any of this framework grabbed you, read the primary text. The most-cited passages for this chapter are in Books I, II, III, and VI of the Nicomachean Ethics. Book I develops eudaimonia and the function argument. Book II lays out virtue as a stable disposition, habituation, and the mean. Book III handles voluntary action and responsibility. Book VI develops phronesis. A public-domain translation by F. H. Peters is available through the Liberty Fund Online Library of Liberty, and W. D. Ross's public-domain translation is at MIT Classics."
     },
     {
       "id": "ch07-p0070",
@@ -604,7 +604,7 @@
       "type": "paragraph",
       "sectionId": "ch07-s012",
       "level": null,
-      "text": "Your Module 2 argument does not need any of these secondary sources. It needs a clear, specific claim about what practice is being formed in a digital case you care about, an argument in the P1/P2/C form that ties the evaluation to a named virtue or vice, and an honest statement of the strongest objection your argument has to answer. Aristotle can give you that vocabulary. Whether the practice you are analyzing is training the kind of person you actually want to become is a judgment only you can make about your own life."
+      "text": "A virtue-ethics argument does not need any of these secondary sources. It needs a clear, specific claim about what practice is being formed in a digital case you care about, an argument in the P1/P2/C form that ties the evaluation to a named virtue or vice, and an honest statement of the strongest objection your argument has to answer. Aristotle can give you that vocabulary. Whether the practice you are analyzing is training the kind of person you actually want to become is a judgment only you can make about your own life."
     },
     {
       "id": "ch07-s013",

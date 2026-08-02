@@ -15,7 +15,7 @@
     "slug": "philosophical-practice-and-ai"
   },
   "path": "/chapter/how-generative-ai-produces-answers/",
-  "wordCount": 4528,
+  "wordCount": 4531,
   "readingMinutes": 21,
   "status": "website-canonical",
   "licenses": {
@@ -35,7 +35,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "3cb58ba7c69935ccb297b53ffeaabb4b9c3c0282d86307b11cafebe391284eef",
-    "canonicalMarkdownSha256": "20a640a211953c2fc0b31198ea48b35dc14fa0583a29f37364174cda91f0b858",
+    "canonicalMarkdownSha256": "d410323b818361886fa17ac5b2432ed2bd81445495d91c9cb859d86d05caed8d",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

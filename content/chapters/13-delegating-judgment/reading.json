@@ -4,10 +4,10 @@
   "slug": "delegating-judgment",
   "title": "Delegating Judgment: Automation, Robotics, Skill, and Answerable Control",
   "language": "en",
-  "sourceSha256": "8d400c32d45b8d1af7194e1cdffca1d798ed23d6265e5714652ff36459820a90",
-  "plainTextSha256": "bb54ab0c9f715eb6dce65bc67ab5896121ec610b1b01d405034d63b3eaade5db",
-  "wordCount": 10604,
-  "readingMinutes": 48,
+  "sourceSha256": "548dbb368ee965ca9bd6817603c0c3aea0ca7e75641ce0b4eaaffe5bfa4169cd",
+  "plainTextSha256": "d0f5bc6fd56dfa886c7cf61c62cc19de5ce1e976128edaa86a3c71f213402353",
+  "wordCount": 10566,
+  "readingMinutes": 47,
   "licenses": {
     "prosePayload": "CC-BY-4.0",
     "originalStructuralMetadata": "CC0-1.0"
@@ -212,7 +212,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s002",
       "level": null,
-      "text": "The agentic research example works the same way. Suppose a student asks Copilot or ChatGPT to create a literature review on AI in nursing. The tool searches, summarizes, and drafts. The visible output may be better organized than the student's first attempt would have been. The handoff question asks what moved. Did the student hand off source discovery? Reading? Synthesis? Citation judgment? Field vocabulary? The first rough attempt? The recognition of gaps? If the student cannot explain which sources were strong, which claims were uncertain, or why the final focus changed, the tool did more than help. It changed the student's relation to the knowledge."
+      "text": "The agentic research example works the same way. Suppose a student asks Copilot or ChatGPT to create a literature review on AI in nursing. The tool searches, summarizes, and drafts. The visible output may be better organized than the student's first attempt would have been. The handoff question asks whether the student gave the tool source discovery, reading, synthesis, citation judgment, field vocabulary, the first rough attempt, or the recognition of gaps. If the student cannot explain which sources were strong, which claims were uncertain, or why the final focus changed, the tool did more than help. It changed the student's relation to the knowledge."
     },
     {
       "id": "ch13-p0026",
@@ -443,7 +443,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s004",
       "level": null,
-      "text": "Consider a student using AI to begin the Module 5-6 research process. One student asks for a report, skims the result, and copies the best-looking claims into a slide deck. That student may have a product, but the student has not practiced the intellectual skills the project requires. Another student asks for a starting map, chooses one claim, opens a source, checks whether the source supports the claim, revises the focus, and writes a short note about what the AI got wrong or missed. That student used AI too. The difference is that the second student kept practice inside the process."
+      "text": "Consider two students beginning a research project with AI. One asks for a report, skims the result, and copies the best-looking claims into a slide deck. That student may have a finished product but has not practiced the intellectual skills the research requires. The other asks for a starting map, chooses one claim, opens a source, checks whether the source supports the claim, revises the focus, and writes a short note about what the AI got wrong or missed. Both students used AI. The second kept practice inside the process."
     },
     {
       "id": "ch13-p0057",
@@ -583,7 +583,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s006",
       "level": null,
-      "text": "Student projects need this layering. A student studying AI in nursing might begin with consequences: does the system reduce charting time or medication errors? The same student should also ask virtue-ethics questions about clinical judgment, care-ethics questions about patient attention, autonomy questions about patient consent and clinician override, and institutional-responsibility questions about who answers when the workflow fails. The frameworks give students several angles on the same delegated-action problem."
+      "text": "A layered analysis of AI in nursing might begin with consequences: does the system reduce charting time or medication errors? It should also ask virtue-ethics questions about clinical judgment, care-ethics questions about patient attention, autonomy questions about patient consent and clinician override, and institutional-responsibility questions about who answers when the workflow fails. These frameworks reveal several dimensions of the same delegated-action problem."
     },
     {
       "id": "ch13-s007",
@@ -842,7 +842,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s008",
       "level": null,
-      "text": "For this reason, the chapter ends with a demand for better delegation. Good delegation keeps human purposes visible, leaves the feedback loop inspectable enough for correction, protects the skills needed for review, makes responsibility traceable to people and institutions with real authority, and gives students a way to use AI while preserving their own judgment."
+      "text": "Good delegation keeps human purposes visible, leaves the feedback loop inspectable enough for correction, protects the skills needed for review, makes responsibility traceable to people and institutions with real authority, and allows people to use AI while preserving their own judgment."
     },
     {
       "id": "ch13-p0110",
@@ -863,7 +863,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s009",
       "level": null,
-      "text": "The chapter ends with a short audit students can use on their own AI-assisted work. It also works for self-driving cars, chatbots, coding agents, mobile robots, student-success models, automated hiring screens, medical triage systems, and algorithmic management systems."
+      "text": "The delegated-action audit works for personal AI-assisted work as well as self-driving cars, chatbots, coding agents, mobile robots, student-success models, automated hiring screens, medical triage systems, and algorithmic management systems."
     },
     {
       "id": "ch13-p0112",
@@ -905,7 +905,7 @@
       "type": "aside",
       "sectionId": "ch13-s009",
       "level": null,
-      "text": "Try It: Delegated-Action Audit\nFor your own AI use in this course, the audit can be short:\nI handed off .\nThe system seemed to be steered by .\nI kept in my own hands so I could learn, verify, revise, or answer for it.\nOne debt or risk this created was .\nOne thing I checked, changed, rejected, or can explain myself is ."
+      "text": "Try It: Delegated-Action Audit\nFor an AI-assisted task, the audit can be short:\nI handed off .\nThe system seemed to be steered by .\nI kept in my own hands so I could learn, verify, revise, or answer for it.\nOne debt or risk this created was .\nOne thing I checked, changed, rejected, or can explain myself is ."
     },
     {
       "id": "ch13-p0118",
@@ -947,7 +947,7 @@
       "type": "paragraph",
       "sectionId": "ch13-s009",
       "level": null,
-      "text": "The audit leaves one design demand:"
+      "text": "Responsible delegation depends on how a design distributes judgment, contestability, and accountability."
     },
     {
       "id": "ch13-p0124",

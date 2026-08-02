@@ -8,7 +8,7 @@ This chapter brings the first three chapters together. Chapter 1 showed how a vi
 
 Philosophy Is Already Working With AI
 
-David Chalmers, for example, describes extended conversations with Claude and ChatGPT while exploring philosophical questions and possible new ideas. A research team led by Ye and colleagues interviewed 21 professional philosophers about language models as critical-thinking tools. The study organized their possible uses into three interaction functions. A model might act as an interlocutor that enters a dialogue, a monitor that watches for gaps or errors, or a respondent that reacts to a philosopher's work. PHIL 123 uses a different three-role structure based on the stages of the course. There are limits, of course. Current models can lose track of subtle positions, supply shallow criticism, or produce fluent answers that the philosopher still has to assess.
+David Chalmers, for example, describes extended conversations with Claude and ChatGPT while exploring philosophical questions and possible new ideas. A research team led by Ye and colleagues interviewed 21 professional philosophers about language models as critical-thinking tools. The study organized their possible uses into three interaction functions. A model might act as an interlocutor that enters a dialogue, a monitor that watches for gaps or errors, or a respondent that reacts to a philosopher's work. PHIL 123 uses a different three-role structure based on the stages of the course. Current models can lose track of subtle positions, supply shallow criticism, or produce fluent answers that the philosopher still has to assess.
 
 Philosophers also work inside companies building these systems. Amanda Askell is a philosopher and research scientist at Anthropic, while Iason Gabriel describes his work as philosopher and research scientist at Google DeepMind. Their roles show that philosophical judgment enters AI development as well as outside criticism of it.
 
@@ -38,7 +38,7 @@ During final-project development, AI may become a project and build assistant. D
 
 The student's responsibility appears in the design trail. When AI compares a podcast, website, and policy guide, the student should explain why one format fits the intended audience and problem. Generated code needs to be understood and tested before it enters the project. Language revisions require another judgment about whether the new wording preserves the project's philosophical position. The final product should show choices that the student can reconstruct and defend.
 
-Exact permissions vary by assignment. Canvas identifies when AI use is required, permitted, limited, or prohibited, along with the process evidence students must preserve. Across all three roles, a stable obligation remains. Students inspect the contribution, decide what to use or change, preserve the required evidence, and explain the judgment behind the decision.
+Exact permissions vary by assignment. Canvas identifies when AI use is required, permitted, limited, or prohibited, along with the process evidence students must preserve. Across all three roles, students inspect the contribution, decide what to use or change, preserve the required evidence, and explain the judgment behind the decision.
 
 Framework Map: Three AI Roles in PHIL 123
 Philosophical practice partner
@@ -102,7 +102,7 @@ A, B, and C evaluate whether the contribution is supportable, appropriately fram
 
 The first question comes from the assignment. In this course, we'll adopt the AI Assessment Scale. It gives instructors a way to state different levels of AI permission for different tasks. PHIL 123 uses those boundaries at the level of an assignment or checkpoint. AI may be required for philosophical practice, permitted for research mapping, allowed for selected project work, and prohibited for a judgment trace or peer reply. A contribution that would be useful in one stage may be inappropriate in another.
 
-R also asks what ability the student is supposed to develop or demonstrate. A chatbot may produce a sound Kantian objection. If the assignment asks the student to formulate that objection independently, submitting the generated version bypasses the target skill. If the assignment asks the student to evaluate an objection supplied by a chatbot, the same output becomes appropriate material for analysis. The words have not changed. The educational use has.
+R also asks what ability the student is supposed to develop or demonstrate. A chatbot may produce a sound Kantian objection. If the assignment asks the student to formulate that objection independently, submitting the generated version bypasses the target skill. If the assignment asks the student to evaluate an objection supplied by a chatbot, the same output becomes appropriate material for analysis. The same words serve different educational purposes because the assignments ask students to do different intellectual work.
 
 Privacy, source rights, and intellectual responsibility also enter here. A student should not place confidential workplace records, identifying information, or private messages into an outside system without permission. A research lead should be followed to the original source so the model's summary does not erase authorship or distort the claim. If AI influences a submitted argument or design, the student should preserve the evidence required by the assignment and explain the influence accurately.
 
@@ -120,7 +120,7 @@ Permission and accountability create further reasons to inspect the path. A stud
 
 Responsible use does not require refusing every substantial AI contribution. It requires a defensible relationship between the assistance and the task. A practice partner can supply pressure for the student to evaluate and answer. A checked research map can orient further inquiry. Project assistance remains defensible when the student directs the work and tests the result, then documents consequential choices. The boundary changes with the role, while every role still requires an account of the student's judgment.
 
-Use AI to Learn, Not Merely to Finish
+Use AI to Learn
 
 An AI-assisted product can look better than the learner's independent work. That difference can be useful. Feedback, examples, and explanations often help people perform tasks they could not yet complete alone. The educational question concerns what the learner can understand, retain, and do after the assistance.
 

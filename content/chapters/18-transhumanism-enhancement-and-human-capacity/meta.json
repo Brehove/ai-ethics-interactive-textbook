@@ -15,7 +15,7 @@
     "slug": "future-stakes-and-technological-movements"
   },
   "path": "/chapter/transhumanism-enhancement-and-human-capacity/",
-  "wordCount": 10251,
+  "wordCount": 10142,
   "readingMinutes": 46,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "b762f6b2009209fd7e15a88420fc916a9a38b1c7c58a54f879306f6606e73221",
-    "canonicalMarkdownSha256": "f52efa11375f9a203a93c13b5280acec5fea0fd94cc340cf91d927d6a5013a3b",
+    "canonicalMarkdownSha256": "c2305cb89432d846399a3a221fccec815c12e37faa28b83bc0302a188efcd24d",
     "reconciliationTransformations": [],
     "selectionNote": "Website baseline selected from the July 31 course-aligned draft. It retires product-builder framing in favor of the Applied Ethics Case Briefing, anchor-case, and considered-judgment sequence while preserving the core philosophical evidence. This website chapter is the active canonical edition."
   }

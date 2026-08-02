@@ -16,7 +16,7 @@ Effective Altruism, longtermism, existential-risk thinking, and AI alignment are
 The chapter's main claim is deliberately balanced: future people and catastrophic risks deserve serious moral attention, but future-stakes reasoning does not give any lab, donor network, expert community, company, or government a blank check to decide everyone else's future. The more an institution claims to act for humanity's long-term future, the more it needs contestability, public accountability, proportional safeguards, and humility about uncertainty.
 
 <!-- phil-passage-id: ch16-p0005 -->
-By the end of the chapter, you should be able to use these ideas in a PHIL 123 case inquiry. Ask what future the decision or practice makes more likely, who benefits now, who inherits risk later, which forecast or assumption carries the argument, and what condition would make the practice more reversible, contestable, and accountable.
+A future-stakes analysis asks what future a decision or practice makes more likely, who benefits now, who inherits risk later, which forecast or assumption carries the argument, and what condition would make the practice more reversible, contestable, and accountable.
 
 <!-- phil-section-id: ch16-s002 -->
 ## Learning Outcomes
@@ -77,7 +77,7 @@ The third is an **AI-safety and frontier-governance history**. This line runs th
 These histories overlap, but they do different work. The cultural history explains the imaginative force of catastrophe. The philosophical history explains why future people and neglected causes became central to Effective Altruist thinking. The AI-safety history explains how those abstract concerns became engineering problems, lab policies, and governance thresholds.
 
 <!-- phil-passage-id: ch16-p0014 -->
-For this chapter, the direct genealogy of Effective Altruism is not apocalypse to AI doom. It is closer to this:
+For this chapter, the direct genealogy of Effective Altruism runs from utilitarian impartiality through future-person ethics and into contemporary AI governance:
 
 <!-- phil-passage-id: ch16-p0015 -->
 1. Classical utilitarian impartiality asks us to count everyone's welfare.
@@ -91,7 +91,7 @@ For this chapter, the direct genealogy of Effective Altruism is not apocalypse t
 9. Frontier AI governance tries to translate those arguments into thresholds, evaluations, safety cases, and release conditions.
 
 <!-- phil-passage-id: ch16-p0016 -->
-That sequence is not the only possible genealogy, but it is the cleanest one for understanding why Effective Altruism became relevant to contemporary AI ethics.
+Other genealogies are possible. This sequence explains most directly why Effective Altruism became relevant to contemporary AI ethics.
 
 <!-- phil-section-id: ch16-s005 -->
 ## Forecasts, Scenarios, And Thresholds Are Not The Same
@@ -103,13 +103,13 @@ Before tracing the genealogy, students need one practical distinction. A forecas
 A **forecast** estimates what may happen. A person might forecast that advanced AI will arrive within a decade, or that a particular capability will become cheap enough for broad use. Forecasts depend heavily on evidence, calibration, track record, and probability.
 
 <!-- phil-passage-id: ch16-p0019 -->
-A **scenario** tells a concrete story about how something might happen. Scenarios are not necessarily predictions. They are tools for planning, imagination, and stress-testing. A scenario can help people notice assumptions and failure modes even if the exact story never happens.
+A **scenario** tells a concrete story about how something might happen. It supports planning, imagination, and stress-testing without necessarily predicting that the story will occur. A scenario can help people notice assumptions and failure modes even if the exact story never happens.
 
 <!-- phil-passage-id: ch16-p0020 -->
 A **threshold** tells an institution when a risk level should trigger a different action. A lab might say that if a model reaches a specific cyber capability, it must undergo additional safeguards before release. A college might say that if an advising model shows a significant error disparity for first-generation students, it cannot be scaled. A threshold converts concern into a rule.
 
 <!-- phil-passage-id: ch16-p0021 -->
-The distinction matters because a number in a public interview, a detailed future story, and a lab's release rule can sound similar in public debate. Ethically, they carry different burdens. Evidence matters most for the forecast. Plausibility and usefulness matter most for the scenario. Authority, enforceability, and accountability matter most for the threshold.
+A number in a public interview, a detailed future story, and a lab's release rule can sound similar in public debate even though they carry different ethical burdens. A forecast depends most heavily on evidence. A scenario depends on plausibility and usefulness. A threshold depends on authority, enforceability, and accountability.
 
 <!-- phil-passage-id: ch16-p0022 -->
 <aside class="textbox shaded" role="note" aria-labelledby="key-point-forecasts">
@@ -130,7 +130,7 @@ Philosophical analysis makes those assumptions explicit so they can be tested.
 Effective Altruism did not begin with AI. It did not begin with extinction risk. One of its deeper philosophical roots is utilitarian impartiality: the idea that each person's welfare matters and that moral reasoning should not automatically privilege one's own comfort, tribe, nation, class, or convenience.
 
 <!-- phil-passage-id: ch16-p0026 -->
-Classical utilitarianism is associated with Jeremy Bentham and John Stuart Mill, but Henry Sidgwick is especially important for the later tradition. The Stanford Encyclopedia of Philosophy describes Sidgwick's *The Methods of Ethics* as a culminating work in the classical utilitarian tradition and notes its influence on later thinkers including Derek Parfit, Peter Singer, and Katarzyna de Lazari-Radek. Sidgwick matters here because he sharpened the thought that ethics asks us to take up a more impartial point of view. From that point of view, my pain does not count more simply because it is mine, and the welfare of people near me does not count more simply because they are near me.
+Classical utilitarianism is associated with Jeremy Bentham and John Stuart Mill, but Henry Sidgwick is especially important for the later tradition. The Stanford Encyclopedia of Philosophy describes Sidgwick's *The Methods of Ethics* as a culminating work in the classical utilitarian tradition and notes its influence on later thinkers including Derek Parfit, Peter Singer, and Katarzyna de Lazari-Radek. Sidgwick sharpened the thought that ethics asks us to take up a more impartial point of view. From that point of view, my pain does not count more simply because it is mine, and the welfare of people near me does not count more simply because they are near me.
 
 <!-- phil-passage-id: ch16-p0027 -->
 This does not mean that utilitarians deny every special obligation. Parents may have special duties to children. Teachers may have special duties to students. Citizens may have special obligations within political communities. The utilitarian pressure is different: if we claim that some suffering matters less because it is far away, unfamiliar, or inconvenient, we need an argument. Mere distance is not enough.
@@ -208,7 +208,7 @@ That question sounds obvious. It is not. People often give time, money, or insti
 GiveWell, founded in 2007, became an important part of the evidence-based charity stream that fed into Effective Altruism. GiveWell describes itself as a nonprofit dedicated to researching cost-effective ways to save and improve lives, sharing that research openly, and directing donations toward programs it believes will do the most good. It also emphasizes that it does not focus merely on administrative overhead. Instead, it asks how much good a program accomplishes per dollar spent.
 
 <!-- phil-passage-id: ch16-p0047 -->
-This shift is important for students. A charity can be emotionally compelling and still accomplish little. Another intervention can be less emotionally vivid and much more effective. The effective-help question asks us to compare interventions, not only intentions.
+A charity can be emotionally compelling and still accomplish little. Another intervention can be less emotionally vivid and much more effective. The effective-help question therefore compares interventions as well as intentions.
 
 <!-- phil-passage-id: ch16-p0048 -->
 Several institutions then helped turn the philosophical pressure into a movement. The Centre for Effective Altruism's history page records that Giving What We Can was founded in Oxford in 2009, 80,000 Hours was founded in 2011, and the Centre for Effective Altruism was founded as an umbrella organization for those projects; the term "effective altruism" was adopted in that process. Giving What We Can focused on pledges and effective giving. 80,000 Hours focused on career choice and impact. CEA helped build the broader community.
@@ -319,10 +319,10 @@ The design concept here is **trajectory**. A trajectory is a direction of travel
 Nick Bostrom helped make **existential risk** a central category in contemporary AI ethics and global-priorities thinking. In ["Existential Risks: Analyzing Human Extinction Scenarios and Related Hazards"](https://nickbostrom.com/papers/existential-risks/), Bostrom defines an existential risk as one where an adverse outcome would annihilate Earth-originating intelligent life or permanently and drastically curtail its potential.
 
 <!-- phil-passage-id: ch16-p0078 -->
-The category matters because some harms are recoverable and others close off the future. A natural disaster can be horrific without being existential. A financial crisis can damage millions of lives without ending humanity's long-term future. A pandemic can be globally catastrophic without making recovery impossible. Existential risk names a narrower and more severe class: events that eliminate humanity or permanently block the futures human beings might otherwise build.
+Some harms are recoverable, while others close off the future. A natural disaster can be horrific without being existential. A financial crisis can damage millions of lives without ending humanity's long-term future. A pandemic can be globally catastrophic without making recovery impossible. Existential risk names a narrower and more severe class: events that eliminate humanity or permanently block the futures human beings might otherwise build.
 
 <!-- phil-passage-id: ch16-p0079 -->
-Bostrom's argument in ["Existential Risk Prevention as Global Priority"](https://www.globalpolicyjournal.com/articles/global-commons-and-environment/existential-risk-prevention-global-priority) is that reducing existential risk can have special moral importance across several moral theories. The structure is straightforward:
+Bostrom's argument in ["Existential Risk Prevention as Global Priority"](https://www.globalpolicyjournal.com/articles/global-commons-and-environment/existential-risk-prevention-global-priority) is that reducing existential risk can have special moral importance across several moral theories. The argument proceeds through four claims:
 
 <!-- phil-passage-id: ch16-p0080 -->
 1. Humanity's long-term future could contain enormous value.
@@ -334,7 +334,7 @@ Bostrom's argument in ["Existential Risk Prevention as Global Priority"](https:/
 His ["Astronomical Waste"](https://nickbostrom.com/papers/astronomical-waste/) argument pushes the scale even harder. If the possible future could contain vast numbers of lives, discoveries, cultures, relationships, artworks, and forms of flourishing, then prematurely losing that future carries extraordinary moral weight. The argument can feel almost unreal because the numbers become so large. That is part of the point. Bostrom is trying to show why ordinary moral attention may underweight the future.
 
 <!-- phil-passage-id: ch16-p0082 -->
-Parfit's influence matters here. Bostrom is not merely repeating Parfit, but his astronomical-stakes reasoning works inside a problem space Parfit helped make unavoidable: extinction is not only the death of everyone alive now. It can also be the loss of future generations, future goods, and possible forms of flourishing. Bostrom takes that Parfit-style pressure and turns it toward risk prevention.
+Bostrom does not merely repeat Parfit. His astronomical-stakes reasoning works inside a problem space Parfit helped make difficult to avoid: extinction includes the death of everyone alive now and the loss of future generations, future goods, and possible forms of flourishing. Bostrom turns that pressure toward risk prevention.
 
 <!-- phil-passage-id: ch16-p0083 -->
 Toby Ord's [*The Precipice*](https://theprecipice.com/) gives a public-facing account of the same moral landscape. Ord argues that humanity has entered a period when technological power has grown faster than wisdom and governance. Nuclear weapons, engineered pandemics, climate risk, and unaligned artificial intelligence all become examples of a broader condition: we may now have the power to destroy or permanently damage humanity's future before we have developed institutions wise enough to manage that power.
@@ -438,7 +438,7 @@ If the system is weak, a bad objective may be annoying. If the system is extreme
 Eliezer Yudkowsky's ["Artificial Intelligence as a Positive and Negative Factor in Global Risk"](https://intelligence.org/files/AIPosNegFactor.pdf) helped turn these concerns into an AI-safety research culture focused on Friendly AI, control problems, and the difficulty of building systems that preserve human values under capability growth. MIRI and rationalist communities were important parts of this history. They should not be treated as the whole field or as consensus, but they helped shape the language of alignment and control.
 
 <!-- phil-passage-id: ch16-p0110 -->
-Stuart Russell's work on human-compatible AI brought alignment concerns into a broader AI-research frame. The Center for Human-Compatible AI at UC Berkeley states its mission as developing the conceptual and technical basis for reorienting AI research toward provably beneficial systems. Russell's central proposal is often summarized as designing machines that remain uncertain about human objectives rather than confidently optimizing a fixed proxy. That matters because overconfident optimization of a bad proxy is one of the recurring failures in both ordinary institutions and advanced-AI thought experiments.
+Stuart Russell's work on human-compatible AI brought alignment concerns into a broader AI-research frame. The Center for Human-Compatible AI at UC Berkeley states its mission as developing the conceptual and technical basis for reorienting AI research toward provably beneficial systems. Russell's central proposal is often summarized as designing machines that remain uncertain about human objectives rather than confidently optimizing a fixed proxy. The proposal addresses overconfident optimization of a bad proxy, a recurring failure in both ordinary institutions and advanced-AI thought experiments.
 
 <!-- phil-passage-id: ch16-p0111 -->
 Alignment is not only a future-superintelligence problem. It appears in smaller systems whenever an AI optimizes a target that only partly captures the human good. A school tells teachers to improve test scores, and instruction narrows around the test. A platform tells a recommender system to maximize engagement, and the system learns that outrage keeps people watching. A company tells managers to reduce costs, and important forms of care disappear because they were not measured. A college tells an AI advising system to maximize completion speed, and the system may push students toward efficient degree paths even when exploration, confidence, work schedule, caregiving responsibilities, or transfer goals matter more.
@@ -447,7 +447,7 @@ Alignment is not only a future-superintelligence problem. It appears in smaller 
 These are not existential-risk cases, but they reveal the structure. Optimization follows the target it is given, and the target is almost always thinner than the human good that motivated it.
 
 <!-- phil-passage-id: ch16-p0113 -->
-For PHIL 123 students, the alignment question is not only "Will superintelligence kill us?" It is also:
+Alignment questions apply to ordinary systems as well as speculative superintelligence:
 
 <!-- phil-passage-id: ch16-p0114 -->
 - What is this system being optimized to do?
@@ -471,7 +471,7 @@ Alignment language can hide disagreement. If someone says "we need aligned AI," 
 A model aligned to user satisfaction may flatter, indulge, or manipulate. A model aligned to corporate policy may serve institutional risk management more than public good. A model aligned to a narrow educational metric may harm the students the metric was supposed to help. A model aligned to "human values" has to face the fact that human beings disagree about values.
 
 <!-- phil-passage-id: ch16-p0118 -->
-This is why alignment is not only technical. It is also ethical and political. Technical alignment asks whether the system reliably follows the intended objective. Normative alignment asks whether the intended objective is worth following. Institutional alignment asks whether the process for defining and enforcing the objective is legitimate.
+Alignment has technical, ethical, and political dimensions. Technical alignment asks whether the system reliably follows the intended objective. Normative alignment asks whether the intended objective is defensible. Institutional alignment asks whether the process for defining and enforcing the objective is legitimate.
 
 <!-- phil-passage-id: ch16-p0119 -->
 A college AI advising system may be technically aligned if it reliably recommends schedules that maximize timely completion. It may be normatively misaligned if timely completion is treated as more important than student agency, exploration, transfer planning, or personal circumstances. It may be institutionally misaligned if students cannot know when AI shaped their recommendation, cannot appeal the recommendation, and cannot reach a human advisor.
@@ -504,7 +504,7 @@ The [2023 Center for AI Safety statement](https://safe.ai/work/statement-on-ai-e
 The Future of Life Institute's [2017 Asilomar AI Principles](https://futureoflife.org/open-letter/ai-principles/) include principles on safety, failure transparency, human control, value alignment, shared benefit, and planning for catastrophic or existential risks proportional to expected impact. Its 2025 [Statement on Superintelligence](https://superintelligence-statement.org/) calls for prohibiting development of superintelligence until there is broad scientific consensus that it can be done safely and controllably, along with strong public buy-in. Those statements turn the control problem into a governance problem: who should decide whether a system may be built, and under what evidence conditions?
 
 <!-- phil-passage-id: ch16-p0127 -->
-In late 2024, Geoffrey Hinton said in a BBC Radio 4 interview, as reported by *The Guardian*, that he had raised his estimate of the chance that AI could lead to human extinction within the next thirty years. *The Guardian* reported the number as 10 to 20 percent. That figure should be treated as a public estimate from one prominent researcher, not as a scientific consensus. It matters because it is a clear example of an expert forecast entering public ethical debate.
+In late 2024, Geoffrey Hinton said in a BBC Radio 4 interview, as reported by *The Guardian*, that he had raised his estimate of the chance that AI could lead to human extinction within the next thirty years. *The Guardian* reported the number as 10 to 20 percent. That public estimate from one prominent researcher is a clear example of an expert forecast entering ethical debate; it is not a scientific consensus.
 
 <!-- phil-passage-id: ch16-p0128 -->
 Other contemporary sources work differently. The [AI 2027](https://ai-2027.com/) project presents a detailed scenario for how advanced AI might develop over the next few years. The authors describe the scenario as their best guess and explicitly say it is not a recommendation or exhortation. Epoch AI's ["What will AI look like in 2030?"](https://epoch.ai/publications/what-will-ai-look-like-in-2030) focuses on compute, investment, infrastructure, energy, data, hardware, automation, and scientific R&D. The report notes that it was commissioned by Google DeepMind while stating that its conclusions are the authors' and not necessarily DeepMind's position. The UK Government Office for Science has published [AI Scenarios 2030](https://www.gov.uk/government/publications/ai-scenarios-2030-helping-policymakers-plan-for-the-future-of-ai/ai-scenarios-2030-helping-policymakers-plan-for-the-future-of-ai) as a planning resource and explicitly states that it is not a statement of policy. The OECD's [*Exploring possible AI trajectories through 2030*](https://www.oecd.org/content/dam/oecd/en/publications/reports/2026/02/exploring-possible-ai-trajectories-through-2030_b6fb75d9/cb41117a-en.pdf) frames its trajectories as plausible but uncertain scenarios for policy discussion, not predictions with assigned probabilities.
@@ -560,7 +560,7 @@ Company frameworks should not be read as either empty public relations or suffic
 </aside>
 
 <!-- phil-passage-id: ch16-p0142 -->
-For PHIL 123 students, these company documents are examples of values embedded in procedure. A safety framework is not just technical paperwork. It tells us what an organization thinks counts as severe harm, how it treats uncertainty, what evidence it trusts, who has authority, and what it is willing to delay or refuse.
+These company documents embed values in procedure. A safety framework is not just technical paperwork. It tells us what an organization thinks counts as severe harm, how it treats uncertainty, what evidence it trusts, who has authority, and what it is willing to delay or refuse.
 
 <!-- phil-section-id: ch16-s017 -->
 ## Cultural Prehistory: Why AI Risk Sounds Apocalyptic
@@ -623,7 +623,7 @@ Apply that objection to AI safety. A frontier lab may claim that it must build m
 A third distortion is **corporate moral laundering**. A company may genuinely worry about catastrophic risk while also benefiting from being seen as the responsible actor in the room. It may favor rules it can afford, prefer voluntary frameworks over binding regulation, and publish safety documents that help recruit talent, reassure investors, and influence policy. Ethics has to analyze those incentives even when no one is acting in bad faith.
 
 <!-- phil-passage-id: ch16-p0161 -->
-A fourth distortion is **single-axis moral reasoning**. If the future is described mainly in terms of total expected value, other values can disappear: rights, dignity, consent, democratic legitimacy, justice, repair, solidarity, community, and human development. A design can be efficient and still disrespectful. A safety policy can reduce one risk and increase another. A forecast can be sincere and still politically illegitimate as a basis for unilateral action.
+A fourth distortion is **single-axis moral reasoning**. If the future is described mainly through total expected value, other values can disappear: rights, dignity, consent, democratic legitimacy, justice, repair, solidarity, community, and human development. A design can be efficient and still disrespectful. A safety policy can reduce one risk and increase another. A forecast can be sincere and still politically illegitimate as a basis for unilateral action.
 
 <!-- phil-passage-id: ch16-p0162 -->
 The strongest critique of future-stakes reasoning can be stated this way:
@@ -676,7 +676,7 @@ This gives us the chapter's most defensible middle position: **constrained futur
 ## Using The Future-Stakes Lens On A Case
 
 <!-- phil-passage-id: ch16-p0173 -->
-In PHIL 123, the future-stakes lens is used to test a considered judgment, not to add futuristic vocabulary to a case. It asks students to make assumptions visible, widen the field of concern, and decide whether scale, reversibility, or contestability should change a position they could otherwise defend.
+The future-stakes lens tests a moral judgment by making its assumptions visible, widening the field of concern, and asking whether scale, reversibility, or contestability should change a position that might otherwise be defensible.
 
 <!-- phil-passage-id: ch16-p0174 -->
 Future-stakes reasoning changes a case analysis in four ways.
@@ -755,7 +755,7 @@ This example shows how the chapter's genealogy becomes practical. Singer widens 
 ## Applying The Lens Across Student Case Inquiries
 
 <!-- phil-passage-id: ch16-p0195 -->
-The same pattern works across PHIL 123 case inquiries.
+The same pattern travels across fields.
 
 <!-- phil-passage-id: ch16-p0196 -->
 A student studying **AI in nursing** might begin with documentation efficiency or triage support. Future-stakes reasoning asks what happens when the system scales across hospitals, insurers, regulators, and vendors. Does it reduce nurse burnout or increase monitoring? Does it help clinicians notice rare conditions or make them defer to a model? What happens to nursing judgment if documentation becomes model-mediated?
@@ -844,7 +844,7 @@ A decision made for users without users, patients without patients, students wit
 <!-- phil-passage-id: ch16-p0215 -->
 <aside class="textbox exercises" aria-labelledby="try-it-one-sentence-audit">
 <h3 id="try-it-one-sentence-audit">Try It: One-Sentence Audit</h3>
-<p>For your anchor case, write one sentence for each category: local benefit, proxy, absent stakeholders, scale effect, future dependency, key assumption, proportional safeguard, and contestability. Then state whether the lens strengthens, challenges, or qualifies your provisional view. Keep each sentence concrete enough that someone else could check your reasoning.</p>
+<p>For one documented case, write one sentence for each category: local benefit, proxy, absent stakeholders, scale effect, future dependency, key assumption, proportional safeguard, and contestability. Then state whether the lens changes your judgment and why. Keep each sentence concrete enough that someone else could check your reasoning.</p>
 </aside>
 
 <!-- phil-section-id: ch16-s032 -->
@@ -929,7 +929,7 @@ The lens forces attention to future people, irreversible harm, and consequences 
 The responsible position is harder than panic and harder than dismissal. Future stakes can constrain action. Uncertainty can justify proportionate safeguards and contestable governance. Present people remain stakeholders. Future people are morally relevant. No one gets a blank check simply by claiming to speak for them.
 
 <!-- phil-passage-id: ch16-p0233 -->
-For PHIL 123, apply the lens to the same documented case you have been studying. Name the assumptions, widen the stakeholder map, test the effectiveness claims, identify the proxies, check reversibility and contestability, and state what evidence would make a responsible decision-maker pause, revise, or stop.
+Apply the lens to a documented case. Name the assumptions, widen the stakeholder map, test the effectiveness claims, identify the proxies, check reversibility and contestability, and state what evidence would make a responsible decision-maker pause, revise, or stop.
 
 <!-- phil-section-id: ch16-s042 -->
 ## References

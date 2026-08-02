@@ -15,8 +15,8 @@
     "slug": "moral-authority-character-and-practical-wisdom"
   },
   "path": "/chapter/aristotle-character-and-ai-assisted-life/",
-  "wordCount": 6568,
-  "readingMinutes": 30,
+  "wordCount": 6509,
+  "readingMinutes": 29,
   "status": "website-canonical",
   "licenses": {
     "prose": "CC-BY-4.0",
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "249a6a701c5e90eb937c12ea81ffce2b09ff099717ca868dc8c9c3c696f8217a",
-    "canonicalMarkdownSha256": "4cacf8fd64d436bbe59e94ad689c22383118c3c2df6fd1adbd0a6dde16ac5ba8",
+    "canonicalMarkdownSha256": "b0ce3f66d3b43127fb9272ff6027ab80017b718bf01f421eca100bab84605145",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }

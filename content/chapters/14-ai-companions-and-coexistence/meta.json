@@ -15,7 +15,7 @@
     "slug": "relationships-creativity-and-coexistence"
   },
   "path": "/chapter/ai-companions-and-coexistence/",
-  "wordCount": 10570,
+  "wordCount": 10455,
   "readingMinutes": 47,
   "status": "website-canonical",
   "licenses": {
@@ -33,7 +33,7 @@
   },
   "websiteBaseline": {
     "selectedSourceSha256": "4abf20d3440d14e1ca9374f9b450bccc6ece8b451607f973d99050942e8005bd",
-    "canonicalMarkdownSha256": "794d48a3fb993b1880cb05ba341f4c01fd545e0a71fa41d3417b282193cf590f",
+    "canonicalMarkdownSha256": "ff2c8ca46d5f87eef57d166b1ed3b354e26eb79aa887a0b3c3eaf2654d5a2b1b",
     "reconciliationTransformations": [],
     "selectionNote": "Imported from the current resolved published-manifest source route."
   }
