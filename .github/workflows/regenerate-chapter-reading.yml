@@ -1,0 +1,108 @@
+name: Regenerate chapter reading files
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - content/chapters/**/chapter.md
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: regenerate-reading-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    name: Regenerate edited chapters
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the pull-request branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Use the repository-pinned Node release
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install from the lockfile
+        run: npm ci
+        env:
+          ASTRO_TELEMETRY_DISABLED: "1"
+
+      - name: Regenerate derivatives for edited chapters
+        id: regenerate
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mapfile -t chapters < <(
+            git diff --name-only --diff-filter=AMR "${BASE_SHA}...HEAD" -- 'content/chapters/*/chapter.md' \
+              | awk -F/ 'NF == 4 { print $3 }' \
+              | sort -u
+          )
+
+          if (( ${#chapters[@]} == 0 )); then
+            echo "No edited chapter source files require regeneration."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for chapter in "${chapters[@]}"; do
+            node scripts/generate-reading.mjs --chapter "$chapter" --write
+          done
+
+          mapfile -t generated_paths < <(git diff --name-only)
+          if (( ${#generated_paths[@]} == 0 )); then
+            echo "The committed reading derivatives are already current."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for changed_path in "${generated_paths[@]}"; do
+            case "$changed_path" in
+              content/chapters/*/chapter.md|content/chapters/*/meta.json|content/chapters/*/reading.json|content/chapters/*/reading.txt)
+                ;;
+              *)
+                echo "Refusing to commit an unexpected generated path: $changed_path" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit generated chapter files
+        if: steps.regenerate.outputs.changed == 'true'
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- content/chapters
+          git commit -m "Regenerate chapter reading files"
+          git push origin "HEAD:${HEAD_BRANCH}"
+
+      - name: Validate the generated commit
+        if: steps.regenerate.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: gh workflow run ci.yml --ref "$HEAD_BRANCH"

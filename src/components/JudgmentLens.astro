@@ -1,0 +1,232 @@
+---
+interface Props {
+  passageId: string;
+  prompt: string;
+  question: string;
+  complication: string;
+  comparisonHref: string;
+  comparisonLabel?: string;
+}
+
+const {
+  passageId,
+  prompt,
+  question,
+  complication,
+  comparisonHref,
+  comparisonLabel = "Compare with the philosopher",
+} = Astro.props;
+---
+
+<aside
+  id="context-panel"
+  class="judgment-lens interactive-only"
+  aria-labelledby="judgment-lens-title"
+  data-judgment-lens
+  data-passage-id={passageId}
+  data-trigger-prompt={prompt}
+  tabindex="-1"
+>
+  <header class="lens-head">
+    <div>
+      <p class="lens-kicker">Judgment lens</p>
+      <p class="lens-anchor">Attached to the opening dilemma</p>
+    </div>
+    <button type="button" class="lens-close" data-context-close data-context-close-own-focus aria-label="Close context panel">×</button>
+  </header>
+
+  <section class="lens-step" aria-labelledby="first-judgment-title">
+    <h2 id="first-judgment-title">Make your first judgment</h2>
+    <p class="lens-question">{question}</p>
+    <label class="judgment-scale">
+      <span><b>Practice preserved</b><b>Practice substituted</b></span>
+      <input type="range" min="0" max="100" value="55" data-first-judgment aria-label="First judgment: practice preserved to practice substituted" />
+    </label>
+    <label class="reason-field">
+      <span>State your reason in one sentence.</span>
+      <textarea rows="3" maxlength="320" data-first-reason></textarea>
+    </label>
+  </section>
+
+  <section class="lens-complication" aria-labelledby="complication-title">
+    <h2 id="complication-title">Complication</h2>
+    <p>{complication}</p>
+  </section>
+
+  <section class="lens-step lens-revision" aria-labelledby="revision-title">
+    <h2 id="revision-title">Revise your judgment</h2>
+    <label class="judgment-scale">
+      <span><b>Practice preserved</b><b>Practice substituted</b></span>
+      <input type="range" min="0" max="100" value="50" data-revised-judgment aria-label="Revised judgment: practice preserved to practice substituted" />
+    </label>
+    <label class="reason-field">
+      <span>What changed, if anything?</span>
+      <textarea rows="2" maxlength="240" data-revision-reason></textarea>
+    </label>
+    <p class="movement-note" data-movement-note aria-live="polite"></p>
+  </section>
+
+  <nav class="lens-actions" aria-label="Judgment lens actions">
+    <button type="button" data-test-objection><span aria-hidden="true">⚖</span> Test an objection</button>
+    <a href={comparisonHref}><span aria-hidden="true">◌</span> {comparisonLabel}</a>
+    <a href={`#${passageId}`} data-return-reading><span aria-hidden="true">▤</span> Return to reading</a>
+  </nav>
+
+  <p class="transient-note">Your responses stay on this page and are not saved.</p>
+</aside>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-judgment-lens]").forEach((lens) => {
+    if (lens.dataset.enhanced === "true") return;
+    lens.dataset.enhanced = "true";
+
+    const passageId = lens.dataset.passageId;
+    const passage = passageId ? document.getElementById(passageId) : null;
+    const prompt = lens.dataset.triggerPrompt ?? "Examine your judgment";
+    const contextClose = lens.querySelector<HTMLButtonElement>("[data-context-close]");
+    const closeContext = () => {
+      const shell = document.querySelector<HTMLElement>(".reader-shell");
+      shell?.setAttribute("data-context-closed", "true");
+      shell?.removeAttribute("data-context-mobile-open");
+      if (!passageId) return;
+      document.querySelector<HTMLButtonElement>(`[data-judgment-trigger="${CSS.escape(passageId)}"] button`)?.focus({ preventScroll: true });
+    };
+
+    if (passage && !document.querySelector(`[data-judgment-trigger="${passageId}"]`)) {
+      const trigger = document.createElement("div");
+      trigger.className = "judgment-trigger interactive-only";
+      trigger.dataset.judgmentTrigger = passageId ?? "";
+      trigger.innerHTML = `
+        <span class="judgment-trigger__question">${prompt}</span>
+        <button type="button" class="judgment-trigger__button" aria-controls="context-panel">
+          <span aria-hidden="true">◉</span> Examine your judgment
+        </button>
+        <span class="judgment-trigger__connector" aria-hidden="true"></span>
+      `;
+      passage.insertAdjacentElement("afterend", trigger);
+
+      const button = trigger.querySelector<HTMLButtonElement>("button");
+      button?.addEventListener("click", () => {
+        const shell = document.querySelector<HTMLElement>(".reader-shell");
+        shell?.removeAttribute("data-context-closed");
+        if (window.matchMedia("(max-width: 900px)").matches) shell?.setAttribute("data-context-mobile-open", "true");
+        else lens.scrollIntoView({ behavior: "smooth", block: "start" });
+        lens.querySelector<HTMLInputElement>("[data-first-judgment]")?.focus({ preventScroll: true });
+      });
+
+      const sizeConnector = () => {
+        const connector = trigger.querySelector<HTMLElement>(".judgment-trigger__connector");
+        if (!connector || window.matchMedia("(max-width: 900px)").matches) return;
+        const triggerRect = trigger.getBoundingClientRect();
+        const lensRect = lens.getBoundingClientRect();
+        const start = connector.getBoundingClientRect().left;
+        connector.style.width = `${Math.max(0, lensRect.left - start + 4)}px`;
+        connector.style.setProperty("--connector-y", `${Math.round(triggerRect.height / 2)}px`);
+      };
+      sizeConnector();
+      window.addEventListener("resize", sizeConnector, { passive: true });
+    }
+
+    const first = lens.querySelector<HTMLInputElement>("[data-first-judgment]");
+    const revised = lens.querySelector<HTMLInputElement>("[data-revised-judgment]");
+    const note = lens.querySelector<HTMLElement>("[data-movement-note]");
+    const updateMovement = () => {
+      if (!first || !revised || !note) return;
+      const movement = Number(revised.value) - Number(first.value);
+      if (Math.abs(movement) < 4) note.textContent = "Your revised judgment is substantially unchanged.";
+      else if (movement > 0) note.textContent = `Your judgment moved ${movement} points toward substitution.`;
+      else note.textContent = `Your judgment moved ${Math.abs(movement)} points toward preservation.`;
+    };
+    first?.addEventListener("input", updateMovement);
+    revised?.addEventListener("input", updateMovement);
+    updateMovement();
+
+    lens.querySelector<HTMLButtonElement>("[data-test-objection]")?.addEventListener("click", () => {
+      const complication = lens.querySelector<HTMLElement>(".lens-complication");
+      complication?.classList.toggle("is-emphasized");
+      complication?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    contextClose?.addEventListener("click", closeContext);
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !lens.contains(document.activeElement)) return;
+      const shell = document.querySelector<HTMLElement>(".reader-shell");
+      if (shell?.hasAttribute("data-context-closed")) return;
+      event.preventDefault();
+      closeContext();
+    });
+  });
+</script>
+
+<style>
+  .judgment-lens {
+    position: sticky;
+    top: var(--header-height);
+    grid-column: 4;
+    align-self: start;
+    height: calc(100vh - var(--header-height) - var(--frame-size));
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: clamp(1.5rem, 2.5vw, 2.2rem);
+    background: var(--paper-light);
+    color: var(--ink);
+  }
+  .lens-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .lens-kicker { margin: 0; color: var(--rust); font-size: 1.25rem; line-height: 1.1; }
+  .lens-anchor { margin: 0.25rem 0 0; font-size: 0.82rem; }
+  .lens-close { width: 2.25rem; height: 2.25rem; border: 0; background: transparent; font-size: 1.65rem; line-height: 1; cursor: pointer; }
+  .lens-step { padding: 1.8rem 0 1.35rem; }
+  .lens-step h2, .lens-complication h2 { margin: 0 0 0.7rem; font-size: 1.3rem; font-weight: 500; line-height: 1.15; }
+  .lens-question { max-width: 28ch; margin: 0 0 1.45rem; font-size: 1.05rem; line-height: 1.45; }
+  .judgment-scale { display: grid; gap: 0.4rem; }
+  .judgment-scale > span { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.7rem; font-weight: 400; }
+  .judgment-scale b { font-weight: 400; }
+  input[type="range"] { width: 100%; accent-color: var(--ink); }
+  .reason-field { display: grid; gap: 0.55rem; margin-top: 1.45rem; font-size: 0.82rem; }
+  .reason-field textarea { width: 100%; resize: vertical; border: 0; border-bottom: 1px solid var(--line-dark); background: repeating-linear-gradient(to bottom, transparent 0, transparent 1.85rem, var(--line) 1.9rem); color: var(--ink); line-height: 1.9rem; padding: 0; }
+  .lens-complication { margin: 0; padding: 1.25rem 0; border-block: 1px solid var(--line); transition: background 160ms ease; }
+  .lens-complication h2 { color: var(--rust); }
+  .lens-complication p { max-width: 34ch; margin: 0; font-size: 0.92rem; line-height: 1.5; }
+  .lens-complication.is-emphasized { background: var(--gold-wash); box-shadow: 0 0 0 0.75rem var(--gold-wash); }
+  .lens-revision { padding-bottom: 0.9rem; }
+  .movement-note { min-height: 1.4em; margin: 0.8rem 0 0; color: var(--rust-dark); font: 0.68rem/1.4 var(--sans); }
+  .lens-actions { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
+  .lens-actions a, .lens-actions button { display: flex; min-height: 3.5rem; align-items: center; gap: 0.4rem; border: 0; border-right: 1px solid var(--line); background: transparent; padding: 0.65rem; color: var(--ink); font: 0.66rem/1.25 var(--serif); text-decoration: none; cursor: pointer; }
+  .lens-actions > :last-child { border-right: 0; }
+  .lens-actions span { font-size: 1rem; }
+  .transient-note { margin: 1rem 0 0; color: var(--ink-soft); font-size: 0.68rem; font-style: italic; }
+
+  :global(.judgment-trigger) { position: relative; display: flex; max-width: var(--content-width); align-items: center; gap: 0.65rem; margin: -0.35rem 0 1rem; white-space: nowrap; }
+  :global(.judgment-trigger__question) { background: var(--gold-wash); padding: 0.05rem 0.35rem; font-size: 0.95rem; }
+  :global(.judgment-trigger__button) { position: relative; z-index: 2; border: 0; background: var(--paper-light); color: #174f8a; padding: 0.15rem 0.35rem; font: 0.72rem/1.2 var(--serif); cursor: pointer; }
+  :global(.judgment-trigger__connector) { position: absolute; z-index: 1; left: 100%; top: 50%; height: 0; border-top: 1px dashed var(--rust); pointer-events: none; }
+  :global(.judgment-trigger__connector::after) { content: ""; position: absolute; right: -5px; top: -5px; width: 8px; height: 8px; border: 2px solid var(--rust); border-radius: 50%; background: var(--paper-light); }
+
+  @media (max-width: 1180px) {
+    .judgment-lens { padding-inline: 1.35rem; }
+    .lens-actions { grid-template-columns: 1fr; }
+    .lens-actions a, .lens-actions button { min-height: 2.8rem; border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 900px) {
+    .judgment-lens {
+      position: fixed !important;
+      z-index: 50;
+      top: var(--header-height);
+      right: var(--frame-size);
+      bottom: auto;
+      left: var(--frame-size);
+      display: none;
+      grid-column: auto;
+      align-self: auto;
+      width: auto;
+      height: calc(100dvh - var(--header-height) - var(--frame-size));
+      min-height: 0;
+      max-height: calc(100dvh - var(--header-height) - var(--frame-size));
+      margin: 0;
+      border: 1px solid var(--frame-line);
+      box-shadow: 0 24px 80px rgb(0 0 0 / 52%);
+    }
+    :global(.reader-shell[data-context-mobile-open]) .judgment-lens { display: block; }
+    :global(.judgment-trigger) { flex-wrap: wrap; white-space: normal; }
+    :global(.judgment-trigger__connector) { display: none; }
+  }
+</style>
