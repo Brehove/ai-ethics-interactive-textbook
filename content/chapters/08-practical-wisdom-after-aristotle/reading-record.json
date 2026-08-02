@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch08",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to distinguish human practical wisdom from judgment-like AI behavior in order to decide what responsibility remains with an AI user.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch08-p0006",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Locate the responsibility",
+      "trigger": "What, if anything, can Maya hand over?",
+      "prompt": "At this point, judge whether Claude is offering useful assistance, something closer to judgment, or both. Identify one decision in Maya's case that must remain hers, and explain what makes that decision ethically hers rather than the tool's.",
+      "guidance": "Commit before the chapter supplies Vallor's or Aristotle's vocabulary. A serious response identifies a concrete decision and gives a reason tied to Maya's situation.",
+      "responseStructure": "prose",
+      "rationale": "The opening case establishes a live question about assistance, judgment, and responsibility before the three philosophical accounts interpret it, so students can preserve an independent starting warrant."
+    },
+    {
+      "id": "framework-comparison",
+      "passageId": "ch08-p0066",
+      "stage": "Rules and judgment comparison",
+      "strategy": "framework-comparison",
+      "title": "Compare the role of judgment",
+      "trigger": "What does each account think rules cannot do alone?",
+      "prompt": "Compare Aristotle, Vallor, and Anthropic on the relation between rules and judgment. Name one shared reason they give for needing more than rules, then explain one difference in what—or who—is supposed to exercise judgment.",
+      "guidance": "Compare the grounds and subject of judgment, not just the fact that all three mention rules. Keep the comparison focused on one shared point and one consequential difference.",
+      "responseStructure": "prose",
+      "rationale": "This passage makes the chapter's central comparison usable by setting the three accounts side by side on rules, values, and context-sensitive judgment."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch08-p0099",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Reconcile the analogy",
+      "trigger": "What did the analogy clarify, and where did it stop?",
+      "prompt": "Classify your opening judgment as changed, qualified, strengthened, or unchanged. Identify the chapter claim or analogy break that produced—or failed to produce—that movement, give your strongest reason now about what Maya remains responsible for, and state the most serious uncertainty that remains about calling AI behavior judgment.",
+      "guidance": "An unchanged judgment is defensible if you show why the chapter's strongest pressure did not dislodge it. Keep the remaining uncertainty philosophical rather than merely factual.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "After the chapter distinguishes character formation in a life from judgment-like model behavior and returns to Maya, students can reconcile their starting judgment without treating the analogy as proof that AI has virtue."
+    }
+  ]
+}

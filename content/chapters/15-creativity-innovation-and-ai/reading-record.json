@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch15",
+  "reasoningObjective": "By the end of this chapter, students should be better able to evaluate an AI-assisted creative practice in order to judge whether its visible human contribution and field conditions make it responsible.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch15-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Make a first authorship judgment",
+      "trigger": "What matters most when AI helps produce a creative work?",
+      "prompt": "In the Colorado State Fair case, should the first ethical question be about authorship, contest fairness, human effort, training data, or audience trust? Choose one and give a reason why it should lead your initial judgment.",
+      "guidance": "Name one feature of the practice that makes your chosen question more important than a simple claim that the image is or is not art.",
+      "responseStructure": "prose",
+      "rationale": "The opening deliberately presents several unsettled layers of the case before the chapter supplies a framework for assessing process and practice."
+    },
+    {
+      "id": "creativity-process-classification",
+      "passageId": "ch15-p0042",
+      "stage": "Process classification hinge",
+      "strategy": "framework-comparison",
+      "title": "Classify the creative work",
+      "trigger": "What does a process label clarify, and what does it leave undecided?",
+      "prompt": "Classify one AI-assisted activity as primarily combinatorial, exploratory, or transformational creativity. Compare that label with one other category by explaining what each would make visible about the process, then state one ethical question the labels cannot answer.",
+      "guidance": "Use a concrete activity and distinguish the kind of possibility-space work being done from questions of fairness, value, or responsibility.",
+      "responseStructure": "prose",
+      "rationale": "This passage explicitly limits Boden's three process categories, making framework comparison useful without confusing classification for a moral verdict."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch15-p0126",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "State a field-specific judgment",
+      "trigger": "What now makes the use responsible, irresponsible, or still uncertain?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then state the strongest reason for your current verdict about the case and identify one remaining objection or uncertainty involving human judgment, prior labor, audience trust, or field effects.",
+      "guidance": "Tie the verdict to the specific practice and its standard, not to a universal rule about AI-generated work.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The conclusion synthesizes extension and degradation as competing possibilities and requires a practice-specific account of judgment, affected people, and responsiveness."
+    }
+  ]
+}

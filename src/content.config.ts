@@ -306,6 +306,42 @@ const chapterReading = defineCollection({
   }),
 });
 
+const readingRecordCheckpointSchema = z.object({
+  id: publicIdentifier,
+  passageId: publicIdentifier,
+  stage: z.string().min(1),
+  strategy: z.enum([
+    "initial-judgment",
+    "self-explanation",
+    "argument-reconstruction",
+    "evidence-warrant",
+    "contrast-case",
+    "counterexample",
+    "consider-alternative",
+    "objection-repair",
+    "question-generation",
+    "epistemic-calibration",
+    "framework-comparison",
+    "transfer",
+    "metacognitive-trace",
+  ]),
+  title: z.string().min(1),
+  trigger: z.string().min(1),
+  prompt: z.string().min(1),
+  guidance: z.string().min(1),
+  responseStructure: z.enum(["prose", "movement-plus-prose"]),
+  rationale: z.string().min(1),
+});
+
+const chapterReadingRecords = defineCollection({
+  loader: glob({ pattern: "**/reading-record.json", base: "./content/chapters" }),
+  schema: chapterScopedMetadata.extend({
+    license: z.literal("CC0-1.0"),
+    reasoningObjective: z.string().min(1),
+    checkpoints: z.array(readingRecordCheckpointSchema).length(3),
+  }),
+});
+
 const people = defineCollection({
   loader: glob({ pattern: "entities/people/records/*.json", base: "./content" }),
   schema: personSchema,
@@ -369,6 +405,7 @@ export const collections = {
   chapterWorld,
   chapterRights,
   chapterReading,
+  chapterReadingRecords,
   people,
   peopleWikimedia,
   media,

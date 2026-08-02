@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch12",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to diagnose the central wrong in an algorithmic opportunity gate in order to defend a repair matched to the system's proxy, error burden, and contestability.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch12-p0006",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Name the first concern",
+      "trigger": "What is most ethically troubling about the dashboard?",
+      "prompt": "Make a provisional judgment about the dashboard's use in advising. Identify one feature of Diego's or Kai's case that matters most, and explain whether it makes the system's problem mainly a mistaken description, an unequal error, an unfair allocation of attention, or something else.",
+      "guidance": "Commit before the chapter supplies its diagnostic vocabulary. Name the feature and the kind of concern it raises; do not merely call the system biased.",
+      "responseStructure": "prose",
+      "rationale": "The opening case makes both misdirected attention and missing attention visible before the chapter explains mirrors, gates, proxies, error burdens, and repairs."
+    },
+    {
+      "id": "proxy-warrant",
+      "passageId": "ch12-p0032",
+      "stage": "Proxy diagnosis",
+      "strategy": "evidence-warrant",
+      "title": "Expose the proxy's warrant",
+      "trigger": "Why did an accurate prediction still produce an unjust result?",
+      "prompt": "State the implicit warrant that treats predicted health-care cost as evidence of medical need. Then explain how the case's unequal history breaks that warrant, using one detail from the study to show why accuracy about cost is not enough.",
+      "guidance": "Distinguish the model's target from the human concern it was meant to represent. A serious response explains the bridge rather than simply repeating that the model was biased.",
+      "responseStructure": "prose",
+      "rationale": "The Obermeyer case has established that the model accurately predicted its chosen target while the target itself carried unequal access forward, making the evidence-to-proxy warrant available for analysis."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch12-p0109",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Match the repair to the wrong",
+      "trigger": "What does the dashboard owe Diego and Kai?",
+      "prompt": "Classify your opening judgment as changed, qualified, strengthened, or unchanged. Identify the chapter claim, audit question, or objection that caused—or failed to cause—that movement, name the central wrong you now find in the dashboard, and defend one repair that addresses that wrong while stating the most serious uncertainty that remains.",
+      "guidance": "Do not treat a technical fix as sufficient unless you explain why it reaches the wrong you named. An unchanged judgment is defensible when you show why the chapter's strongest pressure did not alter it.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "After the chapter tests individual, structural, welfare, and procedural diagnoses; fairness limits; deployment arguments; and repair options, students can form a considered judgment tied to a specific institutional response."
+    }
+  ]
+}

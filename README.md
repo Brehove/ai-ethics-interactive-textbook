@@ -37,6 +37,7 @@ Read:
 
 - [`docs/CONTENT_MODEL.md`](docs/CONTENT_MODEL.md)
 - [`docs/AUTHORING.md`](docs/AUTHORING.md)
+- [`docs/READING_RECORD_PROMPT_DESIGN.md`](docs/READING_RECORD_PROMPT_DESIGN.md)
 - [`workers/editor-auth/README.md`](workers/editor-auth/README.md)
 - [`docs/VOICE_BOUNDARY.md`](docs/VOICE_BOUNDARY.md)
 - [`docs/WIKIMEDIA_WORLD_LAYER.md`](docs/WIKIMEDIA_WORLD_LAYER.md)

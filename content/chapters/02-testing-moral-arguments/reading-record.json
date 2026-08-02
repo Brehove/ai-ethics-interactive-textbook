@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch02",
+  "reasoningObjective": "By the end of this chapter, students should be better able to reconstruct and repair a moral argument by distinguishing its standard, case facts, bridge, and scope in order to defend a limited policy judgment.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch02-p0003",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Take a Position on Renewal",
+      "trigger": "Should the app require an active choice before charging for the annual plan?",
+      "prompt": "State your provisional answer to the renewal-policy question and give one reason the app should or should not require an active choice.",
+      "guidance": "Your reason should identify a moral standard or relevant feature of the design, not merely restate that the option appears in the terms.",
+      "responseStructure": "prose",
+      "rationale": "The policy question is clear before the chapter has supplied the P1/P2/C form, bridge premise, or tests for pressure and repair."
+    },
+    {
+      "id": "bridge-hinge",
+      "passageId": "ch02-p0042",
+      "stage": "Make the inference visible",
+      "strategy": "argument-reconstruction",
+      "title": "Find the Because-Step",
+      "trigger": "What has to be true for the visible design to support the proposed remedy?",
+      "prompt": "In your own words, state what P3 adds to the argument that P1, P2, and the conclusion did not yet show. Then explain why a critic could accept the design facts while still questioning that bridge.",
+      "guidance": "Identify the inferential job of the bridge and the precise point a critic can contest; do not just label the lines.",
+      "responseStructure": "prose",
+      "rationale": "The completed four-line argument makes the missing connection available as a distinct object of philosophical testing."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch02-p0080",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Record Your Repair",
+      "trigger": "What did the company's objection require the argument to change, if anything?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Identify the exact premise, bridge, or scope decision most affected by the objection, give the strongest reason for your present policy, and name the remaining objection or uncertainty.",
+      "guidance": "Say whether you would defend, revise, narrow, or concede and explain why that response fits the pressure rather than treating change as automatically better.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The worked repair and judgment note demonstrate how a serious objection can narrow a conclusion without erasing the student's underlying concern."
+    }
+  ]
+}

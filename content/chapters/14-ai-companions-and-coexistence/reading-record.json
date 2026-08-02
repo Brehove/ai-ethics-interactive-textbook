@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch14",
+  "reasoningObjective": "By the end of this chapter, students should be better able to judge an AI companion as a designed relationship in order to identify the human needs, vulnerabilities, and responsibilities at stake.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch14-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Name the relation",
+      "trigger": "What kind of relation should guide judgment of an AI companion?",
+      "prompt": "Choose one companion case from the opening. Should it be judged first as a tool, a product, a social relationship, or something else? Give one reason tied to what the system does in a user's life.",
+      "guidance": "Commit to a provisional category while acknowledging that another category could become relevant in a different use or setting.",
+      "responseStructure": "prose",
+      "rationale": "The opening sets out the relational problem before the chapter separates moral status, care, autonomy, and design responsibility."
+    },
+    {
+      "id": "care-substitution-test",
+      "passageId": "ch14-p0046",
+      "stage": "Care ethics hinge",
+      "strategy": "contrast-case",
+      "title": "Test care against substitution",
+      "trigger": "When does a companion support care rather than thin it out?",
+      "prompt": "Use the same care companion in two versions: one that helps a caregiver attend to a person's needs and one that an institution uses to reduce human contact. Identify the one changed feature that does the ethical work, and explain why it changes the care-ethical judgment.",
+      "guidance": "Keep the companion and user fixed; focus on a concrete difference in the surrounding practice of attention, responsibility, or human presence.",
+      "responseStructure": "prose",
+      "rationale": "Vallor's account makes the chapter's central care-ethics distinction available: a technology may sustain goods of care or permit their institutional substitution."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch14-p0117",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Judge the designed relationship",
+      "trigger": "How has the chapter changed the terms of your first classification?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then identify the claim or case that most affected your view, give your strongest reason for judging this companion relation as you now do, and name one unresolved risk or objection.",
+      "guidance": "Your reason should connect a particular human need or vulnerability to a design responsibility, rather than treating the companion's apparent personhood as a complete answer.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The closing model judgment holds human attachment, artificial status, and company design power together without requiring an answer to the consciousness question."
+    }
+  ]
+}

@@ -21,6 +21,7 @@ const requiredChapterFiles = [
   "rights.json",
   "reading.json",
   "reading.txt",
+  "reading-record.json",
 ];
 
 function occurrences(source, expression) {
@@ -72,7 +73,7 @@ export async function validateContent({ projectRoot = root } = {}) {
     }
 
     try {
-      const [markdown, meta, annotations, sources, world, rights, reading] = await Promise.all([
+      const [markdown, meta, annotations, sources, world, rights, reading, readingRecord] = await Promise.all([
         readFile(path.join(directory, "chapter.md"), "utf8"),
         readJson(path.join(directory, "meta.json")),
         readJson(path.join(directory, "annotations.json")),
@@ -80,6 +81,7 @@ export async function validateContent({ projectRoot = root } = {}) {
         readJson(path.join(directory, "world.json")),
         readJson(path.join(directory, "rights.json")),
         readJson(path.join(directory, "reading.json")),
+        readJson(path.join(directory, "reading-record.json")),
       ]);
       if (extractLeadingTitle(markdown) !== expected.title || meta.title !== expected.title || reading.title !== expected.title) failures.push(`${expected.id}: approved title mismatch`);
       if (meta.id !== expected.id || meta.slug !== expected.slug || meta.order !== expected.order) failures.push(`${expected.id}: identity/order metadata mismatch`);
@@ -89,13 +91,21 @@ export async function validateContent({ projectRoot = root } = {}) {
       if (meta.websiteBaseline.selectedSourceSha256 !== expected.selectedSourceSha256) failures.push(`${expected.id}: selected source lineage mismatch`);
       if (meta.websiteBaseline.canonicalMarkdownSha256 !== sha256(normalizeNewlines(markdown))) failures.push(`${expected.id}: canonical Markdown hash is stale`);
       if (findForbiddenDeploymentHtmlElements(markdown).length) failures.push(`${expected.id}: forbidden deployment HTML element`);
-      for (const sidecar of [annotations, sources, world, rights, reading]) {
+      for (const sidecar of [annotations, sources, world, rights, reading, readingRecord]) {
         if (sidecar.chapterId !== expected.id) failures.push(`${expected.id}: sidecar chapterId mismatch`);
       }
       const parsed = parseInstrumentedMarkdown(markdown, expected.id);
       if (parsed.title !== expected.title) failures.push(`${expected.id}: instrumented title mismatch`);
       if (reading.sourceSha256 !== sha256(normalizeNewlines(markdown))) failures.push(`${expected.id}: reading source hash mismatch`);
       const segmentIds = new Set(reading.segments.map((segment) => segment.id));
+      if (readingRecord.license !== "CC0-1.0") failures.push(`${expected.id}: reading record metadata must be CC0-1.0`);
+      if (!Array.isArray(readingRecord.checkpoints) || readingRecord.checkpoints.length !== 3) failures.push(`${expected.id}: reading record must contain exactly three checkpoints`);
+      const checkpointIds = new Set();
+      for (const checkpoint of readingRecord.checkpoints ?? []) {
+        if (checkpointIds.has(checkpoint.id)) failures.push(`${expected.id}: duplicate reading record checkpoint ${checkpoint.id}`);
+        checkpointIds.add(checkpoint.id);
+        if (!segmentIds.has(checkpoint.passageId)) failures.push(`${expected.id}: reading record checkpoint ${checkpoint.id} points outside stable identity graph at ${checkpoint.passageId}`);
+      }
       for (const annotation of annotations.items) {
         if (!segmentIds.has(annotation.passageId) && !segmentIds.has(annotation.sectionId)) failures.push(`${expected.id}: annotation points outside stable identity graph`);
       }

@@ -12,7 +12,9 @@ const { chapterNumber, chapterTotal = 18 } = Astro.props;
   {chapterNumber && <p class="chapter-count" aria-label={`Chapter ${chapterNumber} of ${chapterTotal}`}>{chapterNumber} / {chapterTotal}</p>}
   <nav aria-label="Site">
     <a href="/contents/">Contents</a>
+    {!chapterNumber && <a href="/instructors/reading-records/">Instructors</a>}
     {!chapterNumber && <a href="/about/">About</a>}
+    {chapterNumber && <button type="button" data-open-notes>Notes</button>}
     <button type="button" class="type-toggle" data-type-toggle aria-label="Change text size">Aa</button>
     {chapterNumber && <button type="button" data-print-header>Print</button>}
   </nav>
@@ -61,10 +63,15 @@ const { chapterNumber, chapterTotal = 18 } = Astro.props;
   }
   nav { justify-self: end; display: flex; gap: 1rem; }
   nav a, nav button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
     background: transparent;
     color: var(--paper-deep);
-    padding: 0.3rem 0;
+    padding: 0.55rem 0.35rem;
     font: 500 0.67rem/1 var(--sans);
     letter-spacing: 0.08em;
     text-decoration: none;

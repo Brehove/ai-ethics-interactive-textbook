@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch04",
+  "reasoningObjective": "By the end of this chapter, students should be better able to evaluate an AI contribution and its permitted use through ABC-R in order to decide what judgment and work must remain their own.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch04-p0006",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Set AI's Role",
+      "trigger": "What role, if any, should AI have in your philosophical work?",
+      "prompt": "Choose one contribution an AI tool could make to philosophical work and judge whether you would use it. Give one reason it would help inquiry or one reason it could compromise the work.",
+      "guidance": "Commit to a specific use and identify the intellectual responsibility at stake, rather than giving a blanket verdict about AI.",
+      "responseStructure": "prose",
+      "rationale": "The chapter has established AI's uneven but potentially useful participation before giving students the course roles or ABC-R evaluation method."
+    },
+    {
+      "id": "abcr-hinge",
+      "passageId": "ch04-p0022",
+      "stage": "Test the contribution and the use",
+      "strategy": "self-explanation",
+      "title": "Explain an ABC-R Split",
+      "trigger": "How can an AI contribution be good enough in one respect but still not usable?",
+      "prompt": "Give a concrete AI contribution that could pass Accuracy, Bias, and Context checks yet fail Responsible Use for a particular assignment. Explain what makes the contribution acceptable in the first checks but the use unacceptable.",
+      "guidance": "Keep the example tied to a specific task boundary and distinguish the quality of the contribution from the defensibility of using it.",
+      "responseStructure": "prose",
+      "rationale": "ABC-R has just separated contribution-quality checks from the student's responsible-use decision, making the distinction available for application."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch04-p0059",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Record a Responsible Use Decision",
+      "trigger": "What now determines whether AI belongs in your work?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Identify the ABC-R finding or learning concern that most affected it, state your strongest present reason, and name one serious objection or uncertainty about the boundary you would set.",
+      "guidance": "Show how the concern bears on a particular contribution and task; preserve a real unresolved limit rather than claiming ABC-R settles every case automatically.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "After the chapter has tested ABC-R against source checking, framing, assignment boundaries, and the gap between assisted performance and independent ability, students can reconcile an initial use judgment."
+    }
+  ]
+}

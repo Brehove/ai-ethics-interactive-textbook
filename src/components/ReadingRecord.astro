@@ -1,0 +1,801 @@
+---
+interface ReadingPrompt {
+  id: string;
+  passageId: string;
+  stage: string;
+  title: string;
+  trigger: string;
+  prompt: string;
+  guidance: string;
+  responseStructure?: "prose" | "movement-plus-prose";
+}
+
+interface Props {
+  chapterNumber: number;
+  chapterTitle: string;
+  chapterPath: string;
+  chapterVersion: string;
+  prompts: ReadingPrompt[];
+}
+
+const {
+  chapterNumber,
+  chapterTitle,
+  chapterPath,
+  chapterVersion,
+  prompts,
+} = Astro.props;
+---
+
+<button type="button" class="selection-note-button interactive-only" hidden data-selection-note>Add note</button>
+
+<aside
+  id="context-panel"
+  class="reading-record interactive-only"
+  aria-labelledby="reading-record-title"
+  data-reading-record
+  data-chapter-number={chapterNumber}
+  data-chapter-title={chapterTitle}
+  data-chapter-path={chapterPath}
+  data-chapter-version={chapterVersion}
+  data-prompts={JSON.stringify(prompts)}
+  tabindex="-1"
+>
+  <header class="record-head">
+    <div>
+      <p id="reading-record-title" class="record-kicker">Your reading record</p>
+      <p class="record-progress" data-record-progress>0 of 3 responses preserved</p>
+    </div>
+    <button type="button" class="record-close" data-context-close data-context-close-own-focus aria-label="Close reading record">×</button>
+  </header>
+
+  <p id="reading-record-privacy" class="record-privacy"><b>Page memory only.</b> Typed responses stay in this page and are not stored or transmitted by the textbook. The site does not request microphone access.</p>
+
+  <section class="record-prompt" aria-labelledby="active-prompt-title" hidden data-record-prompt>
+    <p class="prompt-stage" data-active-stage></p>
+    <h2 id="active-prompt-title" data-active-title></h2>
+    <p id="active-prompt-copy" class="prompt-copy" data-active-prompt></p>
+    <p id="active-prompt-guidance" class="prompt-guidance" data-active-guidance></p>
+
+    <div data-response-editor>
+      <fieldset class="movement-field" hidden aria-describedby="response-error" data-movement-field>
+        <legend>How has your judgment moved?</legend>
+        <div class="movement-options">
+          <label><input type="radio" name="judgment-movement" value="Changed" data-movement-choice /> <span>Changed</span></label>
+          <label><input type="radio" name="judgment-movement" value="Qualified" data-movement-choice /> <span>Qualified</span></label>
+          <label><input type="radio" name="judgment-movement" value="Strengthened" data-movement-choice /> <span>Strengthened</span></label>
+          <label><input type="radio" name="judgment-movement" value="Unchanged" data-movement-choice /> <span>Unchanged</span></label>
+        </div>
+      </fieldset>
+      <label class="response-field">
+        <span>Your response</span>
+        <textarea
+          rows="7"
+          maxlength="1200"
+          required
+          aria-describedby="active-prompt-copy active-prompt-guidance response-requirement reading-record-privacy response-error"
+          aria-errormessage="response-error"
+          data-response-text
+        ></textarea>
+      </label>
+      <div class="response-meta">
+        <span id="response-requirement">Write two to five sentences.</span>
+        <span data-character-count>0 / 1,200</span>
+      </div>
+      <p class="dictation-fallback">For voice input, focus the response field and use your device's built-in dictation. The textbook does not request microphone access.</p>
+      <p id="response-error" class="response-error" role="alert" data-response-error></p>
+      <button type="button" class="preserve-button" data-request-preserve>Preserve this response</button>
+    </div>
+
+    <div class="preserved-response" hidden data-preserved-response tabindex="-1">
+      <p class="preserved-label">Original response · preserved</p>
+      <p class="preserved-movement" hidden data-preserved-movement></p>
+      <blockquote data-preserved-text></blockquote>
+      <p>You cannot overwrite this response. Your later checkpoints can qualify or revise it.</p>
+    </div>
+
+    <a class="return-link" href="#" data-return-reading>Return to reading <span aria-hidden="true">→</span></a>
+  </section>
+
+  <section class="record-notes" aria-labelledby="record-notes-title">
+    <header>
+      <div>
+        <p class="prompt-stage">Your annotations</p>
+        <h2 id="record-notes-title">Passage notes</h2>
+      </div>
+      <button type="button" data-add-note>Add a note</button>
+    </header>
+    <p class="notes-summary" data-notes-summary>No notes added. Select text in the chapter and choose “Add note,” or add one here with the keyboard.</p>
+    <form class="note-form" hidden data-note-form>
+      <p class="note-anchor" data-note-anchor>No passage selected. You can paste a quotation below.</p>
+      <label>
+        <span>Quotation or passage <small>(optional)</small></span>
+        <textarea rows="3" maxlength="900" data-note-quote></textarea>
+      </label>
+      <label>
+        <span>Your note</span>
+        <textarea rows="5" maxlength="1200" required aria-describedby="note-guidance reading-record-privacy note-error" aria-errormessage="note-error" data-note-text></textarea>
+      </label>
+      <p id="note-guidance">State what you notice, question, infer, or want to remember. The note stays in this page until you copy or download the record.</p>
+      <p id="note-error" class="response-error" role="alert" data-note-error></p>
+      <div class="note-actions">
+        <button type="button" data-save-note>Save note</button>
+        <button type="button" data-cancel-note>Cancel</button>
+      </div>
+    </form>
+    <ol class="note-list" data-note-list></ol>
+  </section>
+
+  <footer class="record-export" hidden data-record-export>
+    <label class="student-name">
+      <span>Name for the downloaded record <small>(optional)</small></span>
+      <input type="text" maxlength="100" autocomplete="name" data-student-name />
+    </label>
+    <div class="export-actions">
+      <button type="button" class="download-button" data-download-record>Download draft reading record</button>
+      <button type="button" class="copy-button" data-copy-record>Copy reading record</button>
+    </div>
+    <p data-export-note>Your download will be marked incomplete until all three responses are preserved.</p>
+  </footer>
+
+  <dialog class="preserve-dialog" data-preserve-dialog aria-labelledby="preserve-dialog-title">
+    <form method="dialog">
+      <p class="dialog-kicker">Before you add it</p>
+      <h2 id="preserve-dialog-title">Preserve this as your original response?</h2>
+      <p>Once added, this response cannot be edited or replaced. Later checkpoints give you room to qualify or revise your thinking.</p>
+      <div>
+        <button value="cancel">Keep writing</button>
+        <button value="confirm" data-confirm-preserve>Preserve response</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p class="record-status visually-hidden" aria-live="polite" data-record-status></p>
+</aside>
+
+<noscript>
+  <aside class="reading-record-noscript" role="note">
+    <h2>Optional reading record</h2>
+    <p>The three reflection checkpoints and downloadable record require JavaScript. The complete chapter remains available above.</p>
+  </aside>
+</noscript>
+
+<script>
+  interface PromptRecord {
+    id: string;
+    passageId: string;
+    stage: string;
+    title: string;
+    trigger: string;
+    prompt: string;
+    guidance: string;
+    responseStructure?: "prose" | "movement-plus-prose";
+  }
+
+  interface PreservedResponse {
+    promptId: string;
+    response: string;
+    preservedAt: string;
+    movement?: string;
+  }
+
+  interface ReadingNote {
+    id: string;
+    passageId: string | null;
+    quote: string;
+    note: string;
+    createdAt: string;
+  }
+
+  const escapeHtml = (value: string) => value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  document.querySelectorAll<HTMLElement>("[data-reading-record]").forEach((record) => {
+    if (record.dataset.enhanced === "true") return;
+    record.dataset.enhanced = "true";
+
+    const prompts = JSON.parse(record.dataset.prompts ?? "[]") as PromptRecord[];
+    const responses = new Map<string, PreservedResponse>();
+    const notes: ReadingNote[] = [];
+    let activePrompt: PromptRecord | null = null;
+    let returnControl: HTMLButtonElement | null = null;
+
+    const promptPanel = record.querySelector<HTMLElement>("[data-record-prompt]");
+    const stage = record.querySelector<HTMLElement>("[data-active-stage]");
+    const title = record.querySelector<HTMLElement>("[data-active-title]");
+    const promptCopy = record.querySelector<HTMLElement>("[data-active-prompt]");
+    const guidance = record.querySelector<HTMLElement>("[data-active-guidance]");
+    const editor = record.querySelector<HTMLElement>("[data-response-editor]");
+    const movementField = record.querySelector<HTMLFieldSetElement>("[data-movement-field]");
+    const movementChoices = Array.from(record.querySelectorAll<HTMLInputElement>("[data-movement-choice]"));
+    const textarea = record.querySelector<HTMLTextAreaElement>("[data-response-text]");
+    const characterCount = record.querySelector<HTMLElement>("[data-character-count]");
+    const responseError = record.querySelector<HTMLElement>("[data-response-error]");
+    const preservedBox = record.querySelector<HTMLElement>("[data-preserved-response]");
+    const preservedText = record.querySelector<HTMLElement>("[data-preserved-text]");
+    const preservedMovement = record.querySelector<HTMLElement>("[data-preserved-movement]");
+    const returnLink = record.querySelector<HTMLAnchorElement>("[data-return-reading]");
+    const progress = record.querySelector<HTMLElement>("[data-record-progress]");
+    const exportPanel = record.querySelector<HTMLElement>("[data-record-export]");
+    const exportNote = record.querySelector<HTMLElement>("[data-export-note]");
+    const downloadButton = record.querySelector<HTMLButtonElement>("[data-download-record]");
+    const copyButton = record.querySelector<HTMLButtonElement>("[data-copy-record]");
+    const studentName = record.querySelector<HTMLInputElement>("[data-student-name]");
+    const dialog = record.querySelector<HTMLDialogElement>("[data-preserve-dialog]");
+    const status = record.querySelector<HTMLElement>("[data-record-status]");
+    const selectionNoteButton = document.querySelector<HTMLButtonElement>("[data-selection-note]");
+    const noteEntryButton = document.querySelector<HTMLButtonElement>("[data-open-notes]");
+    const addNoteButton = record.querySelector<HTMLButtonElement>("[data-add-note]");
+    const noteForm = record.querySelector<HTMLFormElement>("[data-note-form]");
+    const noteAnchor = record.querySelector<HTMLElement>("[data-note-anchor]");
+    const noteQuote = record.querySelector<HTMLTextAreaElement>("[data-note-quote]");
+    const noteText = record.querySelector<HTMLTextAreaElement>("[data-note-text]");
+    const noteError = record.querySelector<HTMLElement>("[data-note-error]");
+    const noteList = record.querySelector<HTMLOListElement>("[data-note-list]");
+    const notesSummary = record.querySelector<HTMLElement>("[data-notes-summary]");
+    const shell = record.closest<HTMLElement>(".reader-shell");
+    const mobileQuery = window.matchMedia("(max-width: 900px)");
+    const modalState = new Map<HTMLElement, boolean>();
+    let focusAfterDialogClose: HTMLElement | null = null;
+    let pendingSelection: { passageId: string | null; quote: string } | null = null;
+
+    const updateCharacterCount = () => {
+      if (characterCount && textarea) characterCount.textContent = `${textarea.value.length.toLocaleString()} / 1,200`;
+    };
+
+    const mobileModalTargets = () => {
+      if (!shell) return [];
+      const targets = Array.from(shell.children).filter((element): element is HTMLElement => element instanceof HTMLElement && element !== record);
+      const header = document.querySelector<HTMLElement>(".site-header");
+      if (header) targets.push(header);
+      return targets;
+    };
+
+    const setMobileModal = (open: boolean) => {
+      const active = open && mobileQuery.matches;
+      if (active) {
+        record.setAttribute("role", "dialog");
+        record.setAttribute("aria-modal", "true");
+        mobileModalTargets().forEach((element) => {
+          if (!modalState.has(element)) modalState.set(element, element.hasAttribute("inert"));
+          element.setAttribute("inert", "");
+        });
+      } else {
+        record.removeAttribute("role");
+        record.removeAttribute("aria-modal");
+        modalState.forEach((wasInert, element) => {
+          if (!wasInert) element.removeAttribute("inert");
+        });
+        modalState.clear();
+      }
+    };
+
+    const openRecord = (selected: PromptRecord, control: HTMLButtonElement) => {
+      activePrompt = selected;
+      returnControl = control;
+      document.querySelectorAll<HTMLButtonElement>("[data-reading-record-trigger] button").forEach((button) => {
+        button.setAttribute("aria-expanded", String(button === control));
+      });
+      promptPanel?.removeAttribute("hidden");
+      if (stage) stage.textContent = selected.stage;
+      if (title) title.textContent = selected.title;
+      if (promptCopy) promptCopy.textContent = selected.prompt;
+      if (guidance) guidance.textContent = selected.guidance;
+      if (returnLink) returnLink.href = `#${selected.passageId}`;
+      const movementRequired = selected.responseStructure === "movement-plus-prose";
+      movementField?.toggleAttribute("hidden", !movementRequired);
+      movementChoices.forEach((choice) => { choice.checked = false; });
+      movementField?.removeAttribute("aria-invalid");
+
+      const preserved = responses.get(selected.id);
+      editor?.toggleAttribute("hidden", Boolean(preserved));
+      preservedBox?.toggleAttribute("hidden", !preserved);
+      if (preservedText) preservedText.textContent = preserved?.response ?? "";
+      if (preservedMovement) {
+        preservedMovement.textContent = preserved?.movement ? `Judgment movement · ${preserved.movement}` : "";
+        preservedMovement.toggleAttribute("hidden", !preserved?.movement);
+      }
+      if (textarea) textarea.value = "";
+      textarea?.removeAttribute("aria-invalid");
+      updateCharacterCount();
+      if (responseError) responseError.textContent = "";
+
+      shell?.removeAttribute("data-context-closed");
+      if (mobileQuery.matches) shell?.setAttribute("data-context-mobile-open", "true");
+      setMobileModal(true);
+      requestAnimationFrame(() => (preserved ? returnLink : textarea)?.focus({ preventScroll: true }));
+    };
+
+    const openNoteComposer = (selection: { passageId: string | null; quote: string } | null, control: HTMLButtonElement | null) => {
+      returnControl = control;
+      pendingSelection = selection;
+      if (noteAnchor) noteAnchor.textContent = selection?.passageId
+        ? `Anchored to passage ${selection.passageId}.`
+        : "No passage selected. You can paste a quotation below.";
+      if (noteQuote) noteQuote.value = selection?.quote ?? "";
+      if (noteText) noteText.value = "";
+      if (noteError) noteError.textContent = "";
+      noteForm?.removeAttribute("hidden");
+      shell?.removeAttribute("data-context-closed");
+      if (mobileQuery.matches) shell?.setAttribute("data-context-mobile-open", "true");
+      setMobileModal(true);
+      requestAnimationFrame(() => noteText?.focus({ preventScroll: true }));
+    };
+
+    prompts.forEach((item, index) => {
+      const passage = document.getElementById(item.passageId);
+      if (!passage || document.querySelector(`[data-reading-record-trigger="${item.id}"]`)) return;
+      const trigger = document.createElement("div");
+      trigger.className = "reading-record-trigger interactive-only";
+      trigger.dataset.readingRecordTrigger = item.id;
+      trigger.innerHTML = `
+        <span class="reading-record-trigger__number">${String(index + 1).padStart(2, "0")}</span>
+        <span class="reading-record-trigger__question">${escapeHtml(item.trigger)}</span>
+        <button type="button" class="reading-record-trigger__button" aria-controls="context-panel" aria-expanded="false" aria-label="Respond to checkpoint ${index + 1}: ${escapeHtml(item.title)}">
+          Respond <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>
+        </button>
+        <span class="reading-record-trigger__connector" aria-hidden="true"></span>
+      `;
+      passage.insertAdjacentElement("afterend", trigger);
+      const button = trigger.querySelector<HTMLButtonElement>("button");
+      button?.addEventListener("click", () => openRecord(item, button));
+
+      const sizeConnector = () => {
+        const connector = trigger.querySelector<HTMLElement>(".reading-record-trigger__connector");
+        const panel = document.querySelector<HTMLElement>("[data-reading-record]");
+        if (!connector || !panel || mobileQuery.matches) return;
+        const start = connector.getBoundingClientRect().left;
+        connector.style.width = `${Math.max(0, panel.getBoundingClientRect().left - start + 4)}px`;
+      };
+      sizeConnector();
+      window.addEventListener("resize", sizeConnector, { passive: true });
+    });
+
+    const closeRecord = () => {
+      shell?.setAttribute("data-context-closed", "true");
+      shell?.removeAttribute("data-context-mobile-open");
+      setMobileModal(false);
+      returnControl?.setAttribute("aria-expanded", "false");
+      returnControl?.focus({ preventScroll: true });
+    };
+
+    const updateProgress = () => {
+      const count = responses.size;
+      if (progress) progress.textContent = `${count} of ${prompts.length} responses preserved`;
+      prompts.forEach((item) => {
+        const completed = responses.has(item.id);
+        const trigger = document.querySelector<HTMLElement>(`[data-reading-record-trigger="${item.id}"]`);
+        trigger?.toggleAttribute("data-complete", completed);
+        const triggerButton = trigger?.querySelector<HTMLButtonElement>("button");
+        if (triggerButton) {
+          triggerButton.firstChild!.textContent = completed ? "Review " : "Respond ";
+          triggerButton.setAttribute("aria-label", `${completed ? "Review" : "Respond to"} checkpoint ${prompts.indexOf(item) + 1}: ${item.title}`);
+        }
+      });
+      exportPanel?.toggleAttribute("hidden", count === 0 && notes.length === 0);
+      const complete = count === prompts.length;
+      if (downloadButton) downloadButton.textContent = complete ? "Download complete reading record" : "Download draft reading record";
+      if (exportNote) exportNote.textContent = complete
+        ? "All three responses are preserved. This download is ready to submit to Canvas."
+        : `Your download will be marked incomplete: ${count} of ${prompts.length} responses preserved.`;
+    };
+
+    const updateNotes = () => {
+      if (notesSummary) notesSummary.textContent = notes.length === 0
+        ? "No notes added. Select text in the chapter and choose “Add note,” or add one here with the keyboard."
+        : `${notes.length} passage ${notes.length === 1 ? "note" : "notes"} included in this reading record.`;
+      if (noteList) {
+        noteList.replaceChildren();
+        notes.forEach((item, index) => {
+          const row = document.createElement("li");
+          const meta = document.createElement("p");
+          meta.className = "note-meta";
+          meta.textContent = `Note ${index + 1}${item.passageId ? ` · ${item.passageId}` : ""}`;
+          row.append(meta);
+          if (item.quote) {
+            const quote = document.createElement("blockquote");
+            quote.textContent = item.quote;
+            row.append(quote);
+          }
+          const copy = document.createElement("p");
+          copy.textContent = item.note;
+          row.append(copy);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.textContent = "Remove note";
+          remove.setAttribute("aria-label", `Remove note ${index + 1}`);
+          remove.addEventListener("click", () => {
+            notes.splice(index, 1);
+            updateNotes();
+            updateProgress();
+            addNoteButton?.focus();
+          });
+          row.append(remove);
+          noteList.append(row);
+        });
+      }
+    };
+
+    textarea?.addEventListener("input", () => {
+      updateCharacterCount();
+      textarea.removeAttribute("aria-invalid");
+      if (responseError) responseError.textContent = "";
+    });
+    movementChoices.forEach((choice) => choice.addEventListener("change", () => {
+      movementField?.removeAttribute("aria-invalid");
+      if (responseError) responseError.textContent = "";
+    }));
+    noteText?.addEventListener("input", () => {
+      noteText.removeAttribute("aria-invalid");
+      if (noteError) noteError.textContent = "";
+    });
+
+    const hideSelectionButton = () => {
+      selectionNoteButton?.setAttribute("hidden", "");
+      pendingSelection = null;
+    };
+
+    const updateSelectionButton = () => {
+      const selection = window.getSelection();
+      const quote = selection?.toString().trim() ?? "";
+      if (!selection || selection.rangeCount === 0 || quote.length < 2 || quote.length > 900) {
+        hideSelectionButton();
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      const common = range.commonAncestorContainer instanceof Element
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentElement;
+      const prose = common?.closest<HTMLElement>(".chapter-prose");
+      if (!prose || record.contains(common)) {
+        hideSelectionButton();
+        return;
+      }
+      const passage = common?.closest<HTMLElement>(`[id^="${record.dataset.chapterNumber ? `ch${String(record.dataset.chapterNumber).padStart(2, "0")}-p` : "ch"}"]`);
+      pendingSelection = { passageId: passage?.id ?? null, quote };
+      if (!selectionNoteButton) return;
+      const rect = range.getBoundingClientRect();
+      selectionNoteButton.style.left = `${Math.max(12, Math.min(window.innerWidth - 110, rect.left + rect.width / 2 - 50))}px`;
+      const buttonHeight = 48;
+      const preferredTop = rect.bottom + 8 + buttonHeight <= window.innerHeight - 12
+        ? rect.bottom + 8
+        : rect.top - buttonHeight - 8;
+      selectionNoteButton.style.top = `${Math.max(70, Math.min(window.innerHeight - buttonHeight - 12, preferredTop))}px`;
+      selectionNoteButton.removeAttribute("hidden");
+    };
+
+    document.addEventListener("pointerup", () => window.setTimeout(updateSelectionButton, 0));
+    document.addEventListener("keyup", (event) => {
+      if (event.key.startsWith("Arrow") || event.key === "Shift") window.setTimeout(updateSelectionButton, 0);
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target === selectionNoteButton) return;
+      if (!(event.target instanceof Node) || !selectionNoteButton?.contains(event.target)) hideSelectionButton();
+    });
+
+    selectionNoteButton?.addEventListener("click", () => {
+      const selected = pendingSelection;
+      selectionNoteButton.setAttribute("hidden", "");
+      window.getSelection()?.removeAllRanges();
+      openNoteComposer(selected, selectionNoteButton);
+    });
+
+    addNoteButton?.addEventListener("click", () => openNoteComposer(null, addNoteButton));
+    noteEntryButton?.addEventListener("click", () => openNoteComposer(null, noteEntryButton));
+    record.querySelector<HTMLButtonElement>("[data-cancel-note]")?.addEventListener("click", () => {
+      noteForm?.setAttribute("hidden", "");
+      addNoteButton?.focus();
+    });
+    record.querySelector<HTMLButtonElement>("[data-save-note]")?.addEventListener("click", () => {
+      const value = noteText?.value.trim() ?? "";
+      if (!value) {
+        if (noteError) noteError.textContent = "Write a note before saving it.";
+        noteText?.setAttribute("aria-invalid", "true");
+        noteText?.focus();
+        return;
+      }
+      notes.push({
+        id: `note-${Date.now()}-${notes.length + 1}`,
+        passageId: pendingSelection?.passageId ?? null,
+        quote: noteQuote?.value.trim() ?? "",
+        note: value,
+        createdAt: new Date().toISOString(),
+      });
+      noteForm?.setAttribute("hidden", "");
+      updateNotes();
+      updateProgress();
+      if (status) status.textContent = `Passage note saved. ${notes.length} ${notes.length === 1 ? "note" : "notes"} in this reading record.`;
+      addNoteButton?.focus();
+    });
+
+    record.querySelector<HTMLButtonElement>("[data-request-preserve]")?.addEventListener("click", () => {
+      const value = textarea?.value.trim() ?? "";
+      const sentenceCount = (value.match(/[.!?](?:\s|$)/g) ?? []).length;
+      const movementRequired = activePrompt?.responseStructure === "movement-plus-prose";
+      const movement = movementChoices.find((choice) => choice.checked)?.value;
+      if (movementRequired && !movement) {
+        if (responseError) responseError.textContent = "Choose how your judgment moved before preserving this response.";
+        movementField?.setAttribute("aria-invalid", "true");
+        movementChoices[0]?.focus();
+        return;
+      }
+      if (value.length < 40 || sentenceCount < 2) {
+        if (responseError) responseError.textContent = "Develop this into at least two sentences before preserving it.";
+        textarea?.setAttribute("aria-invalid", "true");
+        textarea?.focus();
+        return;
+      }
+      dialog?.showModal();
+    });
+
+    record.querySelector<HTMLButtonElement>("[data-confirm-preserve]")?.addEventListener("click", () => {
+      if (!activePrompt || !textarea) return;
+      responses.set(activePrompt.id, {
+        promptId: activePrompt.id,
+        response: textarea.value.trim(),
+        preservedAt: new Date().toISOString(),
+        movement: movementChoices.find((choice) => choice.checked)?.value,
+      });
+      editor?.setAttribute("hidden", "");
+      preservedBox?.removeAttribute("hidden");
+      if (preservedText) preservedText.textContent = textarea.value.trim();
+      const preserved = responses.get(activePrompt.id);
+      if (preservedMovement) {
+        preservedMovement.textContent = preserved?.movement ? `Judgment movement · ${preserved.movement}` : "";
+        preservedMovement.toggleAttribute("hidden", !preserved?.movement);
+      }
+      updateProgress();
+      if (status) status.textContent = `${activePrompt.stage} response preserved. ${responses.size} of ${prompts.length} complete.`;
+      focusAfterDialogClose = preservedBox;
+    });
+
+    dialog?.addEventListener("close", () => {
+      if (!focusAfterDialogClose) return;
+      const destination = focusAfterDialogClose;
+      focusAfterDialogClose = null;
+      requestAnimationFrame(() => destination.focus({ preventScroll: true }));
+    });
+
+    const buildDownload = () => {
+      const count = responses.size;
+      const complete = count === prompts.length;
+      const generatedAt = new Date();
+      const items = prompts.map((item, index) => {
+        const saved = responses.get(item.id);
+        return `<section><p class="stage">${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage)} · ${escapeHtml(item.passageId)}</p><h2>${escapeHtml(item.title)}</h2><p class="prompt">${escapeHtml(item.prompt)}</p>${saved ? `${saved.movement ? `<p class="movement">Judgment movement: <strong>${escapeHtml(saved.movement)}</strong></p>` : ""}<blockquote>${escapeHtml(saved.response).replaceAll("\n", "<br>")}</blockquote><p class="time">Preserved ${escapeHtml(new Date(saved.preservedAt).toLocaleString())}</p>` : `<p class="missing">No response preserved.</p>`}</section>`;
+      }).join("");
+      const noteItems = notes.map((item, index) => `<section><p class="stage">Passage note ${index + 1}${item.passageId ? ` · ${escapeHtml(item.passageId)}` : ""}</p>${item.quote ? `<blockquote>${escapeHtml(item.quote).replaceAll("\n", "<br>")}</blockquote>` : ""}<p>${escapeHtml(item.note).replaceAll("\n", "<br>")}</p><p class="time">Added ${escapeHtml(new Date(item.createdAt).toLocaleString())}</p></section>`).join("");
+      const notesSection = notes.length ? `<h2>Passage notes</h2>${noteItems}` : "";
+      return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PHIL 123 Chapter ${record.dataset.chapterNumber} Reading Record</title><style>html{color:#10233a;background:#f8f4eb;font:18px/1.55 Georgia,serif}body{max-width:760px;margin:0 auto;padding:3rem 2rem}header{border-bottom:2px solid #10233a;padding-bottom:1.5rem}h1{font-size:2.2rem;line-height:1.05;margin:.5rem 0}h2{font-size:1.35rem;margin:.3rem 0}.course,.stage,.status,.time,.source{font:700 .72rem/1.4 Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}.status{display:inline-block;border:1px solid;padding:.35rem .55rem}.complete{color:#235c46}.incomplete,.missing{color:#943b28}section{padding:2rem 0;border-bottom:1px solid #bcb3a5}.stage{color:#943b28}.prompt{font-style:italic}.movement{margin:1.2rem 0 .5rem;color:#315d48}blockquote{margin:1.2rem 0 0;border-left:3px solid #a97435;padding:.2rem 0 .2rem 1.2rem;white-space:normal}.time,.source{color:#5d6670;font-weight:400}.source{margin-top:2rem;text-transform:none;letter-spacing:0}@media print{html{background:white}body{padding:0}}</style></head><body><header><p class="course">PHIL 123 · AI &amp; Ethics</p><h1>Chapter ${record.dataset.chapterNumber}: ${escapeHtml(record.dataset.chapterTitle ?? "")}</h1><p>${studentName?.value.trim() ? `Student: ${escapeHtml(studentName.value.trim())}<br>` : ""}Generated ${escapeHtml(generatedAt.toLocaleString())}</p><p class="status ${complete ? "complete" : "incomplete"}">${complete ? "Complete" : `Incomplete · ${count} of ${prompts.length} responses`}</p></header>${items}${notesSection}<p class="source">Chapter: ${escapeHtml(new URL(record.dataset.chapterPath ?? "/", window.location.origin).href)}<br>Chapter version: ${escapeHtml(record.dataset.chapterVersion ?? "unavailable")}<br>This file was generated in the student's browser. The textbook did not store or transmit the responses.</p></body></html>`;
+    };
+
+    const buildPlainText = () => {
+      const lines = [
+        "PHIL 123 · AI & Ethics",
+        `Chapter ${record.dataset.chapterNumber}: ${record.dataset.chapterTitle ?? ""}`,
+        studentName?.value.trim() ? `Student: ${studentName.value.trim()}` : "",
+        "",
+      ];
+      prompts.forEach((item, index) => {
+        const saved = responses.get(item.id);
+        lines.push(`${index + 1}. ${item.stage} — ${item.title} · ${item.passageId}`, item.prompt);
+        if (saved?.movement) lines.push(`Judgment movement: ${saved.movement}`);
+        lines.push(saved?.response ?? "No response preserved.", "");
+      });
+      if (notes.length) {
+        lines.push("Passage notes", "");
+        notes.forEach((item, index) => {
+          lines.push(`Note ${index + 1}${item.passageId ? ` · ${item.passageId}` : ""}`);
+          if (item.quote) lines.push(`Selected text: “${item.quote}”`);
+          lines.push(item.note, "");
+        });
+      }
+      lines.push(`Chapter: ${new URL(record.dataset.chapterPath ?? "/", window.location.origin).href}`);
+      lines.push("Generated locally in the student's browser; no response was stored or transmitted by the textbook.");
+      return lines.filter((line, index) => line || index > 2).join("\n");
+    };
+
+    downloadButton?.addEventListener("click", () => {
+      const blob = new Blob([buildDownload()], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `phil-123-ch${String(record.dataset.chapterNumber).padStart(2, "0")}-reading-record.html`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+      if (status) status.textContent = `Reading record downloaded. ${responses.size === prompts.length ? "Complete and ready for Canvas." : "The file is marked incomplete."}`;
+    });
+
+    copyButton?.addEventListener("click", async () => {
+      const text = buildPlainText();
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch {
+        try {
+          const helper = document.createElement("textarea");
+          helper.value = text;
+          helper.setAttribute("readonly", "");
+          helper.style.position = "fixed";
+          helper.style.opacity = "0";
+          document.body.append(helper);
+          helper.select();
+          copied = document.execCommand("copy");
+          helper.remove();
+        } catch {
+          copied = false;
+        }
+      }
+      if (status) status.textContent = copied
+        ? "Reading record copied to the clipboard."
+        : "Copy failed in this browser. Use Download reading record instead.";
+    });
+
+    returnLink?.addEventListener("click", () => closeRecord());
+    record.querySelector<HTMLButtonElement>("[data-context-close]")?.addEventListener("click", closeRecord);
+    document.addEventListener("keydown", (event) => {
+      if (dialog?.open || !record.contains(document.activeElement) || shell?.hasAttribute("data-context-closed")) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRecord();
+        return;
+      }
+      if (event.key !== "Tab" || !mobileQuery.matches || !shell?.hasAttribute("data-context-mobile-open")) return;
+      const focusable = Array.from(record.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => !element.hasAttribute("hidden") && element.getClientRects().length > 0);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+    mobileQuery.addEventListener("change", () => {
+      const panelOpen = Boolean(shell && !shell.hasAttribute("data-context-closed"));
+      shell?.toggleAttribute("data-context-mobile-open", panelOpen && mobileQuery.matches);
+      setMobileModal(panelOpen);
+    });
+    updateProgress();
+  });
+</script>
+
+<style>
+  .reading-record {
+    --record-small: 0.8rem;
+    --record-tiny: 0.76rem;
+    position: sticky;
+    top: var(--header-height);
+    grid-column: 4;
+    align-self: start;
+    height: calc(100vh - var(--header-height) - var(--frame-size));
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: clamp(1.45rem, 2.4vw, 2.25rem);
+    background: var(--paper-light);
+    color: var(--ink);
+  }
+  .record-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); }
+  .record-kicker { margin: 0; color: var(--rust); font-size: 1.25rem; line-height: 1.1; }
+  .record-progress { margin: 0.35rem 0 0; color: var(--ink-soft); font: var(--record-small)/1.4 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
+  .record-close { width: 2.25rem; height: 2.25rem; border: 0; background: transparent; color: var(--ink); font-size: 1.65rem; line-height: 1; cursor: pointer; }
+  .record-privacy { margin: 0.85rem 0 0; color: var(--ink-soft); font: var(--record-tiny)/1.5 var(--sans); }
+  .record-privacy b { color: var(--ink); }
+  .record-prompt { padding-top: 1.4rem; }
+  .prompt-stage, .dialog-kicker { margin: 0; color: var(--rust); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+  .record-prompt h2 { margin: 0.45rem 0 0; font-size: clamp(1.55rem, 2.3vw, 2rem); font-weight: 400; line-height: 1.08; }
+  .prompt-copy { margin: 1.2rem 0 0; font-size: 1.05rem; line-height: 1.45; }
+  .prompt-guidance { margin: 0.75rem 0 1.4rem; color: var(--ink-soft); font-size: 0.82rem; font-style: italic; line-height: 1.45; }
+  .movement-field { margin: 0 0 1.1rem; border: 0; padding: 0; }
+  .movement-field legend, .response-field > span, .student-name > span { font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.07em; text-transform: uppercase; }
+  .movement-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.55rem; }
+  .movement-options label { position: relative; display: flex; min-height: 2.55rem; align-items: center; border: 1px solid var(--line-dark); background: #fffdf7; cursor: pointer; }
+  .movement-options input { position: absolute; opacity: 0; }
+  .movement-options span { display: flex; width: 100%; min-height: 2.55rem; align-items: center; justify-content: center; padding: 0.55rem; font: 700 var(--record-tiny)/1.2 var(--sans); }
+  .movement-options input:checked + span { background: var(--ink); color: var(--paper-light); }
+  .movement-options input:focus-visible + span { outline: 3px solid var(--rust); outline-offset: 3px; }
+  .response-field { display: grid; gap: 0.45rem; }
+  .response-field textarea { width: 100%; resize: vertical; border: 1px solid var(--line-dark); border-radius: 0; background: #fffdf7; color: var(--ink); padding: 0.8rem; font: 0.96rem/1.55 var(--serif); }
+  .response-field textarea[aria-invalid="true"] { border-color: #8f2d1e; box-shadow: inset 0 0 0 1px #8f2d1e; }
+  .response-meta { display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 0.45rem; color: var(--ink-soft); font: var(--record-tiny)/1.4 var(--sans); }
+  .dictation-fallback { margin: 0.55rem 0 0; color: var(--ink-soft); font: var(--record-tiny)/1.45 var(--sans); }
+  .response-error { min-height: 1.35em; margin: 0.65rem 0; color: #8f2d1e; font: 700 var(--record-tiny)/1.4 var(--sans); }
+  .preserve-button, .download-button { width: 100%; min-height: 2.75rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper-light); padding: 0.8rem 1rem; font: 700 var(--record-small)/1.3 var(--sans); letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; }
+  .preserved-response { padding: 1rem 0 0; }
+  .preserved-response:focus { outline: 2px solid var(--rust); outline-offset: 4px; }
+  .preserved-label { margin: 0; color: #315d48; font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+  .preserved-movement { margin: 0.7rem 0 0; color: #315d48; font: 700 var(--record-tiny)/1.35 var(--sans); }
+  .preserved-response blockquote { margin: 0.8rem 0; border-left: 2px solid var(--gold); padding: 0.15rem 0 0.15rem 1rem; font-size: 0.95rem; line-height: 1.55; white-space: pre-wrap; }
+  .preserved-response > p:last-child { color: var(--ink-soft); font: var(--record-small)/1.45 var(--sans); }
+  .return-link { display: flex; min-height: 2.75rem; align-items: center; justify-content: space-between; margin-top: 1.3rem; border-top: 1px solid var(--line); padding-top: 0.8rem; color: var(--rust-dark); font: 700 var(--record-small)/1.3 var(--sans); text-decoration: none; }
+  .record-export { margin-top: 1.8rem; padding-top: 1.25rem; border-top: 1px solid var(--line-dark); }
+  .export-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .copy-button { min-height: 2.75rem; border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 0.75rem; font: 700 var(--record-tiny)/1.3 var(--sans); cursor: pointer; }
+  .student-name { display: grid; gap: 0.4rem; margin-bottom: 0.85rem; }
+  .student-name small { font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .student-name input { border: 0; border-bottom: 1px solid var(--line-dark); border-radius: 0; background: transparent; color: var(--ink); padding: 0.4rem 0; font: 0.9rem/1.4 var(--serif); }
+  .record-export > p { margin: 0.7rem 0 0; color: var(--ink-soft); font: var(--record-tiny)/1.45 var(--sans); }
+  .preserve-dialog { width: min(28rem, calc(100vw - 2rem)); border: 1px solid var(--line-dark); border-radius: 0; background: var(--paper-light); color: var(--ink); padding: 0; box-shadow: 0 24px 80px rgb(0 0 0 / 38%); }
+  .preserve-dialog::backdrop { background: rgb(3 6 9 / 67%); }
+  .preserve-dialog form { padding: 1.5rem; }
+  .preserve-dialog h2 { margin: 0.45rem 0 0.8rem; font-size: 1.4rem; font-weight: 400; }
+  .preserve-dialog p:not(.dialog-kicker) { font-size: 0.87rem; line-height: 1.5; }
+  .preserve-dialog form > div { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 1.2rem; }
+  .preserve-dialog button { min-height: 2.75rem; border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 0.7rem; font: 700 var(--record-tiny)/1.3 var(--sans); cursor: pointer; }
+  .preserve-dialog [data-confirm-preserve] { background: var(--ink); color: var(--paper-light); }
+  .reading-record-noscript { grid-column: 4; padding: 2rem; background: var(--paper-light); }
+
+  .selection-note-button { position: fixed; z-index: 80; min-width: 6.2rem; min-height: 2.75rem; border: 1px solid var(--gold); background: var(--frame); color: var(--paper-deep); padding: 0.55rem 0.75rem; box-shadow: 0 8px 24px rgb(0 0 0 / 28%); font: 700 0.72rem/1.2 var(--sans); cursor: pointer; }
+  .record-notes { margin-top: 1.8rem; padding-top: 1.25rem; border-top: 1px solid var(--line-dark); }
+  .record-notes > header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+  .record-notes h2 { margin: 0.25rem 0 0; font-size: 1.3rem; font-weight: 400; }
+  .record-notes > header button,
+  .note-actions button,
+  .note-list button { min-height: 2.75rem; border: 1px solid var(--line-dark); background: transparent; color: var(--ink); padding: 0.6rem 0.75rem; font: 700 var(--record-tiny)/1.25 var(--sans); cursor: pointer; }
+  .notes-summary, .note-form #note-guidance, .note-anchor { color: var(--ink-soft); font: var(--record-tiny)/1.5 var(--sans); }
+  .note-form { margin-top: 1rem; padding: 1rem; border: 1px solid var(--line); background: var(--paper); }
+  .note-form label { display: grid; gap: 0.35rem; margin-top: 0.85rem; color: var(--ink); font: 700 var(--record-tiny)/1.4 var(--sans); letter-spacing: 0.04em; text-transform: uppercase; }
+  .note-form label small { font-weight: 400; letter-spacing: 0; text-transform: none; }
+  .note-form textarea { width: 100%; resize: vertical; border: 1px solid var(--line-dark); border-radius: 0; background: var(--paper-light); color: var(--ink); padding: 0.7rem; font: 0.9rem/1.5 var(--serif); }
+  .note-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+  .note-list { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .note-list li { padding: 1rem 0; border-top: 1px solid var(--line); }
+  .note-list li > p { margin: 0.5rem 0; font-size: 0.88rem; line-height: 1.5; }
+  .note-list blockquote { margin: 0.7rem 0; border-left: 2px solid var(--rust); padding-left: 0.8rem; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; }
+  .note-list .note-meta { color: var(--rust-dark); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  :global(.reading-record-trigger) { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; max-width: var(--content-width); align-items: center; gap: 0.65rem; margin: 0.2rem 0 1.35rem; border-block: 1px solid var(--line); padding: 0.65rem 0; }
+  :global(.reading-record-trigger__number) { color: var(--rust); font: 700 0.74rem/1 var(--sans); }
+  :global(.reading-record-trigger__question) { font-size: 0.88rem; font-style: italic; line-height: 1.35; }
+  :global(.reading-record-trigger__button) { position: relative; z-index: 2; display: inline-flex; min-height: 2rem; align-items: center; gap: 0.35rem; border: 0; background: var(--paper-light); color: #174f8a; padding: 0.35rem 0; font: 700 0.76rem/1.2 var(--sans); cursor: pointer; }
+  :global(.reading-record-trigger__button svg) { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+  :global(.reading-record-trigger__connector) { position: absolute; z-index: 1; left: 100%; top: 50%; height: 0; border-top: 1px solid var(--rust); pointer-events: none; }
+  :global(.reading-record-trigger__connector::after) { content: ""; position: absolute; right: -5px; top: -5px; width: 8px; height: 8px; border: 2px solid var(--rust); transform: rotate(45deg); background: var(--paper-light); }
+  :global(.reading-record-trigger[data-complete]) { border-color: #8da596; }
+  :global(.reading-record-trigger[data-complete] .reading-record-trigger__number) { color: #315d48; }
+
+  :global(body[data-text-scale="large"]) .reading-record { --record-small: 0.84rem; --record-tiny: 0.8rem; }
+  :global(body[data-text-scale="largest"]) .reading-record { --record-small: 0.9rem; --record-tiny: 0.86rem; }
+
+  @media (max-width: 1180px) {
+    .reading-record { padding-inline: 1.3rem; }
+    :global(.reading-record-trigger) { grid-template-columns: auto 1fr; }
+    :global(.reading-record-trigger__button) { grid-column: 2; justify-self: start; }
+  }
+  @media (max-width: 900px) {
+    .reading-record {
+      position: fixed !important;
+      z-index: 50;
+      top: var(--header-height);
+      right: var(--frame-size);
+      left: var(--frame-size);
+      display: none;
+      grid-column: auto;
+      width: auto;
+      height: calc(100dvh - var(--header-height) - var(--frame-size));
+      min-height: 0;
+      max-height: calc(100dvh - var(--header-height) - var(--frame-size));
+      margin: 0;
+      border: 1px solid var(--frame-line);
+      box-shadow: 0 24px 80px rgb(0 0 0 / 52%);
+    }
+    :global(.reader-shell[data-context-mobile-open]) .reading-record { display: block; }
+    :global(.reading-record-trigger) { grid-template-columns: auto minmax(0, 1fr); }
+    :global(.reading-record-trigger__connector) { display: none; }
+    .export-actions { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .reading-record, :global(.reading-record-trigger), .reading-record-noscript { display: none !important; }
+  }
+</style>

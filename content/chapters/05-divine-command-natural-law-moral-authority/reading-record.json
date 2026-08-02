@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch05",
+  "reasoningObjective": "By the end of this chapter, students should be better able to distinguish the grounding of a moral claim from its method and defend an application bridge in order to judge how a command or human good bears on a case.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch05-p0006",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Locate the Source of Obligation",
+      "trigger": "What makes the student's choice about ghostwriting morally binding, if anything?",
+      "prompt": "State your provisional judgment about submitting AI-generated writing as unaided work and identify the ground that gives your strongest reason moral weight: a command, a human good, another framework, or something else.",
+      "guidance": "Give a reason for why the ground supports the judgment; do not treat the existence of a rule as its own complete explanation.",
+      "responseStructure": "prose",
+      "rationale": "The opening case and authority question are clear before Socrates's dilemma and Aquinas's alternative accounts provide a vocabulary for testing the ground."
+    },
+    {
+      "id": "natural-law-hinge",
+      "passageId": "ch05-p0045",
+      "stage": "Explain the natural-law reply",
+      "strategy": "self-explanation",
+      "title": "Connect Command and Good",
+      "trigger": "How does Aquinas avoid treating a divine command as either arbitrary or independent of God?",
+      "prompt": "Explain how the claim that deception damages knowledge and truthful social life connects God's command with a rational order of human goods. Identify the step in that explanation that a critic could still challenge.",
+      "guidance": "Show the relation among command, human goods, and practical reason, then name a vulnerable inferential step rather than merely defining natural law.",
+      "responseStructure": "prose",
+      "rationale": "This passage states the Thomistic reply after the chapter has introduced the four laws and distinguished natural law from biological regularity and simple command-following."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch05-p0083",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "State the Ground and Its Limit",
+      "trigger": "Has the chapter changed how you ground your judgment about ghostwriting?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Identify the distinction or objection that most affected it, give the strongest present reason linking your ground to this case, and name the interpretive or application uncertainty that remains.",
+      "guidance": "Distinguish a framework's ground from the bridge that applies it; an unchanged conclusion must still explain how it survives the chapter's challenge.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter's final complication makes clear that both divine command and natural law still require interpretation, defended goods, and nonmechanical application to hard cases."
+    }
+  ]
+}

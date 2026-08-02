@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch17",
+  "reasoningObjective": "By the end of this chapter, students should be better able to evaluate claims that AI development should move faster or slower in order to judge which speed serves democratic control and human judgment.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch17-p0007",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Take a first position on speed",
+      "trigger": "What should speed in AI development be answerable to?",
+      "prompt": "Choose one AI practice that you think should speed up, slow down, or proceed at its current pace. Give one reason tied to a human good, risk, or institution rather than to speed by itself.",
+      "guidance": "Make a provisional claim about a particular practice; avoid treating all technological change as one thing.",
+      "responseStructure": "prose",
+      "rationale": "The opening frames acceleration as a problem of speed and direction before the chapter separates its historical and political traditions."
+    },
+    {
+      "id": "differential-speed-case",
+      "passageId": "ch17-p0104",
+      "stage": "Differential acceleration hinge",
+      "strategy": "consider-alternative",
+      "title": "Question the protective label",
+      "trigger": "How could a claimed protective acceleration conceal another form of power?",
+      "prompt": "Choose an AI practice described as protective or beneficial. Give the strongest plausible interpretation under which it instead increases surveillance, concentration of power, or unaccountable risk. Explain what evidence would help decide between the two interpretations.",
+      "guidance": "Make the alternative responsive to the same claimed benefit, rather than treating every fast technology as automatically harmful.",
+      "responseStructure": "prose",
+      "rationale": "After naming the classification objection, the chapter requires a serious alternative to claims that a capability is protective or beneficial, making evidence and contestability central to the judgment."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch17-p0155",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Name the speed that serves judgment",
+      "trigger": "Has the chapter changed what you think responsible speed requires?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then name the argument or objection that most affected it, give the strongest reason for your current speed judgment, and identify one serious remaining uncertainty about power, control, or delay.",
+      "guidance": "Explain which institution or human capacity your judgment protects, rather than treating fast or slow as a moral verdict on its own.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The conclusion asks which speed serves judgment after considering accelerationist promises, slowdown critiques, differential acceleration, and the distortions of the lens."
+    }
+  ]
+}

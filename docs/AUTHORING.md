@@ -32,6 +32,12 @@ The `/admin/` route is a lossless text editor, not a WYSIWYG system. It:
 
 The editor cannot choose another repository, owner, base branch, or head branch. It cannot merge `main`. GitHub App installation tokens remain server-side and short-lived.
 
+## Reading record prompts
+
+Before creating or revising student reflection checkpoints, read [`READING_RECORD_PROMPT_DESIGN.md`](./READING_RECORD_PROMPT_DESIGN.md). It is the controlling guide for the three-checkpoint sequence, research-informed strategy repertoire, passage anchoring, prompt planning record, and quality gate.
+
+Do not add a prompt merely because a passage seems important. Each checkpoint must ask students to perform an identifiable philosophical reasoning operation at the point where the chapter has made that operation possible.
+
 ## Review
 
 Use the pull-request diff and Cloudflare preview as the review surface. Reject unexplained changes to raw HTML, stable passage markers, rights records, or generated text. Merge only after CI passes.

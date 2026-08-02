@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch07",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to test an AI-mediated practice against Aristotle's account of practical wisdom in order to form a considered judgment about when assistance becomes substitution.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch07-p0004",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Commit to a starting judgment",
+      "trigger": "Where, for you, does assistance become substitution?",
+      "prompt": "Classify the AI-written apology as assistance, substitution, or something in between. Identify the single feature of the case doing the most ethical work in your judgment, and explain why.",
+      "guidance": "Commit before Aristotle supplies his vocabulary. A serious response names a feature of this particular case and connects it to the verdict.",
+      "responseStructure": "prose",
+      "rationale": "The opening case has made the ethical tension visible without yet supplying Aristotle's interpretation, so the student can preserve an independent starting judgment and its warrant."
+    },
+    {
+      "id": "hinge-judgment",
+      "passageId": "ch07-p0041",
+      "stage": "Practical-wisdom test",
+      "strategy": "contrast-case",
+      "title": "Test the boundary",
+      "trigger": "What change to the case would move your judgment?",
+      "prompt": "Change exactly one feature of the apology case so that your judgment about the AI assistance would change. Name the feature, state the new judgment, and explain why practical wisdom makes that feature decisive.",
+      "guidance": "Keep the rest of the case fixed. Use the contrast to show which particular fact controls the boundary you draw between help and substitution.",
+      "responseStructure": "prose",
+      "rationale": "The anchored passage has established that phronesis concerns particulars and distinguishes tools that support noticing, deliberating, and choosing from tools that replace those activities. A one-feature contrast case makes the student use that distinction rather than repeat its definition."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch07-p0062",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Form a considered judgment",
+      "trigger": "What survived the strongest pressure on your view?",
+      "prompt": "Classify your judgment as changed, qualified, strengthened, or unchanged. Identify the chapter idea or objection that caused—or failed to cause—that movement, give your strongest reason now, and state the most serious objection or uncertainty that remains.",
+      "guidance": "Movement is not automatically improvement. An unchanged judgment is equally defensible when you explain why the chapter's strongest pressure did not dislodge it.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The student has encountered the framework's major objections and can now distinguish the fact of movement from the quality of the reasons, preserve the strongest current warrant, and keep a live objection open."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "chapterId": "ch18",
+  "reasoningObjective": "By the end of this chapter, students should be better able to evaluate a technology's effect on human capacity in order to judge when restoration, enhancement, or optimization requires ethical limits and governance.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch18-p0009",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Identify the capacity at stake",
+      "trigger": "What changes when a technology alters a human capacity?",
+      "prompt": "In the Neuralink case, should the initial ethical focus be restored agency, experimental risk, future enhancement, access, or something else? Choose one and explain why it should guide your first judgment.",
+      "guidance": "Tie your answer to the particular capacity the case changes, rather than to whether the technology seems exciting or frightening.",
+      "responseStructure": "prose",
+      "rationale": "The opening presents restoration, risk, and enhancement pressure before the chapter supplies the vocabulary for distinguishing kinds of capacity change."
+    },
+    {
+      "id": "capacity-boundary-test",
+      "passageId": "ch18-p0023",
+      "stage": "Capacity distinction hinge",
+      "strategy": "self-explanation",
+      "title": "Test the capacity category",
+      "trigger": "What feature turns the same technology from restoration into a different kind of intervention?",
+      "prompt": "Choose one technology from this section and explain how its effect on a capacity can move from restoration or assistance to enhancement, optimization, replacement, or redesign. Identify the step in that change that is least obvious and explain why it alters the ethical question.",
+      "guidance": "Name the capacity and the social or institutional condition that changes its category; do not rely only on whether the device is technologically advanced.",
+      "responseStructure": "prose",
+      "rationale": "The section establishes that capacity changes are context-dependent, so self-explanation requires students to trace why a helpful technology can take ethically different forms across settings."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch18-p0141",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "State a capacity judgment",
+      "trigger": "What now determines whether this capacity change is responsible?",
+      "prompt": "Mark your opening judgment as Changed, Qualified, Strengthened, or Unchanged. Then identify the lens or objection that most affected your view, give the strongest reason for your current judgment, and name the most serious remaining objection or uncertainty, including any safeguard or access concern it raises.",
+      "guidance": "Connect your conclusion to the capacity at stake and to at least one condition involving dignity, disability justice, cognitive liberty, or public governance.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The conclusion synthesizes the chapter's competing lenses and insists that capacity expansion be assessed through social terms rather than simple enthusiasm or refusal."
+    }
+  ]
+}

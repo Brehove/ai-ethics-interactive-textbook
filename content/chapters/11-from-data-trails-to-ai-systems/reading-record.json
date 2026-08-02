@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch11",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to trace and evaluate a data path in order to judge whether a data-driven action respects context, agency, and contestability.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch11-p0005",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Judge the first data path",
+      "trigger": "What should the college do with Rosa's traces?",
+      "prompt": "Make a provisional judgment about using Rosa's course data for an early-alert system. Identify one trace the college may use and one limit or condition that would make that use more or less defensible, then explain why.",
+      "guidance": "Commit before the chapter supplies its full data-path vocabulary. Focus on a concrete use of a trace, not on the general claim that data or AI is good or bad.",
+      "responseStructure": "prose",
+      "rationale": "The opening establishes Rosa's partial record and the possibility of a dashboard or intervention before the chapter explains how traces become categories, proxies, and actions."
+    },
+    {
+      "id": "proxy-contrast",
+      "passageId": "ch11-p0063",
+      "stage": "Proxy-stakes test",
+      "strategy": "contrast-case",
+      "title": "Test the same signal at different stakes",
+      "trigger": "When does a login pattern become too thin for the action it supports?",
+      "prompt": "Use Rosa's login frequency as the same signal in two cases: a friendly outreach message and a high-stakes judgment about her motivation or readiness. Explain why the proxy may be defensible in one case and overreach in the other, naming the feature that changes the ethical stakes.",
+      "guidance": "Keep the signal fixed. Your comparison should show how the action, likely error, or opportunity to correct the record changes what the proxy can reasonably support.",
+      "responseStructure": "prose",
+      "rationale": "The passage has established that a proxy can be useful and weak at once, and it contrasts supportive outreach with settled judgments about a person, enabling a disciplined one-feature comparison."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch11-p0106",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Reconcile the data path",
+      "trigger": "What would make Rosa's data path defensible now?",
+      "prompt": "Classify your opening judgment as changed, qualified, strengthened, or unchanged. Identify the chapter claim or distinction that caused—or failed to cause—that movement, give your strongest reason now about the early-alert system, and state the most serious remaining uncertainty about its purpose, proxy, or contestability.",
+      "guidance": "An unchanged view is legitimate if you explain why the chapter's strongest pressure did not dislodge it. Identify a condition the institution would need to satisfy rather than giving only a general verdict.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter has assembled a defensible data path from clear purpose, proportionate records, contextual integrity, disciplined proxies, visible burdens, and correction routes before the later practice exercise."
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "chapterId": "ch09",
+  "license": "CC0-1.0",
+  "reasoningObjective": "By the end of this chapter, students should be better able to formulate and test a maxim in order to defend a Kantian judgment about AI-assisted communication.",
+  "checkpoints": [
+    {
+      "id": "opening-judgment",
+      "passageId": "ch09-p0003",
+      "stage": "Opening judgment",
+      "strategy": "initial-judgment",
+      "title": "Commit on the application",
+      "trigger": "What should Sam do with the polished draft?",
+      "prompt": "Make a provisional judgment: should Sam submit the chatbot's draft, revise it, or start over? Identify one feature of the draft that matters most to your judgment and explain why it matters.",
+      "guidance": "Do not rely only on the slogan that Sam should be honest. Name a particular claim, purpose, or relationship in the application and connect it to your judgment.",
+      "responseStructure": "prose",
+      "rationale": "The opening case presents a mixed draft of accurate, stretched, and potentially invented claims before Kantian concepts explain how to assess the principle behind submission."
+    },
+    {
+      "id": "maxim-reconstruction",
+      "passageId": "ch09-p0074",
+      "stage": "Universal-law reconstruction",
+      "strategy": "argument-reconstruction",
+      "title": "Show the contradiction",
+      "trigger": "Why does the fake-review maxim fail as universal law?",
+      "prompt": "Reconstruct the Universal Law argument in your own words: state the maxim, name the practice it relies on, and explain how universal permission to follow the maxim would undermine that practice. Then say whether the bridge establishes a contradiction or only predicts a bad outcome.",
+      "guidance": "Make the connection between the maxim and the practice explicit. A serious response distinguishes a contradiction in conception from the claim that widespread copying would merely have bad consequences.",
+      "responseStructure": "prose",
+      "rationale": "The expanded argument has made the maxim, bridge, normative standard, and conclusion visible, allowing students to reconstruct the inference rather than repeat Kantian labels."
+    },
+    {
+      "id": "exit-judgment",
+      "passageId": "ch09-p0088",
+      "stage": "Exit judgment",
+      "strategy": "metacognitive-trace",
+      "title": "Defend a considered maxim",
+      "trigger": "What survives the strongest objection to your view?",
+      "prompt": "Classify your opening judgment as changed, qualified, strengthened, or unchanged. Identify the maxim, bridge, or objection that caused—or failed to cause—that movement, give your strongest Kantian reason now, and state the most serious objection or uncertainty that remains.",
+      "guidance": "Treat an unchanged view as defensible only if you explain why the chapter's pressure on maxims or bridges does not defeat it. Name the exact part of the argument still under pressure.",
+      "responseStructure": "movement-plus-prose",
+      "rationale": "The chapter has pressure-tested both universal-law and humanity arguments, including objections about contradiction, rigidity, and consent, before students form a considered judgment about Sam's case."
+    }
+  ]
+}
