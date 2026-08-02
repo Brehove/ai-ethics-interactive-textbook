@@ -6,6 +6,12 @@ The repository separates four rights domains that must not be collapsed into one
 
 The eighteen chapter texts and the prose payload repeated in `reading.json` and `reading.txt` are licensed under Creative Commons Attribution 4.0 International. Reuse requires attribution. Generated reading formats do not change the prose license merely because they are machine-readable.
 
+## Original project artwork: CC BY 4.0
+
+Original project artwork is licensed under Creative Commons Attribution 4.0 International unless an item-level record says otherwise. Site-level artwork is recorded separately from chapter reuse in [`docs/rights/site-assets.json`](rights/site-assets.json), because it is not a chapter asset and does not belong in a chapter's `rights.json` references. `node scripts/validate-rights.mjs` verifies every registered site image's path, rights fields, provenance fields, checksum, byte count, format, dimensions, and one-to-one coverage of `public/images/`.
+
+The landing-page hero, `public/images/piranesi-oculus-hero.webp`, is original project artwork generated with AI assistance under editorial direction. Its record identifies the file, its exact checksum, a reusable attribution line, and the limited provenance statement required for public reuse. The Piranesi reference identifies an architectural visual motif; it is not a claim that a particular third-party Piranesi work was reproduced or adapted.
+
 ## Code: MIT
 
 Application source, build scripts, and validators are covered by the MIT policy. The code license does not grant rights to the chapter prose or to third-party images, quotations, or source documents.

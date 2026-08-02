@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "scope": "Original site-level visual assets that are not placed in a chapter and therefore do not belong in content/rights/registry.json.",
+  "assets": [
+    {
+      "id": "piranesi-oculus-hero",
+      "path": "public/images/piranesi-oculus-hero.webp",
+      "title": "Piranesi Oculus Hero",
+      "role": "landing-page cover illustration",
+      "creator": "AI Ethics Interactive Textbook project",
+      "createdAt": "2026-08-01",
+      "license": {
+        "spdx": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "provenance": {
+        "method": "Original project artwork generated with AI assistance under editorial direction.",
+        "thirdPartyVisualAsset": "No third-party visual file is copied into or bundled with this asset.",
+        "referenceNote": "The Piranesi reference describes an architectural visual motif and is not a reproduction or adaptation of a particular work."
+      },
+      "technical": {
+        "format": "webp",
+        "width": 1536,
+        "height": 1024,
+        "bytes": 389230,
+        "sha256": "a8ba7857bf36f75793d60fb2c2a29015d7a2da4795fc4cdc05ea077e02667ec8"
+      },
+      "attribution": "AI Ethics Interactive Textbook project, Piranesi Oculus Hero (2026), AI-generated under editorial direction, CC BY 4.0."
+    }
+  ]
+}

@@ -115,17 +115,6 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
       if (gallery.childElementCount === 0) gallery.remove();
     });
 
-    if ("IntersectionObserver" in window) {
-      const visibleCards = new Set<Element>();
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) visibleCards.add(entry.target);
-          else visibleCards.delete(entry.target);
-        });
-        document.body.classList.toggle("inline-scholar-visible", visibleCards.size > 0);
-      }, { threshold: 0.08 });
-      document.querySelectorAll("[data-inline-scholar-card]").forEach((card) => observer.observe(card));
-    }
   };
 
   placeInlineScholarFigures();
@@ -225,14 +214,6 @@ const featuredPeople = people.filter(({ relation }) => relation.featured);
     .inline-scholar-card__portrait :global(.person-portrait img),
     .inline-scholar-card__portrait :global(.portrait-placeholder) { min-height: 0; max-height: 22rem; }
     .inline-scholar-card__record { padding: 1.25rem; }
-  }
-  @media (max-width: 820px) {
-    :global(body.inline-scholar-visible .scholar-launch) {
-      translate: 0 1rem;
-      opacity: 0;
-      pointer-events: none;
-    }
-    :global(.scholar-launch) { transition: opacity 120ms ease, translate 120ms ease; }
   }
   @media print {
     .inline-scholar-card { box-shadow: none; }

@@ -6,7 +6,7 @@
 
 - [ ] Every changed quotation, primary text, image, or media item has a verified source and item-level rights record.
 - [ ] No student records, Canvas exports, instructor-only materials, credentials, private operational notes, or local filesystem paths are included.
-- [ ] Chapter prose still comes from the canonical `chapter.md`; no duplicate First Read or Deep Read prose was introduced.
+- [ ] Chapter prose still comes from the canonical `chapter.md`; no duplicate alternate-route prose was introduced.
 - [ ] New or changed passage, annotation, concept, person, tradition, and source identifiers are stable and unique.
 
 ## Verification
