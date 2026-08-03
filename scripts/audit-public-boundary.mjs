@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const ignoredDirectories = new Set([".git", ".astro", "dist", "node_modules"]);
+const ignoredDirectories = new Set([".git", ".astro", "artifacts", "dist", "node_modules"]);
 const privatePathPattern = new RegExp(`(?:/${"Users"}/|/${"home"}/[^/\s]+/|file:\\/\\/)`, "i");
 const secretPatterns = [
   /-----BEGIN ((?:RSA |EC |OPENSSH )?PRIVATE KEY)-----\r?\n(?:[A-Za-z0-9+/=]{40,}\r?\n){2,}-----END \1-----/,

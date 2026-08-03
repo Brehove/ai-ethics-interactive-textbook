@@ -1,0 +1,81 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Ethics Content API",
+    "version": "1.1.0",
+    "description": "Frozen agent-native authoring contract. Trusted gateway headers establish actor identity. Agent tokens may read, draft, validate, submit, and upload; human-only review and release operations are explicitly marked."
+  },
+  "servers": [{ "url": "https://auth.ethicsandai.your-digital-life.org" }],
+  "security": [{ "browserSession": [] }, { "bearerAuth": [] }],
+  "x-rate-limits": {
+    "persistence": "D1 fail-closed fixed window",
+    "key": "trusted actor plus client",
+    "windowSeconds": 60,
+    "mutation": 120,
+    "upload": 20
+  },
+  "paths": {
+    "/health": { "get": { "security": [], "operationId": "health", "responses": { "200": { "description": "Binding-aware health" } } } },
+    "/v1/schema": { "get": { "operationId": "getSchema", "x-agent-safe": true, "x-required-scopes": ["content:read"], "responses": { "200": { "description": "Runtime operation, provider, upload, review, release, and rate-limit contract" } } } },
+    "/v1/chapters": { "get": { "operationId": "listChapters", "x-agent-safe": true, "x-required-scopes": ["content:read"], "responses": { "200": { "description": "Active canonical chapters" } } } },
+    "/v1/chapters/{chapterId}": { "get": { "operationId": "getChapter", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/chapterId" }], "responses": { "200": { "description": "One revision-bound canonical chapter" } } } },
+    "/v1/documents/{chapterId}": { "get": { "operationId": "getDocumentAlias", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/chapterId" }], "responses": { "200": { "description": "Compatibility alias for the canonical chapter read" } } } },
+    "/v1/chapters/{chapterId}/passages": { "get": { "operationId": "listPassages", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/chapterId" }, { "$ref": "#/components/parameters/limit100" }, { "$ref": "#/components/parameters/cursor" }], "responses": { "200": { "description": "Bounded stable-passage projections" } } } },
+    "/v1/chapters/{chapterId}/passages/{passageId}": { "get": { "operationId": "getPassage", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/chapterId" }, { "$ref": "#/components/parameters/passageId" }], "responses": { "200": { "description": "One stable revision-bound passage" } } } },
+    "/v1/chapters/{chapterId}/dependencies": { "get": { "operationId": "getChapterDependencies", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/chapterId" }, { "$ref": "#/components/parameters/limit100" }, { "$ref": "#/components/parameters/cursor" }], "responses": { "200": { "description": "Bounded revision-bound dependency graph" } } } },
+    "/v1/chapters/{chapterId}/changesets": { "post": { "operationId": "createOrResumeChangeset", "x-agent-safe": true, "x-required-scopes": ["content:write"], "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/chapterId" }], "requestBody": { "$ref": "#/components/requestBodies/createChangeset" }, "responses": { "200": { "description": "Existing open, submitted, or approved changeset resumed" }, "201": { "description": "Draft changeset created" } } } },
+    "/v1/chapters/{chapterId}/revisions/{revisionId}:restoreAsDraft": { "post": { "operationId": "restoreRevisionAsDraft", "x-agent-safe": true, "x-required-scopes": ["content:write"], "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/chapterId" }, { "$ref": "#/components/parameters/revisionId" }], "responses": { "201": { "description": "Historical revision copied into a new draft based on current canonical head" } } } },
+    "/v1/changesets/{changesetId}": { "get": { "operationId": "getChangeset", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "200": { "description": "Working documents plus immutable submitted snapshot and human release decision when present" } } } },
+    "/v1/changesets/{changesetId}:apply": { "post": { "operationId": "applySemanticOperation", "x-agent-safe": true, "x-required-scopes": ["content:write"], "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "200": { "description": "CAS-bound semantic operation result" } } } },
+    "/v1/changesets/{changesetId}:validate": { "post": { "operationId": "validateChangeset", "x-agent-safe": true, "x-required-scopes": ["content:write"], "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "200": { "description": "Publishability validation result" } } } },
+    "/v1/changesets/{changesetId}:diff": { "post": { "operationId": "diffChangeset", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "200": { "description": "Bounded semantic diff without chapter prose duplication" } } } },
+    "/v1/changesets/{changesetId}:submitReview": { "post": { "operationId": "submitChangeset", "x-agent-safe": true, "x-required-scopes": ["content:submit"], "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "201": { "description": "Immutable hash-addressed submitted snapshot" } } } },
+    "/v1/changesets/{changesetId}:approve": { "post": { "operationId": "approveChangeset", "x-human-only": true, "x-required-scopes": ["content:approve"], "x-exact-snapshot-binding": true, "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "201": { "description": "Human approval of exact submitted hash and revision" } } } },
+    "/v1/changesets/{changesetId}:reject": { "post": { "operationId": "rejectChangeset", "x-human-only": true, "x-required-scopes": ["content:approve"], "x-exact-snapshot-binding": true, "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "201": { "description": "Human rejection with required reason" } } } },
+    "/v1/changesets/{changesetId}:publish": { "post": { "operationId": "publishChangeset", "x-human-only": true, "x-required-scopes": ["content:publish"], "x-exact-snapshot-binding": true, "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/changesetId" }], "responses": { "201": { "description": "Control-plane publication; unavailable to browser and MCP agent tokens" } } } },
+    "/v1/media": { "get": { "operationId": "searchMedia", "x-agent-safe": true, "x-required-any-scope": ["media:read", "content:read"], "parameters": [{ "name": "q", "in": "query", "schema": { "type": "string", "maxLength": 100 } }, { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["image", "audio", "video", "document"] } }, { "name": "rightsStatus", "in": "query", "schema": { "type": "string", "enum": ["reviewRequired", "cleared", "blocked"] } }, { "name": "sha256", "in": "query", "schema": { "$ref": "#/components/schemas/sha256" } }, { "$ref": "#/components/parameters/limit50" }, { "$ref": "#/components/parameters/cursor" }], "responses": { "200": { "description": "Reusable ready media versions" } } } },
+    "/v1/media-review-packages": { "post": { "operationId": "createMediaReviewPackage", "x-agent-safe": true, "x-required-any-scope": ["media:upload", "content:write"], "x-result-state": "pending", "x-rate-limit-class": "mutation", "responses": { "201": { "description": "Server-issued pending review package and declaration hash" } } } },
+    "/v1/media-review-packages/{reviewPackageId}:decide": { "post": { "operationId": "decideMediaReviewPackage", "x-human-only": true, "x-required-scopes": ["content:approve"], "x-exact-declaration-binding": true, "x-rate-limit-class": "mutation", "parameters": [{ "$ref": "#/components/parameters/reviewPackageId" }], "responses": { "200": { "description": "Human clearance or block decision" } } } },
+    "/v1/media:requestUpload": { "post": { "operationId": "requestMediaUpload", "x-agent-safe": true, "x-required-scopes": ["media:upload"], "x-rate-limit-class": "upload", "x-media-policy": { "reviewPackageId": "server-issued", "audioVideoTranscriptEquivalent": "required and substantive; not a timed-caption claim", "videoPoster": "required", "maximumBytes": 26214400 }, "responses": { "201": { "description": "Bounded one-time upload ticket" } } } },
+    "/v1/media/uploads/{ticketId}": { "put": { "operationId": "uploadMediaBytes", "x-agent-safe": true, "x-required-scopes": ["media:upload"], "x-rate-limit-class": "upload", "parameters": [{ "$ref": "#/components/parameters/ticketId" }], "responses": { "202": { "description": "Hash-verified bytes quarantined and immutable job queued" } } } },
+    "/v1/media/jobs/{jobId}": { "get": { "operationId": "getMediaJob", "x-agent-safe": true, "x-required-any-scope": ["media:read", "content:read"], "parameters": [{ "$ref": "#/components/parameters/jobId" }], "responses": { "200": { "description": "Media-processing job state" } } } },
+    "/v1/media/{mediaId}": { "get": { "operationId": "getMediaAsset", "x-agent-safe": true, "x-required-any-scope": ["media:read", "content:read"], "parameters": [{ "$ref": "#/components/parameters/mediaId" }], "responses": { "200": { "description": "Finalized immutable media versions and rights states" } } } },
+    "/v1/embeds:resolve": { "post": { "operationId": "resolveEmbed", "x-agent-safe": true, "x-required-scopes": ["content:write"], "x-network-access": false, "responses": { "200": { "description": "Server-registry embed identity or authored rich-link proposal" } } } },
+    "/v1/media:processorCallback": { "post": { "operationId": "processorCallback", "security": [{ "processorHmac": [] }], "x-service-only": true, "responses": { "201": { "description": "Verified media manifest promoted after processing" } } } },
+    "/v1/release-snapshots/{snapshotHash}": { "get": { "operationId": "getReleaseSnapshot", "x-release-service-only": true, "x-required-scopes": ["content:releaseSnapshot"], "x-exact-sha256-bytes": true, "parameters": [{ "$ref": "#/components/parameters/snapshotHash" }], "responses": { "200": { "description": "Exact human-approved immutable submitted snapshot" } } } },
+    "/v1/release-assets/{sha256}": { "get": { "operationId": "getReleaseAsset", "x-release-service-only": true, "x-required-scopes": ["content:releaseSnapshot"], "x-exact-sha256-bytes": true, "parameters": [{ "$ref": "#/components/parameters/sha256Path" }], "responses": { "200": { "description": "Exact approved snapshot-referenced immutable derivative" } } } },
+    "/v1/releases/{releaseId}": { "get": { "operationId": "getReleaseMetadata", "x-agent-safe": true, "x-required-scopes": ["content:read"], "parameters": [{ "$ref": "#/components/parameters/releaseId" }], "responses": { "200": { "description": "Frozen release, authority, approval, and active-pointer metadata" } } } },
+    "/v1/authority/chapter_ch07:activateD1": { "post": { "operationId": "activateChapter7D1Authority", "x-service-only": true, "x-required-scopes": ["content:authority"], "x-fixed-canary": "chapter_ch07", "x-rate-limit-class": "mutation", "responses": { "201": { "description": "Hash- and revision-bound Chapter 7 authority activation" } } } }
+  },
+  "components": {
+    "securitySchemes": {
+      "browserSession": { "type": "apiKey", "in": "cookie", "name": "__Host-editor_session" },
+      "bearerAuth": { "type": "http", "scheme": "bearer" },
+      "processorHmac": { "type": "apiKey", "in": "header", "name": "x-media-signature" }
+    },
+    "schemas": {
+      "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$" },
+      "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+      "uuid": { "type": "string", "format": "uuid" }
+    },
+    "parameters": {
+      "chapterId": { "name": "chapterId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "passageId": { "name": "passageId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "revisionId": { "name": "revisionId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "changesetId": { "name": "changesetId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "reviewPackageId": { "name": "reviewPackageId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "ticketId": { "name": "ticketId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "jobId": { "name": "jobId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "mediaId": { "name": "mediaId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "releaseId": { "name": "releaseId", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/identifier" } },
+      "snapshotHash": { "name": "snapshotHash", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/sha256" } },
+      "sha256Path": { "name": "sha256", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/sha256" } },
+      "limit50": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 } },
+      "limit100": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } },
+      "cursor": { "name": "cursor", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 } }
+    },
+    "requestBodies": {
+      "createChangeset": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": false, "required": ["title", "idempotencyKey"], "properties": { "title": { "type": "string", "minLength": 1, "maxLength": 200 }, "description": { "type": "string", "maxLength": 2000 }, "resume": { "type": "boolean" }, "idempotencyKey": { "$ref": "#/components/schemas/uuid" } } } } } }
+    }
+  }
+}

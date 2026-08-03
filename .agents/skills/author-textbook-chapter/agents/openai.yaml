@@ -1,0 +1,11 @@
+interface:
+  display_name: "Author Textbook Chapter"
+  short_description: "Draft anchored chapter changes safely"
+  default_prompt: "Use $author-textbook-chapter to draft and submit a chapter change."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "ai-ethics-textbook"
+      description: "PHIL 123 content changeset workflow"
+      transport: "streamable_http"
+      url: "https://mcp.ethicsandai.your-digital-life.org/mcp"

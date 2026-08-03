@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Steward"
+  short_description: "Prepare human release evidence safely"
+  default_prompt: "Use $release-steward to prepare release evidence for human review."

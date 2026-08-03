@@ -1,0 +1,89 @@
+---
+import ExternalEmbed from "./ExternalEmbed.astro";
+import RichLinkCard from "./RichLinkCard.astro";
+import NativeMedia from "./NativeMedia.astro";
+
+const { placements = [] } = Astro.props;
+const sourceLabel = (url: string) => new URL(url).hostname.replace(/^www\./, "");
+const externalDefinition = (item: any) => {
+  const provider = item.identity.provider;
+  const pathname = new URL(item.canonicalUrl).pathname;
+  const identity = provider === "x"
+    ? { statusId: item.identity.resourceId, username: pathname.split("/").filter(Boolean)[0] }
+    : provider === "spotify"
+      ? { resourceType: item.identity.resourceType, resourceId: item.identity.resourceId }
+      : { videoId: item.identity.resourceId };
+  const render = provider === "youtube"
+    ? { iframeOrigin: "https://www.youtube-nocookie.com", captions: true, sandbox: "allow-scripts allow-same-origin allow-presentation", allow: "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" }
+    : provider === "vimeo"
+      ? { iframeOrigin: "https://player.vimeo.com", dnt: true, sandbox: "allow-scripts allow-same-origin allow-presentation", allow: "autoplay; fullscreen; picture-in-picture" }
+      : provider === "spotify"
+        ? { iframeOrigin: "https://open.spotify.com", sandbox: "allow-scripts allow-same-origin allow-presentation", allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" }
+        : { timeoutMs: 8000 };
+  return {
+    provider,
+    identity,
+    render,
+    fallback: { title: item.fallback.title, summary: item.fallback.summary, sourceLabel: sourceLabel(item.canonicalUrl), href: item.canonicalUrl },
+    activationDisclosure: provider === "x"
+      ? "Loading the live post runs X's official widget and contacts X. The readable fallback remains available if loading fails."
+      : provider === "spotify"
+        ? "Loading this player contacts Spotify. The instructor-authored fallback remains available."
+      : `Loading this media contacts ${provider === "youtube" ? "YouTube" : "Vimeo"}. The readable fallback remains available.`,
+  };
+};
+const linkFirstCard = (item: any) => {
+  const provider = item.identity.provider as "soundcloud" | "bluesky";
+  const providerName = provider === "soundcloud" ? "SoundCloud" : "Bluesky";
+  return {
+    href: item.canonicalUrl,
+    title: item.fallback.title,
+    summary: item.fallback.summary,
+    sourceLabel: sourceLabel(item.canonicalUrl),
+    linkLabel: item.fallback.linkLabel || `Open on ${providerName}`,
+    teachingUse: item.teachingUse,
+    provider,
+    activationDisclosure: `Opening this link contacts ${providerName}. The textbook does not load a ${providerName} widget automatically.`,
+  };
+};
+---
+
+{placements.length > 0 && <section class="release-placement-gallery" data-release-placement-gallery aria-label="Chapter media and external sources">
+  {placements.map((item: any) => <div data-release-placement data-passage-id={item.anchorPassageId?.replace(/^passage_/, "")}>
+    {item.type === "externalEmbed" && ["youtube", "vimeo", "x", "spotify"].includes(item.identity.provider)
+      ? <ExternalEmbed definition={externalDefinition(item)} />
+      : item.type === "externalEmbed" && ["soundcloud", "bluesky"].includes(item.identity.provider)
+        ? <RichLinkCard card={linkFirstCard(item)} />
+      : item.type === "externalEmbed"
+        ? <RichLinkCard card={{ href: item.canonicalUrl, title: item.fallback.title, summary: item.fallback.summary, sourceLabel: sourceLabel(item.canonicalUrl), linkLabel: item.fallback.linkLabel, teachingUse: item.teachingUse }} />
+        : item.type === "richLink"
+          ? <RichLinkCard card={{ href: item.canonicalUrl, title: item.title, summary: item.summary, sourceLabel: sourceLabel(item.canonicalUrl), linkLabel: item.linkLabel, teachingUse: item.teachingUse, provider: "generic" }} />
+          : item.src && item.kind
+            ? <NativeMedia media={{ kind: item.kind, src: item.src, poster: item.poster, alt: item.alt, title: item.title, caption: item.caption ?? item.teachingUse, credit: item.credit ?? "Source and rights recorded in the textbook release.", transcript: item.transcript, mimeType: item.mimeType, downloadName: item.downloadName }} />
+            : null}
+  </div>)}
+</section>}
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-release-placement-gallery]").forEach((gallery) => {
+    const prose = gallery.closest<HTMLElement>(".chapter-prose");
+    if (!prose) return;
+    gallery.querySelectorAll<HTMLElement>("[data-release-placement]").forEach((placement) => {
+      const passageId = placement.dataset.passageId;
+      const target = passageId ? prose.querySelector<HTMLElement>(`#${CSS.escape(passageId)}`) : null;
+      if (!target || placement.childElementCount === 0) return;
+      let insertionPoint: Element = target;
+      while (insertionPoint.nextElementSibling?.matches("[data-inline-placed]")) insertionPoint = insertionPoint.nextElementSibling;
+      placement.dataset.inlinePlaced = "true";
+      insertionPoint.insertAdjacentElement("afterend", placement);
+    });
+    gallery.querySelectorAll<HTMLElement>("[data-release-placement]:empty").forEach((item) => item.remove());
+    if (gallery.childElementCount === 0) gallery.remove();
+  });
+</script>
+
+<style>
+  .release-placement-gallery:empty { display: none; }
+  [data-release-placement] { margin: 2rem 0; }
+  @media print { [data-release-placement] { break-inside: avoid; } }
+</style>

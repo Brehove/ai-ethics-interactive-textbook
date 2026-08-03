@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": ["packages/*"],
   "engines": {
     "node": ">=22.12.0 <23"
   },
@@ -19,22 +20,38 @@
     "wikimedia:validate": "node scripts/validate-wikimedia.mjs",
     "audit:public": "node scripts/audit-public-boundary.mjs",
     "validate:content": "node scripts/validate-content.mjs && node scripts/validate-reading.mjs && node scripts/validate-rights.mjs && npm run wikimedia:validate",
-    "test": "npm run test:content && npm run test:editor-auth && npm run test:wikimedia && npm run test:offline-downloads",
+    "test": "npm run test:content && npm run test:editor-auth && npm run test:wikimedia && npm run test:offline-downloads && npm run test:contract && npm run test:repository && npm run test:content-api && npm run test:embed-registry && npm run test:media && npm run test:release && npm run test:editor-static && npm run test:mcp && npm run test:skills",
     "test:content": "node --test --test-reporter=spec scripts/test/validate-content.test.mjs",
     "test:editor-auth": "node --test --test-reporter=spec workers/editor-auth/test/*.test.mjs",
     "test:wikimedia": "node --test --test-reporter=spec scripts/test/wikimedia-sync.test.mjs",
     "test:offline-downloads": "node --test --test-reporter=spec scripts/test/finalize-offline-downloads.test.mjs",
+    "test:contract": "tsx --test --test-reporter=spec tests/contract/*.test.ts",
+    "test:repository": "tsx --test --test-reporter=spec tests/migration/*.test.ts && tsx scripts/content/roundtrip.mts",
+    "test:content-api": "node --test --test-reporter=spec tests/api/*.test.mjs",
+    "test:embed-registry": "npm --workspace @ai-ethics/embed-registry test",
+    "test:media": "node --test --test-reporter=spec tests/media/*.test.mjs",
+    "test:release": "node --test --test-reporter=spec tests/release/*.test.mjs",
+    "test:editor-static": "node --test --test-reporter=spec tests/e2e/editor-static.test.mjs",
+    "test:mcp": "tsx --test --test-reporter=spec tests/mcp/*.test.ts && node --test --test-reporter=spec tests/mcp/*.test.mjs",
+    "test:skills": "node --test --test-reporter=spec tests/skills/*.test.mjs",
+    "content:import-report": "tsx scripts/content/import-git.mts",
+    "content:export-snapshot": "tsx scripts/content/export-snapshot.mts",
+    "content:seed-sql": "tsx scripts/content/seed-d1.mts",
     "validate": "npm run audit:public && npm run content:check && npm run validate:content && npm run check && npm test",
     "deploy:reader": "wrangler deploy",
     "deploy:editor-auth": "wrangler deploy --config workers/editor-auth/wrangler.jsonc"
   },
   "dependencies": {
     "astro": "7.1.6",
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "zod": "3.24.1",
+    "zod-to-json-schema": "3.24.6"
   },
   "devDependencies": {
+    "@types/node": "22.15.3",
     "@astrojs/check": "0.9.10",
     "@astrojs/markdown-remark": "7.2.2",
+    "tsx": "4.20.6",
     "typescript": "6.0.3",
     "wrangler": "4.118.0"
   }

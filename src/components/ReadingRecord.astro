@@ -9,6 +9,9 @@ interface ReadingPrompt {
   guidance: string;
   strategy?: string;
   responseStructure?: "prose" | "movement-plus-prose";
+  minWords?: number;
+  maxWords?: number;
+  showInSidebar?: boolean;
 }
 
 interface Props {
@@ -54,7 +57,7 @@ const strategyPreview: Record<string, string> = {
   <header class="record-head">
     <div>
       <p id="reading-record-title" class="record-kicker">Your reading record</p>
-      <p class="record-progress" data-record-progress>0 of 3 responses preserved</p>
+      <p class="record-progress" data-record-progress>0 of {prompts.length} responses preserved</p>
     </div>
     <button type="button" class="record-close" data-context-close data-context-close-own-focus aria-label="Close reading record">×</button>
   </header>
@@ -103,7 +106,7 @@ const strategyPreview: Record<string, string> = {
         <span>Your response</span>
         <textarea
           rows="7"
-          maxlength="1200"
+          maxlength="12000"
           required
           aria-describedby="active-prompt-copy active-prompt-guidance response-requirement reading-record-privacy response-error"
           aria-errormessage="response-error"
@@ -111,8 +114,8 @@ const strategyPreview: Record<string, string> = {
         ></textarea>
       </label>
       <div class="response-meta">
-        <span id="response-requirement">Write two to five sentences.</span>
-        <span data-character-count>0 / 1,200</span>
+        <span id="response-requirement" data-response-requirement>Write a substantive response.</span>
+        <span data-character-count>0 words</span>
       </div>
       <p id="response-error" class="response-error" role="alert" data-response-error></p>
       <button type="button" class="preserve-button" data-request-preserve>Preserve this response</button>
@@ -210,6 +213,9 @@ const strategyPreview: Record<string, string> = {
     guidance: string;
     strategy?: string;
     responseStructure?: "prose" | "movement-plus-prose";
+    minWords?: number;
+    maxWords?: number;
+    showInSidebar?: boolean;
   }
 
   interface PreservedResponse {
@@ -257,6 +263,7 @@ const strategyPreview: Record<string, string> = {
     const textarea = record.querySelector<HTMLTextAreaElement>("[data-response-text]");
     const characterCount = record.querySelector<HTMLElement>("[data-character-count]");
     const responseError = record.querySelector<HTMLElement>("[data-response-error]");
+    const responseRequirement = record.querySelector<HTMLElement>("[data-response-requirement]");
     const preservedBox = record.querySelector<HTMLElement>("[data-preserved-response]");
     const preservedText = record.querySelector<HTMLElement>("[data-preserved-text]");
     const preservedMovement = record.querySelector<HTMLElement>("[data-preserved-movement]");
@@ -290,7 +297,9 @@ const strategyPreview: Record<string, string> = {
     let pendingSelection: { passageId: string | null; quote: string } | null = null;
 
     const updateCharacterCount = () => {
-      if (characterCount && textarea) characterCount.textContent = `${textarea.value.length.toLocaleString()} / 1,200`;
+      if (!characterCount || !textarea) return;
+      const words = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
+      characterCount.textContent = `${words.toLocaleString()} ${words === 1 ? "word" : "words"}`;
     };
 
     const mobileModalTargets = () => {
@@ -348,6 +357,9 @@ const strategyPreview: Record<string, string> = {
       if (title) title.textContent = selected.title;
       if (promptCopy) promptCopy.textContent = selected.prompt;
       if (guidance) guidance.textContent = selected.guidance;
+      const minWords = selected.minWords ?? 30;
+      const maxWords = selected.maxWords ?? 250;
+      if (responseRequirement) responseRequirement.textContent = `Write ${minWords}–${maxWords} words.`;
       if (returnLink) returnLink.href = `#${selected.passageId}`;
       const movementRequired = selected.responseStructure === "movement-plus-prose";
       movementField?.toggleAttribute("hidden", !movementRequired);
@@ -606,7 +618,9 @@ const strategyPreview: Record<string, string> = {
 
     record.querySelector<HTMLButtonElement>("[data-request-preserve]")?.addEventListener("click", () => {
       const value = textarea?.value.trim() ?? "";
-      const sentenceCount = (value.match(/[.!?](?:\s|$)/g) ?? []).length;
+      const wordCount = value ? value.split(/\s+/).length : 0;
+      const minWords = activePrompt?.minWords ?? 30;
+      const maxWords = activePrompt?.maxWords ?? 250;
       const movementRequired = activePrompt?.responseStructure === "movement-plus-prose";
       const movement = movementChoices.find((choice) => choice.checked)?.value;
       if (movementRequired && !movement) {
@@ -615,8 +629,8 @@ const strategyPreview: Record<string, string> = {
         movementChoices[0]?.focus();
         return;
       }
-      if (value.length < 40 || sentenceCount < 2) {
-        if (responseError) responseError.textContent = "Develop this into at least two sentences before preserving it.";
+      if (wordCount < minWords || wordCount > maxWords) {
+        if (responseError) responseError.textContent = `Write between ${minWords} and ${maxWords} words before preserving this response.`;
         textarea?.setAttribute("aria-invalid", "true");
         textarea?.focus();
         return;

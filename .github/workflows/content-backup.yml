@@ -1,0 +1,61 @@
+name: Private content backup and restore check
+
+on:
+  schedule:
+    - cron: "17 09 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: content-backup
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Export the complete remote D1 database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_BACKUP_TOKEN }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          mkdir -p backup
+          npx wrangler d1 export ai-ethics-content --remote --skip-confirmation --config workers/content-api/wrangler.jsonc --output backup/ai-ethics-content.sql
+          gzip -n -9 backup/ai-ethics-content.sql
+          sha256sum backup/ai-ethics-content.sql.gz > backup/ai-ethics-content.sql.gz.sha256
+      - name: Verify the export can restore into clean SQLite
+        run: |
+          gzip -cd backup/ai-ethics-content.sql.gz > backup/restore.sql
+          sqlite3 backup/restore.db < backup/restore.sql
+          test "$(sqlite3 backup/restore.db 'PRAGMA integrity_check;')" = "ok"
+          test -z "$(sqlite3 backup/restore.db 'PRAGMA foreign_key_check;')"
+          test "$(sqlite3 backup/restore.db 'SELECT COUNT(*) FROM documents;')" -ge 18
+          rm backup/restore.sql backup/restore.db
+      - name: Upload immutable private backup and digest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: "true"
+          R2_ENDPOINT_URL: ${{ vars.BACKUP_R2_ENDPOINT_URL }}
+          R2_BACKUP_BUCKET: ${{ vars.BACKUP_R2_BUCKET }}
+        run: |
+          test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$R2_ENDPOINT_URL" && test "$R2_BACKUP_BUCKET" = "ai-ethics-backups"
+          backup_key="d1/$(date -u +%Y-%m-%d)/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws s3 cp backup/ai-ethics-content.sql.gz "s3://${R2_BACKUP_BUCKET}/${backup_key}.sql.gz" --endpoint-url "$R2_ENDPOINT_URL" --only-show-errors
+          aws s3 cp backup/ai-ethics-content.sql.gz.sha256 "s3://${R2_BACKUP_BUCKET}/${backup_key}.sql.gz.sha256" --endpoint-url "$R2_ENDPOINT_URL" --only-show-errors
+          remote_size="$(aws s3api head-object --bucket "$R2_BACKUP_BUCKET" --key "${backup_key}.sql.gz" --endpoint-url "$R2_ENDPOINT_URL" --query ContentLength --output text)"
+          test "$remote_size" = "$(wc -c < backup/ai-ethics-content.sql.gz | tr -d ' ')"

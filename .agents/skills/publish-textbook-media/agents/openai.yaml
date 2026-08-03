@@ -1,0 +1,11 @@
+interface:
+  display_name: "Publish Textbook Media"
+  short_description: "Prepare accessible media for release"
+  default_prompt: "Use $publish-textbook-media to prepare accessible textbook media."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "ai-ethics-textbook"
+      description: "PHIL 123 content changeset workflow"
+      transport: "streamable_http"
+      url: "https://mcp.ethicsandai.your-digital-life.org/mcp"

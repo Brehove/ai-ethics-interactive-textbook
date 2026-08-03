@@ -1,0 +1,196 @@
+---
+interface Fallback {
+  title: string;
+  summary: string;
+  sourceLabel: string;
+  href: string;
+}
+
+interface Definition {
+  provider: "youtube" | "vimeo" | "x" | "spotify";
+  identity: {
+    videoId?: string;
+    statusId?: string;
+    username?: string;
+    resourceType?: "track" | "album" | "playlist" | "episode" | "show";
+    resourceId?: string;
+  };
+  render: {
+    iframeOrigin?: string;
+    sandbox?: string;
+    allow?: string;
+    startSeconds?: number;
+    captions?: boolean;
+    captionLanguage?: string;
+    timeoutMs?: number;
+  };
+  fallback: Fallback;
+  activationDisclosure: string;
+}
+
+const { definition } = Astro.props as { definition: Definition };
+if (definition.provider === "youtube") {
+  Astro.csp?.insertDirective("frame-src https://www.youtube-nocookie.com");
+}
+if (definition.provider === "vimeo") {
+  Astro.csp?.insertDirective("frame-src https://player.vimeo.com");
+}
+if (definition.provider === "x") {
+  Astro.csp?.insertScriptResource("https://platform.x.com");
+  Astro.csp?.insertDirective("frame-src https://platform.twitter.com https://syndication.twitter.com https://x.com");
+}
+if (definition.provider === "spotify") {
+  Astro.csp?.insertDirective("frame-src https://open.spotify.com");
+}
+const activationLabel = definition.provider === "x"
+  ? "Load live post"
+  : definition.provider === "spotify"
+    ? "Load Spotify player"
+    : "Load media";
+const payload = JSON.stringify({
+  provider: definition.provider,
+  identity: definition.identity,
+  render: definition.render,
+  fallback: definition.fallback,
+});
+---
+
+<figure class:list={["external-embed", `external-embed--${definition.provider}`]} data-external-embed data-provider={definition.provider} data-definition={payload}>
+  <div class="external-embed__fallback" data-embed-fallback>
+    <div class="external-embed__label">{definition.fallback.sourceLabel}</div>
+    <h3>{definition.fallback.title}</h3>
+    <p>{definition.fallback.summary}</p>
+    <p class="external-embed__print-source"><strong>Canonical URL:</strong> {definition.fallback.href}</p>
+    <div class="external-embed__actions">
+      <button type="button" data-embed-activate>{activationLabel}</button>
+      <a href={definition.fallback.href} target="_blank" rel="noopener noreferrer">Open source</a>
+    </div>
+    <p class="external-embed__disclosure">{definition.activationDisclosure}</p>
+  </div>
+  <div class="external-embed__player" data-embed-player hidden></div>
+  <p class="external-embed__status" data-embed-status aria-live="polite"></p>
+  <noscript><p class="external-embed__noscript">Interactive media is off. The summary and source link above remain available.</p></noscript>
+</figure>
+
+<script>
+  interface WindowWithX extends Window {
+    twttr?: { widgets?: { createTweet?: (id: string, element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLElement | undefined> } };
+    __phil123XScript?: Promise<void>;
+  }
+
+  const xWindow = window as WindowWithX;
+
+  function loadXScript() {
+    if (xWindow.twttr?.widgets?.createTweet) return Promise.resolve();
+    if (xWindow.__phil123XScript) return xWindow.__phil123XScript;
+    xWindow.__phil123XScript = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://platform.x.com/widgets.js";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("x_script_failed"));
+      document.head.append(script);
+    });
+    return xWindow.__phil123XScript;
+  }
+
+  function safeDefinition(element: HTMLElement) {
+    try {
+      return JSON.parse(element.dataset.definition ?? "");
+    } catch {
+      return null;
+    }
+  }
+
+  function iframeFor(definition: any) {
+    const iframe = document.createElement("iframe");
+    const params = new URLSearchParams();
+    let src = "";
+    if (definition.provider === "youtube") {
+      if (definition.render.startSeconds) params.set("start", String(definition.render.startSeconds));
+      if (definition.render.captions) params.set("cc_load_policy", "1");
+      if (definition.render.captionLanguage) params.set("cc_lang_pref", definition.render.captionLanguage);
+      params.set("rel", "0");
+      src = `https://www.youtube-nocookie.com/embed/${definition.identity.videoId}?${params}`;
+    } else if (definition.provider === "vimeo") {
+      params.set("dnt", "1");
+      if (definition.render.startSeconds) params.set("#t", `${definition.render.startSeconds}s`);
+      src = `https://player.vimeo.com/video/${definition.identity.videoId}?${params}`;
+    } else if (definition.provider === "spotify") {
+      const allowedTypes = ["track", "album", "playlist", "episode", "show"];
+      if (!allowedTypes.includes(definition.identity.resourceType) || !/^[A-Za-z0-9]{22}$/.test(definition.identity.resourceId ?? "")) throw new Error("spotify_identity_invalid");
+      src = `https://open.spotify.com/embed/${definition.identity.resourceType}/${definition.identity.resourceId}`;
+    } else {
+      throw new Error("iframe_provider_unsupported");
+    }
+    iframe.src = src;
+    iframe.title = definition.fallback.title;
+    iframe.loading = "eager";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.setAttribute("sandbox", definition.render.sandbox ?? "allow-scripts allow-same-origin allow-presentation");
+    iframe.setAttribute("allow", definition.render.allow ?? "autoplay; fullscreen; picture-in-picture");
+    iframe.setAttribute("allowfullscreen", "");
+    return iframe;
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-external-embed]")) {
+    if (root.dataset.ready === "true") continue;
+    root.dataset.ready = "true";
+    const definition = safeDefinition(root);
+    const button = root.querySelector<HTMLButtonElement>("[data-embed-activate]");
+    const fallback = root.querySelector<HTMLElement>("[data-embed-fallback]");
+    const player = root.querySelector<HTMLElement>("[data-embed-player]");
+    const status = root.querySelector<HTMLElement>("[data-embed-status]");
+    if (!definition || !button || !fallback || !player || !status) continue;
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      status.textContent = `Loading ${definition.provider === "x" ? "the live post" : definition.provider === "spotify" ? "the Spotify player" : "media"}…`;
+      try {
+        player.replaceChildren();
+        if (definition.provider === "x") {
+          await Promise.race([
+            loadXScript(),
+            new Promise((_, reject) => window.setTimeout(() => reject(new Error("x_timeout")), definition.render.timeoutMs ?? 8000)),
+          ]);
+          const createTweet = xWindow.twttr?.widgets?.createTweet;
+          if (!createTweet) throw new Error("x_factory_missing");
+          const inserted = await createTweet(definition.identity.statusId, player, { dnt: true, align: "center" });
+          if (!inserted || !player.contains(inserted)) throw new Error("x_post_missing");
+        } else {
+          player.append(iframeFor(definition));
+        }
+        fallback.hidden = true;
+        player.hidden = false;
+        status.textContent = "Media loaded. Use the source link in the fallback if the player becomes unavailable.";
+      } catch {
+        player.hidden = true;
+        player.replaceChildren();
+        fallback.hidden = false;
+        button.disabled = false;
+        status.textContent = "The live media could not load. The readable fallback is still available.";
+      }
+    });
+  }
+</script>
+
+<style>
+  .external-embed { margin: 2rem 0; border-block: 1px solid var(--line, #d8d2c4); padding: 1.25rem 0; }
+  .external-embed__fallback { max-width: 46rem; }
+  .external-embed__label { color: var(--ink-soft, #596274); font: 700 0.72rem/1.2 var(--sans, system-ui); letter-spacing: 0.09em; text-transform: uppercase; }
+  h3 { margin: 0.35rem 0 0.45rem; font-size: clamp(1.35rem, 3vw, 1.9rem); }
+  p { margin: 0.45rem 0; }
+  .external-embed__actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1rem; }
+  button, a { min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ink, #102b4d); padding: 0.65rem 0.9rem; font: 700 0.76rem/1 var(--sans, system-ui); text-decoration: none; }
+  button { background: var(--ink, #102b4d); color: white; cursor: pointer; }
+  button:disabled { cursor: wait; opacity: 0.65; }
+  a { background: transparent; color: var(--ink, #102b4d); }
+  button:focus-visible, a:focus-visible { outline: 3px solid #bd8610; outline-offset: 3px; }
+  .external-embed__disclosure, .external-embed__status, .external-embed__noscript { color: var(--ink-soft, #596274); font: 0.78rem/1.5 var(--sans, system-ui); }
+  .external-embed__print-source { display: none; overflow-wrap: anywhere; font: 0.75rem/1.5 var(--sans, system-ui); }
+  .external-embed__player { aspect-ratio: 16 / 9; max-width: 52rem; background: #000; }
+  .external-embed--spotify .external-embed__player { width: min(100%, 46rem); height: 352px; aspect-ratio: auto; background: transparent; }
+  .external-embed__player :global(iframe) { width: 100%; height: 100%; border: 0; }
+  @media (max-width: 36rem) { .external-embed__actions > * { width: 100%; } .external-embed--spotify .external-embed__player { height: 352px; } }
+  @media print { .external-embed__fallback, .external-embed__print-source { display: block !important; } .external-embed__actions, .external-embed__player, .external-embed__status { display: none !important; } }
+</style>

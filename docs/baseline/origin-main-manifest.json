@@ -1,0 +1,2054 @@
+{
+  "schemaVersion": 1,
+  "kind": "phil123-origin-baseline",
+  "repository": "Brehove/ai-ethics-interactive-textbook",
+  "sourceRef": "origin/main",
+  "sourceRevision": "0a2716182953f492a654aa8b704d420216f39450",
+  "sourceCommittedAt": "2026-08-02T19:57:12-06:00",
+  "planSha256": "4a270c423bc68032265b6e8c5c0cc0c3491da5d1974b575eb0042eb15f40a634",
+  "invariants": {
+    "studentAccounts": false,
+    "studentDataStored": false,
+    "publicReaderUsesLiveContentApi": false,
+    "contentAuthority": "git"
+  },
+  "counts": {
+    "parts": 6,
+    "chapters": 18,
+    "sectionIds": 268,
+    "passageIds": 1939,
+    "checkpoints": 54,
+    "checkpointAnchors": 54,
+    "mediaRecords": 37,
+    "vendoredMediaFiles": 37,
+    "trackedFiles": 405
+  },
+  "files": [
+    {
+      "path": ".github/CODEOWNERS",
+      "bytes": 228,
+      "sha256": "447f413ab262fcf21ff08995115327e111f0570baa3c7bd08cd768449fa3a0f3"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "bytes": 518,
+      "sha256": "34ef0914fd5a5fdc19d17b282e75b8ba06dc2e0a5ec3df9b82a8d06bbe55b2f0"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "bytes": 1197,
+      "sha256": "cca3c06fc3238518ca4cee00321598b7134754ee384ac2d46a31e45ff25a385a"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 5742,
+      "sha256": "a6db12c1cdbd7711d6ba381fd988ff825e4dcffea51f590aa5adf0d8a10539e6"
+    },
+    {
+      "path": ".github/workflows/regenerate-chapter-reading.yml",
+      "bytes": 3522,
+      "sha256": "01d2bd7dff190e33ffa1deccdbf438a1f449020682cf9bf22d37e2490b137811"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 339,
+      "sha256": "a4b8e095343f7fd1be2455f9759d0a12dbf2374991542ff04eb00b96a384f1a5"
+    },
+    {
+      "path": ".nvmrc",
+      "bytes": 8,
+      "sha256": "ccb4022e91abb8575a29d306d7aff041f578bb86eb1180d69475bb86a5c4512c"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 965,
+      "sha256": "c59730f2a7c359960167a8a1e26ff1883cd178a92757c7dea79b323f66cd50e4"
+    },
+    {
+      "path": "LICENSES/CC-BY-4.0.txt",
+      "bytes": 693,
+      "sha256": "d6581de08c68a0e0f1e32b968eba1d9cfeea9ef8f7fff2f26335a3628476b6c2"
+    },
+    {
+      "path": "LICENSES/CC0-1.0.txt",
+      "bytes": 451,
+      "sha256": "2f4dd3679ecb6fa9a59407f8195dc13dd99d108a9ebe78c90baf418a8cd64422"
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "bytes": 1067,
+      "sha256": "526f41b68f7a05058c65843f1625f1f2e0f8c0c1dd83190e9afacfe61ed9529c"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3964,
+      "sha256": "dfda37bb960e5dfbd35dd6e5440ab64248d6be59057c448288e4e9421bc844cd"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 1195,
+      "sha256": "c799accf143b69e069c2999a5c93899d0b7b39d6f44637de189f53f8abd8a0fc"
+    },
+    {
+      "path": "astro.config.mjs",
+      "bytes": 1982,
+      "sha256": "f0f644ec8a02a14cabd16ee468d32c0a23b52d6f045e4f7c2ffd5933eabaf3d5"
+    },
+    {
+      "path": "content/book.json",
+      "bytes": 7115,
+      "sha256": "223523f96b3cf12c126ad72a09b046fad3e4d177971e44bfc40988cd7e524988"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/annotations.json",
+      "bytes": 87,
+      "sha256": "e8c38008adc9e748616767217cda45c2b34f3fbb45d941bed28b5efa96205506"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/chapter.md",
+      "bytes": 21596,
+      "sha256": "531e42c03fa358ff9cc4f5fa71fe4db01bba9dda9d94ddd64038422d45e8649f"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/meta.json",
+      "bytes": 1396,
+      "sha256": "6e3fb7402e0d733d2f17373cce30fb9ba911756f12ec04671bd4a0babbe0884a"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/reading-record.json",
+      "bytes": 3054,
+      "sha256": "1ac1d7b5f1bc6fe4f0dd0a5160f28254cd68d4dee4bd2b4f2d8e35f3e01c3e35"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/reading.json",
+      "bytes": 23377,
+      "sha256": "51fdde28f71be31d573c7175aa06bc06372f039e5f601332ac3766680e967917"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/reading.txt",
+      "bytes": 18270,
+      "sha256": "c789d32707954ad2cd3287a7b8b4790ec2013b6fed2eef8b486f493d94f5f600"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/rights.json",
+      "bytes": 134,
+      "sha256": "be14b0bd10a8ba7c392e878aa3292d11d05730499465bfd37c363e334323db4a"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/source-links.json",
+      "bytes": 582,
+      "sha256": "28c2ce11745ddc4d3d49fdb2800978e8619e0d90a03fccc2d56d98a4f15451f1"
+    },
+    {
+      "path": "content/chapters/01-practicing-philosophy/world.json",
+      "bytes": 294,
+      "sha256": "492030c2026c0a21dbf602c0a81b03339151d1e8ab4a69878c6521057db23c6e"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/annotations.json",
+      "bytes": 87,
+      "sha256": "782ebe690071ab61c133871f62cd8be8e47811985a2222a3dde1563e59850744"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/chapter.md",
+      "bytes": 30814,
+      "sha256": "a49c3cb40c4672f03263428b153339259f12311aac198409fb8dd27cd5f1f2f1"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/meta.json",
+      "bytes": 1537,
+      "sha256": "d3511bc17ec71a6a1f0f5210d469a9175945b86eb7fea57acef10cbef2034148"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/reading-record.json",
+      "bytes": 2914,
+      "sha256": "7ada390468c3b3d8b4b4c1e42fcacd59e877802dfbc492fbb573ccae7d5f0d18"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/reading.json",
+      "bytes": 38917,
+      "sha256": "7b136c71805ab04b74ac937354da283fa478a09d08d282c5ba77562bfb9b06b4"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/reading.txt",
+      "bytes": 24190,
+      "sha256": "e7094d3dca151686bdab6806c24a33fe2beed497922edc27ff56aaa6174601be"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/rights.json",
+      "bytes": 134,
+      "sha256": "5330069b69c5d6c5ff9b48db13e365a23f73bfb1de5ff6fdf0dc544d917fb18a"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/source-links.json",
+      "bytes": 122,
+      "sha256": "9a54e727b26fc47aad32ec18ccb0378e3928ba3c73126c0cce62a443d3acc482"
+    },
+    {
+      "path": "content/chapters/02-testing-moral-arguments/world.json",
+      "bytes": 142,
+      "sha256": "a9a1565574218857b01023d11dbaa84fd040807979c353903214324ce5267675"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/annotations.json",
+      "bytes": 87,
+      "sha256": "99b9c3df4eeb3225e8f622a79b2f7555930a9a4c2f641c8ecb4aec1c680ee02f"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/chapter.md",
+      "bytes": 37040,
+      "sha256": "d410323b818361886fa17ac5b2432ed2bd81445495d91c9cb859d86d05caed8d"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/meta.json",
+      "bytes": 1363,
+      "sha256": "f47561c2239019cd4d8c646d8182ba718147c04277d13e80c2d6fd1ff9d90c5b"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/reading-record.json",
+      "bytes": 3050,
+      "sha256": "52de28ae7dd7db52eeeca50f2237ce09aa09b8ed7fce6b0f63644e241e4ed5cf"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/reading.json",
+      "bytes": 40358,
+      "sha256": "84ddb4a2386eca3283caa4565ebcdaf62d19569c3321f32037ccd795030b6f89"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/reading.txt",
+      "bytes": 30665,
+      "sha256": "68f1a8f0ede680c13eadbcf762c93afd753f5b4bd2a9b1a50534b181f225c66c"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/rights.json",
+      "bytes": 170,
+      "sha256": "5575578b1853bb2602c6a7145e467842ef144bf244f6b5271d089ce539cc80c8"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/source-links.json",
+      "bytes": 122,
+      "sha256": "a1ca14d3f4d939c799d74fc4e8ccd6191ec84448e7c7b5a7f1eb52430a597673"
+    },
+    {
+      "path": "content/chapters/03-how-generative-ai-produces-answers/world.json",
+      "bytes": 142,
+      "sha256": "95717c24f398af2a2f19fae93ef7deffbdd68264541fff5d7056d2978592298b"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/annotations.json",
+      "bytes": 87,
+      "sha256": "dc907279cd5b8c1e06cb1aead83aec62ebdab741bbd2c29beeed66b1e2a4b800"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/chapter.md",
+      "bytes": 34878,
+      "sha256": "2b818bd4f2552d5b6e6d20273256e6b48de72e859095f98d1f52a3f9b8a03ad9"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/meta.json",
+      "bytes": 1362,
+      "sha256": "0357c32109c5efc1019318129d65081070e1252f4ba6b0522bf2b08837e24724"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/reading-record.json",
+      "bytes": 3059,
+      "sha256": "52c85ad709fb10407ea507f6600fafeeeeeaa744138e1e11f3adc464cfa59976"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/reading.json",
+      "bytes": 40321,
+      "sha256": "602ebfd54af578bd9e6a81ef455d8131ce065b8410e2508f05583e8b82f82bc6"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/reading.txt",
+      "bytes": 29757,
+      "sha256": "5d5a360d55a4ee4f8bedabb1e4845d10830fb20faccdd13b546b69e54613490b"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/rights.json",
+      "bytes": 134,
+      "sha256": "5369f7bec5e8914fbecff706b14e4b407692cf008504358e73ad71a3f4a4dc05"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/source-links.json",
+      "bytes": 122,
+      "sha256": "d02449226b2fccb0a291d506774f2727994d200202c7f9a7dc7b0720bc8cc462"
+    },
+    {
+      "path": "content/chapters/04-ai-as-an-interlocutor/world.json",
+      "bytes": 142,
+      "sha256": "8b5a6051ad0316431745ca666a68572adc2761fb5fde05c5a342850a401935a3"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/annotations.json",
+      "bytes": 87,
+      "sha256": "ca184dcb0b65b4ad55b2615caf45703047e3de6840cea4bbd59ececde4dbf43e"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/chapter.md",
+      "bytes": 51966,
+      "sha256": "e4acb6fbc9d7c720c58cfa77d00cd595bcbe2ffe0bb7128abc5b9facfefd026f"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/meta.json",
+      "bytes": 1503,
+      "sha256": "bf7f460d968f4539f430c0ce8107cfd67c0b60e55f10b10686b75ae6ef705925"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/reading-record.json",
+      "bytes": 3198,
+      "sha256": "5aca075b8ecc6f29077cebad4f4ecf36277922f3b437b60871bca79a48dad46b"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/reading.json",
+      "bytes": 58406,
+      "sha256": "62664f1e0ab46ce8f5c7a08db6810bdfd713134cc3195ca67fa9d7dd5011934c"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/reading.txt",
+      "bytes": 44770,
+      "sha256": "7f261a3978073be4fe3cc815db4a5816628ec6cab79562b10b575fe3ba5a60b8"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/rights.json",
+      "bytes": 134,
+      "sha256": "bcf8dc7e71fa32d2167dd8e103d7f3989edf9193e85d1228a412f7cc73a6447b"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/source-links.json",
+      "bytes": 1491,
+      "sha256": "3553624b5f0ba087704dcdec7d022400fad9dcab1d2ed3d9feec73c50dc23ab8"
+    },
+    {
+      "path": "content/chapters/05-divine-command-natural-law-moral-authority/world.json",
+      "bytes": 380,
+      "sha256": "ffd110c00b60f5a9307b427c0888458cf6679e448944935a1c8d5befe025b8b9"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/annotations.json",
+      "bytes": 87,
+      "sha256": "b4fbda2c65d0ca4903f78ac6e7ae76df0adcb2cf46e6efcc06fe80028c922536"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/chapter.md",
+      "bytes": 47501,
+      "sha256": "c31bbda3b4e7c2dbcaf5236631a5fe573d48533f3139127ae009a116a3d1d702"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/meta.json",
+      "bytes": 1485,
+      "sha256": "c9ca259b549fbe4c9b040aac1c282776de1ee391dcd7946aa81d586334976737"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/reading-record.json",
+      "bytes": 3316,
+      "sha256": "a3b84bf1200efef536a12dd17abdd56965d6b5cd39430b0c9d7ab5de3f504d36"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/reading.json",
+      "bytes": 52042,
+      "sha256": "5fd720c70a1272af83aeec7ed8626ff369dec1a681f8d100e9c494ae03abf19b"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/reading.txt",
+      "bytes": 38707,
+      "sha256": "2419e64e99d63855b13ea45d4479bfa6ce46a90efb31b4d37e8b0f344e33639e"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/rights.json",
+      "bytes": 134,
+      "sha256": "565e1ef319c53f31e8a959ea0f7d8246e4868c53f2a8d0ea6c89059c6bca2130"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/source-links.json",
+      "bytes": 692,
+      "sha256": "e0bd93cbc278642dbc0b0f757f072d5ff0276b5ac41cd11dee8890afbe05979c"
+    },
+    {
+      "path": "content/chapters/06-commands-constitutions-and-alignment/world.json",
+      "bytes": 286,
+      "sha256": "cdb71ff440ae139cb109c3603f608807516017eaf654fa167c2a5f478d118b46"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/annotations.json",
+      "bytes": 87,
+      "sha256": "ea9c554fbd64aef7aa15c938fd86abbd85c2765b5e377abf97d0236f425d63a3"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/chapter.md",
+      "bytes": 46518,
+      "sha256": "b0ce3f66d3b43127fb9272ff6027ab80017b718bf01f421eca100bab84605145"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/meta.json",
+      "bytes": 1478,
+      "sha256": "a4ecf5ebfd4b083ade4cec8ecc1d02eb7a554945ed0d9fec1ed840bf46c7e1f4"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/reading-record.json",
+      "bytes": 3231,
+      "sha256": "2eae0be7df28d98b0c0e2db67a67f03a4ec802256710ab19c7988f05c4d43fa2"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/reading.json",
+      "bytes": 51939,
+      "sha256": "3a060d227d7fd4ac7d6a5b0ea5d03b6aab50d821fff31d861dd52d90c8cc7623"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/reading.txt",
+      "bytes": 39838,
+      "sha256": "9505f6bcc6a374c69c3f780bbeab2f892624477e8a1ae200dc64efa2fa12ecb2"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/rights.json",
+      "bytes": 134,
+      "sha256": "00798c86d2b34347bbe8783f7c488ee1f13aff5c591b3b12486bdf1c26db96c6"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/source-links.json",
+      "bytes": 836,
+      "sha256": "77c3edf10ae7d7893de95699a806b8eee612073d750ea2c870f91bb033f50f03"
+    },
+    {
+      "path": "content/chapters/07-aristotle-character-and-ai-assisted-life/world.json",
+      "bytes": 357,
+      "sha256": "74c71416bb2c4dc5d922d35c7f3a66fa9a1038a071ec0f397f57cb1520f634aa"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/annotations.json",
+      "bytes": 87,
+      "sha256": "06a36bc251c1004b0a619a1003e2e092e0f09a2ee8e90eab4fb0bf9fa616e162"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/chapter.md",
+      "bytes": 48084,
+      "sha256": "647d7b7cd4690bff360089575a525fecb41cf54d429d53fe285e2677f6216320"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/meta.json",
+      "bytes": 1464,
+      "sha256": "bfdfe9619a31db3eac20f8924009019798eeb30da95a004320c9bd98be5ac510"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/reading-record.json",
+      "bytes": 3333,
+      "sha256": "13b26850e063968c34d8fb142631833dd4863c8e0a4966b9fef5308526c2859e"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/reading.json",
+      "bytes": 57755,
+      "sha256": "8a7df2895175ac03b677a336c9ebc9b84ee874f482db0752ea3d7e0306f8597e"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/reading.txt",
+      "bytes": 41514,
+      "sha256": "f6b5333792cfa150e4da677408e4a14e73f5f3f6f9c61e0174488655af4839ae"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/rights.json",
+      "bytes": 134,
+      "sha256": "b14ab051a2e1c48c70ca25b2a3ba65b838f88e5b42511644c665c47e25c3ab05"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/source-links.json",
+      "bytes": 627,
+      "sha256": "b1299d7df583c453a594d1d8d013cefbae9616ca9f02aea6777b9095ed1258fa"
+    },
+    {
+      "path": "content/chapters/08-practical-wisdom-after-aristotle/world.json",
+      "bytes": 434,
+      "sha256": "27c0ada4a525b9f96845fa496791202e11fd228de2fd58eb9bfc82afa73b2994"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/annotations.json",
+      "bytes": 87,
+      "sha256": "1d267e1cddb934f881f8387f7a8fe37e377efa5c3e588cc108c5fedba94de970"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/chapter.md",
+      "bytes": 50907,
+      "sha256": "d4bdc85fa3d6ae13a6790bf9292a147da534175638c77521c9d2a6224a2a419d"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/meta.json",
+      "bytes": 1334,
+      "sha256": "3c253396681273c3ce6f9896902e694d660b565ccab9b2ee6a8613ed1c1df2d0"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/reading-record.json",
+      "bytes": 3251,
+      "sha256": "d8d253e7ddc740fd31cd9b5e598708b87c6e0553956cb58999b9e81982bdf975"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/reading.json",
+      "bytes": 57460,
+      "sha256": "1fcb3ad86d86d80f0db0eadde0f2b408fce1cac68fc1c492bd69de4392c84875"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/reading.txt",
+      "bytes": 41826,
+      "sha256": "35dd6418fd242f23ad608d4ab62fa735054b179585f48f5ecb19b9daf3ee2d44"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/rights.json",
+      "bytes": 134,
+      "sha256": "391cf0bff3e1fcd229d2d9739d6db92c6982dd4b41d3170f4064dd89e037f482"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/source-links.json",
+      "bytes": 771,
+      "sha256": "293cdb4ece0318ee95327bbb51123df91972442e05e79dcc5404e1084c10cbd8"
+    },
+    {
+      "path": "content/chapters/09-kantian-deontology/world.json",
+      "bytes": 391,
+      "sha256": "e3f1a356030aa9c3dc898d6dcac7eee32b91d8f855443020b8a6d6e7fe62b21a"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/annotations.json",
+      "bytes": 87,
+      "sha256": "4659ad75af7ba0f0ff544c4a6fa6739c3c4bd09c816846a04b3cd06f44622c0a"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/chapter.md",
+      "bytes": 58415,
+      "sha256": "821280319ebf4d087d331adba74de148bd92ad553f092aa6ea0f8e6d9cf7a662"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/meta.json",
+      "bytes": 1494,
+      "sha256": "f23e5907a3f1fff625027b822d3e911e19ca2e5859da3da1980089c147a4aa93"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/reading-record.json",
+      "bytes": 3282,
+      "sha256": "9e638800379292bcaf83ff39be3d40e247583594374826de3177b39666479e40"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/reading.json",
+      "bytes": 63128,
+      "sha256": "3e054a0c9b562bb3a9844646807df807dab5d66df026421f35f162a6e5c7073b"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/reading.txt",
+      "bytes": 49611,
+      "sha256": "c700c067d7afcc89394d681465cbde27eb0e3eb3ae67052be86df185853b3cd6"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/rights.json",
+      "bytes": 134,
+      "sha256": "7ad575ecebb17f29c37315b095e65b0fe1b297b83c10bc3bf623d5d9ab3e722b"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/source-links.json",
+      "bytes": 1968,
+      "sha256": "ab55693ce2ca4802370e19e0e820a5f52b7d1bd61e1702ec66f2c32309fce8e2"
+    },
+    {
+      "path": "content/chapters/10-utilitarianism-consequences-rules-and-two-level-reasoning/world.json",
+      "bytes": 519,
+      "sha256": "1cb7d857467a0c2bc189b145976ad6367b2e1572f3cb258274cee347b5e785d9"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/annotations.json",
+      "bytes": 87,
+      "sha256": "632f17550a09520e9427648ba4b28de734d043fb29be22527af5da103e7322c3"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/chapter.md",
+      "bytes": 62805,
+      "sha256": "afdd528d567337d68146f807daec6038c48021e01ff35714bb562cfa8ebce809"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/meta.json",
+      "bytes": 1451,
+      "sha256": "9d3a400f274bbe79ce805dcc3813cdea40494b9daae8017eb398107217e001de"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/reading-record.json",
+      "bytes": 3375,
+      "sha256": "5fea2f25bbd03fd14a7578d99229fc0b2b88f70c482bf02c12da4c0b6497595c"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/reading.json",
+      "bytes": 70382,
+      "sha256": "85848c7bcdf19904cee4694fe54bf16c2f617ed69d5e79b8e11626c42b179f82"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/reading.txt",
+      "bytes": 50905,
+      "sha256": "e91f9194458361ed7d183da72e66a64d8e88bcf8b9dd7a874c96e507a6b4fc13"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/rights.json",
+      "bytes": 134,
+      "sha256": "bdef97ed0d2257cb748bd48c463d694b624c2370a9d426907770b83fe4c72cde"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/source-links.json",
+      "bytes": 648,
+      "sha256": "215e5a29097cbe6824c65b3146ca62b579cbb0cc9b26e4bf560de7a39df93c38"
+    },
+    {
+      "path": "content/chapters/11-from-data-trails-to-ai-systems/world.json",
+      "bytes": 307,
+      "sha256": "e35798e5b5e2d198c38f41bbd722cdd779659d8cb6f7e1ec24881b4909ff601e"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/annotations.json",
+      "bytes": 87,
+      "sha256": "a898397503471ea786b3cb6f3968d86f1a4fca8e1071e2a70ddf8465ed19fff2"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/chapter.md",
+      "bytes": 76744,
+      "sha256": "5dbd20c9fcf5d39781ebfe207bce4be58e9aca4bd1b455cfa35c590e3ed6de18"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/meta.json",
+      "bytes": 1447,
+      "sha256": "0bde73e089141c4bc9fabe05c2bdcfb10394dc241d25a0ade043f57245d62628"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/reading-record.json",
+      "bytes": 3439,
+      "sha256": "acb512b1772f4904988e0a99d1c429782cadbcf2f092a6e70e217d9327fe1745"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/reading.json",
+      "bytes": 80503,
+      "sha256": "6449cd8638eca54c44febefcce5cd6cbf3bd5574319ae102653ffeada1c8bfa3"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/reading.txt",
+      "bytes": 63254,
+      "sha256": "c7354aa765cc359788ae2dd3240e843fe1ba8db31f042db197dbdde92831b3dc"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/rights.json",
+      "bytes": 134,
+      "sha256": "365079db425dfa9be67a5d783cfe5121cde8dfb9121dc92d0e4d14878ed68a6a"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/source-links.json",
+      "bytes": 963,
+      "sha256": "9a01bdb340266e5f303a817e31bab8007f64023cbd96ccdcc013837555ae3bf2"
+    },
+    {
+      "path": "content/chapters/12-algorithmic-bias-and-the-ai-mirror/world.json",
+      "bytes": 455,
+      "sha256": "b3ea3107304167be4aad64a5f4c9b8db48115fda50560b8ca78549da5e4b8091"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/annotations.json",
+      "bytes": 87,
+      "sha256": "eb5782b18c59febb46113c6712f897faa8eefe7757479a38c279300bf95c55b8"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/chapter.md",
+      "bytes": 84411,
+      "sha256": "548dbb368ee965ca9bd6817603c0c3aea0ca7e75641ce0b4eaaffe5bfa4169cd"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/meta.json",
+      "bytes": 1587,
+      "sha256": "1e2042f034fb728b0ab025911bd395cd1a94fba9bcbd41520daed802c13ef11e"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/reading-record.json",
+      "bytes": 3262,
+      "sha256": "4f9a35e98cadcf026ae0332e21be4ce6b89b8717f3ef7e7eed7fec313b3ce509"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/reading.json",
+      "bytes": 88494,
+      "sha256": "972ae11d397c55f5e813b4b10fdcdc17906ea1026f75748db0dfd780ef971250"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/reading.txt",
+      "bytes": 69710,
+      "sha256": "d0f5bc6fd56dfa886c7cf61c62cc19de5ce1e976128edaa86a3c71f213402353"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/rights.json",
+      "bytes": 134,
+      "sha256": "ee0318dd94d8153460ae48908c732d2e6e6937127cbb9632b7db684897084982"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/source-links.json",
+      "bytes": 609,
+      "sha256": "a8cfbb8374975303253ad4b8e0913455e0e5bbe1fcacab995155aca52228a670"
+    },
+    {
+      "path": "content/chapters/13-delegating-judgment/world.json",
+      "bytes": 432,
+      "sha256": "9bc3ffe839ff24f5fb435d4c63e4a227a083233bf557dfd64f460a49442c4844"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/annotations.json",
+      "bytes": 87,
+      "sha256": "1dfc6bd6d17f3ddc3de4056dbd98d742b22edda798aeb2ebd46f3f59f21e1cab"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/chapter.md",
+      "bytes": 80655,
+      "sha256": "ff2c8ca46d5f87eef57d166b1ed3b354e26eb79aa887a0b3c3eaf2654d5a2b1b"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/meta.json",
+      "bytes": 1450,
+      "sha256": "df28c002d50566c0dfb93cd391bf91e0bb596d644bc91c588e3fd011e47a3f7c"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/reading-record.json",
+      "bytes": 3097,
+      "sha256": "b89b9004f1bc30e875aacc6cdcc40532629b39c69d841994a76dd319a611e1e8"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/reading.json",
+      "bytes": 93194,
+      "sha256": "7aa57ff49d4ba08bf2225aac7b9af3f8d100eebd37cf8f49beb41d26a17833bf"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/reading.txt",
+      "bytes": 68995,
+      "sha256": "59fbb8daf1c0b2c466a20647d7d32d7024adc8641f01e22a3e46af44dad83080"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/rights.json",
+      "bytes": 134,
+      "sha256": "26a5c4ef3a35353d7cbf871ad07d80ac902ad03dca308899eeff226f3611740b"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/source-links.json",
+      "bytes": 615,
+      "sha256": "e333bdac07cae40f055dfa53c2aea7d63a8de28ecee8e320dd43e776fb864ea3"
+    },
+    {
+      "path": "content/chapters/14-ai-companions-and-coexistence/world.json",
+      "bytes": 457,
+      "sha256": "be0ea0dddb32613f10b3827a8588f8d34d69ad60df0953b0e36ed777081bd924"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/annotations.json",
+      "bytes": 87,
+      "sha256": "c2d6f6144d4f43a5a54bbcb14e95d8252d4c8cab5037fad95078afbe3b31bc4d"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/chapter.md",
+      "bytes": 78761,
+      "sha256": "67d0d219a068aaedb8a9b4fed0b93de4cd083769403000416183be1fad7dcb19"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/meta.json",
+      "bytes": 1453,
+      "sha256": "dd26d9dd61cc1cabaa396b703a16776ba71df48081ffc982677fb5027982e28f"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/reading-record.json",
+      "bytes": 3139,
+      "sha256": "48241914eb5682e70eab7e7905f018acc768877f1db8961f6f9ecb0cc5b1710d"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/reading.json",
+      "bytes": 86619,
+      "sha256": "fb6548360e10df63d977b78f51e2da5c3312b63831cf5d2fac57a297c66cd2f6"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/reading.txt",
+      "bytes": 67336,
+      "sha256": "6c9ab678f1c67bd483486d7a82204d5727833b3c7cbc9aedc23af43583bd4b68"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/rights.json",
+      "bytes": 134,
+      "sha256": "419d5e587f8eb45d09196054f54efc4d25a01207cfe599ea917d21400091e084"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/source-links.json",
+      "bytes": 575,
+      "sha256": "7d3acb72ad793813d325d9087a6091b8ad9af0e831fdd89030a1d8c376586157"
+    },
+    {
+      "path": "content/chapters/15-creativity-innovation-and-ai/world.json",
+      "bytes": 324,
+      "sha256": "7b7f2515e3b60c0c3f0211b94b66ba62c2a87531c61f2bd476a9f707a2472526"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/annotations.json",
+      "bytes": 87,
+      "sha256": "840390d713ef664e2dc87390041865f9073092325c42b6b4ecf0803521824ea8"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/chapter.md",
+      "bytes": 110777,
+      "sha256": "f59169adb89f5ffc1440a053ae804b10692159f701223050a6300b32e611f7bd"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/meta.json",
+      "bytes": 1736,
+      "sha256": "49fc8f2e5f1c75ebd4b48b1b1b8d19ed43e712b6a66eb43f6699cab01cbf5309"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/reading-record.json",
+      "bytes": 3147,
+      "sha256": "85e7132811d5e43d3e4941607729dfb79ade20ce7105298e970165b38fb85068"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/reading.json",
+      "bytes": 131477,
+      "sha256": "953daa56414f8dfa955d8dd63e87cf6c491ac00d9289f061c4f90de6562ec58d"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/reading.txt",
+      "bytes": 92419,
+      "sha256": "a0b64e8f3c5d81cdde929720f566c0dc89e91e5429e65b214e6715f735926002"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/rights.json",
+      "bytes": 134,
+      "sha256": "b44d43764c68d20febed406d7ab5888167840c849af9bc30abb8dddf8bd69806"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/source-links.json",
+      "bytes": 1680,
+      "sha256": "af0768c741b2df5567c8f8aecab92993332b65ac666959a1b07f55bdef66e2bb"
+    },
+    {
+      "path": "content/chapters/16-existential-risk-effective-altruism-and-future-stakes/world.json",
+      "bytes": 638,
+      "sha256": "c6b8b883eec316dda86ec1f096c3bb7c10882114abbd1f0cdf9f8004653e6ae6"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/annotations.json",
+      "bytes": 87,
+      "sha256": "4c9279f248fbb5572d9791b6fb7ef9b8f75d663a3e62a8135bbfd980dd53ddf4"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/chapter.md",
+      "bytes": 96355,
+      "sha256": "31026f43d5c88a005aead068a27e3b88dbf6ca265f690c3d55f953682d7a5731"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/meta.json",
+      "bytes": 1677,
+      "sha256": "87d49ad99b45032c84b13d7b75384a227947480bc40b80e914dddebd0bce93bf"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/reading-record.json",
+      "bytes": 3133,
+      "sha256": "f63df449a26adffe5b6ce52d34b5ef7f320876cc3367261e8281b04aacce8932"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/reading.json",
+      "bytes": 106809,
+      "sha256": "664a5884a4b26892f0ac64dbe420ceb7d482bc67d3f92594fa01a45eb5b8bbca"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/reading.txt",
+      "bytes": 82396,
+      "sha256": "40fba461916a9b37b8d92abc9c63b57a7af5ba2baa840bddc2cd04b41925a021"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/rights.json",
+      "bytes": 134,
+      "sha256": "af992c83a40ace55b8c422254eaa6a9476256da7100819b0ed365f53cb3ab5c7"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/source-links.json",
+      "bytes": 1069,
+      "sha256": "3e5736f4731b3e39dbaba3332f12c0eee588860958885e6413cc81dd078852a8"
+    },
+    {
+      "path": "content/chapters/17-accelerationism-ai-and-the-ethics-of-speed/world.json",
+      "bytes": 614,
+      "sha256": "847744f737e130ce8e468e835a7a381158cf471956cbddef5595055c74846968"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/annotations.json",
+      "bytes": 87,
+      "sha256": "0f36967ede93080e3fbd3c9aedf35e166a638fd452630673bb09663b5aafccc5"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/chapter.md",
+      "bytes": 85838,
+      "sha256": "c2305cb89432d846399a3a221fccec815c12e37faa28b83bc0302a188efcd24d"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/meta.json",
+      "bytes": 1703,
+      "sha256": "6757facab71e1c3e06c6345abb3f572ecc109b3d7c20ac11f8ffd9f77d805533"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/reading-record.json",
+      "bytes": 3280,
+      "sha256": "2bd483d395b80ec99c2569e5fe9c1843d8fb2458ead6481cd15443debc66b9e2"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/reading.json",
+      "bytes": 91622,
+      "sha256": "ce99a2ed34276a5b05bfc8d0d1273b8e0e94de8d179ed50712eb20e615bd3bb4"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/reading.txt",
+      "bytes": 69968,
+      "sha256": "f4d83657d333d70f906bfb911026c5717a0f8663bf47373db92814fe245e5a3d"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/rights.json",
+      "bytes": 134,
+      "sha256": "5fda252b0dfbeb7db62b0d243287f3b5f156862ec87fd5725ea8387b775896e4"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/source-links.json",
+      "bytes": 1079,
+      "sha256": "366d1310841833d79c3cbb2a92d623805325754260e4f3996500164d9ef71b7e"
+    },
+    {
+      "path": "content/chapters/18-transhumanism-enhancement-and-human-capacity/world.json",
+      "bytes": 487,
+      "sha256": "0348c26d516eed8879c0ca5eed549054ece09ff47c1910c5c4b41891083c1d21"
+    },
+    {
+      "path": "content/entities/concepts/index.json",
+      "bytes": 40,
+      "sha256": "0e5e19436438b496cb29a0243523d31a7369bd1228b84cc6779d8ca88eaeec17"
+    },
+    {
+      "path": "content/entities/people/index.json",
+      "bytes": 40,
+      "sha256": "0e5e19436438b496cb29a0243523d31a7369bd1228b84cc6779d8ca88eaeec17"
+    },
+    {
+      "path": "content/entities/people/records/aristotle.json",
+      "bytes": 1395,
+      "sha256": "fac6263bc07e2d03dfd595cabf9a4584d35c59d7f9efe9071ef19f463a6804fb"
+    },
+    {
+      "path": "content/entities/people/records/derek-parfit.json",
+      "bytes": 1391,
+      "sha256": "c256b9063eeeb04604a2c947873dc1d675187fb5368c887a253049169df22eaf"
+    },
+    {
+      "path": "content/entities/people/records/helen-nissenbaum.json",
+      "bytes": 1485,
+      "sha256": "8b2ca9817b1e1e522db78a81b1cfe3541fd692954bb50e7f8e36798ec7e5cf7e"
+    },
+    {
+      "path": "content/entities/people/records/immanuel-kant.json",
+      "bytes": 1549,
+      "sha256": "3b60820814ce3b77de41a4a7f82d737139f827b9f1c1fc83479ee9818c570851"
+    },
+    {
+      "path": "content/entities/people/records/jeremy-bentham.json",
+      "bytes": 1488,
+      "sha256": "57a5aae0c32d710885a040c2b2090f691d0254410caf7ae02c25a66cc4a9138e"
+    },
+    {
+      "path": "content/entities/people/records/john-rawls.json",
+      "bytes": 1278,
+      "sha256": "e8d58c401184673b0e4325f193fe045e1ce93811436fa28735e4b3f4d2b178a7"
+    },
+    {
+      "path": "content/entities/people/records/john-stuart-mill.json",
+      "bytes": 1592,
+      "sha256": "7773d7c18afce34bc21fb70a0dc2800fde7060c7035eb8d4ae6d8b2c04f3e702"
+    },
+    {
+      "path": "content/entities/people/records/margaret-boden.json",
+      "bytes": 1257,
+      "sha256": "d15610864af7b0905c92cc0e6716705329fca8876c73b08cee5832f7a74f176d"
+    },
+    {
+      "path": "content/entities/people/records/michael-sandel.json",
+      "bytes": 1404,
+      "sha256": "643572a39682de187141b10f76201e8d39d285f167cf6d4607af1f259c1e18ab"
+    },
+    {
+      "path": "content/entities/people/records/nick-bostrom.json",
+      "bytes": 1415,
+      "sha256": "d693e80ba74c8cf439c0feb177efd65826d82881e1f185bf0aba771342523c5f"
+    },
+    {
+      "path": "content/entities/people/records/nick-land.json",
+      "bytes": 1392,
+      "sha256": "e8af17df8d496f52c0672e72a092196481e897a616fde331a90806e4476a54c6"
+    },
+    {
+      "path": "content/entities/people/records/peter-singer.json",
+      "bytes": 1322,
+      "sha256": "fe9d507a64ba6f29bba99268726c10d3d1096757625397de318d9eeb4cf0b4cf"
+    },
+    {
+      "path": "content/entities/people/records/plato.json",
+      "bytes": 1433,
+      "sha256": "c2d7f580c6467e8487480c7fc884fe2b9c19877c53701bd34943970d734e9460"
+    },
+    {
+      "path": "content/entities/people/records/shannon-vallor.json",
+      "bytes": 1350,
+      "sha256": "4aaf3a8f35a8bd3de00d509845b23e814c53efce42d903ce5e42ab705ffec48b"
+    },
+    {
+      "path": "content/entities/people/records/thomas-aquinas.json",
+      "bytes": 1432,
+      "sha256": "af99f77e4fcd7bb21ca74c1c424890e008aad1d9345317f8947ec66492ebb20b"
+    },
+    {
+      "path": "content/entities/people/wikimedia-manifest.json",
+      "bytes": 7275,
+      "sha256": "fba3725b0229fff6a85d6da2cd5cb056914f0df5a2e58156691e5b1ba19610cf"
+    },
+    {
+      "path": "content/entities/people/wikimedia/aristotle.json",
+      "bytes": 3922,
+      "sha256": "1e260c6d4a55369317fba6ac1dd248f3611f6070938323256cdc8f0415ac2fc6"
+    },
+    {
+      "path": "content/entities/people/wikimedia/derek-parfit.json",
+      "bytes": 1578,
+      "sha256": "ba2b723a9e4a2e2571dea0a8d5696f0b56238d95d02e67854f5ed865387d3259"
+    },
+    {
+      "path": "content/entities/people/wikimedia/helen-nissenbaum.json",
+      "bytes": 1436,
+      "sha256": "7e4f2088a1142e359a0f3bbdbcb3c7acbd8cd9a04dca317bc9d2c3f87ca04682"
+    },
+    {
+      "path": "content/entities/people/wikimedia/immanuel-kant.json",
+      "bytes": 3266,
+      "sha256": "7410b8fdc1461e38f76c12fd910161bd4f974ea99590906182d28b893afb0b78"
+    },
+    {
+      "path": "content/entities/people/wikimedia/jeremy-bentham.json",
+      "bytes": 3156,
+      "sha256": "6c698be444200f0cf8a8c38ec6690c4259fbd670604f73a26ffe58a0ef49e7b5"
+    },
+    {
+      "path": "content/entities/people/wikimedia/john-rawls.json",
+      "bytes": 2083,
+      "sha256": "b31998086dc27cc893eee3642fb8fe8c1fc54b57ebcda383ac8120e70c69de21"
+    },
+    {
+      "path": "content/entities/people/wikimedia/john-stuart-mill.json",
+      "bytes": 2954,
+      "sha256": "4e686e17e598e7a0a63972c5a59f5dbbfec447a640577915915da8546ece96af"
+    },
+    {
+      "path": "content/entities/people/wikimedia/margaret-boden.json",
+      "bytes": 1838,
+      "sha256": "1d64e9584c8b9a3f79329372295b5785ca65ff374e474ed9baa27a45409d98d8"
+    },
+    {
+      "path": "content/entities/people/wikimedia/michael-sandel.json",
+      "bytes": 2014,
+      "sha256": "dc4eb4c107aa4a25422d9e96855ebf06d8d79724fc50e672f5bb3ef4d9ac16a4"
+    },
+    {
+      "path": "content/entities/people/wikimedia/nick-bostrom.json",
+      "bytes": 1387,
+      "sha256": "e15b7e952dbcc53b14b8b049414cdf67db28dfe3506408d642ebb078009e5e48"
+    },
+    {
+      "path": "content/entities/people/wikimedia/nick-land.json",
+      "bytes": 1750,
+      "sha256": "bbbf3deff77f5b191e0508b3806a6253f4f5241138588e6413288715433bcd72"
+    },
+    {
+      "path": "content/entities/people/wikimedia/peter-singer.json",
+      "bytes": 1996,
+      "sha256": "2e8ce9364acc5c0eccfc1c9dd0ccbc0261afee45d0c1c95a7f183d001e803fe3"
+    },
+    {
+      "path": "content/entities/people/wikimedia/plato.json",
+      "bytes": 5006,
+      "sha256": "ba8e16c230150f2674720c701f6467afffb0ad9c6365bf8b6e75ba8ba9c11199"
+    },
+    {
+      "path": "content/entities/people/wikimedia/shannon-vallor.json",
+      "bytes": 1221,
+      "sha256": "012fcaf482ac22e7ccd986340dc7177e6bde98b2ab8c3a2348323a560a293d30"
+    },
+    {
+      "path": "content/entities/people/wikimedia/thomas-aquinas.json",
+      "bytes": 4676,
+      "sha256": "79ce53740950ebdfdae84186278264c16de1248aead13240754cc8d8ec8c2303"
+    },
+    {
+      "path": "content/entities/traditions/index.json",
+      "bytes": 40,
+      "sha256": "0e5e19436438b496cb29a0243523d31a7369bd1228b84cc6779d8ca88eaeec17"
+    },
+    {
+      "path": "content/media/records/alphafold-protein-structure.json",
+      "bytes": 811,
+      "sha256": "99aebaa920ae03c67ec22a7a1fcf6cdbad2ed682c07a0cfd7c3d8f1cf176115a"
+    },
+    {
+      "path": "content/media/records/aristotle-altemps-portrait.json",
+      "bytes": 633,
+      "sha256": "0c572c13afda6978e4e1a627dfb791449753507647fb7ae39def0f11561b8167"
+    },
+    {
+      "path": "content/media/records/aristotle-ethics-rosselli.json",
+      "bytes": 827,
+      "sha256": "fca8eb4ae7f1d7570c1cd95ffc0d6758f94e0247f54dd042061407f091e2299f"
+    },
+    {
+      "path": "content/media/records/aristotle-ne-book6-manuscript.json",
+      "bytes": 818,
+      "sha256": "5025c168b388d5c07352805b6875a315d0d96da7c0c2caa7f1b80e226062fd8a"
+    },
+    {
+      "path": "content/media/records/bci-diagram.json",
+      "bytes": 768,
+      "sha256": "7414872ea55d8213a66d8a9650eed79ef861114c176c8d3e2c88d8b79842460e"
+    },
+    {
+      "path": "content/media/records/bertillon-record.json",
+      "bytes": 767,
+      "sha256": "dec5b47b6bbbff298386946a4e799ac4d3dbdc0bafc3bd4ccc6310e1ecb510a2"
+    },
+    {
+      "path": "content/media/records/crispr-cas9-diagram.json",
+      "bytes": 889,
+      "sha256": "5c6214bc1ffe635b1194eb0c2e9a37fd44b0d13722bc22a1e1bef25b3c54219d"
+    },
+    {
+      "path": "content/media/records/derek-parfit-harvard-2015.json",
+      "bytes": 631,
+      "sha256": "70f4f695cd468745c973c36ba7e690a842cebee2a918af319395ac56cba1eaa7"
+    },
+    {
+      "path": "content/media/records/domesday-manuscript-page.json",
+      "bytes": 746,
+      "sha256": "e586b84f5f94043a836fca3752e3f502a3c8b23495fef3a7f486b7e8f1cffc65"
+    },
+    {
+      "path": "content/media/records/euthyphro-edition.json",
+      "bytes": 724,
+      "sha256": "af9974c4e8ad3b7fea00da629deafa843584478598ab8480de8a7c525546f39f"
+    },
+    {
+      "path": "content/media/records/frankenstein-1831-frontispiece.json",
+      "bytes": 776,
+      "sha256": "25af6f0e3ba2ef87c6aa6b5ebd9d20fd8ac40b26e64eaec5905fab90b6ba3603"
+    },
+    {
+      "path": "content/media/records/helen-nissenbaum-berkeley-lecture.json",
+      "bytes": 622,
+      "sha256": "e5d50a1242e7e107f041c223e67597e6ad737436827aab9b8746c7f9ad454453"
+    },
+    {
+      "path": "content/media/records/hollerith-punch-card.json",
+      "bytes": 759,
+      "sha256": "b668ff0698b892f3ed3cf040a17539f3f2cbbefb745c5d66f6059112e8078308"
+    },
+    {
+      "path": "content/media/records/immanuel-kant-becker-portrait.json",
+      "bytes": 645,
+      "sha256": "485e6646ea1be5e80968b0f9ec6ac7affc287cbe4398c45e2891269dcb9c9e30"
+    },
+    {
+      "path": "content/media/records/inca-quipu.json",
+      "bytes": 790,
+      "sha256": "6148aeb9a9cb8c589231905076244769a35673487f4d2d5836683b9f5a415121"
+    },
+    {
+      "path": "content/media/records/jacquard-loom.json",
+      "bytes": 721,
+      "sha256": "876e7bf905aa8adba542879171887e4b7bd2d5c9d842f7790d755b7751cc8304"
+    },
+    {
+      "path": "content/media/records/jeremy-bentham.json",
+      "bytes": 709,
+      "sha256": "e2b655d80b0183216a9cf2e648d1aa6584d95134aa161b61c309e99ba0b7a8fd"
+    },
+    {
+      "path": "content/media/records/john-rawls-1971-portrait.json",
+      "bytes": 659,
+      "sha256": "16ffaa26a39c6036bb4f3d0e6dede802fb2546eaa2766e29ea8e92f65e1af694"
+    },
+    {
+      "path": "content/media/records/john-stuart-mill-stereoscopic-portrait.json",
+      "bytes": 748,
+      "sha256": "47c3d22b2731745ad84b405bca6ebb3f86005f15109a580b14e943c9409b63b7"
+    },
+    {
+      "path": "content/media/records/kant-groundwork-title.json",
+      "bytes": 762,
+      "sha256": "e7316b9cd7820714c728cec33d442fd119e1ee4f24cb49222996df3cac2fb258"
+    },
+    {
+      "path": "content/media/records/llm-training-workflow.json",
+      "bytes": 868,
+      "sha256": "acb556679dfe067b0f313cd91cc7311390a586994b7820b3d9ccd84208935034"
+    },
+    {
+      "path": "content/media/records/margaret-boden-portrait.json",
+      "bytes": 599,
+      "sha256": "fd4add40c20355d0444127b5c84ac7166e6e77f538f75135dc79a89bb24aa8ce"
+    },
+    {
+      "path": "content/media/records/michael-sandel-2023-portrait.json",
+      "bytes": 662,
+      "sha256": "52f0cfef2f938801fc04b09ce6b39e7c855cf672d2dc7cd5f28d10975faa865f"
+    },
+    {
+      "path": "content/media/records/mill-utilitarianism-1863.json",
+      "bytes": 669,
+      "sha256": "707fea07249c8f961529c21e56cb2a0e409612552461763c839030ac0c87bc85"
+    },
+    {
+      "path": "content/media/records/nick-bostrom-portrait.json",
+      "bytes": 657,
+      "sha256": "4741423dc4765c591569ec20ec2b172ef3a52a8055ab2cfee446b66ca287589a"
+    },
+    {
+      "path": "content/media/records/nick-land-2025-portrait.json",
+      "bytes": 606,
+      "sha256": "07d2f3523071831d683fed7c56240f7087bf4e4c2213507393aed372687eaee4"
+    },
+    {
+      "path": "content/media/records/on-liberty-title-page.json",
+      "bytes": 773,
+      "sha256": "94978d0958223762ce7309bf6f6fa44e45c871b0c86de3f65230994794024310"
+    },
+    {
+      "path": "content/media/records/peter-singer-2017-portrait.json",
+      "bytes": 597,
+      "sha256": "55ca9107691762c036f213129dc8687e9b92f632648afcf5610958118fefd08f"
+    },
+    {
+      "path": "content/media/records/plato-silanion-portrait.json",
+      "bytes": 697,
+      "sha256": "58c7d75b96bd294590759bf91b792f09fe0592d90d088ba67e0d946765d6bede"
+    },
+    {
+      "path": "content/media/records/rag-diagram.json",
+      "bytes": 868,
+      "sha256": "d4012bc462716e0c8a7d2ad4b7544661143e01c2f044c136a72e4fcb4796eec2"
+    },
+    {
+      "path": "content/media/records/shannon-vallor-portrait.json",
+      "bytes": 603,
+      "sha256": "49440dc0454335521714bec2cb6fcb171975f4c6b3385c5b710155d5ccc85c04"
+    },
+    {
+      "path": "content/media/records/summa-isny-manuscript.json",
+      "bytes": 732,
+      "sha256": "3ebf124e437337de6a399874019a638c1c22e43f36ccb9656e5fe65d640e3e5d"
+    },
+    {
+      "path": "content/media/records/talos-vase.json",
+      "bytes": 783,
+      "sha256": "da2897cec55db6d11151c703368bff08d35656b8586ddbc28a912c5fc5a696a0"
+    },
+    {
+      "path": "content/media/records/thomas-aquinas-crivelli-portrait.json",
+      "bytes": 656,
+      "sha256": "07989adce47d308bd0b5b98f0961c040feaf729b8e6f78346c06248b29350cac"
+    },
+    {
+      "path": "content/media/records/transformer-attention-block.json",
+      "bytes": 925,
+      "sha256": "b79e91c6386cd5242620013e21f465a0563ee1920afeacfaeafac377cb1aa0fb"
+    },
+    {
+      "path": "content/media/records/us-constitution-page1.json",
+      "bytes": 803,
+      "sha256": "feefb36ec776e17844947dbcb737f083e49e4ffa4ca2fe2bfe2bbd3ee08160ea"
+    },
+    {
+      "path": "content/media/records/watt-governor.json",
+      "bytes": 756,
+      "sha256": "179283d5a7f52d1b78fa456652bd8dd1ae363d33ae65a320dbdb5695963e2856"
+    },
+    {
+      "path": "content/media/wikimedia/alphafold-protein-structure.json",
+      "bytes": 1573,
+      "sha256": "ddfb0d14ace5cc7f8e7000a625370323b508ee995f3f24034e1f523f428236ea"
+    },
+    {
+      "path": "content/media/wikimedia/aristotle-altemps-portrait.json",
+      "bytes": 1536,
+      "sha256": "42b33da922f17777816e962b166c25d1d8a5c5fb9d23b9982116f8966cfeace9"
+    },
+    {
+      "path": "content/media/wikimedia/aristotle-ethics-rosselli.json",
+      "bytes": 1902,
+      "sha256": "8bbf2b80aaea54e5cdcf920eb73d882c60837d7056f0f72fb55fa67d8fb248aa"
+    },
+    {
+      "path": "content/media/wikimedia/aristotle-ne-book6-manuscript.json",
+      "bytes": 1631,
+      "sha256": "a514670ab5cff7ca8812acc7f2b77351d548a3e443510be53ea7c0bfe5ae58d0"
+    },
+    {
+      "path": "content/media/wikimedia/bci-diagram.json",
+      "bytes": 1623,
+      "sha256": "4f8493521f756e08def1f7751fd6075573b9f0a0045c241dc035ed0b7cc4388a"
+    },
+    {
+      "path": "content/media/wikimedia/bertillon-record.json",
+      "bytes": 1877,
+      "sha256": "4338a748f20ab43a09fbcef4d75ed20cfb0f4101efedc02e947c50df1c859f88"
+    },
+    {
+      "path": "content/media/wikimedia/crispr-cas9-diagram.json",
+      "bytes": 1887,
+      "sha256": "e60288d5f3d5a7dc0e4e8ed21db51a8fff326ddd73607b99cfbaaada96342e70"
+    },
+    {
+      "path": "content/media/wikimedia/derek-parfit-harvard-2015.json",
+      "bytes": 1739,
+      "sha256": "315e49f2602a70e5da18620feed2b3cd0c91155638bdef425381f76c41547f71"
+    },
+    {
+      "path": "content/media/wikimedia/domesday-manuscript-page.json",
+      "bytes": 1878,
+      "sha256": "0d8338be8259ad2205fe6e4b3393dfffb1c5d3b73246d6905032e435db1f6d8e"
+    },
+    {
+      "path": "content/media/wikimedia/euthyphro-edition.json",
+      "bytes": 1835,
+      "sha256": "8a2444c2ff378f28ca9cd4a34476edc3e97def9082fda53b973eb733e92dfe04"
+    },
+    {
+      "path": "content/media/wikimedia/frankenstein-1831-frontispiece.json",
+      "bytes": 1637,
+      "sha256": "7c950d5764ffe77dc45d860b7009697cafbaadb8e6633a68d0ae6635de6e6b41"
+    },
+    {
+      "path": "content/media/wikimedia/helen-nissenbaum-berkeley-lecture.json",
+      "bytes": 1754,
+      "sha256": "b1753cfe6cc7715945d2106cc561ab96e11b299ff9b2063a3b1cd44db2c5b861"
+    },
+    {
+      "path": "content/media/wikimedia/hollerith-punch-card.json",
+      "bytes": 1585,
+      "sha256": "76182ddf01e96c494e556296e1b94608b35fe05eca3ba64205f0bb5fa275eb61"
+    },
+    {
+      "path": "content/media/wikimedia/immanuel-kant-becker-portrait.json",
+      "bytes": 1495,
+      "sha256": "cb29ca823cf9504be8920932fe50160584218d90bb115ef4e1ca0455c1e3b91d"
+    },
+    {
+      "path": "content/media/wikimedia/inca-quipu.json",
+      "bytes": 1510,
+      "sha256": "9bb8e8abe38026e6e1a488fc72684d88e9c138bccf50ee7338748747c251a254"
+    },
+    {
+      "path": "content/media/wikimedia/jacquard-loom.json",
+      "bytes": 1445,
+      "sha256": "1557a72c8791bfd6713585ac13484c1fbea43c8865afa7999e65cbd9f741adb5"
+    },
+    {
+      "path": "content/media/wikimedia/jeremy-bentham.json",
+      "bytes": 1760,
+      "sha256": "696ace9bb7ab56c9209bfee0f40e0d50618e1c0a0b310d6a3d18c1b244e2eefc"
+    },
+    {
+      "path": "content/media/wikimedia/john-rawls-1971-portrait.json",
+      "bytes": 2113,
+      "sha256": "e75e2e33903680d640dce67f47e5881fe9ce7f65eda962e9877a362d98ac054c"
+    },
+    {
+      "path": "content/media/wikimedia/john-stuart-mill-stereoscopic-portrait.json",
+      "bytes": 1731,
+      "sha256": "38b1f6f7a725d8897fc9181b815b7af6f88ac4b671814b8650aaffb0573b4c28"
+    },
+    {
+      "path": "content/media/wikimedia/kant-groundwork-title.json",
+      "bytes": 1564,
+      "sha256": "9174630fd840fb094b61f460782c05c838619f8b96487eade36409ff2ca53e8c"
+    },
+    {
+      "path": "content/media/wikimedia/llm-training-workflow.json",
+      "bytes": 1739,
+      "sha256": "1b942d43fa73bc3bc5a802e7698ad00a994a9abd3c2f39cb36cb166e3a6cef89"
+    },
+    {
+      "path": "content/media/wikimedia/margaret-boden-portrait.json",
+      "bytes": 1563,
+      "sha256": "be87e96947854d87f66f6e11c9c0c1566babc0568d1f4dbc55d513f7e696da22"
+    },
+    {
+      "path": "content/media/wikimedia/michael-sandel-2023-portrait.json",
+      "bytes": 1829,
+      "sha256": "f509cd232d5bb041592fe69d051db64dfd10851de39c8ab7d8c11ddf183c1e7d"
+    },
+    {
+      "path": "content/media/wikimedia/mill-utilitarianism-1863.json",
+      "bytes": 1622,
+      "sha256": "f00ffc971d5035f2a43b659cd6e30a9311534b3dfee11ed8a91b8caf24964f7f"
+    },
+    {
+      "path": "content/media/wikimedia/nick-bostrom-portrait.json",
+      "bytes": 1704,
+      "sha256": "19fc4a3a3d08e384b96fefa09c89407eae46dd0da433735318f9ee903f025198"
+    },
+    {
+      "path": "content/media/wikimedia/nick-land-2025-portrait.json",
+      "bytes": 1660,
+      "sha256": "d8236a37b8528b02ee34af0b81ac1e5b4392a086090af62579d69cb39f3f1ee4"
+    },
+    {
+      "path": "content/media/wikimedia/on-liberty-title-page.json",
+      "bytes": 1727,
+      "sha256": "e1ffa9fb6f83cebab6618ea3cdca35d541d19397f376fda89d1ed0687ee4351b"
+    },
+    {
+      "path": "content/media/wikimedia/peter-singer-2017-portrait.json",
+      "bytes": 1609,
+      "sha256": "6deb0c4b697686be93b6ba50a0a4dbf54d3ebf633468efc65258b2a26fdd4220"
+    },
+    {
+      "path": "content/media/wikimedia/plato-silanion-portrait.json",
+      "bytes": 1652,
+      "sha256": "0b4e6ceab9ba7f8277883637cb5d2d11637b8daf0bac1b12ef72d386b25882c1"
+    },
+    {
+      "path": "content/media/wikimedia/rag-diagram.json",
+      "bytes": 1510,
+      "sha256": "92ff097fa5b146d9ef8722f882431d94fd73a09cec381626162faf6febbb78fd"
+    },
+    {
+      "path": "content/media/wikimedia/shannon-vallor-portrait.json",
+      "bytes": 1554,
+      "sha256": "86ae827f95a927ba6aaec6c74bbfec836a364f467f3bc1d217b1a1aaf78c486e"
+    },
+    {
+      "path": "content/media/wikimedia/summa-isny-manuscript.json",
+      "bytes": 1743,
+      "sha256": "b145fa4cd50235146223ff048269e1598fafe136959dfe13c5983928e2446aa8"
+    },
+    {
+      "path": "content/media/wikimedia/talos-vase.json",
+      "bytes": 1514,
+      "sha256": "207f6b17b562b54c93e0dff97db22f91306d3851d7b4761117f0a93c5e6d2821"
+    },
+    {
+      "path": "content/media/wikimedia/thomas-aquinas-crivelli-portrait.json",
+      "bytes": 1559,
+      "sha256": "68c0bda4d26eec49b603e75a3d9b93e40670f6710022059a2e534d68575255b6"
+    },
+    {
+      "path": "content/media/wikimedia/transformer-attention-block.json",
+      "bytes": 1642,
+      "sha256": "6d1c76f7d9ffc193676ead277d5191eab97c2501f305b989ece7721e220ee5ae"
+    },
+    {
+      "path": "content/media/wikimedia/us-constitution-page1.json",
+      "bytes": 1767,
+      "sha256": "0d94e5a5b78947c50c4cd4105dc17892ff7fe4d2cc487011f72ef41ef41ceffb"
+    },
+    {
+      "path": "content/media/wikimedia/watt-governor.json",
+      "bytes": 1487,
+      "sha256": "e1c6e120a68a47922c39b0dcd4bf48732f8058ab07fc6b1bd07708f8221b81da"
+    },
+    {
+      "path": "content/migration-baseline.json",
+      "bytes": 393,
+      "sha256": "68b68b8f2e2d027dab38208951cf2025bf97bc7d9b619c0eb99c9b55df0aaa1f"
+    },
+    {
+      "path": "content/policies/licenses.json",
+      "bytes": 784,
+      "sha256": "fdba71a8885a39a56610fd439d937fc16de47b7a64c6fbea01ba164fa6e0ff6c"
+    },
+    {
+      "path": "content/primary-sources/index.json",
+      "bytes": 40,
+      "sha256": "0e5e19436438b496cb29a0243523d31a7369bd1228b84cc6779d8ca88eaeec17"
+    },
+    {
+      "path": "content/reconciliation-map.json",
+      "bytes": 17645,
+      "sha256": "8762550d621bbb5cf40d6c333130299c7a1af3ff3073ba97b39771a35ac60e24"
+    },
+    {
+      "path": "content/rights/registry.json",
+      "bytes": 1032,
+      "sha256": "c0b69b82ebdc6a1518a4d2bd774790366560f7644cd7b8ec4bb85249e6c73528"
+    },
+    {
+      "path": "docs/AUTHORING.md",
+      "bytes": 2244,
+      "sha256": "80e8d091a762caa0f4c39a481c480fd065c202100e22b2f0454bfe7d5fd682b5"
+    },
+    {
+      "path": "docs/CH07_READING_RECORD_PLAN.md",
+      "bytes": 4646,
+      "sha256": "97af6cda6adeda0b57ba9b43ab94e8acb8b5e5108d587e58349c7126c375bffd"
+    },
+    {
+      "path": "docs/CONTENT_MODEL.md",
+      "bytes": 5605,
+      "sha256": "8c585cae2d8de2cad5c65b8166a9dacb355a667e0b5d6e614b41238a57f6c381"
+    },
+    {
+      "path": "docs/DEPLOYMENT.md",
+      "bytes": 1894,
+      "sha256": "83ea310802b27fb475715b410dafe5999d243c0f9424248fcd0b4fda27f67136"
+    },
+    {
+      "path": "docs/PRIVACY.md",
+      "bytes": 1396,
+      "sha256": "d22c6e1904b2ec9cddf5e3a9ab9b7b0c4e06bf61edb0b440b3e270f7015b1924"
+    },
+    {
+      "path": "docs/PUBLIC_BOUNDARY.md",
+      "bytes": 1701,
+      "sha256": "1b6c954080cd87c8e6ff21a99204432e200d82add6ed1e50713cb6a93758092a"
+    },
+    {
+      "path": "docs/READING_RECORD_PROMPT_DESIGN.md",
+      "bytes": 26364,
+      "sha256": "359775dc394925438ea57192802efcc11b1ee4b3ca025cf5efe624a9b3f5cb68"
+    },
+    {
+      "path": "docs/RIGHTS_AND_LICENSING.md",
+      "bytes": 3961,
+      "sha256": "2e223508c0537e2ead80188f10a9e123a4b2506e81135098a4fe60feea3b1355"
+    },
+    {
+      "path": "docs/VOICE_BOUNDARY.md",
+      "bytes": 2270,
+      "sha256": "ef13b1978edc90058ab219b6dfc9b8c3e62e33dbe7161a4a1a4d54e4e30e872c"
+    },
+    {
+      "path": "docs/WIKIMEDIA_WORLD_LAYER.md",
+      "bytes": 9424,
+      "sha256": "b974f8aab01a308e953910086f482827bfc63af706f168e6bb542a8788aba09e"
+    },
+    {
+      "path": "docs/accessibility/2026-08-02-reader-audit.md",
+      "bytes": 4398,
+      "sha256": "d0dedcf2d4a0379ec3a59acbab71497f5987fa0db67a386bf0dbac0e1001aee4"
+    },
+    {
+      "path": "docs/rights/site-assets.json",
+      "bytes": 1337,
+      "sha256": "032e64b17b1d3f7d8ff7fb65c54da308dde410d3831ec60d03c9070c0c5e008a"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 262107,
+      "sha256": "34393ade8dac05a560c0fa9f3a17a54272643618c5518df57d761224edabbde5"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1933,
+      "sha256": "9915b34a358ee50710b8aad2abc84088828d993ee44736c0cf90917ea90d4677"
+    },
+    {
+      "path": "public/_headers",
+      "bytes": 861,
+      "sha256": "1c52d4361af6038a0ba3e985fab679a36ec4408d10be724e8b3a59ba56e5a62a"
+    },
+    {
+      "path": "public/images/piranesi-oculus-hero.webp",
+      "bytes": 389230,
+      "sha256": "a8ba7857bf36f75793d60fb2c2a29015d7a2da4795fc4cdc05ea077e02667ec8"
+    },
+    {
+      "path": "public/media/wikimedia/alphafold-protein-structure.webp",
+      "bytes": 7728,
+      "sha256": "82d16aa4c405a17db1fd369e5fcc0ce9467d24fd5b1e2e96a48f4f19eecb34c5"
+    },
+    {
+      "path": "public/media/wikimedia/aristotle-altemps-inv8575.webp",
+      "bytes": 83452,
+      "sha256": "d423c3876329fc1afdea5c8bebce7c7db8006b8f9ca30c6f43968f683f4e6c23"
+    },
+    {
+      "path": "public/media/wikimedia/aristotle-ethics-rosselli.webp",
+      "bytes": 65300,
+      "sha256": "879d014ab34d17ab299745aade09d3b092401b2f14ca87ef1b18dbe1119f0246"
+    },
+    {
+      "path": "public/media/wikimedia/aristotle-ne-book6-manuscript.webp",
+      "bytes": 223118,
+      "sha256": "30e2441214ced6cd0ff051a585f8620327a7c1b07ca29ad6c11c52c0a4811e3d"
+    },
+    {
+      "path": "public/media/wikimedia/bci-diagram.webp",
+      "bytes": 15224,
+      "sha256": "e3ea4d94d33bc2a7b21c35da3e849bc70afe2fff8489e5dfc2f45ec07b17084f"
+    },
+    {
+      "path": "public/media/wikimedia/bertillon-record.webp",
+      "bytes": 49560,
+      "sha256": "87ce0b6f877e202e6771756837fcb4db935c0b72eb19c0afb87c7e20121e1819"
+    },
+    {
+      "path": "public/media/wikimedia/crispr-cas9-diagram.webp",
+      "bytes": 56536,
+      "sha256": "b59b3e8ec6a612d60fc60b0a56185c6a766965e65a69af149f74273b454cdb29"
+    },
+    {
+      "path": "public/media/wikimedia/derek-parfit-harvard-2015.webp",
+      "bytes": 25206,
+      "sha256": "0956d9c6b93cb59eda0493ef33780779dabac8c1982d4a80ddc6179157b2a2e9"
+    },
+    {
+      "path": "public/media/wikimedia/domesday-manuscript-page.webp",
+      "bytes": 155350,
+      "sha256": "965e64977ce34e09be8c3426a37132d97659a288f3ac6e5c41a80f5bc471012d"
+    },
+    {
+      "path": "public/media/wikimedia/euthyphro-edition.webp",
+      "bytes": 31824,
+      "sha256": "41945cc2aa0e72d59192dd39e637f05087f65c4f81a2c70662545faba8035099"
+    },
+    {
+      "path": "public/media/wikimedia/frankenstein-1831-frontispiece.webp",
+      "bytes": 230068,
+      "sha256": "33bc476b04de87d3cc1c1974409afced9dad243bdbc1d54f4ca3d05d04793c1e"
+    },
+    {
+      "path": "public/media/wikimedia/helen-nissenbaum-berkeley-lecture.webp",
+      "bytes": 76794,
+      "sha256": "6f3bacbdf7b4370f2fdf8b4ebfb1f38bb6eb8041203551fd11c0942df12a6fb5"
+    },
+    {
+      "path": "public/media/wikimedia/hollerith-punch-card.webp",
+      "bytes": 58930,
+      "sha256": "5a74aa0a4c3112a3dcae03fa46df3fbefd8a7e7e52ba4d043465531301f25ce7"
+    },
+    {
+      "path": "public/media/wikimedia/immanuel-kant-gemaelde-2.webp",
+      "bytes": 212120,
+      "sha256": "9c385d46fff91101b5ea2c30cf2b777dfecc18ee723a90eb594b559d8d2d48a3"
+    },
+    {
+      "path": "public/media/wikimedia/inca-quipu.webp",
+      "bytes": 65658,
+      "sha256": "bf06eeadc3a1d332da539e8f417486227017ecb2d4295c18a14cc888aeb9d8bc"
+    },
+    {
+      "path": "public/media/wikimedia/jacquard-loom.webp",
+      "bytes": 149518,
+      "sha256": "aff003a81605b3b70d41f330bccf8916bcd351ba2c2f59ac8f095f8c7045cd97"
+    },
+    {
+      "path": "public/media/wikimedia/jeremy-bentham-met-268348.webp",
+      "bytes": 56274,
+      "sha256": "213b32cf828d6a9efeeaf4c393d020ff99cce14cb788f62b8d7b441b9da44076"
+    },
+    {
+      "path": "public/media/wikimedia/john-rawls-1971-portrait.webp",
+      "bytes": 116572,
+      "sha256": "b9db1fe6f0add6ec245b53a35f1a8296190e032eebd378c7a45ceea6ef293b2f"
+    },
+    {
+      "path": "public/media/wikimedia/john-stuart-mill-stereoscopic-c1870.webp",
+      "bytes": 65944,
+      "sha256": "0a0fd330b7ac4c6589a5b4f62aae657d2e2d64cc9a0b69b97d7974a56188166d"
+    },
+    {
+      "path": "public/media/wikimedia/kant-groundwork-title.webp",
+      "bytes": 62138,
+      "sha256": "e25799d0557a5e25010adb23db45b2d1353fe6f1419a3aa62e8b0e30bcdceafc"
+    },
+    {
+      "path": "public/media/wikimedia/llm-training-workflow.webp",
+      "bytes": 68454,
+      "sha256": "fbb8b74a22870d1009b425fc8eae32f3a91c93301f74c260db2bcd0590ae6254"
+    },
+    {
+      "path": "public/media/wikimedia/margaret-boden-portrait.webp",
+      "bytes": 38886,
+      "sha256": "fd5a37c7cb7aab1e38eb4ab28f94b2b7cb1cec700f52dbb35f0e5101104b28ab"
+    },
+    {
+      "path": "public/media/wikimedia/michael-sandel-2023-portrait.webp",
+      "bytes": 43784,
+      "sha256": "f004de2d6abdf7889987afd16ff4f83f72e3d198e0ad6536bcb80e96adee59d2"
+    },
+    {
+      "path": "public/media/wikimedia/mill-utilitarianism-1863.webp",
+      "bytes": 95216,
+      "sha256": "651a08c667f5b63ce9f33137363c2e4068510d9b74210685dab283193ccd7a62"
+    },
+    {
+      "path": "public/media/wikimedia/nick-bostrom-portrait.webp",
+      "bytes": 28488,
+      "sha256": "8293c9d032f800b84bb2a5a1273bc8167b8d1609effc3321b4ba394899001817"
+    },
+    {
+      "path": "public/media/wikimedia/nick-land-2025-portrait.webp",
+      "bytes": 18744,
+      "sha256": "a305fb1fbbfde7f80fc09cdfb738acd24f5cae9164ddef47c061a51b35504321"
+    },
+    {
+      "path": "public/media/wikimedia/on-liberty-title-page.webp",
+      "bytes": 27540,
+      "sha256": "19dce7c9ab70e193fb7ca49dacc5cee6fbc1fa2485f54189d8a55d3d0048c7db"
+    },
+    {
+      "path": "public/media/wikimedia/peter-singer-2017-portrait.webp",
+      "bytes": 65578,
+      "sha256": "02f39f51cc0a5cf116aeb896a551848b905e7aa3271a0b3b4ce61b5639ad2bf5"
+    },
+    {
+      "path": "public/media/wikimedia/plato-silanion-musei-capitolini.webp",
+      "bytes": 96162,
+      "sha256": "1de9133ab2d4b778cff7a3f2b3c56d9df85dc9ca602e8acca1403c3f7bff1ea4"
+    },
+    {
+      "path": "public/media/wikimedia/rag-diagram.webp",
+      "bytes": 31060,
+      "sha256": "d047e6be4510b8c250fd96caa70ef2bfc8d59fec20c249c2c8d3d29fa59279e5"
+    },
+    {
+      "path": "public/media/wikimedia/shannon-vallor-portrait.webp",
+      "bytes": 30000,
+      "sha256": "d6d0050abcd261d3c778ec904d908a116ccaa38f91937fab0116049acb73b924"
+    },
+    {
+      "path": "public/media/wikimedia/st-thomas-aquinas-fxd.webp",
+      "bytes": 243748,
+      "sha256": "22c51a7d46253bca61c486018d005987092e976a70a822fbb6fefafbac206233"
+    },
+    {
+      "path": "public/media/wikimedia/summa-isny-manuscript.webp",
+      "bytes": 186994,
+      "sha256": "9b0d2f33b0187c8c03d0339c1ea496050d2b357ecb10f76f9ab257d754f0942e"
+    },
+    {
+      "path": "public/media/wikimedia/talos-vase.webp",
+      "bytes": 128556,
+      "sha256": "83ad5becb11b50fedb48c985c592b98ba026e0431887690053a58add1e3bf0aa"
+    },
+    {
+      "path": "public/media/wikimedia/transformer-attention-block.webp",
+      "bytes": 22422,
+      "sha256": "2920bc577bc4b9ff1d4d6f56d0821136ee74b1874436b95b00350ee1e5b72872"
+    },
+    {
+      "path": "public/media/wikimedia/us-constitution-page1.webp",
+      "bytes": 162132,
+      "sha256": "f4133a77c44f214c40a1c91715ffeddfdf43d9b06b12a4e392cb6f625ccaec00"
+    },
+    {
+      "path": "public/media/wikimedia/watt-governor.webp",
+      "bytes": 43032,
+      "sha256": "3e78023e7455fa557f8118a3de30e65542cb79f52e6b7a572fe091d60f7d4c2a"
+    },
+    {
+      "path": "public/robots.txt",
+      "bytes": 41,
+      "sha256": "a78a6daa78af5526d5fa9f64433df5122798b5e75550cf2a6ccb8ecbc08aecb3"
+    },
+    {
+      "path": "scripts/audit-public-boundary.mjs",
+      "bytes": 2418,
+      "sha256": "8208773a4407b8c740da833f1b3560242a838cf10550b81f43a42cdac7dbe28d"
+    },
+    {
+      "path": "scripts/content-model-lib.mjs",
+      "bytes": 18667,
+      "sha256": "b59df197437001cb4017b9a20d27af7242c65e7ad5ee99eba9937c2f9f534995"
+    },
+    {
+      "path": "scripts/finalize-offline-downloads.mjs",
+      "bytes": 2051,
+      "sha256": "69da61a44cf35d70570232b0fd6be59b8a7a8b37dc7414baf219d6b1b024bca9"
+    },
+    {
+      "path": "scripts/generate-reading.mjs",
+      "bytes": 4196,
+      "sha256": "ba159ed3fd81165d8bd81e4e5e18367bb0062eb20c4872416e15439d0f734be6"
+    },
+    {
+      "path": "scripts/import-content.mjs",
+      "bytes": 10972,
+      "sha256": "68097e5667e613d8ac1a772865f680e62af6c81f634687212b1d3e8357bf7b8c"
+    },
+    {
+      "path": "scripts/remark-phil-passage-ids.mjs",
+      "bytes": 911,
+      "sha256": "436d7dde6323fe19d3db3de98b17376075522a1d0bd4003460a0e233ade1b749"
+    },
+    {
+      "path": "scripts/sync-wikimedia.mjs",
+      "bytes": 1549,
+      "sha256": "a04a6de7cddadb30fefeaad3f1586bcd9a48aef7754387b105b3167a5e2a8443"
+    },
+    {
+      "path": "scripts/test/finalize-offline-downloads.test.mjs",
+      "bytes": 2237,
+      "sha256": "b38b496007874e6f9c5d7302a6b126ce628a33c442203be3a7659996a9ad69d8"
+    },
+    {
+      "path": "scripts/test/validate-content.test.mjs",
+      "bytes": 1597,
+      "sha256": "e1fbdfa9ad27db1ece12d43e6afbcc9272a71e0f56b3381fed9b20f24738f763"
+    },
+    {
+      "path": "scripts/test/wikimedia-sync.test.mjs",
+      "bytes": 10818,
+      "sha256": "814906b0413bd385c804b5b010c0116c349d5d04988e7945b58b7a46fc007854"
+    },
+    {
+      "path": "scripts/validate-content.mjs",
+      "bytes": 11050,
+      "sha256": "12ef620cf62a4ce2e7c0046c38f0981d8f3c37e3edd5bee84096ef15e11ab596"
+    },
+    {
+      "path": "scripts/validate-reading.mjs",
+      "bytes": 3131,
+      "sha256": "a9f3757bdf7e91c9b0569d397399c4154d32b87f6d210b8d66073d1df3b74b09"
+    },
+    {
+      "path": "scripts/validate-rights.mjs",
+      "bytes": 7557,
+      "sha256": "28f8b1120eab0ea73124b61a367dc708966ba4d47aa10cc2965418cb33013ff3"
+    },
+    {
+      "path": "scripts/validate-wikimedia.mjs",
+      "bytes": 16811,
+      "sha256": "70f2a0816a81f0d508a8caae84e2d6d17074b0693f38912ca6990f7c2ce89efe"
+    },
+    {
+      "path": "scripts/wikimedia-lib.mjs",
+      "bytes": 25279,
+      "sha256": "8459f4fa3cd0187c0a7ad070b95ea403dbab57d728daf3ccebb557a9446e3960"
+    },
+    {
+      "path": "src/components/ChapterActions.astro",
+      "bytes": 577,
+      "sha256": "4bcd6cb614c8397ebf9bd2938627b2ca974eae29e956d0378fa5bef07252e933"
+    },
+    {
+      "path": "src/components/InlineArtifacts.astro",
+      "bytes": 5219,
+      "sha256": "7a3c544ecd4114fed36349bab814e6baccc3bd7982b3da463d3196f7d7621eec"
+    },
+    {
+      "path": "src/components/InlineConceptDiagrams.astro",
+      "bytes": 3807,
+      "sha256": "e1ec4c6fba891b21c6677c623b014734cfe146bb6f17f0e649c5b5c74bc41f3e"
+    },
+    {
+      "path": "src/components/InlineScholarFigures.astro",
+      "bytes": 9664,
+      "sha256": "6341231ee53d29b9c3be5cf0adb53f8e985575941e2edd5793ba67da126cafc9"
+    },
+    {
+      "path": "src/components/LayerIntro.astro",
+      "bytes": 564,
+      "sha256": "8384d0895ddcb704ca29a7a10b95becf026d8720009d94be0ceb63af4ac35530"
+    },
+    {
+      "path": "src/components/PersonCard.astro",
+      "bytes": 2339,
+      "sha256": "c54ca7ce30069a5121a184dbdd209ca8baaa875e94222cc9d60317ed5795309a"
+    },
+    {
+      "path": "src/components/PersonPortrait.astro",
+      "bytes": 2544,
+      "sha256": "7542de17f0e812b4e24058557a0f60a92e3e1f3fa36910bb0a5f8304d8dfbbf5"
+    },
+    {
+      "path": "src/components/PrivacyNote.astro",
+      "bytes": 304,
+      "sha256": "53947f25b3678348056f0027429c22da95d792d859a28aeff30946d056e02801"
+    },
+    {
+      "path": "src/components/ReaderShell.astro",
+      "bytes": 15922,
+      "sha256": "b98cc47bf18b07f1c07845c156bf65ff40190c2607307e56aa46e395ceb79246"
+    },
+    {
+      "path": "src/components/ReadingRecord.astro",
+      "bytes": 56662,
+      "sha256": "457ee91c7cfdbe17f4e1dcd9e8558aa3a5dd253ce6fad4f1bb0997aa7028c1d2"
+    },
+    {
+      "path": "src/components/ScholarlyDock.astro",
+      "bytes": 19632,
+      "sha256": "da9a4557a1cc69d81e254a0ef70685da522eae3acb014d563ce9c18b1f72f719"
+    },
+    {
+      "path": "src/components/SiteHeader.astro",
+      "bytes": 3427,
+      "sha256": "276dbfe78989fbebd5bf613ca73edb2271230180b051165b5628de5f7655bd9a"
+    },
+    {
+      "path": "src/content.config.ts",
+      "bytes": 12760,
+      "sha256": "b84beef0f87986030c2b1582708052a8a1a0fed623f62bc654d7ac1e4abe99e5"
+    },
+    {
+      "path": "src/layouts/SiteLayout.astro",
+      "bytes": 1215,
+      "sha256": "bbd52b1d4d66605504777931538e48abed51fc0147d4ce6f677fa231b1db6515"
+    },
+    {
+      "path": "src/lib/chapter-diagrams.ts",
+      "bytes": 16428,
+      "sha256": "8bde9f42bbcf9d941f5eff0312f8046e0c83a9c5a2ff93a0ad30c1fc4be6211a"
+    },
+    {
+      "path": "src/lib/content.ts",
+      "bytes": 11481,
+      "sha256": "7b822a95b9be4547bfcb40d11e00dd5301b69a9aaea24afd44900c8582aa5508"
+    },
+    {
+      "path": "src/lib/scholarly-layer.ts",
+      "bytes": 2022,
+      "sha256": "0e66ebe4633911508faac3f377f7689559b54930ed6e86084498f880fe307cd6"
+    },
+    {
+      "path": "src/pages/404.astro",
+      "bytes": 666,
+      "sha256": "207b99a96ba65f3c1e535a586a9eebd93d9a3af36bd9bcbffaf8c221cb8760b8"
+    },
+    {
+      "path": "src/pages/about/index.astro",
+      "bytes": 3597,
+      "sha256": "064f055c9357c97e92aed4b42dca010fc277bdcfaca859b2eb18ffbd1122a93b"
+    },
+    {
+      "path": "src/pages/accessibility/index.astro",
+      "bytes": 4622,
+      "sha256": "0f30a29593c43f7e7cf488a1d4c969c46d310b596ba62cd59218d7ba98f2cd96"
+    },
+    {
+      "path": "src/pages/admin/index.astro",
+      "bytes": 12362,
+      "sha256": "8f4fb2a6f8259d3dc7598655a4396f2e2726568182935f988b14e6910c2e92ed"
+    },
+    {
+      "path": "src/pages/api/reading/[slug].json.ts",
+      "bytes": 613,
+      "sha256": "4ee6ca576db34b9d61ea473db3e9e299b66f3d7e6fc5312e33468037222825b5"
+    },
+    {
+      "path": "src/pages/api/reading/[slug].txt.ts",
+      "bytes": 750,
+      "sha256": "422d4928b6526cbd276c043560fb42aad67370f943edeb2204ed65752bea0b08"
+    },
+    {
+      "path": "src/pages/chapter/[slug]/deep/index.astro",
+      "bytes": 3356,
+      "sha256": "0e42964d93b4f13e7319d3f602bb4c25dfdbf34f497d607c657fefd90015bdf6"
+    },
+    {
+      "path": "src/pages/chapter/[slug]/index.astro",
+      "bytes": 2233,
+      "sha256": "5f9604054dc2275d3f8816c5da121cfa5368fbfe4dc529804d638cabd3ebe2fb"
+    },
+    {
+      "path": "src/pages/chapter/[slug]/sources/index.astro",
+      "bytes": 3073,
+      "sha256": "0c8f5521f72db5bc087e1521b4d8bfc4158e54706b11ce70755d91191f1e6a32"
+    },
+    {
+      "path": "src/pages/chapter/[slug]/world/index.astro",
+      "bytes": 5443,
+      "sha256": "a039196212ace9bd2c9bc0a450f8d782d6bff41d48b9c0ce2b81271ff2349556"
+    },
+    {
+      "path": "src/pages/contents/index.astro",
+      "bytes": 2949,
+      "sha256": "1ca5aaa92c0ad3a68b5231b17b86be7b68c559658b961d73bf2bca54eeec7433"
+    },
+    {
+      "path": "src/pages/downloads/[slug].html.astro",
+      "bytes": 2895,
+      "sha256": "0124349b93d389a0e0a64138a5aa29c756be3a8013eccbf29288e2fb4615a2e2"
+    },
+    {
+      "path": "src/pages/index.astro",
+      "bytes": 7583,
+      "sha256": "8e03afc6dbc1e6253f40ef834faf254411be78e83bc991840b53b6d9beef6f57"
+    },
+    {
+      "path": "src/pages/instructors/reading-records/index.astro",
+      "bytes": 6535,
+      "sha256": "63fd11340bfd17ebd9224533c8d0d4b8ec2d4cb0a4afc23311dd0ecfa255f739"
+    },
+    {
+      "path": "src/pages/people/[slug].astro",
+      "bytes": 6774,
+      "sha256": "cb3ad20ae4c5bd53b1f50cbe7d545eee2798b935f13b0723e451f1926d25238c"
+    },
+    {
+      "path": "src/pages/rights/index.astro",
+      "bytes": 2583,
+      "sha256": "fa3c8dae335acdd901ebb578d02105aa884771aaa1a9c1ba2f277d19c22320e7"
+    },
+    {
+      "path": "src/styles/global.css",
+      "bytes": 6655,
+      "sha256": "fbf7a2d00bc6fedf707b552609ebe5f7fb36153d5c7b94f200c7feb6466d79bf"
+    },
+    {
+      "path": "src/styles/scholarly-layer.css",
+      "bytes": 6833,
+      "sha256": "aecf271fc1cb0dcaa03a986d87676c9e1da2af4a0af25cd6a9d613eb43437f3f"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 230,
+      "sha256": "f83a10d81988c1247ddd61b179a3043d13fdc65ace3a577f5c5fdd2057ab0464"
+    },
+    {
+      "path": "workers/editor-auth/README.md",
+      "bytes": 5715,
+      "sha256": "926ec106e8c37ca5edbecb4eddfe39e9e75e961ff773a0e816a342f10e130bdf"
+    },
+    {
+      "path": "workers/editor-auth/SECURITY.md",
+      "bytes": 5414,
+      "sha256": "1a59dd96cb342a5a2ba78a8965325c1c3f8bcbbc598f048e2bb935a4e6c6b76e"
+    },
+    {
+      "path": "workers/editor-auth/src/constants.mjs",
+      "bytes": 912,
+      "sha256": "f056d7f819eb2f6ed47045548a219e21b786cbf09f9f582c52cbbf00222a0be4"
+    },
+    {
+      "path": "workers/editor-auth/src/crypto.mjs",
+      "bytes": 6554,
+      "sha256": "76e201ae20d12d443fbe1846793fabf6094612b2f76a2e8ed8e89d899066ebee"
+    },
+    {
+      "path": "workers/editor-auth/src/github.mjs",
+      "bytes": 9984,
+      "sha256": "f26042cbcd803562c32caa80d13d9e179e341416730e8715127d3d709acc8bb3"
+    },
+    {
+      "path": "workers/editor-auth/src/index.mjs",
+      "bytes": 12672,
+      "sha256": "352b38225e51038af2be13f8defc7fcca0a01785e43dfeae3d830631a67bffd6"
+    },
+    {
+      "path": "workers/editor-auth/src/policy.mjs",
+      "bytes": 7752,
+      "sha256": "90206ff5175952db8cc68618caa03e18cfbda338a1da84d1ac605a0d47886812"
+    },
+    {
+      "path": "workers/editor-auth/test/editor-auth.test.mjs",
+      "bytes": 16516,
+      "sha256": "acb4c4432895f3f1c11621121d885b3e7861a0b71560dfbf1bceacbf7fd1bdcd"
+    },
+    {
+      "path": "workers/editor-auth/wrangler.jsonc",
+      "bytes": 1021,
+      "sha256": "1fc42fa285b57c1d2a97c9d5ab5bc5e6e802206a2f3c09f4b547b9c696c9a8aa"
+    },
+    {
+      "path": "wrangler.jsonc",
+      "bytes": 389,
+      "sha256": "75d8efc592c4a9fce4675f1eae4ff35716995b87aa0926f6f17108bf40f72c0f"
+    }
+  ],
+  "baselineId": "baseline_98a1bc915983954939262a0d9a5bdbdb"
+}

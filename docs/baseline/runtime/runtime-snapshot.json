@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "0a2716182953f492a654aa8b704d420216f39450",
+  "localOrigin": "http://127.0.0.1:4325",
+  "productionOrigin": "https://ethicsandai.your-digital-life.org",
+  "local": [
+    {
+      "id": "home",
+      "url": "http://127.0.0.1:4325/",
+      "status": 200,
+      "headers": {
+        "content-type": "text/html"
+      },
+      "bytes": 22552,
+      "sha256": "aa63f95e5307bc3c5af4e1dc9d82cd8d9a7bdf2825f53b8cacc928bcfd01efde",
+      "inlineScripts": 7,
+      "inlineStyles": 3,
+      "storageReferences": 0
+    },
+    {
+      "id": "chapter-07",
+      "url": "http://127.0.0.1:4325/chapter/aristotle-character-and-ai-assisted-life/",
+      "status": 200,
+      "headers": {
+        "content-type": "text/html"
+      },
+      "bytes": 137334,
+      "sha256": "b615cf84c55f093c75449d9fc1da5b00d1b9b47faed5ff58028c72a5c181b8b6",
+      "inlineScripts": 20,
+      "inlineStyles": 11,
+      "storageReferences": 0
+    },
+    {
+      "id": "admin",
+      "url": "http://127.0.0.1:4325/admin/",
+      "status": 200,
+      "headers": {
+        "content-type": "text/html"
+      },
+      "bytes": 22235,
+      "sha256": "48e30173094082c81da79a583011288b6ffc906d1c1822a5a7da71748b4ba0b0",
+      "inlineScripts": 8,
+      "inlineStyles": 3,
+      "storageReferences": 0
+    }
+  ],
+  "production": [
+    {
+      "id": "home",
+      "url": "https://ethicsandai.your-digital-life.org/",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-security-policy": "frame-ancestors 'none'",
+        "content-type": "text/html",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "permissions-policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()",
+        "referrer-policy": "no-referrer",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "bytes": 7333,
+      "sha256": "d09197fd3a5ce70ad042cde214f505acbb9f580ad1bc173fea3890559a217c5e",
+      "inlineScripts": 1,
+      "inlineStyles": 0,
+      "storageReferences": 0
+    },
+    {
+      "id": "chapter-07",
+      "url": "https://ethicsandai.your-digital-life.org/chapter/aristotle-character-and-ai-assisted-life/",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-security-policy": "frame-ancestors 'none'",
+        "content-type": "text/html",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "permissions-policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()",
+        "referrer-policy": "no-referrer",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "bytes": 83777,
+      "sha256": "c627bd37becf99590c601d73bb633df8708f2e2cd42a38e541764d5574f36e5f",
+      "inlineScripts": 7,
+      "inlineStyles": 1,
+      "storageReferences": 0
+    },
+    {
+      "id": "admin",
+      "url": "https://ethicsandai.your-digital-life.org/admin/",
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate, no-store",
+        "content-security-policy": "frame-ancestors 'none'",
+        "content-type": "text/html",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "permissions-policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), web-share=(), xr-spatial-tracking=()",
+        "referrer-policy": "no-referrer",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "bytes": 8771,
+      "sha256": "bf1d77426db2d9f5cdc4aaa8963dab261c02dc79f48e10e8320e1b8d0a0583b4",
+      "inlineScripts": 2,
+      "inlineStyles": 0,
+      "storageReferences": 0
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "docs/baseline/runtime/home-desktop-1536x1024.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2265510,
+      "sha256": "82e736777ed5f0a46607b6200ae5b3e46c7535b4b2a59d3d9b4ea2005bcfc6a1"
+    },
+    {
+      "file": "docs/baseline/runtime/chapter-07-desktop-1536x1024.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 238956,
+      "sha256": "274bd3b5fff235ac8618804dd1ef71e973e3c03f2e1a62aa5a813ac4d49a917d"
+    },
+    {
+      "file": "docs/baseline/runtime/chapter-07-mobile-390x844.png",
+      "width": 390,
+      "height": 844,
+      "bytes": 102415,
+      "sha256": "b43f0446a2a257423509a4b0d31d1a716a924fe66c9f5914dd5949c46106a8e7"
+    },
+    {
+      "file": "docs/baseline/runtime/chapter-07-no-js-1536x1024.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 238956,
+      "sha256": "274bd3b5fff235ac8618804dd1ef71e973e3c03f2e1a62aa5a813ac4d49a917d"
+    },
+    {
+      "file": "docs/baseline/runtime/admin-desktop-1536x1024.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 82887,
+      "sha256": "42d71b296edb871efe5e71c8bc9a152834ade90a7b16c396a8832cec2ef3c04e"
+    }
+  ],
+  "print": {
+    "file": "docs/baseline/runtime/chapter-07-print.pdf",
+    "bytes": 3995683,
+    "sha256": "3954ba50f88975f824751d4e6bf744ee728d83c903b395f6b47d6ff697f7b161"
+  },
+  "observations": {
+    "studentStorageAllowed": false,
+    "providerRequestsExpectedBeforeActivation": 0,
+    "browserToolFallback": "Chrome headless used because the in-app Browser and js_repl Playwright tools were unavailable"
+  }
+}

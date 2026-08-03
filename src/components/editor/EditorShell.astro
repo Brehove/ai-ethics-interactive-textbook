@@ -1,0 +1,608 @@
+---
+import type { ChapterSummary } from "../../lib/content";
+
+interface Props { chapters: ChapterSummary[]; authOrigin: string; contentApiOrigin: string; }
+const { chapters, authOrigin, contentApiOrigin } = Astro.props;
+const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
+---
+
+<main id="main-content" class="textbook-editor" data-editor-root data-auth-origin={authOrigin} data-content-api-origin={contentApiOrigin}>
+  <header class="editor-topbar">
+    <button class="product-mark" type="button" aria-label="AI Ethics Textbook home"><span aria-hidden="true">▯</span> AI Ethics Textbook</button>
+    <label class="chapter-picker"><span class="visually-hidden">Current chapter</span><select data-chapter aria-describedby="chapter-canary-note">{chapters.map((chapter) => <option value={`${String(chapter.order).padStart(2, "0")}-${chapter.slug}`} selected={chapter.slug === active.slug} disabled={chapter.order !== 7}>{chapter.order}. {chapter.title} — {chapter.order === 7 ? "editable canary" : "read-only"}</option>)}</select><small id="chapter-canary-note">Chapter 7 is the only editable D1 canary. Other chapters remain repository-managed.</small></label>
+    <button class="release-state" type="button" data-release-state><i></i> Draft <span aria-hidden="true">⌄</span></button>
+    <div class="top-actions"><button type="button" data-preview aria-label="Preview chapter">◉ <span>Preview</span></button><button type="button" data-review aria-label="Review changes">▢ <span>Review changes</span><b data-change-count>0</b></button><button type="button" data-validate aria-label="Validate change set">✓ <span>Validate</span></button><button class="publish" type="button" data-submit-review aria-label="Submit change set for review">⇧ <span>Submit review</span></button><button type="button" data-login hidden>Sign in with GitHub</button><button type="button" data-logout hidden>Sign out</button><button class="more" type="button" data-publish aria-label="Publication status">⋮</button></div>
+  </header>
+
+  <div class="editor-workspace">
+    <nav class="editor-nav" aria-label="Editor workspace">
+      <button class="mobile-nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="editor-navigation-items">☰ <span>Menu</span></button>
+      <div class="nav-items" id="editor-navigation-items" data-nav-items>
+        <button type="button" data-workspace="Chapter">▤ <span>Chapter</span></button><button class="selected" type="button" data-workspace="Checkpoints">▱ <span>Checkpoints</span></button><button type="button" data-workspace="Media">▧ <span>Media</span></button><button type="button" data-workspace="Sources">❝ <span>Sources</span></button><button type="button" data-workspace="Rights">♧ <span>Rights</span></button><button type="button" data-workspace="Releases">▣ <span>Releases</span></button>
+      </div>
+      <button class="collapse-nav" type="button" data-collapse-nav>« <span>Collapse sidebar</span></button>
+    </nav>
+
+    <section class="chapter-canvas" aria-label="Structured chapter editor">
+      <p class="editor-status" data-editor-status aria-live="polite">Checking editor session…</p>
+      <article class="chapter-prose" data-prose>
+        <h1>7.3 &nbsp; Eudaimonia and the AI-Assisted Life</h1>
+        <p>For Aristotle, <em>eudaimonia</em> is not a feeling but an activity of soul in accordance with virtue over a complete life. It is neither fleeting pleasure nor momentary success, but a stable disposition to choose, act, and perceive well.</p>
+        <p>AI systems can support many human activities, yet they do not, by themselves, constitute a good life. They are tools, environments, and interlocutors, not ends. The question is not whether AI can make us happy, but whether and how its use can be integrated into a life oriented by practical wisdom.</p>
+        <p class="passage selected-passage" tabindex="0" data-passage-id="ch07-p0041"><button class="passage-marker" type="button" aria-label="Add a checkpoint anchored to this passage" data-anchor>▱<span class="visually-hidden">Add checkpoint</span><small>1</small></button>Character is formed through repeated actions chosen for their own sake (NE II.1). If we routinely rely on AI to deliberate, remember, or judge, we risk cultivating habits of dependence that erode the virtues of practical reason. Conversely, if we use AI with discernment—recognizing its limits, correcting its errors, and refusing its vices—we may strengthen our own capacities.</p>
+        <h2>7.4 &nbsp; Friends, Communities, and Digital Participation</h2>
+        <p>Aristotle emphasizes that we become just by acting justly with others (NE II.1). The AI-mediated spaces in which we speak, learn, and decide together are now central to our moral formation. These spaces can cultivate friendship and cooperation, or corrode them through manipulation, anonymity, and scale.</p>
+      </article>
+      <div class="media-toolbar" role="group" aria-label="Insert media"><button type="button" class="add-media" data-media-menu aria-expanded="true" aria-controls="media-insert-choices" aria-label="Show or hide media choices">+</button><div class="media-menu" id="media-insert-choices" data-media-options><button type="button" data-media="Image or GIF">▧ Image or GIF</button><button type="button" data-media="YouTube">▹ YouTube</button><button type="button" data-media="Vimeo">∨ Vimeo</button><button type="button" data-media="X post">𝕏 X post</button><button type="button" data-media="Spotify">♫ Spotify</button><button type="button" data-media="SoundCloud">◒ SoundCloud</button><button type="button" data-media="Bluesky">☁ Bluesky</button><button type="button" data-media="Audio/Video">♬ Audio/Video</button><button type="button" data-media="PDF">□ PDF</button><button type="button" data-media="Link card">↗ Link card</button></div></div>
+      <div class="text-block-editor" data-text-editor hidden><label>Selected text block<textarea data-text-value></textarea></label><button type="button" data-save-text>Save text change</button></div>
+      <p class="snapshot-receipt" data-snapshot-receipt hidden></p>
+      <section class="human-release-review" data-human-review hidden aria-labelledby="human-review-title">
+        <div class="human-review-heading"><div><p class="review-eyebrow">Submitted snapshot</p><h2 id="human-review-title">Human release review</h2></div><strong data-review-state>Awaiting decision</strong></div>
+        <dl class="snapshot-identity"><div><dt>Immutable snapshot hash</dt><dd><code data-snapshot-hash>—</code></dd></div><div><dt>Snapshot revision</dt><dd><code data-snapshot-revision>—</code></dd></div></dl>
+        <p class="release-warning" id="release-review-warning"><strong>Approval does not publish.</strong> It records a human release decision for this exact immutable snapshot. Final promotion remains GitHub-gated.</p>
+        <label>Optional approval note<textarea data-approval-comment maxlength="2000" aria-describedby="release-review-warning"></textarea></label>
+        <button class="approve-release" type="button" data-approve-release aria-describedby="release-review-warning">Approve release snapshot</button>
+        <details class="reject-review"><summary>Reject this snapshot</summary><label>Reason for rejection<textarea data-rejection-comment maxlength="2000" required aria-describedby="release-review-warning"></textarea></label><button type="button" data-reject-release aria-describedby="release-review-warning">Reject snapshot</button></details>
+        <p class="decision-status" data-decision-status aria-live="polite"></p>
+      </section>
+    </section>
+
+    <aside class="checkpoint-inspector" data-inspector aria-label="Prompt checkpoint inspector">
+      <div class="inspector-heading"><h2>Prompt checkpoint</h2><button type="button" data-inspector-close aria-label="Close checkpoint inspector">×</button></div>
+      <p class="offline-note" data-offline-note hidden>Read-only/offline: changes remain in this browser and cannot be published.</p>
+      <div class="checkpoint-tabs" data-checkpoint-tabs aria-label="Chapter checkpoints"></div>
+      <label>Type<select data-checkpoint-type disabled><option selected>Commit</option><option>Work</option><option>Reconcile</option></select></label>
+      <div class="field-pair"><label>Stage<input data-checkpoint-stage /></label><label>Strategy<select data-checkpoint-strategy><option>initial-judgment</option><option>self-explanation</option><option>argument-reconstruction</option><option>evidence-warrant</option><option>contrast-case</option><option>counterexample</option><option>consider-alternative</option><option>objection-repair</option><option>question-generation</option><option>epistemic-calibration</option><option>framework-comparison</option><option>transfer</option><option>metacognitive-trace</option></select></label></div>
+      <label>Title<input data-checkpoint-title /></label><label>Trigger<textarea class="short-textarea" data-checkpoint-trigger></textarea></label>
+      <label>Prompt<textarea data-prompt>Evaluate the claim that delegating deliberation to AI systems can be consistent with the formation of virtue. Use Aristotle's account of habituation (NE II.1) and discuss at least one concrete example.</textarea></label>
+      <label>Guidance<textarea class="short-textarea" data-checkpoint-guidance></textarea></label>
+      <label>Passage anchor<select data-anchor-select><option>7.3 &nbsp; Eudaimonia and the AI-Assisted Life</option></select></label>
+      <p class="anchor-note">Anchors to selected passage. <button type="button" data-edit-anchor>Edit anchor</button></p>
+      <label class="toggle-row">Show in sidebar preview <input type="checkbox" checked data-sidebar-preview /><span aria-hidden="true"></span></label><p class="field-help">Students will see this checkpoint in the sidebar.</p>
+      <label>Student response format<select data-response-format><option value="prose" selected>Prose</option><option value="movement-plus-prose">Movement plus prose</option></select></label>
+      <div class="word-limits"><label>Min. words<input data-min-words type="number" min="1" max="1000" value="250" /></label><label>Max. words<input data-max-words type="number" min="1" max="1000" value="750" /></label></div>
+      <label>Rationale<textarea class="short-textarea" data-checkpoint-rationale></textarea></label>
+      <button class="inspection-row" type="button" data-a11y>Accessibility check <span class="good">✓ No issues detected</span> ›</button>
+      <label>Editorial approval<select><option selected>● Needs review</option><option>✓ Approved</option></select></label>
+      <button class="add-checkpoint" type="button" data-add-checkpoint>+ Add checkpoint</button><button class="save-checkpoint" type="button" data-save-checkpoint hidden>▱ Save checkpoint</button><button class="remove-checkpoint" type="button" data-remove-checkpoint hidden>Remove checkpoint</button>
+      <p class="checkpoint-count" data-checkpoint-count>0 draft checkpoints of 3. Add Commit first; the order is immutable.</p>
+    </aside>
+  </div>
+
+  <section class="agent-activity" data-agent-drawer aria-label="Semantic review">
+    <div class="agent-tabs"><button type="button" data-agent-toggle aria-expanded="true" aria-controls="semantic-review-summary">✧ <strong>Review changes</strong><span aria-hidden="true">⌃</span></button><span>Semantic changes <b data-semantic-count>0</b></span><span>Working version <strong data-working-version>—</strong></span></div>
+    <div class="agent-diff semantic-review" id="semantic-review-summary" data-review-summary tabindex="-1"><p class="accepted-message">Loading the canonical comparison…</p></div>
+  </section>
+</main>
+
+<dialog class="media-inspector" data-media-dialog aria-labelledby="media-dialog-title">
+  <form method="dialog" data-media-form><div class="inspector-heading"><h2 id="media-dialog-title" data-media-title>Insert media</h2><button type="button" data-media-close aria-label="Close media inspector">×</button></div>
+  <label data-media-ref-label>Canonical URL<input type="url" inputmode="url" autocomplete="url" data-media-url required placeholder="https://" /></label><label>Title<input type="text" data-media-title-input required /></label>
+  <div class="native-upload" data-native-upload hidden><label class="advanced-toggle"><input type="checkbox" data-existing-asset /> Use existing reviewed asset IDs <span>Advanced option for agent-prepared media</span></label><label data-file-field>Native media file<input type="file" data-media-file /></label><p class="gif-note" data-gif-note hidden>GIF remains animated media. Placement defaults to click-to-play with a static poster in print.</p><div class="review-controls" data-review-controls><fieldset><legend>Rights declaration</legend><label>Rights basis<select data-rights-basis required><option value="owned">Owned</option><option value="licensed">Licensed</option><option value="permission">Permission</option><option value="publicDomain">Public domain</option><option value="fairUse">Fair use</option><option value="unknown">Unknown — needs review</option></select></label><label>Creator or rights holder<input type="text" data-rights-creator required /></label><label>Source URL <span>Optional; public HTTPS only</span><input type="url" inputmode="url" data-rights-source placeholder="https://" /></label><label>License or terms <span>Optional</span><input type="text" data-rights-license /></label><label>Required attribution<textarea data-rights-attribution required></textarea></label></fieldset><fieldset><legend>Editorial declaration</legend><label>Teaching use<textarea data-review-teaching-use required></textarea></label><label>Placement intent<textarea data-placement-intent required></textarea></label></fieldset><fieldset><legend>Accessibility declaration</legend><label class="review-ack"><input type="checkbox" data-decorative /> This asset is decorative and needs no alt text.</label><label data-review-alt-field>Reviewed alt text<textarea data-review-alt required></textarea></label><label>Motion review<select data-motion-review><option value="notApplicable">Not applicable</option><option value="pending">Pending</option><option value="passed">Passed</option><option value="failed">Failed</option></select></label><div data-transcript-declaration hidden><label>Transcript/equivalent language<input type="text" data-caption-language value="en" /></label><label>Substantive transcript/equivalent<textarea data-review-transcript></textarea></label></div></fieldset><label data-poster-alt-field hidden>Reviewed video poster alt text<textarea data-poster-alt></textarea></label><button class="create-review-package" type="button" data-create-review-package>Create pending review package</button><section class="review-package-receipt" data-review-package-receipt hidden aria-label="Pending media review package"><div><strong data-review-package-state>Pending human decision</strong><code data-review-package-hash></code></div><p data-review-package-summary></p><p><strong>Pending is not clearance.</strong> Upload may proceed, but release remains blocked until a human clears this exact declaration hash.</p><label>Required decision comment<textarea data-review-decision-comment maxlength="2000"></textarea></label><div class="review-decision-actions"><button type="button" data-clear-review-package>Clear exact package</button><button type="button" data-block-review-package>Block exact package</button></div></section><p class="upload-progress" data-review-package-status aria-live="polite"></p></div><p class="review-required-note">The editor first creates a server-issued <strong>pending</strong> review package from these declarations. Uploads remain <strong>reviewRequired</strong>; package creation and placement do not clear or approve the media.</p><label class="review-ack"><input type="checkbox" data-review-ack /> I understand that package creation, upload, and placement are not rights, editorial, accessibility, or release approval.</label><p class="upload-progress" data-upload-progress aria-live="polite"></p></div>
+  <div class="existing-asset-fields" data-existing-fields hidden><div class="media-library"><div class="media-library-search"><label>Search reusable media<input type="search" data-media-search maxlength="100" placeholder="Title or exact SHA-256" /></label><label>Kind<select data-media-kind><option value="">Any kind</option><option value="image">Image</option><option value="audio">Audio</option><option value="video">Video</option><option value="document">Document</option></select></label><label>Rights<select data-media-rights><option value="cleared">Cleared</option><option value="reviewRequired">Review required</option><option value="blocked">Blocked</option><option value="">Any state</option></select></label><button type="button" data-media-search-submit>Search library</button></div><p class="field-help">Choose a persisted asset to pin its exact latest version and rights case. Only cleared media can enter a release snapshot.</p><div class="media-library-results" data-media-results aria-live="polite"></div></div><details class="raw-media-ids"><summary>Enter exact IDs manually <span>Advanced recovery</span></summary><label data-media-id-field>Media ID<input type="text" data-media-id placeholder="media_…" /></label><label data-media-version-field>Media version ID<input type="text" data-media-version-id placeholder="mediaVersion_…" /></label><label data-rights-case-field>Rights case ID<input type="text" data-rights-case-id placeholder="rights_…" /></label></details></div>
+  <label data-caption-field>Caption<textarea data-media-caption required placeholder="State what the media shows and why it appears here."></textarea></label><label data-alt-field>Alt text<textarea data-media-alt required placeholder="Convey the essential visual information, without repeating the caption."></textarea></label><label data-transcript-field hidden>Transcript declaration or location<textarea data-media-transcript></textarea></label><label>Teaching use / credit<input type="text" data-media-credit required /></label><label data-fallback-field hidden>Authored fallback summary<textarea data-x-fallback placeholder="Describe this resource for readers who do not activate the live embed."></textarea></label><label data-link-label-field hidden>Link label<input type="text" data-link-label maxlength="120" placeholder="Open resource" /></label><p class="provider-privacy" data-provider-privacy hidden></p><p class="field-help" data-media-help>Raw embed HTML is never accepted.</p><button class="save-checkpoint" type="submit" data-media-submit>Add to change set</button></form>
+</dialog>
+
+<script>
+  type Block = { type: string; blockId?: string; text?: string; level?: number; passageId?: string; items?: string[] };
+  type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: "commit" | "work" | "reconcile"; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
+  type Chapter = { title?: string; body?: Block[]; checkpoints?: Checkpoint[] };
+  const root = document.querySelector<HTMLElement>("[data-editor-root]")!;
+  if (!root) throw new Error("Editor root missing");
+  const gatewayOrigin = root.dataset.contentApiOrigin?.replace(/\/$/, "") ?? "";
+  const status = root.querySelector<HTMLElement>("[data-editor-status]")!;
+  const offline = root.querySelector<HTMLElement>("[data-offline-note]")!;
+  const inspector = root.querySelector<HTMLElement>("[data-inspector]")!;
+  const prose = root.querySelector<HTMLElement>("[data-prose]")!;
+  const login = root.querySelector<HTMLButtonElement>("[data-login]")!;
+  const logout = root.querySelector<HTMLButtonElement>("[data-logout]")!;
+  const addCheckpoint = root.querySelector<HTMLButtonElement>("[data-add-checkpoint]")!;
+  const saveCheckpoint = root.querySelector<HTMLButtonElement>("[data-save-checkpoint]")!;
+  const removeCheckpoint = root.querySelector<HTMLButtonElement>("[data-remove-checkpoint]")!;
+  const textEditor = root.querySelector<HTMLElement>("[data-text-editor]")!;
+  const textValue = root.querySelector<HTMLTextAreaElement>("[data-text-value]")!;
+  const snapshotReceipt = root.querySelector<HTMLElement>("[data-snapshot-receipt]")!;
+  const humanReview = root.querySelector<HTMLElement>("[data-human-review]")!;
+  const snapshotHashValue = root.querySelector<HTMLElement>("[data-snapshot-hash]")!;
+  const snapshotRevisionValue = root.querySelector<HTMLElement>("[data-snapshot-revision]")!;
+  const reviewState = root.querySelector<HTMLElement>("[data-review-state]")!;
+  const approvalComment = root.querySelector<HTMLTextAreaElement>("[data-approval-comment]")!;
+  const rejectionComment = root.querySelector<HTMLTextAreaElement>("[data-rejection-comment]")!;
+  const approveRelease = root.querySelector<HTMLButtonElement>("[data-approve-release]")!;
+  const rejectRelease = root.querySelector<HTMLButtonElement>("[data-reject-release]")!;
+  const decisionStatus = root.querySelector<HTMLElement>("[data-decision-status]")!;
+  const submitReview = root.querySelector<HTMLButtonElement>("[data-submit-review]")!;
+  const checkpointTabs = root.querySelector<HTMLElement>("[data-checkpoint-tabs]")!;
+  const checkpointCount = root.querySelector<HTMLElement>("[data-checkpoint-count]")!;
+  const checkpointType = root.querySelector<HTMLSelectElement>("[data-checkpoint-type]")!;
+  const stage = root.querySelector<HTMLInputElement>("[data-checkpoint-stage]")!;
+  const strategy = root.querySelector<HTMLSelectElement>("[data-checkpoint-strategy]")!;
+  const checkpointTitle = root.querySelector<HTMLInputElement>("[data-checkpoint-title]")!;
+  const trigger = root.querySelector<HTMLTextAreaElement>("[data-checkpoint-trigger]")!;
+  const prompt = root.querySelector<HTMLTextAreaElement>("[data-prompt]")!;
+  const guidance = root.querySelector<HTMLTextAreaElement>("[data-checkpoint-guidance]")!;
+  const anchor = root.querySelector<HTMLSelectElement>("[data-anchor-select]")!;
+  const sidebarPreview = root.querySelector<HTMLInputElement>("[data-sidebar-preview]")!;
+  const responseStructure = root.querySelector<HTMLSelectElement>("[data-response-format]")!;
+  const minWords = root.querySelector<HTMLInputElement>("[data-min-words]")!;
+  const maxWords = root.querySelector<HTMLInputElement>("[data-max-words]")!;
+  const rationale = root.querySelector<HTMLTextAreaElement>("[data-checkpoint-rationale]")!;
+  const mediaDialog = document.querySelector<HTMLDialogElement>("[data-media-dialog]")!;
+  const mediaTitle = mediaDialog.querySelector<HTMLElement>("[data-media-title]")!;
+  const mediaRefField = mediaDialog.querySelector<HTMLElement>("[data-media-ref-label]")!;
+  const nativeUpload = mediaDialog.querySelector<HTMLElement>("[data-native-upload]")!;
+  const existingAsset = mediaDialog.querySelector<HTMLInputElement>("[data-existing-asset]")!;
+  const existingFields = mediaDialog.querySelector<HTMLElement>("[data-existing-fields]")!;
+  const mediaSearch = mediaDialog.querySelector<HTMLInputElement>("[data-media-search]")!;
+  const mediaKind = mediaDialog.querySelector<HTMLSelectElement>("[data-media-kind]")!;
+  const mediaRights = mediaDialog.querySelector<HTMLSelectElement>("[data-media-rights]")!;
+  const mediaSearchSubmit = mediaDialog.querySelector<HTMLButtonElement>("[data-media-search-submit]")!;
+  const mediaResults = mediaDialog.querySelector<HTMLElement>("[data-media-results]")!;
+  const fileField = mediaDialog.querySelector<HTMLElement>("[data-file-field]")!;
+  const mediaFile = mediaDialog.querySelector<HTMLInputElement>("[data-media-file]")!;
+  const reviewControls = mediaDialog.querySelector<HTMLElement>("[data-review-controls]")!;
+  const reviewPackageStatus = mediaDialog.querySelector<HTMLElement>("[data-review-package-status]")!;
+  const createReviewPackage = mediaDialog.querySelector<HTMLButtonElement>("[data-create-review-package]")!;
+  const reviewPackageReceipt = mediaDialog.querySelector<HTMLElement>("[data-review-package-receipt]")!;
+  const reviewPackageState = mediaDialog.querySelector<HTMLElement>("[data-review-package-state]")!;
+  const reviewPackageHash = mediaDialog.querySelector<HTMLElement>("[data-review-package-hash]")!;
+  const reviewPackageSummary = mediaDialog.querySelector<HTMLElement>("[data-review-package-summary]")!;
+  const reviewDecisionComment = mediaDialog.querySelector<HTMLTextAreaElement>("[data-review-decision-comment]")!;
+  const clearReviewPackage = mediaDialog.querySelector<HTMLButtonElement>("[data-clear-review-package]")!;
+  const blockReviewPackage = mediaDialog.querySelector<HTMLButtonElement>("[data-block-review-package]")!;
+  const rightsBasis = mediaDialog.querySelector<HTMLSelectElement>("[data-rights-basis]")!;
+  const rightsCreator = mediaDialog.querySelector<HTMLInputElement>("[data-rights-creator]")!;
+  const rightsSource = mediaDialog.querySelector<HTMLInputElement>("[data-rights-source]")!;
+  const rightsLicense = mediaDialog.querySelector<HTMLInputElement>("[data-rights-license]")!;
+  const rightsAttribution = mediaDialog.querySelector<HTMLTextAreaElement>("[data-rights-attribution]")!;
+  const reviewTeachingUse = mediaDialog.querySelector<HTMLTextAreaElement>("[data-review-teaching-use]")!;
+  const placementIntent = mediaDialog.querySelector<HTMLTextAreaElement>("[data-placement-intent]")!;
+  const decorative = mediaDialog.querySelector<HTMLInputElement>("[data-decorative]")!;
+  const reviewAltField = mediaDialog.querySelector<HTMLElement>("[data-review-alt-field]")!;
+  const reviewAlt = mediaDialog.querySelector<HTMLTextAreaElement>("[data-review-alt]")!;
+  const motionReview = mediaDialog.querySelector<HTMLSelectElement>("[data-motion-review]")!;
+  const transcriptDeclaration = mediaDialog.querySelector<HTMLElement>("[data-transcript-declaration]")!;
+  const captionLanguage = mediaDialog.querySelector<HTMLInputElement>("[data-caption-language]")!;
+  const reviewTranscript = mediaDialog.querySelector<HTMLTextAreaElement>("[data-review-transcript]")!;
+  const posterAltField = mediaDialog.querySelector<HTMLElement>("[data-poster-alt-field]")!;
+  const posterAlt = mediaDialog.querySelector<HTMLTextAreaElement>("[data-poster-alt]")!;
+  const gifNote = mediaDialog.querySelector<HTMLElement>("[data-gif-note]")!;
+  const reviewAck = mediaDialog.querySelector<HTMLInputElement>("[data-review-ack]")!;
+  const uploadProgress = mediaDialog.querySelector<HTMLElement>("[data-upload-progress]")!;
+  const mediaRef = mediaDialog.querySelector<HTMLInputElement>("[data-media-url]")!;
+  const mediaName = mediaDialog.querySelector<HTMLInputElement>("[data-media-title-input]")!;
+  const mediaCaption = mediaDialog.querySelector<HTMLTextAreaElement>("[data-media-caption]")!;
+  const mediaAlt = mediaDialog.querySelector<HTMLTextAreaElement>("[data-media-alt]")!;
+  const mediaCredit = mediaDialog.querySelector<HTMLInputElement>("[data-media-credit]")!;
+  const mediaId = mediaDialog.querySelector<HTMLInputElement>("[data-media-id]")!;
+  const mediaVersionId = mediaDialog.querySelector<HTMLInputElement>("[data-media-version-id]")!;
+  const rightsCaseId = mediaDialog.querySelector<HTMLInputElement>("[data-rights-case-id]")!;
+  const mediaIdField = mediaDialog.querySelector<HTMLElement>("[data-media-id-field]")!;
+  const mediaVersionField = mediaDialog.querySelector<HTMLElement>("[data-media-version-field]")!;
+  const rightsCaseField = mediaDialog.querySelector<HTMLElement>("[data-rights-case-field]")!;
+  const mediaTranscript = mediaDialog.querySelector<HTMLTextAreaElement>("[data-media-transcript]")!;
+  const mediaFallback = mediaDialog.querySelector<HTMLTextAreaElement>("[data-x-fallback]")!;
+  const mediaLinkLabel = mediaDialog.querySelector<HTMLInputElement>("[data-link-label]")!;
+  const captionField = mediaDialog.querySelector<HTMLElement>("[data-caption-field]")!;
+  const altField = mediaDialog.querySelector<HTMLElement>("[data-alt-field]")!;
+  const transcriptField = mediaDialog.querySelector<HTMLElement>("[data-transcript-field]")!;
+  const fallbackField = mediaDialog.querySelector<HTMLElement>("[data-fallback-field]")!;
+  const linkLabelField = mediaDialog.querySelector<HTMLElement>("[data-link-label-field]")!;
+  const providerPrivacy = mediaDialog.querySelector<HTMLElement>("[data-provider-privacy]")!;
+  const mediaHelp = mediaDialog.querySelector<HTMLElement>("[data-media-help]")!;
+  const mediaSubmit = mediaDialog.querySelector<HTMLButtonElement>("[data-media-submit]")!;
+  const reviewSummary = root.querySelector<HTMLElement>("[data-review-summary]")!;
+  const semanticCount = root.querySelector<HTMLElement>("[data-semantic-count]")!;
+  const workingVersion = root.querySelector<HTMLElement>("[data-working-version]")!;
+  const slots = ["commit", "work", "reconcile"] as const;
+  let authenticated = false; let contentOnline = false; let dirty = false; let csrfToken = ""; let changeSetId = ""; let baseRevisionId = ""; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
+  const setStatus = (message: string) => { status.textContent = message; };
+  const key = () => crypto.randomUUID();
+  const post = (path: string, body: unknown) => fetch(`${gatewayOrigin}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken }, body: JSON.stringify(body) });
+  const checkpointFor = (slot: string) => (chapter.checkpoints ?? []).find((item) => item.slot === slot);
+  const blockForPassage = (passageId: string) => (chapter.body ?? []).find((item) => item.passageId === passageId);
+  const digest = async (text: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hashFile = async (file: File) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+  function mediaReviewDeclarations(audioOrVideo: boolean) {
+    const transcriptEquivalent = audioOrVideo ? { language: captionLanguage.value.trim(), text: reviewTranscript.value.trim() } : undefined;
+    if (audioOrVideo && (!transcriptEquivalent?.language || !transcriptEquivalent.text)) throw new Error("Audio and video require a substantive transcript/equivalent and language");
+    const rights = { basis: rightsBasis.value, creator: rightsCreator.value.trim(), attribution: rightsAttribution.value.trim(), ...(rightsSource.value.trim() ? { sourceUrl: rightsSource.value.trim() } : {}), ...(rightsLicense.value.trim() ? { license: rightsLicense.value.trim() } : {}) };
+    if (!rights.creator || !rights.attribution) throw new Error("Creator and required attribution are required");
+    const editorial = { teachingUse: reviewTeachingUse.value.trim(), placementIntent: placementIntent.value.trim() };
+    if (!editorial.teachingUse || !editorial.placementIntent) throw new Error("Teaching use and placement intent are required");
+    const accessibility = { decorative: decorative.checked, motionReview: motionReview.value, ...(!decorative.checked ? { altText: reviewAlt.value.trim() } : {}), ...(transcriptEquivalent ? { transcriptEquivalent } : {}) };
+    if (!decorative.checked && !reviewAlt.value.trim()) throw new Error("Non-decorative media requires reviewed alt text");
+    return { rights, editorial, accessibility, transcriptEquivalent };
+  }
+
+  function showHumanReview(snapshot: Record<string, unknown>) {
+    submittedSnapshotHash = typeof snapshot.snapshotHash === "string" ? snapshot.snapshotHash : "";
+    submittedSnapshotRevision = typeof snapshot.snapshotRevision === "string" ? snapshot.snapshotRevision : "";
+    if (!/^[a-f0-9]{64}$/.test(submittedSnapshotHash) || !submittedSnapshotRevision) throw new Error("Submission receipt omitted immutable snapshot identity");
+    snapshotHashValue.textContent = submittedSnapshotHash;
+    snapshotRevisionValue.textContent = submittedSnapshotRevision;
+    reviewState.textContent = "Awaiting human decision";
+    decisionStatus.textContent = "Review the exact snapshot identity before recording a release decision.";
+    humanReview.hidden = false;
+    submitReview.disabled = true;
+    submitReview.querySelector("span")!.textContent = "Submitted";
+    root.querySelector<HTMLElement>("[data-release-state]")!.textContent = "Submitted for review";
+    humanReview.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function showRecordedDecision(decision: Record<string, unknown>) {
+    const approved = decision.decision === "approved";
+    reviewState.textContent = approved ? "Release approved" : "Rejected";
+    decisionStatus.textContent = approved
+      ? "Release approval is recorded for this exact snapshot. Nothing was published; final promotion remains GitHub-gated."
+      : `Snapshot rejected${typeof decision.comment === "string" && decision.comment ? `: ${decision.comment}` : "."} Nothing was published.`;
+    approveRelease.disabled = true; rejectRelease.disabled = true;
+  }
+
+  async function recordReleaseDecision(decision: "approve" | "reject") {
+    if (!submittedSnapshotHash || !submittedSnapshotRevision || humanReview.hidden) { setStatus("No submitted snapshot is available for a release decision."); return; }
+    const comment = decision === "approve" ? approvalComment.value.trim() : rejectionComment.value.trim();
+    if (decision === "reject" && !comment) { rejectionComment.focus(); decisionStatus.textContent = "A rejection reason is required."; return; }
+    approveRelease.disabled = true; rejectRelease.disabled = true;
+    decisionStatus.textContent = decision === "approve" ? "Recording human release approval…" : "Recording rejection…";
+    try {
+      const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:${decision}`, { snapshotHash: submittedSnapshotHash, snapshotRevision: submittedSnapshotRevision, decisionKind: "release", comment, idempotencyKey: key() });
+      const data = await response.json();
+      if (!response.ok || data.snapshotHash !== submittedSnapshotHash || data.snapshotRevision !== submittedSnapshotRevision || data.decision !== (decision === "approve" ? "approved" : "rejected")) throw new Error("Release decision response did not match the submitted snapshot");
+      reviewState.textContent = decision === "approve" ? "Release approved" : "Rejected";
+      decisionStatus.textContent = decision === "approve" ? "Release approval recorded for this exact snapshot. Nothing was published; final promotion remains GitHub-gated." : "Snapshot rejected with a recorded reason. Nothing was published.";
+      setStatus(decision === "approve" ? "Human release approval recorded. Final promotion remains GitHub-gated; nothing was published." : "Submitted snapshot rejected. Revise in a new change set before resubmitting.");
+    } catch {
+      approveRelease.disabled = false; rejectRelease.disabled = false;
+      decisionStatus.textContent = "The release decision was not recorded. The snapshot identity or review state may have changed.";
+    }
+  }
+
+  async function createPendingReviewPackage(audioOrVideo: boolean) {
+    const declarations = mediaReviewDeclarations(audioOrVideo);
+    reviewPackageStatus.textContent = "Persisting pending review declarations…";
+    const response = await post("/v1/media-review-packages", { rights: declarations.rights, editorial: declarations.editorial, accessibility: declarations.accessibility, idempotencyKey: key() });
+    const data = await response.json();
+    if (!response.ok || data.state !== "pending" || typeof data.id !== "string") throw new Error("Pending review package could not be created");
+    if (!/^[a-f0-9]{64}$/.test(String(data.declarationHash ?? ""))) throw new Error("Pending review package omitted its declaration hash");
+    activeReviewPackageId = data.id; activeReviewDeclarationHash = data.declarationHash; activeReviewPackageState = "pending";
+    reviewPackageState.textContent = "Pending human decision"; reviewPackageHash.textContent = activeReviewDeclarationHash;
+    reviewPackageSummary.textContent = `${declarations.rights.basis} rights · ${declarations.rights.creator} · ${declarations.editorial.placementIntent.slice(0, 120)}${declarations.accessibility.decorative ? " · decorative" : " · alt text declared"}`;
+    reviewPackageReceipt.hidden = false; clearReviewPackage.disabled = false; blockReviewPackage.disabled = false;
+    reviewPackageStatus.textContent = `Pending review package ${data.id} created. This is not clearance or approval.`;
+    return { reviewPackageId: data.id as string, transcriptEquivalent: declarations.transcriptEquivalent };
+  }
+
+  async function decideReviewPackage(decision: "cleared" | "blocked") {
+    const comment = reviewDecisionComment.value.trim();
+    if (!activeReviewPackageId || !activeReviewDeclarationHash) { reviewPackageStatus.textContent = "Create a pending review package first."; return; }
+    if (!comment) { reviewDecisionComment.focus(); reviewPackageStatus.textContent = "A human decision comment is required."; return; }
+    clearReviewPackage.disabled = true; blockReviewPackage.disabled = true;
+    try {
+      const response = await post(`/v1/media-review-packages/${encodeURIComponent(activeReviewPackageId)}:decide`, { declarationHash: activeReviewDeclarationHash, decision, comment, idempotencyKey: key() });
+      const data = await response.json();
+      if (!response.ok || data.declarationHash !== activeReviewDeclarationHash || data.decision !== decision) throw new Error("Review decision response mismatch");
+      activeReviewPackageState = String(data.state); reviewPackageState.textContent = decision === "cleared" ? "Cleared by instructor" : "Blocked by instructor";
+      reviewPackageStatus.textContent = decision === "cleared" ? "Exact media declaration package cleared. This does not approve chapter release or publish." : "Exact media declaration package blocked. It cannot be uploaded or released.";
+    } catch { clearReviewPackage.disabled = false; blockReviewPackage.disabled = false; reviewPackageStatus.textContent = "Media review decision was not recorded."; }
+  }
+
+  async function uploadAndProcessNativeMedia() {
+    const file = mediaFile.files?.[0];
+    if (!file) throw new Error("Select a native media file");
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(file.name) || file.name.includes("..")) throw new Error("Rename the file with letters, numbers, dots, dashes, or underscores only");
+    const audioOrVideo = file.type.startsWith("audio/") || file.type.startsWith("video/");
+    if (file.type.startsWith("video/") && !posterAlt.value.trim()) throw new Error("A reviewed poster description is required for video");
+    const declarations = mediaReviewDeclarations(audioOrVideo);
+    if (!activeReviewPackageId || !activeReviewDeclarationHash) throw new Error("Create and review the pending declaration package before uploading");
+    if (activeReviewPackageState === "rejected") throw new Error("Blocked review packages cannot be uploaded");
+    uploadProgress.textContent = "Hashing the file locally…";
+    const sha256 = await hashFile(file); const idempotencyKey = key();
+    const requestBody: Record<string, unknown> = { filename: file.name, mimeType: file.type, bytes: file.size, sha256, idempotencyKey, reviewPackageId: activeReviewPackageId };
+    if (declarations.transcriptEquivalent) requestBody.transcriptEquivalent = { provided: true, language: declarations.transcriptEquivalent.language, text: declarations.transcriptEquivalent.text };
+    if (file.type.startsWith("video/")) requestBody.poster = { provided: true, alt: posterAlt.value.trim() };
+    uploadProgress.textContent = "Requesting a bounded upload ticket…";
+    const ticketResponse = await post("/v1/media:requestUpload", requestBody); if (!ticketResponse.ok) throw new Error("Upload request was rejected");
+    const ticket = await ticketResponse.json();
+    uploadProgress.textContent = "Uploading raw bytes to quarantine…";
+    const uploadResponse = await fetch(`${gatewayOrigin}${ticket.upload.path}`, { method: "PUT", credentials: "include", headers: { ...ticket.upload.requiredHeaders, "X-Editor-CSRF": csrfToken }, body: file });
+    if (!uploadResponse.ok) throw new Error("Raw upload failed");
+    const delays = [500, 750, 1000, 1500, 2000, 3000, 4000, 4000, 4000];
+    for (let attempt = 0; attempt < delays.length; attempt += 1) {
+      uploadProgress.textContent = `Processing media… check ${attempt + 1} of ${delays.length}`;
+      await wait(delays[attempt]);
+      const jobResponse = await fetch(`${gatewayOrigin}/v1/media/jobs/${encodeURIComponent(ticket.jobId)}`, { credentials: "include" });
+      if (!jobResponse.ok) throw new Error("Media job status unavailable");
+      const job = await jobResponse.json();
+      if (job.state === "failed") throw new Error(`Media processing failed${job.error_code ? `: ${job.error_code}` : ""}`);
+      if (job.state === "ready") {
+        mediaId.value = String(job.mediaId ?? job.media_id ?? ""); mediaVersionId.value = String(job.mediaVersionId ?? job.media_version_id ?? ""); rightsCaseId.value = String(job.rightsCaseId ?? job.rights_case_id ?? "");
+        if (!mediaId.value || !mediaVersionId.value || !rightsCaseId.value) throw new Error("Ready job omitted stable media IDs");
+        const rightsStatus = String(job.rightsStatus ?? job.rights_status ?? "reviewRequired");
+        uploadProgress.textContent = `Ready for placement. Rights status: ${rightsStatus}; placement is not release approval.`;
+        return rightsStatus;
+      }
+    }
+    throw new Error("Media processing did not finish within the bounded polling window");
+  }
+
+  function renderChapter() {
+    const blocks = chapter.body ?? [];
+    const headingIndex = Math.max(0, blocks.findIndex((block) => block.type === "heading"));
+    const visible = blocks.slice(headingIndex, headingIndex + 8).filter((block) => block.type === "heading" || block.type === "paragraph" || block.type === "blockquote" || block.type === "list");
+    const nodes: HTMLElement[] = [];
+    for (const block of visible) {
+      const tag: string = block.type === "heading" ? (block.level === 2 ? "h1" : "h2") : block.type === "blockquote" ? "blockquote" : "p";
+      const element = document.createElement(tag);
+      element.textContent = block.type === "list" ? (block.items ?? []).join(" • ") : (block.text ?? "");
+      if (block.blockId) element.dataset.blockId = block.blockId;
+      if (block.passageId) { element.dataset.passageId = block.passageId; element.tabIndex = 0; element.addEventListener("click", () => { anchor.value = block.passageId!; selectedBlockId = block.blockId ?? ""; prose.querySelectorAll("[data-block-id]").forEach((item) => item.classList.toggle("selected-passage", item === element)); if (selectedBlockId && ["paragraph", "heading", "blockquote", "callout"].includes(block.type)) { textValue.value = block.text ?? ""; textEditor.hidden = false; } inspector.classList.add("open"); setStatus(`Selected ${block.passageId}; checkpoint and text actions now target this block.`); }); }
+      nodes.push(element);
+    }
+    if (nodes.length) prose.replaceChildren(...nodes);
+    anchor.replaceChildren(...blocks.filter((block) => block.passageId).map((block) => { const option = document.createElement("option"); option.value = block.passageId!; option.textContent = `${block.passageId} · ${(block.text ?? block.items?.join(" ") ?? "Passage").slice(0, 72)}`; return option; }));
+    const picker = root.querySelector<HTMLSelectElement>("[data-chapter]");
+    if (picker?.selectedOptions[0] && chapter.title) picker.selectedOptions[0].textContent = `7. ${chapter.title} — editable canary`;
+  }
+
+  function renderSemanticReview() {
+    type ReviewItem = { label: string; detail: string; tone?: "changed" | "added" | "removed" };
+    const items: ReviewItem[] = [];
+    const canonicalCheckpoints = new Map((canonicalChapter.checkpoints ?? []).map((item) => [item.slot, item]));
+    const workingCheckpoints = new Map((chapter.checkpoints ?? []).map((item) => [item.slot, item]));
+    for (const slot of slots) {
+      const before = canonicalCheckpoints.get(slot); const after = workingCheckpoints.get(slot);
+      if (!before && after) items.push({ label: `${slot} checkpoint`, detail: "Added to the working chapter", tone: "added" });
+      else if (before && !after) items.push({ label: `${slot} checkpoint`, detail: "Removed from the working chapter", tone: "removed" });
+      else if (before && after && JSON.stringify(before) !== JSON.stringify(after)) items.push({ label: `${slot} checkpoint`, detail: "Prompt, guidance, response, or anchor revised", tone: "changed" });
+    }
+    const canonicalBlocks = new Map((canonicalChapter.body ?? []).filter((block) => block.blockId).map((block) => [block.blockId!, block]));
+    const workingBlocks = new Map((chapter.body ?? []).filter((block) => block.blockId).map((block) => [block.blockId!, block]));
+    let revisedText = 0; let insertedMedia = 0; let removedBlocks = 0;
+    for (const [blockId, block] of workingBlocks) {
+      const before = canonicalBlocks.get(blockId);
+      if (before && before.text !== block.text && typeof block.text === "string") revisedText += 1;
+      if (!before && ["mediaFigure", "externalEmbed", "richLink"].includes(block.type)) insertedMedia += 1;
+    }
+    for (const blockId of canonicalBlocks.keys()) if (!workingBlocks.has(blockId)) removedBlocks += 1;
+    if (revisedText) items.push({ label: `${revisedText} text block${revisedText === 1 ? "" : "s"}`, detail: "Wording revised from the canonical chapter", tone: "changed" });
+    if (insertedMedia) items.push({ label: `${insertedMedia} media or embed block${insertedMedia === 1 ? "" : "s"}`, detail: "Added to the working chapter", tone: "added" });
+    if (removedBlocks) items.push({ label: `${removedBlocks} canonical block${removedBlocks === 1 ? "" : "s"}`, detail: "Absent from the working chapter", tone: "removed" });
+    semanticCount.textContent = String(items.length); workingVersion.textContent = contentOnline ? String(expectedVersion) : "—";
+    root.querySelector<HTMLElement>("[data-change-count]")!.textContent = String(items.length);
+    if (!items.length) { const message = document.createElement("p"); message.className = "accepted-message"; message.textContent = "No semantic differences from canonical Chapter 7."; reviewSummary.replaceChildren(message); return; }
+    reviewSummary.replaceChildren(...items.map((item) => { const card = document.createElement("article"); card.className = `semantic-change ${item.tone ?? "changed"}`; const heading = document.createElement("h3"); heading.textContent = item.label; const detail = document.createElement("p"); detail.textContent = item.detail; card.append(heading, detail); return card; }));
+  }
+
+  function readCheckpoint(): Checkpoint {
+    const selected = checkpointFor(selectedSlot);
+    return { passageId: anchor.value, passageExcerptHash: selected?.passageId === anchor.value ? selected.passageExcerptHash : "", slot: selectedSlot, stage: stage.value, strategy: strategy.value, title: checkpointTitle.value, trigger: trigger.value, prompt: prompt.value, guidance: guidance.value, responseStructure: responseStructure.value as Checkpoint["responseStructure"], minWords: Number(minWords.value), maxWords: Number(maxWords.value), rationale: rationale.value, showInSidebar: sidebarPreview.checked };
+  }
+
+  function selectCheckpoint(slot: typeof slots[number], creating = false) {
+    selectedSlot = slot;
+    const item = checkpointFor(slot);
+    checkpointType.value = slot[0].toUpperCase() + slot.slice(1);
+    stage.value = item?.stage ?? slot;
+    strategy.value = item?.strategy ?? (slot === "commit" ? "initial-judgment" : slot === "work" ? "self-explanation" : "metacognitive-trace");
+    checkpointTitle.value = item?.title ?? ""; trigger.value = item?.trigger ?? ""; prompt.value = item?.prompt ?? ""; guidance.value = item?.guidance ?? ""; rationale.value = item?.rationale ?? "";
+    responseStructure.value = item?.responseStructure ?? "prose"; minWords.value = String(item?.minWords ?? 30); maxWords.value = String(item?.maxWords ?? 120); sidebarPreview.checked = item?.showInSidebar ?? true;
+    if (item?.passageId && [...anchor.options].some((option) => option.value === item.passageId)) anchor.value = item.passageId;
+    saveCheckpoint.hidden = !(item || creating); removeCheckpoint.hidden = !item; addCheckpoint.hidden = true;
+    checkpointTabs.querySelectorAll("button").forEach((button) => button.classList.toggle("active", (button as HTMLElement).dataset.slot === slot));
+  }
+
+  function renderCheckpointState() {
+    const checkpoints = chapter.checkpoints ?? [];
+    checkpointTabs.replaceChildren(...slots.map((slot) => { const button = document.createElement("button"); const exists = Boolean(checkpointFor(slot)); button.type = "button"; button.dataset.slot = slot; button.textContent = `${exists ? "✓" : "+"} ${slot[0].toUpperCase()}${slot.slice(1)}`; button.disabled = !exists; button.addEventListener("click", () => selectCheckpoint(slot)); return button; }));
+    const missing = slots.find((slot) => !checkpointFor(slot));
+    checkpointCount.textContent = missing ? `${checkpoints.length} checkpoint${checkpoints.length === 1 ? "" : "s"} of 3. ${missing[0].toUpperCase() + missing.slice(1)} is the next immutable slot.` : "3 checkpoints of 3: Commit, Work, Reconcile. Existing records remain editable.";
+    addCheckpoint.hidden = !missing; addCheckpoint.dataset.slot = missing ?? ""; saveCheckpoint.hidden = true; removeCheckpoint.hidden = true;
+    if (checkpointFor(selectedSlot)) selectCheckpoint(selectedSlot); else if (checkpoints[0]) selectCheckpoint(checkpoints[0].slot); else if (missing) { checkpointType.value = missing[0].toUpperCase() + missing.slice(1); }
+  }
+
+  async function hydrateChangeset() {
+    const response = await fetch(`${gatewayOrigin}/v1/changesets/${encodeURIComponent(changeSetId)}`, { credentials: "include" });
+    if (!response.ok) throw new Error("changeset unavailable");
+    const data = await response.json(); const working = data.documents?.find((item: { document_id?: string }) => item.document_id === "chapter_ch07") ?? data.documents?.[0];
+    if (!working) throw new Error("working chapter missing");
+    baseRevisionId = String(working.base_revision_id ?? baseRevisionId); expectedVersion = Number(working.version ?? expectedVersion); chapter = working.content ?? chapter; renderSemanticReview();
+    if (data.submittedSnapshot) {
+      showHumanReview(data.submittedSnapshot);
+      snapshotReceipt.hidden = false;
+      snapshotReceipt.textContent = `Submitted immutable snapshot ${data.submittedSnapshot.snapshotHash} at revision ${data.submittedSnapshot.snapshotRevision}.`;
+      if (data.releaseDecision) showRecordedDecision(data.releaseDecision);
+    }
+  }
+
+  async function createOrResumeChangeSet() {
+    const idempotencyKey = key();
+    const response = await post("/v1/chapters/chapter_ch07/changesets", { title: "Chapter 7 structured editor", description: "Instructor-authored Chapter 7 checkpoint and media changes.", idempotencyKey, resume: true });
+    if (!response.ok) throw new Error("changeset unavailable");
+    const data = await response.json(); changeSetId = String(data.id ?? ""); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version ?? expectedVersion);
+    if (!changeSetId) throw new Error("changeset id missing");
+    await hydrateChangeset();
+  }
+
+  async function applyOperation(operation: unknown) {
+    const idempotencyKey = key();
+    const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:apply`, { baseRevisionId, expectedVersion, idempotencyKey, operation });
+    if (!response.ok) throw new Error("operation rejected");
+    const data = await response.json(); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version); chapter = data.chapter ?? chapter; renderSemanticReview();
+  }
+
+  const stablePosition = () => ({ afterBlockId: selectedBlockId || (chapter.body ?? []).find((block) => block.blockId)?.blockId || "" });
+  function safePublicUrl(value: string) {
+    let url: URL;
+    try { url = new URL(value); } catch { throw new Error("Enter a complete public HTTPS URL"); }
+    const host = url.hostname.toLowerCase();
+    if (url.protocol !== "https:" || url.username || url.password || url.port || !host.includes(".") || host === "localhost" || host.includes(":") || /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) || /(?:^|\.)(?:local|internal|localhost)$/.test(host)) throw new Error("Only public HTTPS URLs without credentials or custom ports are accepted");
+    url.hostname = host; url.hash = "";
+    return url;
+  }
+
+  function providerDefinition(label: string, value: string) {
+    const url = safePublicUrl(value); const parts = url.pathname.split("/").filter(Boolean); const host = url.hostname;
+    if (label === "YouTube") {
+      if (!["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"].includes(host)) throw new Error("Use a public YouTube URL");
+      const resourceId = host === "youtu.be" ? parts[0] : url.searchParams.get("v") || (["shorts", "embed", "live"].includes(parts[0]) ? parts[1] : "");
+      if (!/^[A-Za-z0-9_-]{11}$/.test(resourceId ?? "")) throw new Error("Use a public YouTube video URL");
+      return { identity: { provider: "youtube", resourceType: "video", resourceId }, canonicalUrl: `https://www.youtube.com/watch?v=${resourceId}` };
+    }
+    if (label === "Vimeo") {
+      if (!["vimeo.com", "www.vimeo.com", "player.vimeo.com"].includes(host)) throw new Error("Use a public Vimeo URL");
+      const resourceId = [...parts].reverse().find((part) => /^\d{6,12}$/.test(part)) || "";
+      if (!resourceId) throw new Error("Use a public Vimeo video URL");
+      return { identity: { provider: "vimeo", resourceType: "video", resourceId }, canonicalUrl: `https://vimeo.com/${resourceId}` };
+    }
+    if (label === "X post") {
+      if (!["x.com", "www.x.com", "twitter.com", "www.twitter.com"].includes(host)) throw new Error("Use a public X post URL");
+      const match = url.pathname.match(/^\/([A-Za-z0-9_]{1,15})\/status\/(\d{5,25})(?:\/.*)?$/);
+      if (!match) throw new Error("Use the canonical URL for one public X post");
+      return { identity: { provider: "x", resourceType: "post", resourceId: match[2] }, canonicalUrl: `https://x.com/${match[1]}/status/${match[2]}` };
+    }
+    if (label === "Spotify") {
+      if (host !== "open.spotify.com") throw new Error("Use a canonical Spotify URL");
+      const match = url.pathname.match(/^\/(track|album|playlist|episode|show)\/([A-Za-z0-9]{22})$/);
+      if (!match) throw new Error("Use a canonical Spotify track, album, playlist, episode, or show URL");
+      return { identity: { provider: "spotify", resourceType: match[1], resourceId: match[2] }, canonicalUrl: `https://open.spotify.com/${match[1]}/${match[2]}` };
+    }
+    if (label === "SoundCloud") {
+      if (!["soundcloud.com", "www.soundcloud.com"].includes(host) || parts.length < 2) throw new Error("Use a canonical public SoundCloud creator and track URL, not a short link");
+      const resourceId = parts.at(-1) ?? "";
+      if (!/^[A-Za-z0-9._-]+$/.test(resourceId)) throw new Error("The SoundCloud track identity is invalid");
+      return { identity: { provider: "soundcloud", resourceType: parts.at(-2) === "sets" ? "set" : "track", resourceId }, canonicalUrl: `https://soundcloud.com/${parts.join("/")}` };
+    }
+    if (label === "Bluesky") {
+      if (host !== "bsky.app") throw new Error("Use a canonical public Bluesky post URL");
+      const match = url.pathname.match(/^\/profile\/([a-z0-9][a-z0-9.-]{1,251})\/post\/([a-z0-9]+)$/i);
+      if (!match) throw new Error("Use a canonical public Bluesky post URL");
+      return { identity: { provider: "bluesky", resourceType: "post", resourceId: match[2] }, canonicalUrl: `https://bsky.app/profile/${match[1]}/post/${match[2]}` };
+    }
+    throw new Error("This provider is not available as a typed embed");
+  }
+
+  async function start() {
+    if (!gatewayOrigin) { offline.hidden = false; setStatus("Services are not configured. Nothing entered here will be persisted."); return; }
+    try {
+      const sessionResponse = await fetch(`${gatewayOrigin}/api/session`, { credentials: "include" });
+      if (sessionResponse.status === 401 || sessionResponse.status === 403) { login.hidden = false; setStatus("Authentication service healthy · no active instructor session."); return; }
+      if (!sessionResponse.ok) throw new Error("auth unavailable");
+      const sessionData = await sessionResponse.json(); authenticated = true; csrfToken = String(sessionData.csrf_token ?? ""); logout.hidden = false; setStatus(`Authenticated as ${sessionData.user.login}. Checking content API…`);
+      const schemaResponse = await fetch(`${gatewayOrigin}/v1/schema`, { credentials: "include" });
+      if (!schemaResponse.ok) throw new Error("schema unavailable");
+      const schemaData = await schemaResponse.json();
+      for (const operation of ["text.replace", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
+      const chapterResponse = await fetch(`${gatewayOrigin}/v1/documents/chapter_ch07`, { credentials: "include" });
+      if (!chapterResponse.ok) throw new Error("content unavailable");
+      const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId); contentOnline = true;
+      await createOrResumeChangeSet(); renderChapter(); renderCheckpointState(); offline.hidden = true; setStatus(`Authenticated · Chapter 7 loaded · change set ${changeSetId.slice(0, 8)} · version ${expectedVersion}.`);
+    } catch { offline.hidden = false; setStatus(authenticated ? "Authentication is healthy, but the content API is unavailable. Nothing entered here will be persisted." : "Authentication service unavailable. Nothing entered here will be persisted."); }
+  }
+
+  root.querySelectorAll<HTMLButtonElement>("[data-workspace]").forEach((button) => button.addEventListener("click", () => { root.querySelectorAll("[data-workspace]").forEach((item) => item.classList.toggle("selected", item === button)); setStatus(`${button.dataset.workspace} workspace selected.`); }));
+  root.querySelector<HTMLButtonElement>("[data-nav-toggle]")?.addEventListener("click", (event) => { const button = event.currentTarget as HTMLButtonElement; const expanded = button.getAttribute("aria-expanded") !== "true"; button.setAttribute("aria-expanded", String(expanded)); root.querySelector("[data-nav-items]")?.classList.toggle("open", expanded); });
+  root.querySelector<HTMLButtonElement>("[data-collapse-nav]")?.addEventListener("click", () => root.classList.toggle("nav-collapsed"));
+  root.querySelector<HTMLButtonElement>("[data-inspector-close]")?.addEventListener("click", () => inspector.classList.remove("open"));
+  root.querySelector<HTMLButtonElement>("[data-media-menu]")?.addEventListener("click", (event) => { const menu = root.querySelector<HTMLElement>("[data-media-options]")!; menu.hidden = !menu.hidden; (event.currentTarget as HTMLButtonElement).setAttribute("aria-expanded", String(!menu.hidden)); });
+  root.querySelectorAll<HTMLElement>(".checkpoint-inspector input,.checkpoint-inspector textarea,.checkpoint-inspector select").forEach((field) => field.addEventListener("input", () => { dirty = true; setStatus("Checkpoint has unsaved edits."); }));
+  addCheckpoint.addEventListener("click", () => { const slot = addCheckpoint.dataset.slot as typeof slots[number]; if (slot) { selectCheckpoint(slot, true); setStatus(`New ${slot} checkpoint opened. It is not persisted until Save checkpoint succeeds.`); } });
+  saveCheckpoint.addEventListener("click", async () => { if (!contentOnline || !changeSetId) { setStatus("Not saved: the content API is unavailable. Copy your text before leaving this page."); return; } try { const checkpoint = readCheckpoint(); if (!checkpoint.passageExcerptHash) checkpoint.passageExcerptHash = await digest(blockForPassage(checkpoint.passageId)?.text ?? ""); await applyOperation({ type: "checkpoint.upsert", checkpoint }); dirty = false; renderCheckpointState(); selectCheckpoint(checkpoint.slot); setStatus(`Saved ${checkpoint.slot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint was not saved. The server rejected the operation or the working version changed."); } });
+  removeCheckpoint.addEventListener("click", async () => { const item = checkpointFor(selectedSlot); if (!item || !contentOnline) { setStatus("Checkpoint was not removed."); return; } try { await applyOperation({ type: "checkpoint.remove", slot: selectedSlot, checkpointId: item.checkpointId }); renderCheckpointState(); setStatus(`Removed ${selectedSlot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint removal was rejected by the server."); } });
+  root.querySelector<HTMLButtonElement>("[data-save-text]")?.addEventListener("click", async () => { if (!selectedBlockId || !contentOnline) { setStatus("Text was not saved: select an editable text block while online."); return; } try { await applyOperation({ type: "text.replace", blockId: selectedBlockId, text: textValue.value }); renderChapter(); dirty = false; textEditor.hidden = true; setStatus(`Text block saved · working version ${expectedVersion}.`); } catch { setStatus("Text replacement was rejected by the server."); } });
+  const mediaKindLabel = (mimeType: string) => mimeType === "application/pdf" || mimeType === "text/plain" ? "document" : mimeType.split("/")[0] || "asset";
+  async function searchMediaLibrary() {
+    mediaSearchSubmit.disabled = true; mediaResults.textContent = "Searching the persisted media library…";
+    try {
+      const query = new URLSearchParams({ limit: "20" });
+      if (mediaSearch.value.trim()) query.set("q", mediaSearch.value.trim());
+      if (mediaKind.value) query.set("kind", mediaKind.value);
+      if (mediaRights.value) query.set("rightsStatus", mediaRights.value);
+      const response = await fetch(`${gatewayOrigin}/v1/media?${query}`, { credentials: "include" });
+      const data = await response.json();
+      if (!response.ok || !Array.isArray(data.media)) throw new Error("Media search was rejected");
+      if (!data.media.length) { mediaResults.textContent = "No reusable media matched these filters."; return; }
+      const cards = data.media.map((item: Record<string, unknown>) => {
+        const card = document.createElement("article"); card.className = "media-library-result";
+        const copy = document.createElement("div"); const heading = document.createElement("strong"); heading.textContent = String(item.title ?? "Untitled media");
+        const details = document.createElement("span"); details.textContent = `${mediaKindLabel(String(item.detected_mime ?? ""))} · ${String(item.rights_status ?? "unknown rights")} · ${String(item.media_version_id ?? "unknown version")}`;
+        const choose = document.createElement("button"); choose.type = "button"; choose.textContent = "Use this version";
+        choose.addEventListener("click", () => { mediaId.value = String(item.id ?? ""); mediaVersionId.value = String(item.media_version_id ?? ""); rightsCaseId.value = String(item.rights_case_id ?? ""); selectedExistingRightsStatus = String(item.rights_status ?? "unknown"); mediaResults.querySelectorAll("article").forEach((result) => result.classList.toggle("selected", result === card)); choose.textContent = "Selected"; uploadProgress.textContent = `${heading.textContent} pinned to ${mediaVersionId.value}; rights state ${selectedExistingRightsStatus}.`; });
+        copy.append(heading, details); card.append(copy, choose); return card;
+      });
+      mediaResults.replaceChildren(...cards);
+    } catch { mediaResults.textContent = "Media library search is unavailable. Use advanced recovery only if you have all three exact IDs."; }
+    finally { mediaSearchSubmit.disabled = false; }
+  }
+  const configureExistingAsset = (advanced: boolean) => { fileField.hidden = advanced; reviewControls.hidden = advanced; transcriptDeclaration.hidden = advanced || selectedMedia !== "Audio/Video"; posterAltField.hidden = advanced || selectedMedia !== "Audio/Video"; existingFields.hidden = !advanced; altField.hidden = !advanced; mediaFile.required = !advanced; mediaAlt.required = advanced; mediaId.required = advanced; mediaVersionId.required = advanced; rightsCaseId.required = advanced; if (advanced && !mediaResults.childElementCount) void searchMediaLibrary(); };
+  existingAsset.addEventListener("change", () => configureExistingAsset(existingAsset.checked));
+  createReviewPackage.addEventListener("click", () => { const file = mediaFile.files?.[0]; if (!file) { reviewPackageStatus.textContent = "Select a native media file first."; return; } void createPendingReviewPackage(file.type.startsWith("audio/") || file.type.startsWith("video/")).catch((error) => { reviewPackageStatus.textContent = error instanceof Error ? error.message : "Pending package was not created."; }); });
+  clearReviewPackage.addEventListener("click", () => { void decideReviewPackage("cleared"); });
+  blockReviewPackage.addEventListener("click", () => { void decideReviewPackage("blocked"); });
+  reviewControls.querySelectorAll("fieldset input,fieldset textarea,fieldset select").forEach((field) => field.addEventListener("input", () => { if (activeReviewPackageId) { activeReviewPackageId = ""; activeReviewDeclarationHash = ""; activeReviewPackageState = ""; reviewPackageReceipt.hidden = true; reviewPackageStatus.textContent = "Declarations changed. Create a new immutable pending package."; } }));
+  mediaSearchSubmit.addEventListener("click", () => { void searchMediaLibrary(); });
+  mediaSearch.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); void searchMediaLibrary(); } });
+  decorative.addEventListener("change", () => { reviewAltField.hidden = decorative.checked; reviewAlt.required = !decorative.checked; });
+  mediaFile.addEventListener("change", () => { const file = mediaFile.files?.[0]; activeReviewPackageId = ""; activeReviewDeclarationHash = ""; activeReviewPackageState = ""; reviewPackageReceipt.hidden = true; reviewPackageStatus.textContent = file ? "File changed. Create a pending review package for this exact declaration." : ""; gifNote.hidden = file?.type !== "image/gif"; const audioOrVideo = Boolean(file && (file.type.startsWith("audio/") || file.type.startsWith("video/"))); transcriptDeclaration.hidden = existingAsset.checked || !audioOrVideo; posterAltField.hidden = existingAsset.checked || !file?.type.startsWith("video/"); uploadProgress.textContent = file ? `${file.name} · ${file.type || "unknown MIME"} · ${file.size.toLocaleString()} bytes` : ""; });
+  const externalSelections = ["YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Link card"];
+  const privacyCopy: Record<string, string> = {
+    YouTube: "The reader shows the authored fallback first. Loading the player contacts YouTube.",
+    Vimeo: "The reader shows the authored fallback first. Loading the DNT-configured player contacts Vimeo.",
+    "X post": "The reader shows the authored fallback first. Loading the live post explicitly contacts X.",
+    Spotify: "The reader shows the authored fallback first. Students explicitly choose whether to contact Spotify and load its player.",
+    SoundCloud: "The reader uses a safe link-first card. It never loads a SoundCloud widget or fetches SoundCloud metadata.",
+    Bluesky: "The reader uses a safe link-first card. It never loads a Bluesky widget or fetches Bluesky metadata.",
+    "Link card": "The reader uses only the title and summary entered here. It never fetches arbitrary page metadata or active HTML.",
+  };
+  root.querySelectorAll<HTMLButtonElement>("[data-media]").forEach((button) => button.addEventListener("click", () => {
+    selectedMedia = button.dataset.media ?? ""; mediaTitle.textContent = `Insert ${selectedMedia}`;
+    mediaRef.value = ""; mediaName.value = ""; mediaId.value = ""; mediaVersionId.value = ""; rightsCaseId.value = ""; selectedExistingRightsStatus = ""; mediaSearch.value = ""; mediaKind.value = ""; mediaRights.value = "cleared"; mediaResults.replaceChildren(); rightsBasis.value = "owned"; rightsCreator.value = ""; rightsSource.value = ""; rightsLicense.value = ""; rightsAttribution.value = ""; reviewTeachingUse.value = ""; placementIntent.value = ""; decorative.checked = false; reviewAlt.value = ""; reviewAlt.required = true; reviewAltField.hidden = false; motionReview.value = "notApplicable"; captionLanguage.value = "en"; reviewTranscript.value = ""; posterAlt.value = ""; activeReviewPackageId = ""; activeReviewDeclarationHash = ""; activeReviewPackageState = ""; reviewPackageReceipt.hidden = true; reviewDecisionComment.value = ""; reviewPackageStatus.textContent = ""; mediaFile.value = ""; existingAsset.checked = false; reviewAck.checked = false; uploadProgress.textContent = ""; mediaCaption.value = ""; mediaAlt.value = ""; mediaCredit.value = ""; mediaTranscript.value = ""; mediaFallback.value = ""; mediaLinkLabel.value = selectedMedia === "Link card" ? "Open resource" : `Open on ${selectedMedia}`;
+    const external = externalSelections.includes(selectedMedia); const linkCard = selectedMedia === "Link card";
+    nativeUpload.hidden = external; reviewAck.required = !external; mediaRefField.hidden = !external; mediaRef.required = external; mediaName.parentElement!.hidden = !external; mediaName.required = external; mediaIdField.hidden = external; mediaVersionField.hidden = external; rightsCaseField.hidden = external; captionField.hidden = linkCard; mediaCaption.required = !linkCard; altField.hidden = external; mediaAlt.required = !external; transcriptField.hidden = selectedMedia !== "Audio/Video"; fallbackField.hidden = !external; mediaFallback.required = external; linkLabelField.hidden = !external; mediaLinkLabel.required = external; providerPrivacy.hidden = !external; providerPrivacy.textContent = privacyCopy[selectedMedia] ?? "";
+    if (!external) { mediaFile.accept = selectedMedia === "PDF" ? "application/pdf,.pdf" : selectedMedia === "Audio/Video" ? "audio/*,video/*" : "image/png,image/jpeg,image/webp,image/gif,.gif"; configureExistingAsset(false); } else existingFields.hidden = true;
+    gifNote.hidden = true; mediaSubmit.textContent = linkCard ? "Add link card" : ["SoundCloud", "Bluesky"].includes(selectedMedia) ? "Add link-first source" : external ? "Insert embed" : "Upload, process, and place";
+    mediaHelp.textContent = external ? "Only a typed provider identity and instructor-authored fallback are saved. Raw embed HTML is never accepted." : "The file is hashed locally, uploaded to quarantine, processed, assigned stable IDs, then placed after the selected block.";
+    root.querySelector<HTMLElement>("[data-media-options]")!.hidden = true; root.querySelector<HTMLButtonElement>("[data-media-menu]")!.setAttribute("aria-expanded", "false"); mediaDialog.showModal();
+  }));
+  mediaDialog.querySelector<HTMLButtonElement>("[data-media-close]")?.addEventListener("click", () => mediaDialog.close());
+  mediaDialog.querySelector<HTMLFormElement>("[data-media-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!contentOnline || !changeSetId) { setStatus("Media was not saved because the content API is unavailable."); return; }
+    const position = stablePosition();
+    if (!position.afterBlockId) { setStatus("Media was not saved because no stable block position is available."); return; }
+    try {
+      const external = externalSelections.includes(selectedMedia);
+      let placedRightsStatus = "";
+      if (external) {
+        if (selectedMedia === "Link card") {
+          const canonicalUrl = safePublicUrl(mediaRef.value).toString();
+          await applyOperation({ type: "embed.upsert", position, embed: { kind: "richLink", anchorPassageId: anchor.value, canonicalUrl, title: mediaName.value, summary: mediaFallback.value, teachingUse: mediaCredit.value, linkLabel: mediaLinkLabel.value, accessedAt: new Date().toISOString() } });
+        } else {
+          const definition = providerDefinition(selectedMedia, mediaRef.value);
+          await applyOperation({ type: "embed.upsert", position, embed: { kind: "externalEmbed", anchorPassageId: anchor.value, identity: definition.identity, canonicalUrl: definition.canonicalUrl, caption: mediaCaption.value, teachingUse: mediaCredit.value, displayPreset: "reading", theme: "auto", fallback: { title: mediaName.value, summary: mediaFallback.value, transcript: mediaTranscript.value || undefined, linkLabel: mediaLinkLabel.value, accessedAt: new Date().toISOString() }, adapterVersion: `${definition.identity.provider}-v1` } });
+        }
+      } else {
+        if (!reviewAck.checked) throw new Error("review status acknowledgement required");
+        placedRightsStatus = existingAsset.checked ? selectedExistingRightsStatus || "unknown" : await uploadAndProcessNativeMedia();
+        await applyOperation({ type: "media.place", position, placement: { mediaId: mediaId.value, mediaVersionId: mediaVersionId.value, rightsCaseId: rightsCaseId.value, anchorPassageId: anchor.value, decorative: existingAsset.checked ? false : decorative.checked, ...(!(existingAsset.checked ? false : decorative.checked) ? { alt: existingAsset.checked ? mediaAlt.value : reviewAlt.value } : {}), caption: mediaCaption.value, teachingUse: mediaCredit.value, displayPreset: "reading", align: "center", ...(selectedMedia === "Image or GIF" ? { animationPolicy: "clickToPlay" } : {}), printPolicy: "poster", downloadable: false } });
+      }
+      mediaDialog.close(); renderChapter(); setStatus(placedRightsStatus && placedRightsStatus !== "cleared" ? `${selectedMedia} inserted · rights status ${placedRightsStatus}. Placement is saved, but release remains blocked until the exact package is cleared and the library state refreshes.` : `${selectedMedia} inserted · working version ${expectedVersion}.`);
+    } catch (error) {
+      uploadProgress.textContent = error instanceof Error ? error.message : "Media lifecycle failed";
+      setStatus("Media or embed insertion did not complete. No placement was applied unless the final operation succeeded.");
+    }
+  });
+  root.querySelector<HTMLButtonElement>("[data-preview]")?.addEventListener("click", () => { root.classList.toggle("previewing"); setStatus(root.classList.contains("previewing") ? "Inline preview enabled." : "Editing view restored."); });
+  root.querySelector<HTMLButtonElement>("[data-review]")?.addEventListener("click", () => { const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const toggle = root.querySelector<HTMLButtonElement>("[data-agent-toggle]")!; drawer.classList.remove("collapsed"); toggle.setAttribute("aria-expanded", "true"); reviewSummary.focus(); });
+  root.querySelector<HTMLButtonElement>("[data-validate]")?.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Validation requires an online change set with no unsaved form edits."); return; } try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:validate`, {}); const data = await response.json(); if (!response.ok) throw new Error(); setStatus(`Validation passed · ${data.validationHash ?? data.contentHash}.`); } catch { setStatus("Validation failed. Review the chapter requirements before submission."); } });
+  submitReview.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Review submission requires an online, saved change set."); return; } try { const idempotencyKey = key(); const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:submitReview`, { baseRevisionId, expectedVersion, idempotencyKey }); const data = await response.json(); if (!response.ok) throw new Error(); showHumanReview(data); snapshotReceipt.hidden = false; snapshotReceipt.textContent = `Submitted immutable snapshot ${data.snapshotHash} at revision ${data.snapshotRevision}.`; setStatus("Submitted for human review. Approval remains a separate explicit action and does not publish."); } catch { setStatus("Review submission failed validation or the working version changed."); } });
+  approveRelease.addEventListener("click", () => { void recordReleaseDecision("approve"); });
+  rejectRelease.addEventListener("click", () => { void recordReleaseDecision("reject"); });
+  root.querySelector<HTMLButtonElement>("[data-publish]")?.addEventListener("click", () => setStatus("This editor does not auto-approve or publish. Submitted snapshots require separate review and release approval."));
+  login.addEventListener("click", () => { if (gatewayOrigin) window.location.assign(`${gatewayOrigin}/auth/start`); });
+  logout.addEventListener("click", async () => { if (gatewayOrigin) await fetch(`${gatewayOrigin}/auth/logout`, { method: "POST", credentials: "include", headers: { "X-Editor-CSRF": csrfToken } }); window.location.reload(); });
+  root.querySelector<HTMLButtonElement>("[data-agent-toggle]")?.addEventListener("click", (event) => { const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const collapsed = drawer.classList.toggle("collapsed"); (event.currentTarget as HTMLButtonElement).setAttribute("aria-expanded", String(!collapsed)); });
+  void start();
+</script>

@@ -6,10 +6,17 @@
   },
   "include": [
     ".astro/types.d.ts",
-    "**/*"
+    "src/**/*",
+    "astro.config.mjs"
   ],
   "exclude": [
     "dist",
-    "node_modules"
+    "node_modules",
+    "artifacts",
+    "docs",
+    "packages",
+    "scripts",
+    "tests",
+    "workers"
   ]
 }

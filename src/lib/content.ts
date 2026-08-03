@@ -72,6 +72,7 @@ export type ChapterWorld = CollectionEntry<"chapterWorld">["data"];
 export type ChapterRights = CollectionEntry<"chapterRights">["data"];
 export type ChapterReading = CollectionEntry<"chapterReading">["data"];
 export type ChapterReadingRecord = CollectionEntry<"chapterReadingRecords">["data"];
+export type ChapterReleasePlacements = CollectionEntry<"chapterReleasePlacements">["data"];
 export type Person = CollectionEntry<"people">["data"];
 export type PersonWikimedia = CollectionEntry<"peopleWikimedia">["data"];
 export type PersonMedia = CollectionEntry<"media">["data"];
@@ -118,6 +119,7 @@ export interface ChapterBundle {
   rights: ChapterRights;
   reading: ChapterReading;
   readingRecord: ChapterReadingRecord;
+  releasePlacements: ChapterReleasePlacements["placements"];
   previous: ChapterSummary | null;
   next: ChapterSummary | null;
 }
@@ -132,6 +134,7 @@ interface ContentIndex {
   rights: CollectionEntry<"chapterRights">[];
   reading: CollectionEntry<"chapterReading">[];
   readingRecords: CollectionEntry<"chapterReadingRecords">[];
+  releasePlacements: CollectionEntry<"chapterReleasePlacements">[];
   people: CollectionEntry<"people">[];
   peopleWikimedia: CollectionEntry<"peopleWikimedia">[];
   media: CollectionEntry<"media">[];
@@ -151,11 +154,12 @@ async function loadContentIndex(): Promise<ContentIndex> {
     getCollection("chapterRights"),
     getCollection("chapterReading"),
     getCollection("chapterReadingRecords"),
+    getCollection("chapterReleasePlacements"),
     getCollection("people"),
     getCollection("peopleWikimedia"),
     getCollection("media"),
     getCollection("mediaWikimedia"),
-  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading, readingRecords, people, peopleWikimedia, media, mediaWikimedia]) => {
+  ]).then(([books, chapters, meta, annotations, sourceLinks, world, rights, reading, readingRecords, releasePlacements, people, peopleWikimedia, media, mediaWikimedia]) => {
     if (books.length !== 1) throw new Error(`Expected one book record; found ${books.length}`);
     return {
       book: books[0],
@@ -167,6 +171,7 @@ async function loadContentIndex(): Promise<ContentIndex> {
       rights,
       reading,
       readingRecords,
+      releasePlacements,
       people,
       peopleWikimedia,
       media,
@@ -242,6 +247,7 @@ export async function getChapter(slug: string): Promise<ChapterBundle | undefine
     rights: scopedRecord(index.rights.map((item) => item.data), meta.id, "rights"),
     reading: scopedRecord(index.reading.map((item) => item.data), meta.id, "reading"),
     readingRecord: scopedRecord(index.readingRecords.map((item) => item.data), meta.id, "reading record"),
+    releasePlacements: index.releasePlacements.find((item) => item.data.chapterId === `chapter_${meta.id}` || item.data.chapterId === meta.id)?.data.placements ?? [],
     previous,
     next,
   };

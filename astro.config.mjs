@@ -3,21 +3,6 @@ import { unified } from "@astrojs/markdown-remark";
 import remarkPhilPassageIds from "./scripts/remark-phil-passage-ids.mjs";
 
 const configuredSite = process.env.PUBLIC_SITE_URL?.trim() || "https://ethicsandai.your-digital-life.org";
-const configuredEditorAuthOrigin =
-  process.env.PUBLIC_EDITOR_AUTH_ORIGIN?.trim() || "https://auth.ethicsandai.your-digital-life.org";
-
-function validatedEditorAuthOrigin(value) {
-  if (!value) return null;
-  const url = new URL(value);
-  const local = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
-  if ((url.protocol !== "https:" && !local) || url.origin !== value.replace(/\/$/, "")) {
-    throw new Error("PUBLIC_EDITOR_AUTH_ORIGIN must be an exact HTTPS origin without a path");
-  }
-  return url.origin;
-}
-
-const editorAuthOrigin = validatedEditorAuthOrigin(configuredEditorAuthOrigin);
-
 export default defineConfig({
   output: "static",
   trailingSlash: "always",
@@ -45,12 +30,14 @@ export default defineConfig({
       },
       directives: [
         "default-src 'self'",
-        "base-uri 'self'",
-        `connect-src 'self'${editorAuthOrigin ? ` ${editorAuthOrigin}` : ""}`,
+        "base-uri 'none'",
+        "connect-src 'self'",
         "font-src 'self'",
         "form-action 'self'",
         "img-src 'self' data:",
+        "media-src 'self'",
         "object-src 'none'",
+        "worker-src 'self'",
         "upgrade-insecure-requests",
       ],
     },

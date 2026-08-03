@@ -2,26 +2,48 @@
 
 ## End-to-End Implementation Plan
 
-- **Status:** Implementation-ready architecture proposal; execution requires the Phase 0 governance decision below
-- **Plan version:** 1.0
-- **Last updated:** 2026-08-02
+- **Status:** Implementation in progress; Chapter 7 production canary awaiting R2 account activation
+- **Plan version:** 1.2
+- **Last updated:** 2026-08-03
 - **Target repository:** `Brehove/ai-ethics-interactive-textbook`
 - **Migration baseline:** `origin/main` at `0a2716182953f492a654aa8b704d420216f39450`
 - **Confidence:** High on the architecture and guardrails; moderate on the schedule until the vertical spike is complete
 
 ---
 
+## 0. Live implementation status
+
+This document remains the end-to-end implementation plan. The implementation branch now contains the Chapter 7 vertical canary rather than only a proposal. Status must be read from tested artifacts and deployed infrastructure, not inferred from the original estimates below.
+
+| Phase | Current state on 2026-08-03 | Remaining gate |
+|---|---|---|
+| 0 — governance/baseline | Complete: clean worktree, five ADRs, signed baseline, archived visual/runtime evidence | None |
+| 1 — contract/spike | Complete for the Chapter 7 canary: shared schemas, Git/D1 repository paths, deterministic import/export/round-trip, media/embed projections | Live R2 upload/restore proof after account activation |
+| 2 — control plane/shadow migration | Implemented and remotely seeded: 18 documents/revisions/authority records, semantic operations, CAS, idempotency, audit provenance, human-only review/release, restore-as-draft | Production Worker deployment; remaining full-book search/preview/release-lock hardening is tracked below |
+| 3 — instructor editor/checkpoints | Complete for Chapter 7: browser prose/checkpoint/media/embed authoring, canonical-versus-working review, validation, submit, exact-snapshot human approve/reject, reload-safe review state, mobile/accessibility pass | Live authenticated smoke test |
+| 4 — native media | Processing, quarantine, callbacks, GIF poster/playback, responsive images, audio/video/PDF policy and tests implemented | R2 buckets/credentials and one real end-to-end production upload |
+| 5 — provider registry | YouTube, Vimeo, X, safe rich links, and fallback-first extended adapters implemented with no arbitrary HTML | Live multi-browser/network smoke checks |
+| 6 — API hardening | Actor provenance, scope separation, CAS/idempotency, exact snapshot verification, semantic diff, reject, restore, and hostile-input tests implemented | Preview-token flow, multi-document merge/rebase, serialized release state, and broader operational limits |
+| 7 — MCP/Skills | Hosted/local MCP registry, exhaustive OpenAPI route surface, and four versioned Skills implemented; agents can edit/validate/diff/submit but cannot approve or publish | Deploy Worker, set its bearer, and run one live client smoke test |
+| 8 — immutable release | Signed candidate, exact snapshot route, isolated materialization/build, asset digests, canary upload/promotion/rollback commands and protected GitHub environments implemented | Cloudflare release token; live canary upload, smoke, human approval, promotion, rollback drill |
+| 9 — cutover | Chapter 7 is the only permitted canary in code and UI; D1 remains nonauthoritative in production | Complete the live canary before changing its authority record; then batch the other 17 chapters |
+| 10 — extended media | Spotify click-to-load plus SoundCloud and Bluesky link-first adapters are implemented in contract, editor, reader, print, and conformance tests | Live provider smoke checks and post-canary quarterly operational drills |
+
+The only account-level blocker to the live media canary is Cloudflare R2 activation. The dashboard currently presents a $0-due-now subscription with usage overages; activation is intentionally not performed without the account owner’s explicit confirmation. No authority registry entry is switched to D1 until the production release is green and reversible.
+
+---
+
 ## 1. Executive decision
 
-Build a database-backed **authoring control plane**, not a database-backed public reader.
+Build a database-backed **authoring control plane**, not a database-backed public reader. The approved hard operating budget ceiling is **$5/month**. Sanity is rejected: its free tier is unsuitable for private drafts/revision history and its usable private tier is $15/seat/month. See [Sanity pricing](https://www.sanity.io/pricing).
 
 The target system is:
 
-- **Sanity** as the canonical store for routine editorial content, structured prompt checkpoints, media metadata, uploaded assets, drafts, and revision history after an explicit cutover;
+- **Cloudflare D1/R2** as the canonical store for routine editorial content, structured prompt checkpoints, media metadata, uploaded assets, drafts, and revision history after an explicit cutover;
 - a **custom textbook Content API** as the only agent write path and the enforcement boundary for validation, authorization, concurrency, audit history, media ingestion, embed resolution, review, and publication;
 - a **custom textbook MCP server and reusable Skills** over that API, with narrow semantic tools rather than generic document patches;
-- a customized **Sanity Studio** as the browser-based instructor editor, including chapter editing, prompt-checkpoint management, media upload and placement, embed insertion, preview, history, and review;
-- the existing **Astro reader and Cloudflare deployment** as an immutable static publication artifact that never reads from Sanity or another mutable content API at page-view time;
+- a standalone **Textbook Editor** as the browser-based instructor editor, including chapter editing, prompt-checkpoint management, media upload and placement, embed insertion, preview, history, and review;
+- the existing **Astro reader and Cloudflare deployment** as an immutable static publication artifact that never reads from D1/R2 or another mutable content API at page-view time;
 - **GitHub as the authority for code**, schemas, renderers, design tokens, validators, migrations, tests, MCP implementation, Skills, and infrastructure—not the routine content-editing interface;
 - no content commit, branch, pull request, or merge for an ordinary prose, checkpoint, caption, image, or embed update.
 
@@ -99,7 +121,7 @@ The system must therefore preserve the current public reader while replacing the
 ### 3.2 Agent-native operation
 
 - Every meaningful authoring action has a typed API operation.
-- The MCP exposes textbook-domain tools, not generic database access or arbitrary Sanity patches.
+- The MCP exposes textbook-domain tools, not generic database access or arbitrary storage patches.
 - Agents can find a chapter or passage, create a draft, edit prose, add or revise a checkpoint, upload media, resolve a provider URL, place an asset, write captions and alt text, validate, render a preview, inspect a diff, and submit for review.
 - Agent changes are reviewable, attributable, idempotent, revision-safe, and reversible.
 - Styling remains renderer-owned. Agents choose semantic types and approved presets; they never supply CSS, HTML, iframe source strings, script code, or arbitrary player parameters.
@@ -111,7 +133,7 @@ The system must therefore preserve the current public reader while replacing the
 - A release pins exact content revisions, prompt records, media assets, embed definitions, rights records, renderer version, and derivative versions in one manifest.
 - Publication is atomic. A failed build leaves the currently active release untouched.
 - A complete prior release can be restored in one operation.
-- Public chapter views make no live request to Sanity.
+- Public chapter views make no live request to D1/R2.
 - Required reading remains complete when JavaScript is disabled, the reader is offline, a provider blocks the embed, or a post/video has disappeared.
 
 ### 3.4 Privacy
@@ -140,15 +162,15 @@ The system must therefore preserve the current public reader while replacing the
                          AUTHORING PLANE
 
   Instructor browser                                  Agent / Codex
-  Textbook Studio                                     MCP client + Skills
+  Textbook Editor                                     MCP client + Skills
          |                                                    |
          | manual draft editing                               | typed tools
          v                                                    v
-  Sanity Studio + shared contract  <------>  Textbook MCP / Content API
+  Standalone Textbook Editor        <------>  Textbook MCP / Content API
          |                                      | auth, validation, audit,
-         | drafts, Portable Text, assets        | concurrency, idempotency,
+         | drafts, normalized blocks, assets    | concurrency, idempotency,
          v                                      | embed/media resolution
-                    Sanity Content Lake <-------+
+                    D1 canonical content <-------+
                          |
                          | approved frozen snapshot
                          v
@@ -165,7 +187,7 @@ The system must therefore preserve the current public reader while replacing the
                          PUBLIC PLANE
 
   Static HTML/CSS/JS + pinned first-party assets and fallbacks
-  No Sanity SDK | No mutable content API | No student data store | No analytics
+  No editorial SDK | No mutable content API | No student data store | No analytics
 ```
 
 ### 4.1 Authority model
@@ -175,51 +197,51 @@ The authority transition must be explicit and one-way:
 | Stage | Routine content authority | Code authority | Public authority |
 |---|---|---|---|
 | Before shadow migration | Git content tree | Git | Current deployed artifact |
-| Shadow migration | Git; Sanity is read-only shadow | Git | Current deployed artifact |
-| Canary | Git for noncanary chapters; Sanity for named canary chapter only | Git | One frozen release manifest |
-| After cutover | Sanity | Git | One frozen release manifest |
+| Shadow migration | Git; D1 import is a read-only shadow | Git | Current deployed artifact |
+| Canary | Git for noncanary chapters; D1 for named canary chapter only | Git | One frozen release manifest |
+| After cutover | D1/R2 | Git | One frozen release manifest |
 
-There is never a stage where the same chapter is freely writable in both Git and Sanity. The active authority lives in a versioned, server-enforced **per-chapter authority registry**, not a scalar `CONTENT_AUTHORITY` flag. Each entry names `git` or `sanity`, source coordinates, and the approved normalized snapshot hash. Import/export scripts, Studio, API, migration jobs, and candidate creation all consult it. Every release candidate freezes the complete mapping. Tests must prove that a Sanity-authoritative canary chapter cannot be read from its stale Git fixture and that its Git write path is rejected.
+There is never a stage where the same chapter is freely writable in both Git and D1. The active authority lives in a versioned, server-enforced **per-chapter authority registry**, not a scalar `CONTENT_AUTHORITY` flag. Each entry names `git` or `d1`, source coordinates, and the approved normalized snapshot hash. Import/export scripts, editor, API, migration jobs, and candidate creation all consult it. Every release candidate freezes the complete mapping. Tests must prove that a D1-authoritative canary chapter cannot be read from its stale Git fixture and that its Git write path is rejected.
 
-After cutover, the repository’s current content tree becomes a frozen migration fixture unless a later ADR removes it. Scheduled Sanity exports go to an off-provider backup target; routine edits do not generate content commits.
+After cutover, the repository’s current content tree becomes a frozen migration fixture unless a later ADR removes it. Scheduled D1/R2 exports go to an off-provider backup target; routine edits do not generate content commits.
 
 ### 4.2 Technology choices
 
 | Concern | Decision | Reason |
 |---|---|---|
-| Browser editor | Custom Textbook Editor tool hosted in Sanity Studio | Uses the Studio shell/schema ecosystem while routing every authoritative edit through the domain API; ordinary direct document editing is disabled |
-| Editorial store | Sanity Content Lake | Structured content and assets with an API-first data model |
+| Browser editor | Standalone Textbook Editor | React application over the domain API; no storage-vendor SDK or direct database editing |
+| Editorial store | Cloudflare D1 + private R2 | Normalized revisions/metadata in D1; immutable media, snapshots, previews, and release artifacts in R2 |
 | Agent mutation boundary | Cloudflare Worker Content API | Shared server-side validation, auth, audit, revision guards, provider resolution, and stable domain semantics |
 | Agent protocol | Custom Streamable HTTP MCP | Narrow tools with explicit schemas and accurate safety annotations |
 | Agent workflows | Versioned Skills in the repository | Reproducible chapter, checkpoint, media, and release-review procedures |
 | Reader | Existing root Astro application | Preserve the current public UX and derivative pipeline |
 | Public hosting | Existing Cloudflare Workers Static Assets deployment | Preserve current topology and rollback path |
 | Draft preview | Cross-site protected Astro preview Worker | One-time read-only snapshot rendering without authoring cookies, API credentials, or a live production dependency |
-| P0 images/GIFs/files | Sanity assets | Avoid a premature second canonical asset store; immutable hashed asset URLs and image transforms |
-| Upload ingress | Temporary Cloudflare R2 quarantine | Gives browsers and agents a short-lived upload target without exposing a Sanity write token; objects are deleted after verified import or by lifecycle expiry |
-| Long video | YouTube/Vimeo in P0 | Sanity file assets do not provide adaptive transcoding; do not pretend they are a video platform |
-| Release backups | Scheduled full Sanity export plus release records/artifacts in private off-Sanity object storage | Portability and disaster recovery without routine Git commits |
+| P0 images/GIFs/files | Private R2 media store | Immutable hash-addressed asset objects and generated first-party variants |
+| Upload ingress | Temporary Cloudflare R2 quarantine | Short-lived upload target; objects are promoted only after verification or expire by lifecycle |
+| Long video | YouTube/Vimeo in P0 | Do not pretend the native short-media path is an adaptive video platform |
+| Release backups | Scheduled D1 export plus R2 snapshot/media/release records in a separate private backup prefix | Portability and disaster recovery without routine Git commits |
 
 ### 4.3 Operational persistence and runtimes
 
 | State/work | Concrete runtime | Notes |
 |---|---|---|
-| Canonical accepted revisions/assets | Sanity Content Lake | Service-only writes through Content API after migration |
-| Authority registry, change-set metadata, idempotency, audit mirror, approval tokens, release sequence/lock, jobs, provider health | Cloudflare D1 | Schema migrations in `workers/content-api/migrations/`; not a second prose store |
-| Isolated working documents | Namespaced Sanity documents written only by API | `changeset.<changeSetId>.<documentId>`; never public/canonical heads |
+| Canonical accepted revisions/metadata | Cloudflare D1 | API-only append-only normalized revisions and canonical heads after migration |
+| Authority registry, change-set metadata, idempotency, audit, approval tokens, release sequence/lock, jobs, provider health | Cloudflare D1 | Schema migrations in `workers/content-api/migrations/` |
+| Isolated working documents | D1 change-set rows | Namespaced by `changeSetId` and document ID; never public/canonical heads |
 | Upload ingress | Private R2 `textbook-upload-quarantine` bucket | Presigned PUT; 24-hour lifecycle; no public route |
 | Submitted snapshots, release snapshots, preview snapshots, build artifacts, exports | Private R2 versioned buckets/prefixes | Content-addressed, checksummed, retention-locked where supported |
 | Media/release dispatch | Cloudflare Queues with explicit DLQs | Job ID/run lineage; consumers are idempotent |
 | Media inspection | Protected GitHub Actions OCI job in P0 | ClamAV/libmagic/qpdf or mutool/Sharp/ffprobe; signed callback; replace with a dedicated container only if volume warrants |
-| Release build | Protected GitHub Actions environment | Pinned image/toolchain; reads immutable snapshot, not current Sanity |
+| Release build | Protected GitHub Actions environment | Pinned image/toolchain; reads immutable snapshot, not current D1 |
 | Public release | Cloudflare Workers Versions + Static Assets | Upload version, smoke-test preview, serialized promote/rollback |
-| MCP | Separate Cloudflare Worker at protected MCP origin | Streamable HTTP facade over Content API; no Sanity token |
+| MCP | Separate Cloudflare Worker at protected MCP origin | Streamable HTTP facade over Content API; no database credential |
 
-The operational D1/R2 layer stores commands, proofs, and immutable snapshots; Sanity remains the accepted editorial-content authority after cutover.
+The D1/R2 layer is the accepted editorial-content authority after cutover as well as the operational and immutable-snapshot layer.
 
 ### 4.4 Architectural invariants
 
-1. Git and Sanity are never simultaneous writable authorities for one chapter.
+1. Git and D1 are never simultaneous writable authorities for one chapter.
 2. The public reader never queries mutable editorial data.
 3. Every mutation is attributable to an actor and run.
 4. Every mutation names an expected base revision.
@@ -230,17 +252,17 @@ The operational D1/R2 layer stores commands, proofs, and immutable snapshots; Sa
 9. External embeds are optional enhancements; first-party fallbacks carry the pedagogical meaning.
 10. Only a frozen, validated snapshot can become a release.
 
-Sanity Studio schema validation is an authoring aid, not the security boundary. API writes can bypass Studio validation. Production Studio therefore runs as a custom Textbook Editor tool: ordinary document desks and direct mutation actions are removed, the instructor’s Sanity role is read-only, and every authoritative edit is a semantic Content API command. The migration operator’s server credential is the only direct writer during import. The custom tool may keep an incomplete local form, but autosave persists it to an isolated API change set—not to a shared canonical document—and invalid work cannot be submitted or released.
+Editor validation is an authoring aid, not the security boundary. Production uses a standalone Textbook Editor that routes every authoritative edit through semantic Content API commands; no browser receives direct D1/R2 write credentials. The editor may keep an incomplete local form, but autosave persists it only to an isolated API change set—not to a shared canonical head—and invalid work cannot be submitted or released.
 
 ---
 
 ## 5. Canonical content contract
 
-Create one versioned TypeScript contract package and derive JSON Schema, OpenAPI schemas, Sanity schema helpers, validators, MCP tool schemas, migration checks, and renderer types from it. Do not maintain parallel handwritten definitions.
+Create one versioned TypeScript contract package and derive JSON Schema, OpenAPI schemas, D1 persistence mappings, validators, MCP tool schemas, migration checks, and renderer types from it. Do not maintain parallel handwritten definitions.
 
 ### 5.1 Book and chapter projections
 
-Sanity stores append-only `chapterRevision` documents whose body is Portable Text. `ChapterBundle` is the deterministic provider-neutral projection returned by `ContentRepository` and consumed by validators, renderers, derivatives, API callers, and release snapshots. It is not a second writable representation.
+D1 stores append-only normalized `chapterRevision` records and related block rows. `ChapterBundle` is the deterministic provider-neutral projection returned by `ContentRepository` and consumed by validators, renderers, derivatives, API callers, and release snapshots. It is not a second writable representation.
 
 ```ts
 type ChapterBundleBase = {
@@ -322,22 +344,22 @@ The complete release graph includes book/part metadata, chapter metadata, annota
 
 The importer must not naïvely round-trip the corpus through a generic WYSIWYG editor. Complex raw asides and tables that cannot be represented losslessly in the first contract become **locked `legacyMarkup` blocks**. New `legacyMarkup` creation is forbidden. Imported legacy blocks remain rendered and sanitized, but can only be converted through an explicit migration command with before/after visual review.
 
-#### Portable Text storage boundary
+#### Normalized block storage boundary
 
-- A Sanity `chapterRevision` stores `bodyPortableText`, not `ChapterBlock[]` JSON.
-- Each addressable Portable Text/custom block has `_key`, `blockId`, and, where applicable, `passageId` or `sectionId`. Imported `_key` values equal the existing stable public ID. For new content the server allocates one stable ID and sets `_key`/`blockId` consistently.
-- Public identity comes from the explicit ID field. The normalizer rejects unexplained `_key`/ID divergence.
+- A D1 `chapterRevision` stores normalized `ChapterBlock` rows, not an opaque rich-text blob.
+- Each addressable block has `blockId` and, where applicable, `passageId` or `sectionId`. Imported IDs equal the existing stable public ID; the server allocates all new IDs.
+- Public identity comes from the explicit ID field; storage row keys are not public anchors.
 - Each paragraph, heading, list item, quote, table, callout, figure, embed, diagram, and legacy block has its own stable block identity. List grouping is derived without sacrificing item passage IDs.
-- Marks and spans use storage-local keys; they do not become public anchors.
+- Inline spans use storage-local keys; they do not become public anchors.
 - Reordering preserves IDs. Split/merge/delete use semantic operations and write aliases/tombstones.
-- `normalizePortableText()` is pure and versioned. `denormalizeForMigration()` exists only for migration/round-trip tests, not routine authoring.
+- `normalizeChapterBlocks()` is pure and versioned. Import/export transforms exist only for migration/round-trip tests, not routine authoring.
 - The release snapshot contains the normalized projection and its hash, so a later serializer change cannot alter an existing release.
 
 ### 5.2 Stable-ID rules
 
 - The server assigns all new chapter, block, passage, figure, embed, media, checkpoint, and release IDs.
-- The Studio and agents cannot edit IDs directly.
-- Sanity `_rev` is used only for backend compare-and-swap. The domain `revisionId` is an append-only server ID bound to a content hash and remains portable outside Sanity.
+- The editor and agents cannot edit IDs directly.
+- D1 revision/version guards are used only for backend compare-and-swap. The domain `revisionId` is an append-only server ID bound to a content hash and remains portable outside D1.
 - Splitting a passage retains the original ID on the first semantic segment and creates a new ID for the second, unless the editor explicitly chooses the opposite.
 - Merging passages retains one ID and writes a tombstone/alias for the retired ID.
 - Deleting an anchored passage is blocked until every checkpoint, media placement, source, annotation, and downstream reference is moved or explicitly retired.
@@ -577,7 +599,7 @@ type ChangeSet = {
     documentId: string;
     documentType: ContentObjectType;
     baseDomainRevisionId: string;
-    baseSanityRev: string;            // backend CAS only
+    baseStorageVersion: string;       // backend CAS only
     workingDocumentId: string;        // isolated changeset.<id>.<document>
   }[];
   state: "draft" | "inReview" | "approved" | "merged" | "rejected" | "superseded";
@@ -596,9 +618,9 @@ type ChangeSet = {
 };
 ```
 
-Each Studio tab or agent job opens or resumes an explicit `changeSetId`. API commands mutate only isolated `changeset.<changeSetId>.<documentId>` working documents; they do not mutate a shared canonical draft. A change set may span a chapter plus shared media, rights, source, entity, or diagram documents. Autosave persists semantic operations and a working-snapshot hash.
+Each Textbook Editor workspace or agent job opens or resumes an explicit `changeSetId`. API commands mutate only isolated `changeset.<changeSetId>.<documentId>` working documents; they do not mutate a shared canonical draft. A change set may span a chapter plus shared media, rights, source, entity, or diagram documents. Autosave persists semantic operations and a working-snapshot hash.
 
-Submission freezes an immutable submitted snapshot. Approval records bind to that hash. Merge rechecks every target with Sanity `_rev` compare-and-swap, creates new append-only domain revision documents, atomically advances all affected Sanity head documents, and writes an audit-outbox record in the same Sanity transaction. An idempotent worker mirrors that outbox to D1. If any base has changed, merge returns a semantic conflict/rebase object; it does not partially apply. Rejection or abandonment cannot require “undo” because the canonical heads were never changed. Working documents can be garbage-collected after retention while operations, snapshots, approvals, and audit remain append-only.
+Submission freezes an immutable submitted snapshot. Approval records bind to that hash. Merge rechecks every target with D1 version-guarded compare-and-swap, creates new append-only domain revisions, atomically advances all affected D1 heads, and writes an audit record in the same transaction. If any base has changed, merge returns a semantic conflict/rebase object; it does not partially apply. Rejection or abandonment cannot require “undo” because canonical heads were never changed. Working documents can be garbage-collected after retention while operations, snapshots, approvals, and audit remain append-only.
 
 Hard deletion is unavailable in routine UI and agent scopes.
 
@@ -607,7 +629,7 @@ Hard deletion is unavailable in routine UI and agent scopes.
 ```ts
 type ContentSourceDescriptor =
   | { authority: "git"; gitSha: string; sourcePath: string; normalizedSnapshotHash: string }
-  | { authority: "sanity"; projectId: string; dataset: string; apiVersion: string; domainRevisionId: string; normalizedSnapshotHash: string };
+  | { authority: "d1"; databaseId: string; domainRevisionId: string; normalizedSnapshotHash: string };
 
 type ReleaseCandidateManifest = {
   candidateId: string;
@@ -622,7 +644,7 @@ type ReleaseCandidateManifest = {
   sourceAssets: Record<
     string,
     | { authority: "git"; gitSha: string; sourcePath: string; sha256: string }
-    | { authority: "sanity"; sanityAssetRef: string; mediaVersionId: string; sha256: string }
+    | { authority: "r2"; r2ObjectKey: string; mediaVersionId: string; sha256: string }
   >;
   approvalIds: string[];
   codeProvenance: {
@@ -673,13 +695,13 @@ type ActiveReleasePointer = {
 };
 ```
 
-Candidate creation first serializes and persists the complete normalized snapshot, then hashes and signs the immutable manifest. The build reads that snapshot URI and verifies the hash; it never rereads “current” Sanity content. `buildChecks`, asset release URLs, artifact hashes, and deployment IDs are not appended to the supposedly immutable candidate; they live in signed attestations and receipts.
+Candidate creation first serializes and persists the complete normalized snapshot, then hashes and signs the immutable manifest. The build reads that snapshot URI and verifies the hash; it never rereads current D1 content. `buildChecks`, asset release URLs, artifact hashes, and deployment IDs are not appended to the supposedly immutable candidate; they live in signed attestations and receipts.
 
 Hashes use canonical JSON with the record’s own hash/signature fields omitted; the signature covers the resulting digest. IDs, timestamps, map ordering, Unicode normalization, and number serialization are deterministic and contract-tested.
 
-The server—not Studio or an agent—selects `codeProvenance.gitSha` from an allowlisted protected branch commit with green required checks. It also pins the lockfile, Node version, build-image digest, and contract version. A client cannot provide arbitrary renderer code.
+The server—not the Textbook Editor or an agent—selects `codeProvenance.gitSha` from an allowlisted protected branch commit with green required checks. It also pins the lockfile, Node version, build-image digest, and contract version. A client cannot provide arbitrary renderer code.
 
-The complete restorable release is the signed candidate manifest + normalized snapshot + build attestation + immutable artifact + deployment receipt. These records have explicit R2 URIs/hashes and retention and do not depend on live Sanity revisions. Rollback changes the active release pointer/deployment as a serialized complete unit; it does not reconstruct a chapter from current database state.
+The complete restorable release is the signed candidate manifest + normalized snapshot + build attestation + immutable artifact + deployment receipt. These records have explicit R2 URIs/hashes and retention and do not depend on live D1 revisions. Rollback changes the active release pointer/deployment as a serialized complete unit; it does not reconstruct a chapter from current database state.
 
 ---
 
@@ -704,7 +726,7 @@ The complete restorable release is the signed candidate manifest + normalized sn
 | Adapter/P2 | TikTok | Add only for an actual chapter need | Provider-specific security/privacy/browser test first |
 | Adapter/P2 | Instagram/Facebook | Add only after app/token requirements are accepted | Provider-specific authenticated resolver |
 | Adapter/P2 | Mastodon, Reddit, Giphy/Tenor, SlideShare/Scribd/Issuu, TED, podcast/RSS | Link card until a chapter requirement justifies an adapter | No generic oEmbed discovery |
-| Prohibited | Arbitrary iframe/script/HTML/oEmbed HTML | Never | Reject at Studio, API, MCP, import, and build layers |
+| Prohibited | Arbitrary iframe/script/HTML/oEmbed HTML | Never | Reject at editor, API, MCP, import, and build layers |
 
 The adapter interface exists from the first implementation, so P1/P2 providers do not require a content-schema redesign.
 
@@ -754,18 +776,18 @@ published:        a fact recorded by a particular immutable release manifest
 
 A reusable asset is never globally marked “published,” because different placements and releases can use it with different captions, approvals, and versions.
 
-1. Studio or MCP calls `begin_media_upload` with a sanitized basename, claimed MIME, byte size, and SHA-256. Absolute paths and path separators are rejected.
-2. The API validates scope, creates an opaque random quarantine key, and returns a short-lived presigned URL for a dedicated private Cloudflare R2 quarantine bucket. No Sanity token is returned to any client.
+1. Editor or MCP calls `begin_media_upload` with a sanitized basename, claimed MIME, byte size, and SHA-256. Absolute paths and path separators are rejected.
+2. The API validates scope, creates an opaque random quarantine key, and returns a short-lived presigned URL for a dedicated private Cloudflare R2 quarantine bucket. No D1/R2 credential is returned to any client.
 3. A browser uploads directly to the presigned target. An agent uses an attached MCP resource/upload handle or a Skill-side streaming client restricted to an approved workspace file; the file body never passes through model context.
 4. `complete_media_upload` verifies the R2 object’s byte count and hash, then schedules the sanctioned media processor.
 5. The processor verifies the actual MIME signature, dimensions, frame count, duration, active content, and decode limits. Unsupported MIME types, active SVG, polyglots, decompression bombs, oversized files, and mismatched hashes are blocked.
-6. The server streams the verified object to Sanity’s authenticated Assets API with its server-side write token, records the returned asset reference and technical metadata, verifies the final checksum, and deletes the R2 quarantine object. A bucket lifecycle rule removes abandoned objects after 24 hours.
+6. The server promotes the verified object to the immutable private R2 media store under its content hash, records the object reference and technical metadata in D1, verifies the final checksum, and deletes the R2 quarantine object. A bucket lifecycle rule removes abandoned objects after 24 hours.
 7. System metadata becomes read-only.
 8. The instructor or media agent adds proposed rights, alt text, caption, teaching use, transcript, placement, crop, and display preset.
 9. An instructor approves rights when the license is not already deterministically verifiable.
 10. Publication materializes the exact approved asset and derivatives referenced by the release manifest.
 
-Studio uses the same custom upload input and quarantine path. The default direct Sanity asset upload is disabled for textbook media so manual and agent uploads receive the same checks.
+The standalone editor uses the same custom upload input and quarantine path, so manual and agent uploads receive the same checks.
 
 P0 disallows SVG uploads. Existing code-owned SVG diagrams may remain under the code/release pipeline until a separate sanitizer and raster fallback path is approved.
 
@@ -780,9 +802,9 @@ P0 downloadable-document formats are PDF and UTF-8 plain text only. The processo
 
 ### 6.4 GIF and animated-image behavior
 
-1. Store the original animated image as a Sanity image asset.
+1. Store the original animated image as an immutable R2 media object.
 2. Inspect dimensions, frame count, bytes, MIME, and flash/motion review status.
-3. Generate or request the Sanity `frame=1` still as the poster.
+3. Generate a first-frame still as the poster during the sanctioned media job.
 4. The public page initially renders only the still poster and a “Play animation” control.
 5. On activation, replace the poster source with the animated rendition.
 6. “Stop animation” swaps back to the still poster and returns focus predictably.
@@ -817,11 +839,11 @@ P0 downloadable-document formats are PDF and UTF-8 plain text only. The processo
 
 ### 6.7 X adapter
 
-X is the most operationally brittle P0 provider and receives a daily health check.
+X is the most operationally brittle P0 provider and receives a daily health check. Its authored rich fallback is the default experience; the official widget is a consent-gated enhancement only.
 
 - Accept only canonical public post URLs and extract the post ID.
 - Store the canonical URL/ID, display options, and instructor-authored fallback—not oEmbed HTML, mutable health state, or a cached copy of the post.
-- After activation load the official `https://platform.x.com/widgets.js` and call `twttr.widgets.createTweet()` with `dnt: true` and approved options.
+- Only after explicit activation and connection disclosure, load the official `https://platform.x.com/widgets.js` and call `twttr.widgets.createTweet()` with `dnt: true` and approved options.
 - Do not reconstruct the post with custom HTML, create a screenshot-style imitation, or place X content in a custom iframe.
 - Add X script/frame/connect domains only to pages/releases containing an X block, after a CSP report-only compatibility pass in Chrome, Safari, and Firefox.
 - Deleted, protected, suspended, age-gated, or unavailable content must surface the instructor-authored summary and canonical link. An edited post remains live through the official widget; a detected edit may raise an editorial-review alert but does not trigger a counterfeit cached rendering.
@@ -829,7 +851,7 @@ X is the most operationally brittle P0 provider and receives a daily health chec
 - The reader keeps the fallback visible until `twttr.widgets.createTweet()` resolves with an inserted element. Script-load failure, promise rejection, a missing returned element, or timeout restores the fallback and direct link.
 - Provider text does not enter agent context unless the instructor explicitly asks to inspect it. Provider content is untrusted and cannot influence tool policy.
 
-The official X widget is the one explicit P0 third-party-script exception: the script URL and invocation are code-owned by the reviewed adapter and cannot be supplied or changed by chapter content. It still executes in the reader document after activation, which is a larger trust grant than a cross-origin video iframe. Phase 0 must record acceptance of that risk. If that exception is not accepted—or if X’s current policy/browser behavior fails the gate—the supported X experience becomes the same rich citation/fallback card plus “Open on X,” not arbitrary code or a custom iframe.
+The official X widget is the one explicit P0 third-party-script exception: the script URL and invocation are code-owned by the reviewed adapter and cannot be supplied or changed by chapter content. It executes only after activation, which is a larger trust grant than a cross-origin video iframe. If it fails policy/browser gates, the supported X experience remains the rich citation/fallback card plus “Open on X,” never arbitrary code or a custom iframe.
 
 ### 6.8 Authoring-time URL resolver
 
@@ -891,16 +913,16 @@ No provider request may occur before activation. `loading="lazy"` is not suffici
 
 ## 7. Browser authoring experience
 
-Deploy Textbook Studio at a protected hostname such as `studio.ethicsandai.your-digital-life.org`. It is a custom Studio tool, not an exposed ordinary Sanity document desk. The authenticated instructor has read-only Content Lake access; all edits, uploads, approvals, and releases call the Content API with an explicit `changeSetId`, base revision, idempotency key, and actor/run identity.
+Deploy the standalone Textbook Editor at a protected hostname such as `editor.ethicsandai.your-digital-life.org`. The authenticated instructor has no direct database access; all edits, uploads, approvals, and releases call the Content API with an explicit `changeSetId`, base revision, idempotency key, and actor/run identity.
 
-Draft preview uses a cross-site versioned Workers preview origin such as `https://<version>-ethicsandai-preview.<account>.workers.dev`, protected by Cloudflare Access. It receives a one-time, short-lived, read-only token bound to one immutable R2 snapshot hash. It has no Sanity credential, authoring cookie, Content API mutation scope, or access to another draft. Responses are `Cache-Control: no-store`, `X-Robots-Tag: noindex`, and strict CSP; `frame-ancestors` permits only the exact Studio origin. Preview XSS therefore cannot reuse an authoring session.
+Draft preview uses a cross-site versioned Workers preview origin such as `https://<version>-ethicsandai-preview.<account>.workers.dev`, protected by Cloudflare Access. It receives a one-time, short-lived, read-only token bound to one immutable R2 snapshot hash. It has no database credential, authoring cookie, Content API mutation scope, or access to another draft. Responses are `Cache-Control: no-store`, `X-Robots-Tag: noindex`, and strict CSP; `frame-ancestors` permits only the exact editor origin. Preview XSS therefore cannot reuse an authoring session.
 
 ### 7.1 Chapter workspace
 
 The chapter screen has these tabs:
 
 1. **Outline** — headings, block types, stable IDs, anchors, warnings, and drag-to-move controls.
-2. **Body** — Portable Text editing with renderer-owned custom blocks for callouts, tables, figures, embeds, and diagrams.
+2. **Body** — normalized structured-block editing with renderer-owned blocks for callouts, tables, figures, embeds, and diagrams.
 3. **Prompt Checkpoints** — the dedicated feature described below.
 4. **Media** — chapter placements plus reusable library search/upload.
 5. **Sources & Rights** — citations, excerpts, licenses, rights status, and blocking omissions.
@@ -986,7 +1008,7 @@ The UI never offers a raw “Embed code” field.
 - `Create release candidate` pins all chapters and assets.
 - `Publish release` requires an instructor-scoped step-up confirmation for that exact release ID.
 - `Restore release` requires the same and restores a complete manifest/deployment.
-- Ordinary Sanity “Publish” actions are not registered in the Textbook Editor; only the validated release workflow can change the public textbook.
+- The standalone editor has no ordinary publish action; only the validated release workflow can change the public textbook.
 
 ---
 
@@ -1005,11 +1027,11 @@ Implement the API as a versioned Cloudflare Worker at a protected same-site orig
 | Build worker | Frozen snapshot only | No | Derivatives only | No | No | Deployment candidate only | No |
 | Migration operator | Time-limited full import | Time-limited | Yes | No | No | No | No |
 
-ADR 0004 must select and prove the complete identity path before schema implementation. The preferred P0 arrangement is Cloudflare Access with the existing GitHub identity for the Studio origin, Access JWT validation at the API, and a separate OAuth 2.1 issuer/JWKS plus short-lived scoped tokens for MCP agents. The ADR records issuers, audiences, JWKS caching, PKCE, agent-client registration, token lifetimes/rotation/revocation, step-up reauthentication, and the named emergency account. It also proves whether the Sanity Studio shell can operate with read-only/no browser-write access on the selected Sanity plan; custom roles are not assumed because they may require an Enterprise plan. If it cannot, the same Textbook Editor tool ships as a standalone React app over the Content API while Sanity remains the service-only datastore.
+ADR 0004 selects the complete identity path before schema implementation: GitHub OAuth with an instructor allowlist for the standalone editor, exact-origin and session-bound CSRF protection at the API, and short-lived scoped OAuth tokens for MCP agents. It records issuer/audience, JWKS caching, PKCE, agent-client registration, token lifetimes/rotation/revocation, step-up reauthentication, and the named emergency account.
 
-Store Sanity service credentials only in server-side secrets. A Skill or MCP connection never grants authority by itself; the API checks the authenticated scope on every call. No browser or agent receives a Sanity write token.
+Store D1/R2 bindings only in server-side Workers. A Skill or MCP connection never grants authority by itself; the API checks the authenticated scope on every call. No browser or agent receives a database/write credential.
 
-Browser mutations also require an allowed `Origin`, a CSRF token bound to the instructor session, and strict same-site cookie settings. Agent calls use bearer tokens and never browser cookies. CORS permits only the named Studio/preview origins. The public reader origin receives no authoring credential and is not an allowed mutation origin.
+Browser mutations also require an allowed `Origin`, a CSRF token bound to the instructor session, and strict same-site cookie settings. Agent calls use bearer tokens and never browser cookies. CORS permits only the named Textbook Editor and preview origins. The public reader origin receives no authoring credential and is not an allowed mutation origin.
 
 ### 8.2 Mutation envelope
 
@@ -1035,7 +1057,7 @@ Rules:
 - validation failure: `422 VALIDATION_FAILED` with stable machine codes and passage/block paths;
 - insufficient scope: `403 FORBIDDEN`;
 - unsupported provider: `422 PROVIDER_NOT_SUPPORTED` plus link-card proposal;
-- no partial multi-document merge; create revisions, advance all canonical Sanity heads, and write an audit-outbox record in one revision-guarded Sanity transaction, then mirror operational state to D1 idempotently.
+- no partial multi-document merge; create revisions, advance all canonical D1 heads, and write an audit record in one revision-guarded D1 transaction.
 
 ### 8.3 Read endpoints
 
@@ -1133,7 +1155,7 @@ POST /v1/releases/{releaseId}:verifyDeployment
 - an exact candidate/restore release ID;
 - a single-use short-lived approval token bound to instructor identity, action, candidate-manifest hash, build-attestation hash, exact Cloudflare version/artifact, and current active-release ID;
 - an idempotency key;
-- a typed confirmation phrase in the Studio UI;
+- a typed confirmation phrase in the editor UI;
 - complete audit logging.
 
 Any change to the candidate, approval set, check result, artifact, permission, Cloudflare version, or active release invalidates the token. Promotion and rollback enter one book-wide serialized D1 queue/lock. Candidate sequence numbers are monotonic; promotion performs compare-and-swap against `expectedActiveReleaseId`; stale candidates fail closed. Rollback uses the same lock and CAS path so it cannot race a publish.
@@ -1160,7 +1182,7 @@ Logs contain no bearer tokens, full draft bodies, uploaded file bodies, or provi
 
 ## 9. MCP and Skills
 
-The MCP server is an adapter over the Content API. It does not connect directly to Sanity with a general-purpose token.
+The MCP server is an adapter over the Content API. It does not connect directly to D1/R2 with a general-purpose credential.
 
 ### 9.1 P0 MCP tools
 
@@ -1331,11 +1353,11 @@ smoke-test preview -> instructor step-up approval
 serialized expected-active CAS -> versions deploy 100% -> receipt/pointer
 ```
 
-Candidate creation persists and hashes the full snapshot before approval, eliminating a read-after-approval race. The build consumes only that snapshot. Ordinary draft saves do not build production. Because all accepted mutations already pass through the API, a Sanity webhook is not a publication trigger; if retained, a signed webhook only detects/alerts on out-of-band drift.
+Candidate creation persists and hashes the full snapshot before approval, eliminating a read-after-approval race. The build consumes only that snapshot. Ordinary draft saves do not build production. Because all accepted mutations already pass through the API, no storage webhook is a publication trigger; optional drift checks only detect/alert on out-of-band change.
 
 No content commit is created. CI checks out the renderer code at the pinned Git SHA and materializes the approved snapshot into an ephemeral build directory.
 
-The materializer downloads every approved Sanity image/file used by the release, verifies its recorded SHA-256, writes the selected original or derivative to a content-addressed same-origin release path such as `/media/{sha256}.{ext}`, and rewrites the public reference. The build attestation records the complete `Sanity asset ref -> release URL -> SHA-256` mapping. External-provider audio/video/post content is not downloaded. If a native file cannot fit the tested Cloudflare artifact budget, publication blocks with a remediation message; P0 does not silently fall back to a public Sanity CDN URL.
+The materializer reads every approved R2 image/file used by the release, verifies its recorded SHA-256, writes the selected original or derivative to a content-addressed same-origin release path such as `/media/{sha256}.{ext}`, and rewrites the public reference. The build attestation records the complete `R2 object -> release URL -> SHA-256` mapping. External-provider audio/video/post content is not downloaded. If a native file cannot fit the tested Cloudflare artifact budget, publication blocks with a remediation message; P0 does not silently fall back to a mutable public asset URL.
 
 Exact Cloudflare P0 flow:
 
@@ -1365,16 +1387,16 @@ The same frozen snapshot produces:
 - checkpoint payloads and downloadable reading-record template;
 - future voice/audio output.
 
-No derivative reads “current” Sanity state after the release is frozen.
+No derivative reads current D1/R2 state after the release is frozen.
 
 ### 10.3 Backups
 
-- Nightly canonical Sanity dataset export to off-provider object storage.
+- Nightly canonical D1 export and R2 inventory to an off-provider backup target.
 - Nightly asset inventory with hashes and references.
 - Every release stores its signed candidate manifest, materialized snapshot, build attestation, complete immutable artifact, checksums, code provenance, deployment receipt, and active-pointer history.
 - Weekly full export integrity check.
 - Monthly restore drill into a clean development dataset.
-- Quarterly local build from the restored export with network access to Sanity and media providers disabled.
+- Quarterly local build from the restored export with network access to D1/R2 and media providers disabled.
 - Defined retention for drafts, audit logs, releases, and deleted/tombstoned identities.
 
 Backups are not a second routine editing surface.
@@ -1391,7 +1413,7 @@ Rollback restores the prior Cloudflare deployment/release pointer and verifies:
 - homepage and representative chapter checks;
 - no mixed old/new cache state.
 
-Target: restore the prior production release within five minutes without modifying Sanity content.
+Target: restore the prior production release within five minutes without modifying canonical D1 content.
 
 ---
 
@@ -1412,20 +1434,18 @@ docs/
 .github/
   workflows/
     ci.yml
-    deploy-studio.yml
+    deploy-editor.yml
     content-release.yml
     content-backup.yml
     content-drift-audit.yml
     media-process.yml
     deploy-mcp.yml
-    sanity-staging-migration.yml
+    d1-staging-migration.yml
 
-studio/
+editor/
   package.json
   tsconfig.json
-  sanity.config.ts
-  sanity.cli.ts
-  schemaTypes/
+  src/
     book.ts
     part.ts
     chapter.ts
@@ -1453,11 +1473,10 @@ studio/
     RightsReviewInput.tsx
     MultiSurfacePreview.tsx
     SemanticDiff.tsx
-  tools/textbookEditor/
-    TextbookEditorTool.tsx
+  textbookEditor/
+    TextbookEditor.tsx
     apiClient.ts
     changeSetSession.ts
-  structure/removeWritableDesks.ts
 
 packages/
   content-contract/
@@ -1470,7 +1489,7 @@ packages/
   content-repository/
     src/ContentRepository.ts
     src/GitContentRepository.ts
-    src/SanityContentRepository.ts
+    src/D1ContentRepository.ts
   content-renderer/
     src/portableText/
     src/media/
@@ -1516,9 +1535,6 @@ workers/
     src/releases/
     src/jobs/
     src/provider-resolver/
-  sanity-drift-webhook/
-    wrangler.jsonc
-    src/
   job-dispatcher/
     package.json
     wrangler.jsonc
@@ -1541,10 +1557,10 @@ skills/
   phil123-release-steward/SKILL.md
 
 scripts/
-  sanity/import-git.mts
-  sanity/export-snapshot.mts
-  sanity/roundtrip.mts
-  sanity/drift-audit.mts
+  d1/import-git.mts
+  d1/export-snapshot.mts
+  d1/roundtrip.mts
+  d1/drift-audit.mts
   release/build-release.mts
   release/verify-release.mts
   media/check-embed-health.mts
@@ -1589,15 +1605,15 @@ Commit names and validation for configuration, never secret values:
 
 | Component | Nonsecret config/binding | Secret/credential |
 |---|---|---|
-| Studio | API origin, preview origin, contract version, Sanity project/dataset IDs | Cloudflare Access session handled by platform; no Sanity write token |
-| Content API | D1 `CONTROL_DB`; R2 `UPLOAD_QUARANTINE`, `SNAPSHOTS`, `ARTIFACTS`, `BACKUPS`; Queues `MEDIA_JOBS`, `RELEASE_JOBS`; allowed origins/audiences; Sanity API version/project/dataset; GitHub repo/workflow IDs | Sanity service write token; approval/signing keys; OAuth/JWT verification material where not public JWKS; GitHub App/server credential |
+| Editor | API origin, preview origin, contract version | GitHub OAuth client/session configuration; no D1/R2 browser credential |
+| Content API | D1 `CONTROL_DB`; R2 `UPLOAD_QUARANTINE`, `MEDIA`, `SNAPSHOTS`, `ARTIFACTS`, `BACKUPS`; Queues `MEDIA_JOBS`, `RELEASE_JOBS`; allowed origins/audiences; GitHub repo/workflow IDs | approval/signing keys; OAuth/JWT verification material where not public JWKS; GitHub App/server credential |
 | Job dispatcher | Queues + DLQs; workflow names; callback origin | GitHub App credential; signed-callback key |
-| Media workflow | job ID, signed download/callback URLs, processor image digest | No long-lived Sanity/browser token; short-lived scoped job credential only |
+| Media workflow | job ID, signed download/callback URLs, processor image digest | No long-lived database/browser credential; short-lived scoped job credential only |
 | Release workflow | candidate/snapshot URI+hash, protected code SHA, Node/image/lockfile digests | Cloudflare version-upload token; short-lived R2 read; signed callback key |
-| Preview | R2 snapshot binding, exact Studio frame origin, token issuer/audience | one-time snapshot-token verification key |
-| MCP | Content API origin/version, OAuth issuer/audience, tool limits | client/session tokens supplied at runtime; no Sanity credential |
+| Preview | R2 snapshot binding, exact Textbook Editor frame origin, token issuer/audience | one-time snapshot-token verification key |
+| MCP | Content API origin/version, OAuth issuer/audience, tool limits | client/session tokens supplied at runtime; no database credential |
 
-Each workspace commits `package.json`, `tsconfig.json`, `wrangler.jsonc` or Sanity config, generated binding types, and a redacted `.dev.vars.example` containing names only. `wrangler.jsonc` declares required secrets; CI fails on missing bindings, unpinned API versions, or an unexpected production origin.
+Each workspace commits `package.json`, `tsconfig.json`, `wrangler.jsonc`, generated binding types, and a redacted `.dev.vars.example` containing names only. `wrangler.jsonc` declares required secrets; CI fails on missing bindings, unpinned API versions, or an unexpected production origin.
 
 ---
 
@@ -1611,10 +1627,10 @@ Each workspace commits `package.json`, `tsconfig.json`, `wrangler.jsonc` or Sani
 
 Tasks:
 
-1. Approve the architecture decision: Sanity becomes content authority only after canary; the static release boundary remains; X’s official post widget is the single reviewed P0 third-party-script exception or X is fallback-only.
-2. Run a written Sanity feasibility/cost gate before creating schemas: selected plan price; private-dataset behavior; Studio/browser authentication; built-in read-only role behavior; custom-role price/granularity; revision-history retention; API/build/asset/transform quotas; asset export including bytes; transaction limits; animated-image behavior; system-field protection; and dataset/asset restoration. Set an annual cost ceiling.
-3. If Sanity cannot meet the gate without an unacceptable plan or browser write authority, stop and adopt a replacement ADR before schema work. Preferred fallback: the same domain contracts/API over Cloudflare D1/R2 with a standalone Textbook Editor; do not drift into an unplanned hybrid.
-4. Approve ADR 0004’s exact human/agent auth, CSRF/CORS, token, step-up, Sanity-role, emergency-access, and credential-rotation design.
+1. Record the approved architecture: standalone editor with D1/R2 content authority after canary; Git code authority; immutable static releases; hard operating ceiling of $5/month.
+2. Record rejection of Sanity: its free tier is public-only/insufficient for required history, and its usable private tier is $15/seat/month, above the ceiling.
+3. Approve the D1/R2 retention, backup, export, and restore design before schema implementation.
+4. Approve ADR 0004’s exact GitHub OAuth instructor allowlist, agent scopes, CSRF/CORS, token, step-up, emergency-access, and credential-rotation design.
 5. Amend tracked architecture/authoring/privacy/deployment/content-model/security/rights/voice documents to reflect the approved transition.
 6. Correct current tracked documentation drift, including the omission of `reading-record.json` from `docs/CONTENT_MODEL.md`.
 7. Preserve this currently untracked reviewed plan before leaving the dirty checkout: record its SHA-256, create the new worktree, then add the same checked file as the first implementation-branch change. Do not assume `git worktree add` carries an untracked file.
@@ -1641,7 +1657,7 @@ Tasks:
 12. Capture golden desktop, 390 px mobile, print, no-JS, offline, current CSP/header, and provider-network fixtures for every chapter plus interactive checkpoint behavior.
 13. Record current response privacy, browser storage, network, inline-script/style, and deployment/cache behavior.
 14. Create the five ADRs listed in the repository map.
-15. After the vendor gate passes, create Sanity development and staging datasets with separate least-privilege service credentials; defer production provisioning until release infrastructure is ready.
+15. Create D1 development/staging databases and separate private R2 media/quarantine/snapshot/artifact/backup prefixes; defer production provisioning until release infrastructure is ready.
 16. Create D1 development/staging databases, private R2 quarantine/snapshot/artifact buckets, Queue/DLQ pairs, and a quarantine 24-hour lifecycle rule.
 17. Decide the initial short-media byte/duration budgets from representative files and actual deployment limits.
 
@@ -1653,7 +1669,7 @@ Exit criteria:
 - governance documents permit the new architecture;
 - the implementation branch is clean and based on current `origin/main`;
 - the reviewed plan exists in that branch with the recorded hash;
-- Sanity capability/cost/auth feasibility is proven or the replacement ADR is approved;
+- the approved D1/R2 architecture, $5/month ceiling, and GitHub OAuth scope design are documented;
 - no routine content authority has moved yet.
 
 ### Phase 1 — Shared contract and vertical spike
@@ -1666,11 +1682,11 @@ Tasks:
 
 1. Add npm workspaces and `packages/content-contract`.
 2. Inventory every current book/chapter sidecar and encode book/part/chapter, annotations, world/entities/relationships, diagrams, sources, rights, reading-record objective/license/checkpoints, IDs, exports, and derivative requirements in Zod/JSON Schema.
-3. Define draft vs publishable `ChapterBundle`, `BookReleaseSnapshot`, Portable Text normalization boundary, block union, identity aliases/tombstones, multi-document change sets, immutable media versions, rights/approval cases, embed/link, and candidate/attestation/receipt contracts.
+3. Define draft vs publishable `ChapterBundle`, `BookReleaseSnapshot`, normalized block-storage boundary, block union, identity aliases/tombstones, multi-document change sets, immutable media versions, rights/approval cases, embed/link, and candidate/attestation/receipt contracts.
 4. Add the repository interface plus Git implementation.
-5. Configure minimal schemas in the approved development dataset.
+5. Configure D1 migrations and R2 bindings for the approved development environment.
 6. Import Chapter 7, its three checkpoints, media, sources, rights, stable IDs, and one synthetic “block gallery” covering every block type.
-7. Add a Sanity repository implementation.
+7. Add a D1/R2 repository implementation.
 8. Materialize both sources through the same renderer.
 9. Compare:
    - every stable ID;
@@ -1682,7 +1698,7 @@ Tasks:
    - desktop/mobile/print screenshots.
 10. Spike one still image, one GIF, one YouTube URL, and one X URL through the intended data model and preview.
 11. Spike one small native MP4 through the final first-party path and verify byte-range seeking, MIME headers, CORS, poster, captions, and bandwidth behavior.
-12. Validate Sanity export/restore into a clean dataset.
+12. Validate D1/R2 export/restore into a clean environment.
 
 Exit criteria:
 
@@ -1691,14 +1707,14 @@ Exit criteria:
 - the three checkpoint records render exactly once inline and once through the side-panel data path;
 - no provider request occurs before activation;
 - GIF first-frame/play/stop works with reduced motion;
-- Sanity export/restore produces the same contract hashes.
+- D1/R2 export/restore produces the same contract hashes.
 - every current sidecar is pinned in the normalized content graph or explicitly classified as code-owned.
 
 Kill/redirect criteria:
 
-- If Portable Text cannot preserve a legacy structure losslessly, keep that structure as locked `legacyMarkup`; do not force conversion.
+- If normalized blocks cannot preserve a legacy structure losslessly, keep that structure as locked `legacyMarkup`; do not force conversion.
 - If an official provider cannot meet privacy/accessibility/fallback gates, ship the rich link-card fallback until its adapter passes; never relax to raw HTML.
-- If Sanity export cannot reproduce the snapshot deterministically, stop before full import and fix the repository abstraction/contract.
+- If D1/R2 export cannot reproduce the snapshot deterministically, stop before full import and fix the repository abstraction/contract.
 
 ### Phase 2 — Foundational control plane and full shadow migration
 
@@ -1718,19 +1734,19 @@ Kill/redirect criteria:
 8. Implement upload tickets/quarantine completion and provider-resolver skeletons.
 9. Implement the authority registry with every chapter set to Git.
 
-**2A gate:** No mutating Studio, media, or provider UI work begins until auth, IDs, isolated change sets, base revisions, idempotency, audit, and preview-token contracts pass integration tests.
+**2A gate:** No mutating Textbook Editor, media, or provider UI work begins until auth, IDs, isolated change sets, base revisions, idempotency, audit, and preview-token contracts pass integration tests.
 
 #### Phase 2B — Full shadow migration
 
-1. Complete Sanity revision/media/rights/entity/relationship schemas; make ordinary Studio desks read-only/absent.
-2. Build idempotent `import-git`, `export-snapshot`, `roundtrip`, and `drift-audit` scripts.
+1. Complete D1 revision/media/rights/entity/relationship migrations and repository mappings; direct database writes remain unavailable outside the API.
+2. Build idempotent D1/R2 `import-git`, `export-snapshot`, `roundtrip`, and `drift-audit` scripts.
 3. Import all book/part metadata, chapters, annotations, reading objectives/checkpoints, people, concepts, traditions, world-layer records, sources, media/Wikimedia records, rights, diagrams, stable IDs, aliases, tombstones, and relationships.
 4. Record import provenance and source hashes on every imported document.
-5. Build frozen Sanity snapshots and materialize the current content tree in a temporary directory.
-6. Run existing and new validation/build/visual checks from both Git and Sanity snapshots.
+5. Build frozen D1/R2 snapshots and materialize the current content tree in a temporary directory.
+6. Run existing and new validation/build/visual checks from both Git and D1/R2 snapshots.
 7. Add dependency-graph validation for every media/source/entity/diagram placement and checkpoint anchor.
 8. Add stored-XSS sanitization tests for all legacy/raw markup.
-9. Keep every authority-registry entry on Git; direct Sanity writes remain migration-only.
+9. Keep every authority-registry entry on Git; direct D1/R2 writes remain API/migration-only.
 
 Exit criteria:
 
@@ -1738,10 +1754,10 @@ Exit criteria:
 - exactly 18 chapters, 268 section IDs, 1,939 passage IDs, 54 checkpoint anchors, 37 media records/assets, and all recorded sidecars/legacy structures survive;
 - every anchor target exists and every excerpt hash is initialized;
 - all generated derivatives match or have approved diffs;
-- the Sanity shadow cannot be used for production authoring;
+- the D1/R2 shadow cannot be used for production authoring;
 - repeated imports are idempotent.
 
-### Phase 3 — Instructor Studio and prompt-checkpoint editor
+### Phase 3 — Standalone instructor editor and prompt-checkpoint editor
 
 - **Estimate:** 1.5–2 weeks
 - **Depends on:** Phase 2A; can overlap Phase 2B and later API hardening
@@ -1749,16 +1765,16 @@ Exit criteria:
 
 Tasks:
 
-1. Implement the custom Textbook Editor tool and remove writable ordinary document desks/actions.
+1. Implement the standalone Textbook Editor with no direct database document desk/actions.
 2. Bind every screen/autosave to an explicit isolated `changeSetId`; route all reads/mutations through the Content API.
-3. Configure Portable Text/custom block projections and lock legacy blocks.
+3. Configure normalized block projections and lock legacy blocks.
 4. Implement stable-ID display and API-backed dependency-aware block move/split/merge/delete commands.
 5. Build the Prompt Checkpoints tab with Add/Edit/Move Anchor/Replace/Preview/Validate.
 6. Render prompt preview inline and in the actual side-panel component.
 7. Add semantic-diff and dependency-impact views.
 8. Add one-time cross-site protected multi-surface preview.
 9. Add revision restore-as-new-change-set.
-10. Test two concurrent Studio change sets plus the complete manual workflow on Chapter 7.
+10. Test two concurrent Textbook Editor change sets plus the complete manual workflow on Chapter 7.
 
 Exit criteria:
 
@@ -1766,7 +1782,7 @@ Exit criteria:
 - the editor cannot create a fourth checkpoint or publish an incomplete set;
 - stable IDs cannot be casually edited or orphaned;
 - draft preview matches production styling at desktop/mobile/print;
-- one rejected or stale Studio change set cannot contaminate another or the canonical head;
+- one rejected or stale editor change set cannot contaminate another or the canonical head;
 - no public content authority has moved yet.
 
 ### Phase 4 — Native media pipeline
@@ -1821,7 +1837,7 @@ Tasks:
 Exit criteria:
 
 - browser network tests prove zero provider requests before activation;
-- raw embed HTML and unsupported options are rejected through Studio and API;
+- raw embed HTML and unsupported options are rejected through the Textbook Editor and API;
 - public/private/deleted/restricted/timeout cases degrade cleanly;
 - X official rendering passes the provider-policy and browser matrix;
 - generic link cards require no arbitrary fetch and render on every output surface;
@@ -1831,23 +1847,23 @@ Exit criteria:
 ### Phase 6 — Domain API completion and adversarial hardening
 
 - **Estimate:** 1.5–2 weeks
-- **Depends on:** Phase 2A plus implemented Studio/media/embed operations from Phases 3–5
+- **Depends on:** Phase 2A plus implemented Textbook Editor/media/embed operations from Phases 3–5
 - **Purpose:** Complete cross-domain review/release operations and prove the control plane under attack and failure.
 
 Tasks:
 
 1. Publish/freeze OpenAPI 3.1 and generated MCP schemas from the shared contract.
-2. Complete multi-document CAS merge/rebase, append-only domain revisions, atomic Sanity head/audit-outbox transaction, outbox-to-D1 recovery, and isolated-change-set retention.
+2. Complete multi-document CAS merge/rebase, append-only domain revisions, atomic D1 head/audit transaction, and isolated-change-set retention.
 3. Complete content/rights/editorial approval records and hash invalidation.
 4. Complete media/version, embed/link, review, candidate, attestation, deployment, restore, and verification endpoints.
 5. Implement single-use approval tokens, release sequence, book-wide lock/queue, expected-active CAS, and crash reconciler.
 6. Complete structured redacted audit events, rate limits, per-run budgets, circuit breakers, DLQ operations, and recursive-event suppression.
 7. Add hostile metadata, stored-XSS, SSRF, retry, conflict, privilege-escalation, log-redaction, multi-document partial-failure, concurrent-publish, publish/rollback-race, and expired-token suites.
-8. Pen-test Studio attempts to bypass the API/direct-write boundary and verify Sanity permissions/service tokens.
+8. Pen-test editor attempts to bypass the API/direct-write boundary and verify D1/R2 binding isolation.
 
 Exit criteria:
 
-- agents cannot write directly to Sanity;
+- agents cannot write directly to D1/R2;
 - the same server validators run for agent writes and release checks;
 - concurrent same-base edits produce a semantic `409`, not last-write-wins;
 - repeated requests produce exactly one change/media/release;
@@ -1892,7 +1908,7 @@ Exit criteria:
 
 Tasks:
 
-1. Provision the production Sanity dataset, D1/R2/Queue bindings, protected GitHub environments, and least-privilege secrets only after prior gates pass.
+1. Provision production D1/R2/Queue bindings, protected GitHub environments, and least-privilege secrets only after prior gates pass.
 2. Implement persisted complete snapshots, immutable signed candidate manifests, server-selected protected code provenance, build attestations, deployment receipts, and active pointers.
 3. Add signed/idempotent release queue, monotonic sequence, book-wide lock, expected-active CAS, stale-candidate rejection, and crash reconciler.
 4. Materialize the candidate snapshot into an ephemeral checkout and require all generators/validators to use its explicit `--snapshot-root`.
@@ -1913,7 +1929,7 @@ Exit criteria:
 - only a protected green renderer SHA/pinned toolchain can build a candidate;
 - deployed CSP/document/media headers match the signed/generated policy;
 - prior release rollback finishes within five minutes;
-- restored export builds locally without Sanity or media-provider availability.
+- restored export builds locally without D1/R2 or media-provider availability.
 
 ### Phase 9 — Canary, cutover, and retirement of Git authoring
 
@@ -1924,7 +1940,7 @@ Exit criteria:
 Tasks:
 
 1. Select Chapter 7 as canary because it exercises the reading record and media path.
-2. Freeze Git editing for that chapter and change only its per-chapter authority-registry entry to a pinned Sanity revision/snapshot; retain Git authority for the other 17.
+2. Freeze Git editing for that chapter and change only its per-chapter authority-registry entry to a pinned D1 revision/R2 snapshot; retain Git authority for the other 17.
 3. Complete real manual and agent/API workflows:
    - prose correction;
    - prompt-checkpoint revision;
@@ -1935,14 +1951,14 @@ Tasks:
 5. Run privacy/network/accessibility/security/rollback checks.
 6. Collect instructor friction notes and fix blocking UX.
 7. Cut over the remaining chapters in controlled batches.
-8. Switch every remaining per-chapter authority-registry entry to its pinned Sanity source only after its batch gates pass.
-9. Make the Git content tree read-only/frozen, disable the Git editor’s write path, and prove production refuses fixture fallback for Sanity-authoritative chapters.
+8. Switch every remaining per-chapter authority-registry entry to its pinned D1/R2 source only after its batch gates pass.
+9. Make the Git content tree read-only/frozen, disable the Git editor’s write path, and prove production refuses fixture fallback for D1-authoritative chapters.
 10. After the defined rollback window, retire the regeneration workflow and revoke legacy Git editor/auth write credentials.
 11. Document the support and incident procedure.
 
 Exit criteria:
 
-- every chapter is authored in Sanity and published through immutable releases;
+- every chapter is authored in the standalone editor/D1 and published through immutable releases;
 - no routine content update requires Git;
 - the old Git editor cannot create split-brain authority;
 - all 18 chapters, IDs, checkpoints, media, rights, and derivatives pass the final parity manifest;
@@ -1958,13 +1974,13 @@ Tasks:
 
 1. Add Spotify, SoundCloud, and Bluesky adapters through the same contract.
 2. Add MP4/WebM generation for large GIFs and compare performance.
-3. Evaluate Sanity Media Library/Mux or another adaptive streaming service only if instructor-uploaded long video becomes a real requirement.
+3. Evaluate Mux or another adaptive streaming service only if instructor-uploaded long video becomes a real requirement and its cost is separately approved.
 4. Add a provider-adapter conformance kit so new providers inherit URL, CSP, fallback, health, print, offline, accessibility, and security tests.
 5. Add TikTok only when a chapter requires it and it passes the browser/privacy matrix.
 6. Add Instagram/Facebook only after app/token operational costs are accepted.
 7. Run quarterly dependency, token, CSP, provider-policy, and restore audits.
 8. Review failed health checks and replace brittle embeds with first-party sources when practical.
-9. Improve Studio ergonomics using real authoring friction, not speculative WYSIWYG features.
+9. Improve Textbook Editor ergonomics using real authoring friction, not speculative WYSIWYG features.
 10. Maintain backward-compatible API/MCP schema versions and migration guides.
 
 Exit criteria for each new provider:
@@ -1976,7 +1992,7 @@ Exit criteria for each new provider:
 - authored fallback/no-JS/offline/print output;
 - removed/restricted content behavior;
 - policy and attribution record;
-- API, Studio, MCP, security, and visual tests.
+- API, Textbook Editor, MCP, security, and visual tests.
 
 ---
 
@@ -1989,7 +2005,7 @@ Phase 1 shared contract/spike
    |
 Phase 2A API/auth/change-set/operations spine
    |             |                 |
-   |             |                 +--> Phase 3 Studio/checkpoints --+
+   |             |                 +--> Phase 3 Editor/checkpoints --+
    |             +--------------------> Phase 4 native media ---------+
    +----------------------------------> Phase 5 provider embeds ------+
    |                                                               |
@@ -2008,7 +2024,7 @@ Phase 2B full shadow import -----------------------------------------+
 Recommended ownership lanes:
 
 - **Lane A — Contract and migration:** shared schemas, IDs, repository adapters, import/export, parity tests.
-- **Lane B — Studio and prompts:** manual UX, anchor editor, preview, diff, revisions.
+- **Lane B — Editor and prompts:** manual UX, anchor editor, preview, diff, revisions.
 - **Lane C — Media and embeds:** uploads, rights, renderers, provider registry, CSP, health.
 - **Lane D — API and release:** auth, semantic operations, MCP, audit, CI, deployment, rollback.
 
@@ -2022,11 +2038,11 @@ Only one lane owns a file/module at a time. Contract changes require cross-lane 
 
 | Suite | Proves |
 |---|---|
-| Contract | Zod/JSON Schema/OpenAPI/Sanity/MCP agree on fields, enums, and versions |
+| Contract | Zod/JSON Schema/OpenAPI/D1/MCP agree on fields, enums, and versions |
 | Migration | All IDs, raw structures, checkpoints, rights, media, and sources survive import/export |
-| Repository parity | Git and Sanity adapters emit equivalent `ChapterBundle` snapshots during shadow mode |
+| Repository parity | Git and D1/R2 adapters emit equivalent `ChapterBundle` snapshots during shadow mode |
 | API | Auth, scopes, revision guards, idempotency, errors, transactions, audit events |
-| Change-set isolation | Multi-document working snapshots, CAS merge/rebase, rejection, concurrent Studio/agent sessions |
+| Change-set isolation | Multi-document working snapshots, CAS merge/rebase, rejection, concurrent editor/agent sessions |
 | Security | Stored XSS, URL schemes, event handlers, SVG, SSRF, redirects, DNS rebinding, polyglots, oversized assets |
 | Prompt | Exactly three, ordered slots, valid anchors/excerpt hashes, supported response structure, one shared inline/sidebar source |
 | Media | MIME/hash/dimensions, rights, alt/caption, placement, responsive variants, GIF controls, captions/transcripts |
@@ -2160,8 +2176,8 @@ npm run release:verify -- --candidate <candidate-id>
 
 | Severity | Failure | Guardrail | Required proof |
 |---|---|---|---|
-| Critical | Git and Sanity both writable | Per-chapter authority registry and one-way cutover | Edit attempts on both sides; nonauthority path is rejected |
-| Critical | Studio bypasses API invariants | Read-only/removed desks; custom tool uses isolated API change sets | Direct Sanity mutation denied; every save has actor/base/idempotency/audit |
+| Critical | Git and D1 both writable | Per-chapter authority registry and one-way cutover | Edit attempts on both sides; nonauthority path is rejected |
+| Critical | Editor bypasses API invariants | Standalone editor uses isolated API change sets | Direct D1/R2 mutation denied; every save has actor/base/idempotency/audit |
 | Critical | Concurrent change sets contaminate each other | Namespaced working docs and CAS multi-document merge | Reject/stale one proposal; other and canonical heads remain unchanged |
 | Critical | WYSIWYG destroys IDs/raw structures | Lossless typed/hybrid model and locked legacy blocks | Full import/export ID, DOM, and visual parity |
 | Critical | Passage edit silently invalidates prompts/media | Dependency graph and excerpt hash review | Rewrite/split/move/delete anchored passage; release blocks correctly |
@@ -2170,7 +2186,7 @@ npm run release:verify -- --candidate <candidate-id>
 | Critical | Agent imports unlicensed media | Quarantine and instructor rights approval | Agent publish attempt fails at API and build |
 | Critical | Binary replacement rewrites approved use | Append-only media versions and version/use-bound rights | Replace asset; old release/placement remains pinned and new use needs review |
 | Critical | Student response leaks | Separate bundles; no public response/storage/analytics path | Storage, HAR, logs, reload, and bundle audit |
-| Critical | Candidate rereads mutable content | Persist/hash snapshot before manifest/approval | Mutate Sanity during build; artifact remains bound to candidate snapshot |
+| Critical | Candidate rereads mutable content | Persist/hash snapshot before manifest/approval | Mutate D1 during build; artifact remains bound to candidate snapshot |
 | Critical | Partial/out-of-order publication mixes states | Signed candidate/attestation, serialized CAS promotion, reconciler | Kill/race build, publish, rollback; one expected release remains active |
 | Critical | Agent selects malicious renderer SHA | Server-selected protected green code provenance | Client-supplied SHA rejected; lockfile/image/contract hashes pinned |
 | High | Provider tracks before click | First-party card and network boundary | HAR proves no request before activation |
@@ -2216,7 +2232,7 @@ These are operational targets, not student analytics. Do not add student event t
 The first two weeks should be ticketed in this order:
 
 1. **ARCH-001:** Approve content-authority and X-script-exception decisions.
-2. **VENDOR-001:** Complete Sanity capability, cost, role, auth, quota, export, retention, and restore gate.
+2. **STORAGE-001:** Complete D1/R2 cost, retention, export, and restore gate within the $5/month ceiling.
 3. **AUTH-001:** Approve exact human/agent/step-up identity ADR.
 4. **PLAN-001:** Hash and place this reviewed plan in the clean implementation branch.
 5. **BASE-001:** Create clean worktree from current `origin/main` without touching user work.
@@ -2226,11 +2242,11 @@ The first two weeks should be ticketed in this order:
 9. **CONTRACT-002:** Add v2 `ChapterBundle` and stable-ID utilities.
 10. **CONTRACT-003:** Add complete graph, draft/publishable, checkpoint, media-version, rights/approval, embed/link, change-set, and release-record schemas.
 11. **REPO-001:** Define `ContentRepository` and implement Git adapter.
-12. **SANITY-001:** Create dev dataset, roles, and Studio workspace.
-13. **SANITY-002:** Implement chapter/checkpoint/media/embed schemas.
+12. **D1-001:** Create development database, R2 bindings, and standalone editor workspace.
+13. **D1-002:** Implement chapter/checkpoint/media/embed migrations and mappings.
 14. **MIG-001:** Parse Chapter 7 into the hybrid typed block model.
 15. **MIG-002:** Preserve/lock legacy markup blocks.
-16. **REPO-002:** Implement Sanity adapter.
+16. **REPO-002:** Implement D1/R2 adapter.
 17. **RENDER-001:** Render both adapters through one `ChapterBundle` path.
 18. **PROMPT-001:** Preserve Chapter 7 inline/sidebar checkpoint behavior.
 19. **MEDIA-001:** Upload/render one still image with current caption quality.
@@ -2242,7 +2258,7 @@ The first two weeks should be ticketed in this order:
 25. **DR-001:** Export and restore the spike into a clean dataset.
 26. **GATE-001:** Review spike results and decide whether to proceed to full import.
 
-No Studio polish, broad provider work, or full API surface should precede `GATE-001`.
+No Textbook Editor polish, broad provider work, or full API surface should precede `GATE-001`.
 
 ---
 
@@ -2250,7 +2266,7 @@ No Studio polish, broad provider work, or full API surface should precede `GATE-
 
 The platform is complete when all statements below are true:
 
-1. Joel can open Textbook Studio, edit chapter prose, save a draft, preview it, submit it, and publish an approved release without opening GitHub.
+1. Joel can open the Textbook Editor, edit chapter prose, save a draft, preview it, submit it, and publish an approved release without opening GitHub.
 2. Joel can open the Prompt Checkpoints tab, add a missing checkpoint, edit any of the three prompts, move its stable passage anchor, and preview the exact inline and side-panel presentations.
 3. Joel can upload a still image, GIF/WebP, short audio/video, PDF, or plain-text document; add high-quality alt/caption/transcript/teaching use/rights; place it precisely; and obtain polished web/mobile/print/offline output.
 4. Joel can paste a YouTube, Vimeo, or X URL and receive a structured, editable, click-to-load embed with an authored fallback, or create an instructor-authored rich link card for another URL.
@@ -2260,33 +2276,24 @@ The platform is complete when all statements below are true:
 8. The public reader remains static, preserves current student-response privacy, and makes no provider request before explicit activation.
 9. All 18 chapters and the complete book/part/annotation/world/entity/diagram/source/checkpoint/media/rights/derivative graph pass the final migration manifest with all recorded IDs.
 10. A failed, stale, concurrent, or interrupted release cannot advance out of order; the previous complete release restores within five minutes.
-11. A clean off-provider export restores into a local build without Sanity or external media providers.
+11. A clean off-provider export restores into a local build without D1/R2 or external media providers.
 12. The old Git content editor is disabled as a write path, eliminating split-brain authority.
-13. Studio and agents edit isolated multi-document change sets; rejection, stale revision, and concurrent work cannot contaminate canonical heads.
+13. The Textbook Editor and agents edit isolated multi-document change sets; rejection, stale revision, and concurrent work cannot contaminate canonical heads.
 14. Media placements pin immutable asset versions and version/use-bound rights plus human semantic approvals; relevant changes invalidate approval.
 15. Draft preview is cross-site, snapshot-bound, read-only, short-lived, uncached, and has no authoring credentials.
-16. No normal user/agent can mutate Sanity directly; all accepted writes carry base revision, idempotency, actor/run, validation, and audit.
+16. No normal user/agent can mutate D1/R2 directly; all accepted writes carry base revision, idempotency, actor/run, validation, and audit.
 17. Every active release has a signed candidate snapshot, protected code provenance, build attestation, exact security headers, deployment receipt, and verifiable active pointer.
 
 ---
 
 ## 19. Official technical references
 
-### Sanity
+### Approved storage and identity
 
-- [Assets in Content Lake](https://www.sanity.io/docs/content-lake/assets)
-- [Image type and asset metadata](https://www.sanity.io/docs/studio/image-type)
-- [Image URL transformations, animation, and first-frame rendering](https://www.sanity.io/docs/apis-and-sdks/image-urls)
-- [Portable Text editor configuration](https://www.sanity.io/docs/studio/portable-text-editor-configuration)
-- [Custom form components](https://www.sanity.io/docs/studio/form-components-reference)
-- [Validation](https://www.sanity.io/docs/studio/validation)
-- [Schema validation and the Content Lake](https://www.sanity.io/docs/content-lake/schema-validation-and-the-content-lake)
-- [Transactions and revision guards](https://www.sanity.io/docs/content-lake/transactions)
-- [Roles and permissions](https://www.sanity.io/docs/content-lake/roles-concepts)
-- [Authentication and tokens](https://www.sanity.io/docs/content-lake/http-auth)
-- [Assets HTTP API](https://www.sanity.io/docs/http-reference/assets)
-- [Dataset export](https://www.sanity.io/docs/http-reference/export)
-- [Sanity MCP server](https://www.sanity.io/docs/ai/mcp-server)
+- [Sanity pricing](https://www.sanity.io/pricing) (rejected for this implementation because the usable private tier exceeds the $5/month ceiling)
+- [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- [Cloudflare R2](https://developers.cloudflare.com/r2/)
+- [GitHub OAuth apps](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)
 
 ### Cloudflare release and storage
 
@@ -2337,8 +2344,8 @@ The platform is complete when all statements below are true:
 
 ## 20. Immediate next decision
 
-Approve or reject the Phase 0 architecture gate:
+Phase 0 architecture decision (approved):
 
-> After a successful vendor/auth spike, shadow migration, and canary, Sanity becomes the sole routine content authority; Git remains the code authority; the public reader remains a static immutable release; arbitrary embed HTML remains prohibited; X either uses the single reviewed click-activated official-widget script exception or ships as a rich fallback link only.
+> After shadow migration and canary, D1/R2 becomes the sole routine content authority; Git remains the code authority; the public reader remains a static immutable release; arbitrary embed HTML remains prohibited; X renders its authored rich fallback by default and may load the single reviewed official widget only after explicit student activation/consent.
 
-If approved, implementation begins with the clean `origin/main` worktree and the vertical spike. It does not begin by modifying the currently dirty redesign checkout.
+Implementation begins with the clean `origin/main` worktree and the vertical spike. It does not begin by modifying the currently dirty redesign checkout.

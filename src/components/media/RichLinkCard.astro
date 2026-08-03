@@ -1,0 +1,42 @@
+---
+interface LinkCard {
+  href: string;
+  title: string;
+  summary: string;
+  sourceLabel: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  linkLabel?: string;
+  teachingUse?: string;
+  activationDisclosure?: string;
+  provider?: "soundcloud" | "bluesky" | "generic";
+}
+const { card } = Astro.props as { card: LinkCard };
+---
+
+<article class:list={["rich-link", card.provider && `rich-link--${card.provider}`]} data-rich-link-card data-provider={card.provider ?? "generic"}>
+  {card.imageUrl && <img src={card.imageUrl} alt={card.imageAlt ?? ""} loading="lazy" decoding="async" />}
+  <div>
+    <p class="rich-link__source">{card.sourceLabel}</p>
+    <h3>{card.title}</h3>
+    <p>{card.summary}</p>
+    <p class="rich-link__print-source"><strong>Canonical URL:</strong> {card.href}</p>
+    {card.teachingUse && <p class="rich-link__teaching-use"><strong>Teaching use:</strong> {card.teachingUse}</p>}
+    <a class="rich-link__action" href={card.href} target="_blank" rel="noopener noreferrer">{card.linkLabel ?? "Open source"}<span class="visually-hidden">: {card.title}</span></a>
+    {card.activationDisclosure && <p class="rich-link__disclosure">{card.activationDisclosure}</p>}
+  </div>
+</article>
+
+<style>
+  .rich-link { display: grid; grid-template-columns: minmax(0, 10rem) minmax(0, 1fr); gap: 1rem; margin: 2rem 0; border-block: 1px solid var(--line, #d8d2c4); padding: 1rem 0; }
+  img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+  .rich-link__source { margin: 0 0 0.3rem; color: var(--ink-soft, #596274); font: 700 0.7rem/1.2 var(--sans, system-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+  h3, p { margin: 0.3rem 0; }
+  .rich-link__teaching-use, .rich-link__disclosure { color: var(--ink-soft, #596274); font: 0.78rem/1.5 var(--sans, system-ui); }
+  .rich-link__print-source { display: none; overflow-wrap: anywhere; font: 0.75rem/1.5 var(--sans, system-ui); }
+  .rich-link__action { min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; margin-top: 0.65rem; border: 1px solid var(--ink, #102b4d); padding: 0.65rem 0.9rem; font: 700 0.76rem/1 var(--sans, system-ui); text-decoration: none; }
+  a { color: inherit; text-underline-offset: 0.16em; }
+  a:focus-visible { outline: 3px solid #bd8610; outline-offset: 3px; }
+  @media (max-width: 36rem) { .rich-link { grid-template-columns: 1fr; } .rich-link__action { width: 100%; justify-content: center; } }
+  @media print { .rich-link { break-inside: avoid; } .rich-link__print-source { display: block; } }
+</style>

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "bundleVersion": "1.0.0",
+  "files": [
+    {
+      "path": "author-textbook-chapter/SKILL.md",
+      "sha256": "c6f6f3c4ad4458a7f0924176edfe592f2aeca14f778f2d92e4668c1f9fedbfda"
+    },
+    {
+      "path": "author-textbook-chapter/agents/openai.yaml",
+      "sha256": "7ebf3611a18425e3b9b50d6d8f2ef0e2fcbe4320954b8f249375c8626566387e"
+    },
+    {
+      "path": "author-textbook-chapter/references/mcp-workflow.md",
+      "sha256": "2b83bab43445b006e691d1a7072e56ec2b22bfe2e33d84c330eaca14b5e5b285"
+    },
+    {
+      "path": "manage-prompt-checkpoints/SKILL.md",
+      "sha256": "15f3a35dda4980cab1df1312f8ec8f1cd7d1e7132caaa8fbeccad81297fab178"
+    },
+    {
+      "path": "manage-prompt-checkpoints/agents/openai.yaml",
+      "sha256": "858a066e4b342511a404ea2d2e5cb998514e639cae9f2c057efcda7b65fa5e3c"
+    },
+    {
+      "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
+      "sha256": "dfd6922fe59c0e0f0f44d3d509fcab79280aa2f4b92ec25ce684be09843ff6cf"
+    },
+    {
+      "path": "publish-textbook-media/SKILL.md",
+      "sha256": "b948f392cb94b1e45cef8ee631995bedd522543970f59005b81a450f1805f9c7"
+    },
+    {
+      "path": "publish-textbook-media/agents/openai.yaml",
+      "sha256": "a49c302e9dfbecf168528dd1440722a1d71fb1befef5f49329fda24837858735"
+    },
+    {
+      "path": "publish-textbook-media/references/media-workflow.md",
+      "sha256": "459fee1474854ec8a95bde873f951097a29d3b6760f444231e5ee3973cdf9d50"
+    },
+    {
+      "path": "release-steward/SKILL.md",
+      "sha256": "e0c644dd9e1882dc7233eee9c06269760203c695f09e62ba6249ee202eff733f"
+    },
+    {
+      "path": "release-steward/agents/openai.yaml",
+      "sha256": "b8edb8098860d4d1e3d9662dba8c1d25e12acd03d4920bf2043ac4d41293ab20"
+    },
+    {
+      "path": "release-steward/references/handoff.md",
+      "sha256": "b94f103cc1e76b1899196f20ebac0b833c469129efe6aa745a7eb7c583da6fb2"
+    }
+  ]
+}
