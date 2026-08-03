@@ -754,7 +754,14 @@ async function stageReleaseDeployment(request, env, identity) {
   if (previousRelease?.cloudflare_version_id && previousRelease.cloudflare_version_id !== body.previousCloudflareVersionId) throw new ApiError(409, 'ROLLBACK_VERSION_MISMATCH', 'Provided recovery version does not match the active release receipt');
   const stagedAt = now();
   const sequence = await allocateReleaseSequence(env, stagedAt);
-  const releaseId = await deterministicId('release', { candidateId: body.candidateId, candidateManifestHash: body.candidateManifestHash });
+  // A verified candidate may be uploaded again after an interrupted attempt.
+  // The immutable Cloudflare version distinguishes those deployable artifacts;
+  // omitting it made an abandoned release permanently block a safe retry.
+  const releaseId = await deterministicId('release', {
+    candidateId: body.candidateId,
+    candidateManifestHash: body.candidateManifestHash,
+    cloudflareVersionId: body.cloudflareVersionId
+  });
   const transactionId = await deterministicId('deployment', { action: 'promote', releaseId, expectedActiveReleaseId, idempotencyKey: body.idempotencyKey });
   const expiresAt = new Date(Date.parse(stagedAt) + 10 * 60 * 1000).toISOString();
   const response = { transactionId, action: 'promote', state: 'staged', releaseId, sequence, candidateId: body.candidateId, snapshotHash: body.snapshotHash, snapshotRevision: body.snapshotRevision, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, previousCloudflareVersionId: body.previousCloudflareVersionId, cloudflareVersionId: body.cloudflareVersionId, authorityDocumentCount: authorityEntries.length, expiresAt };
