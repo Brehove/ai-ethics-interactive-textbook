@@ -746,6 +746,21 @@ test('chapter.replaceBody atomically saves a continuous document while preservin
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Revised work passage.'));
 });
 
+test('chapter.replaceBody applies visual paragraph, heading, quote, callout, and list style changes', async () => {
+  const source = baseChapter();
+  const styled = await applySemanticOperation(source, { type: 'chapter.replaceBody', body: [
+    { blockId: 'b-commit', type: 'heading', level: 2, text: 'A real heading' },
+    { blockId: 'b-work', type: 'list', ordered: false, items: ['First reason', 'Second reason'] },
+    { blockId: 'b-reconcile', type: 'blockquote', text: 'A quoted objection.' }
+  ] });
+  assert.deepEqual(styled.chapter.body.map((block) => block.type), ['heading', 'list', 'blockquote']);
+  assert.equal(styled.chapter.body[0].blockId, 'b-commit');
+  assert.match(styled.chapter.body[0].sectionId, /^section_/);
+  assert.equal(styled.chapter.body[1].passageId, 'p-work');
+  assert.deepEqual(styled.chapter.body[1].items, ['First reason', 'Second reason']);
+  assert.equal(styled.chapter.body[2].passageId, 'p-reconcile');
+});
+
 test('chapter.replaceBody refuses client IDs, altered locked content, and orphaned anchors', async () => {
   const source = baseChapter();
   source.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];

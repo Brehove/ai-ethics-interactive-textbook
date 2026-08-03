@@ -323,9 +323,27 @@ const normalizeInsertedBlock = async (chapter, input, position) => {
 };
 
 const editableBodyTypes = new Set(['paragraph', 'heading', 'blockquote', 'callout', 'list', 'codeBlock', 'table']);
-const normalizeExistingEditableBlock = (existing, input, index) => {
-  if (input.type !== existing.type) throw new ApiError(422, 'BLOCK_TYPE_CHANGE_UNSUPPORTED', 'Change paragraph styles with Markdown syntax or insert a new structured block', { blockId: existing.blockId, index });
+const visualStyleTypes = new Set(['paragraph', 'heading', 'blockquote', 'callout', 'list']);
+const normalizeExistingEditableBlock = async (existing, input, index) => {
   if (input.blockId !== existing.blockId) throw new ApiError(422, 'STABLE_ID_CHANGE_FORBIDDEN', 'Existing block identity cannot be changed', { index });
+  if (input.type !== existing.type) {
+    if (!visualStyleTypes.has(existing.type) || !visualStyleTypes.has(input.type)) throw new ApiError(422, 'BLOCK_TYPE_CHANGE_UNSUPPORTED', 'Only paragraph, heading, quote, callout, and list styles can be changed in the visual editor', { blockId: existing.blockId, index });
+    if (input.type === 'heading') {
+      if (!Number.isInteger(input.level) || input.level < 2 || input.level > 6) throw new ApiError(422, 'HEADING_LEVEL_INVALID', 'Heading level must be 2 through 6', { index });
+      return { type: 'heading', blockId: existing.blockId, sectionId: existing.sectionId || await deterministicId('section', { blockId: existing.blockId, type: 'heading' }), level: input.level, text: safeText(input.text, `body.${index}.text`, 1000) };
+    }
+    const passageId = existing.passageId || await deterministicId('passage', { blockId: existing.blockId, type: input.type });
+    if (input.type === 'list') {
+      if (typeof input.ordered !== 'boolean' || !Array.isArray(input.items) || input.items.length < 1 || input.items.length > 100) throw new ApiError(422, 'LIST_INVALID', 'List requires ordered and 1 to 100 items', { index });
+      const items = input.items.map((item, itemIndex) => safeText(item, `body.${index}.items.${itemIndex}`, 4000));
+      return { type: 'list', blockId: existing.blockId, passageId, ordered: input.ordered, text: items.join(' '), items };
+    }
+    if (input.type === 'callout') {
+      if (!['note', 'warning', 'example', 'question'].includes(input.tone)) throw new ApiError(422, 'CALLOUT_TONE_INVALID', 'Callout tone is invalid', { index });
+      return { type: 'callout', blockId: existing.blockId, passageId, tone: input.tone, text: safeText(input.text, `body.${index}.text`, 20000) };
+    }
+    return { type: input.type, blockId: existing.blockId, passageId, text: safeText(input.text, `body.${index}.text`, 50000) };
+  }
   if (['paragraph', 'heading', 'blockquote', 'callout'].includes(existing.type)) {
     const limit = existing.type === 'heading' ? 1000 : existing.type === 'callout' ? 20000 : 50000;
     return { ...existing, text: safeText(input.text, `body.${index}.text`, limit) };
@@ -359,7 +377,7 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
         normalized = structuredClone(existing);
       } else {
         if (!editableBodyTypes.has(existing.type)) throw new ApiError(422, 'STRUCTURED_BLOCK_REQUIRES_PRESERVE', 'Media, embeds, diagrams, and legacy content must be preserved or changed with their dedicated controls', { blockId: existing.blockId });
-        normalized = normalizeExistingEditableBlock(existing, candidate, index);
+        normalized = await normalizeExistingEditableBlock(existing, candidate, index);
       }
     } else {
       if (candidate.preserve !== undefined) throw new ApiError(422, 'PRESERVE_REQUIRES_BLOCK_ID', 'preserve requires an existing blockId', { index });
