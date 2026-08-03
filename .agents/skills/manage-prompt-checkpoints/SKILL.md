@@ -9,4 +9,4 @@ Read `references/checkpoint-rules.md`. Read the chapter and passages first; anch
 
 Create or resume a changeset, then use `upsert_checkpoint` with the current base revision, changeset ID, and unique UUID idempotency key. Do not modify the reading record with raw markup or client-side state.
 
-Validate and diff the changeset. Submit for review and stop there unless explicit authority covers approval or publication.
+Render the immutable one-time preview and inspect both the inline placement and sidebar state. Then validate and diff the changeset. Submit for review and stop there. Normal agents never approve, reject, or publish; hand the exact submitted snapshot identity to the separate human release path.

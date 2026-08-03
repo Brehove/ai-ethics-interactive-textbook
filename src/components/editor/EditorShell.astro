@@ -9,7 +9,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 <main id="main-content" class="textbook-editor" data-editor-root data-auth-origin={authOrigin} data-content-api-origin={contentApiOrigin}>
   <header class="editor-topbar">
     <button class="product-mark" type="button" aria-label="AI Ethics Textbook home"><span aria-hidden="true">▯</span> AI Ethics Textbook</button>
-    <label class="chapter-picker"><span class="visually-hidden">Current chapter</span><select data-chapter aria-describedby="chapter-canary-note">{chapters.map((chapter) => <option value={`${String(chapter.order).padStart(2, "0")}-${chapter.slug}`} selected={chapter.slug === active.slug} disabled={chapter.order !== 7}>{chapter.order}. {chapter.title} — {chapter.order === 7 ? "editable canary" : "read-only"}</option>)}</select><small id="chapter-canary-note">Chapter 7 is the only editable D1 canary. Other chapters remain repository-managed.</small></label>
+    <label class="chapter-picker"><span class="visually-hidden">Current chapter</span><select data-chapter aria-describedby="chapter-canary-note">{chapters.map((chapter) => <option value={`chapter_ch${String(chapter.order).padStart(2, "0")}`} selected={chapter.slug === active.slug} data-order={chapter.order} data-title={chapter.title} data-editable={chapter.order === 7 ? "true" : "false"}>{chapter.order}. {chapter.title} — {chapter.order === 7 ? "editable canary" : "read-only until cutover"}</option>)}</select><small id="chapter-canary-note">Browse all 18 chapters here. Chapter 7 is the writable canary; each later chapter unlocks only after its controlled D1 cutover.</small></label>
     <button class="release-state" type="button" data-release-state><i></i> Draft <span aria-hidden="true">⌄</span></button>
     <div class="top-actions"><button type="button" data-preview aria-label="Preview chapter">◉ <span>Preview</span></button><button type="button" data-review aria-label="Review changes">▢ <span>Review changes</span><b data-change-count>0</b></button><button type="button" data-validate aria-label="Validate change set">✓ <span>Validate</span></button><button class="publish" type="button" data-submit-review aria-label="Submit change set for review">⇧ <span>Submit review</span></button><button type="button" data-login hidden>Sign in with GitHub</button><button type="button" data-logout hidden>Sign out</button><button class="more" type="button" data-publish aria-label="Publication status">⋮</button></div>
   </header>
@@ -84,13 +84,14 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 </dialog>
 
 <script>
-  type Block = { type: string; blockId?: string; text?: string; level?: number; passageId?: string; items?: string[] };
+  type Block = { type: string; blockId?: string; text?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; figureId?: string; embedId?: string; linkId?: string };
   type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: "commit" | "work" | "reconcile"; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
   type Chapter = { title?: string; body?: Block[]; checkpoints?: Checkpoint[] };
   const root = document.querySelector<HTMLElement>("[data-editor-root]")!;
   if (!root) throw new Error("Editor root missing");
   const gatewayOrigin = root.dataset.contentApiOrigin?.replace(/\/$/, "") ?? "";
   const status = root.querySelector<HTMLElement>("[data-editor-status]")!;
+  const chapterPicker = root.querySelector<HTMLSelectElement>("[data-chapter]")!;
   const offline = root.querySelector<HTMLElement>("[data-offline-note]")!;
   const inspector = root.querySelector<HTMLElement>("[data-inspector]")!;
   const prose = root.querySelector<HTMLElement>("[data-prose]")!;
@@ -195,7 +196,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const semanticCount = root.querySelector<HTMLElement>("[data-semantic-count]")!;
   const workingVersion = root.querySelector<HTMLElement>("[data-working-version]")!;
   const slots = ["commit", "work", "reconcile"] as const;
-  let authenticated = false; let contentOnline = false; let dirty = false; let csrfToken = ""; let changeSetId = ""; let baseRevisionId = ""; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
+  let authenticated = false; let contentOnline = false; let dirty = false; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
   const setStatus = (message: string) => { status.textContent = message; };
   const key = () => crypto.randomUUID();
   const post = (path: string, body: unknown) => fetch(`${gatewayOrigin}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken }, body: JSON.stringify(body) });
@@ -330,21 +331,30 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 
   function renderChapter() {
     const blocks = chapter.body ?? [];
-    const headingIndex = Math.max(0, blocks.findIndex((block) => block.type === "heading"));
-    const visible = blocks.slice(headingIndex, headingIndex + 8).filter((block) => block.type === "heading" || block.type === "paragraph" || block.type === "blockquote" || block.type === "list");
     const nodes: HTMLElement[] = [];
-    for (const block of visible) {
-      const tag: string = block.type === "heading" ? (block.level === 2 ? "h1" : "h2") : block.type === "blockquote" ? "blockquote" : "p";
-      const element = document.createElement(tag);
-      element.textContent = block.type === "list" ? (block.items ?? []).join(" • ") : (block.text ?? "");
+    for (const block of blocks) {
+      let element: HTMLElement;
+      if (block.type === "heading") element = document.createElement(block.level === 2 ? "h1" : block.level === 3 ? "h2" : "h3");
+      else if (block.type === "blockquote") element = document.createElement("blockquote");
+      else if (block.type === "list") {
+        element = document.createElement(block.ordered ? "ol" : "ul");
+        for (const item of block.items ?? []) { const li = document.createElement("li"); li.textContent = item; element.append(li); }
+      } else if (block.type === "table") {
+        element = document.createElement("table");
+        for (const [rowIndex, row] of (block.rows ?? []).entries()) { const tr = document.createElement("tr"); for (const cell of row) { const td = document.createElement(rowIndex === 0 ? "th" : "td"); td.textContent = cell; tr.append(td); } element.append(tr); }
+      } else if (block.type === "codeBlock") { element = document.createElement("pre"); const code = document.createElement("code"); code.textContent = block.code ?? block.text ?? ""; if (block.language) code.dataset.language = block.language; element.append(code); }
+      else if (block.type === "callout") { element = document.createElement("aside"); element.className = "editor-callout"; }
+      else if (["mediaFigure", "externalEmbed", "richLink", "diagram"].includes(block.type)) { element = document.createElement("figure"); element.className = `editor-structured-block editor-${block.type}`; const label = document.createElement("strong"); label.textContent = block.type === "mediaFigure" ? "Media" : block.type === "externalEmbed" ? "Embed" : block.type === "richLink" ? "Link card" : "Diagram"; const copy = document.createElement("figcaption"); copy.textContent = block.caption ?? block.title ?? block.alt ?? block.canonicalUrl ?? block.figureId ?? block.embedId ?? block.linkId ?? "Structured content"; element.append(label, copy); }
+      else { element = document.createElement("p"); if (block.type === "legacyMarkup") { element.className = "editor-locked-block"; element.textContent = "Locked legacy block — convert through a reviewed migration before editing."; } }
+      if (!element.childNodes.length) element.textContent = block.text ?? "";
       if (block.blockId) element.dataset.blockId = block.blockId;
       if (block.passageId) { element.dataset.passageId = block.passageId; element.tabIndex = 0; element.addEventListener("click", () => { anchor.value = block.passageId!; selectedBlockId = block.blockId ?? ""; prose.querySelectorAll("[data-block-id]").forEach((item) => item.classList.toggle("selected-passage", item === element)); if (selectedBlockId && ["paragraph", "heading", "blockquote", "callout"].includes(block.type)) { textValue.value = block.text ?? ""; textEditor.hidden = false; } inspector.classList.add("open"); setStatus(`Selected ${block.passageId}; checkpoint and text actions now target this block.`); }); }
       nodes.push(element);
     }
     if (nodes.length) prose.replaceChildren(...nodes);
     anchor.replaceChildren(...blocks.filter((block) => block.passageId).map((block) => { const option = document.createElement("option"); option.value = block.passageId!; option.textContent = `${block.passageId} · ${(block.text ?? block.items?.join(" ") ?? "Passage").slice(0, 72)}`; return option; }));
-    const picker = root.querySelector<HTMLSelectElement>("[data-chapter]");
-    if (picker?.selectedOptions[0] && chapter.title) picker.selectedOptions[0].textContent = `7. ${chapter.title} — editable canary`;
+    const selected = chapterPicker.selectedOptions[0];
+    if (selected && chapter.title) selected.textContent = `${selected.dataset.order ?? ""}. ${chapter.title} — ${selected.dataset.editable === "true" ? "editable" : "read-only until cutover"}`;
   }
 
   function renderSemanticReview() {
@@ -372,7 +382,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (removedBlocks) items.push({ label: `${removedBlocks} canonical block${removedBlocks === 1 ? "" : "s"}`, detail: "Absent from the working chapter", tone: "removed" });
     semanticCount.textContent = String(items.length); workingVersion.textContent = contentOnline ? String(expectedVersion) : "—";
     root.querySelector<HTMLElement>("[data-change-count]")!.textContent = String(items.length);
-    if (!items.length) { const message = document.createElement("p"); message.className = "accepted-message"; message.textContent = "No semantic differences from canonical Chapter 7."; reviewSummary.replaceChildren(message); return; }
+    if (!items.length) { const message = document.createElement("p"); message.className = "accepted-message"; message.textContent = `No semantic differences from canonical ${chapter.title ?? selectedChapterId}.`; reviewSummary.replaceChildren(message); return; }
     reviewSummary.replaceChildren(...items.map((item) => { const card = document.createElement("article"); card.className = `semantic-change ${item.tone ?? "changed"}`; const heading = document.createElement("h3"); heading.textContent = item.label; const detail = document.createElement("p"); detail.textContent = item.detail; card.append(heading, detail); return card; }));
   }
 
@@ -406,7 +416,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   async function hydrateChangeset() {
     const response = await fetch(`${gatewayOrigin}/v1/changesets/${encodeURIComponent(changeSetId)}`, { credentials: "include" });
     if (!response.ok) throw new Error("changeset unavailable");
-    const data = await response.json(); const working = data.documents?.find((item: { document_id?: string }) => item.document_id === "chapter_ch07") ?? data.documents?.[0];
+    const data = await response.json(); const working = data.documents?.find((item: { document_id?: string }) => item.document_id === selectedChapterId) ?? data.documents?.[0];
     if (!working) throw new Error("working chapter missing");
     baseRevisionId = String(working.base_revision_id ?? baseRevisionId); expectedVersion = Number(working.version ?? expectedVersion); chapter = working.content ?? chapter; renderSemanticReview();
     if (data.submittedSnapshot) {
@@ -419,7 +429,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 
   async function createOrResumeChangeSet() {
     const idempotencyKey = key();
-    const response = await post("/v1/chapters/chapter_ch07/changesets", { title: "Chapter 7 structured editor", description: "Instructor-authored Chapter 7 checkpoint and media changes.", idempotencyKey, resume: true });
+    const selected = chapterPicker.selectedOptions[0];
+    const response = await post(`/v1/chapters/${encodeURIComponent(selectedChapterId)}/changesets`, { title: `${selected?.dataset.title ?? chapter.title ?? selectedChapterId} structured editor`, description: `Instructor-authored checkpoint, prose, and media changes for ${selectedChapterId}.`, idempotencyKey, resume: true });
     if (!response.ok) throw new Error("changeset unavailable");
     const data = await response.json(); changeSetId = String(data.id ?? ""); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version ?? expectedVersion);
     if (!changeSetId) throw new Error("changeset id missing");
@@ -484,6 +495,22 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     throw new Error("This provider is not available as a typed embed");
   }
 
+  async function loadSelectedChapter() {
+    selectedChapterId = chapterPicker.value;
+    contentOnline = false; dirty = false; changeSetId = ""; selectedBlockId = ""; expectedVersion = 1; submittedSnapshotHash = ""; submittedSnapshotRevision = "";
+    humanReview.hidden = true; snapshotReceipt.hidden = true; textEditor.hidden = true;
+    const chapterResponse = await fetch(`${gatewayOrigin}/v1/documents/${encodeURIComponent(selectedChapterId)}`, { credentials: "include" });
+    if (!chapterResponse.ok) throw new Error("content unavailable");
+    const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId);
+    const selected = chapterPicker.selectedOptions[0];
+    const editable = documentData.authoringState === "editable";
+    if (selected) selected.dataset.editable = String(editable);
+    if (editable) { contentOnline = true; await createOrResumeChangeSet(); }
+    renderChapter(); renderCheckpointState(); renderSemanticReview(); offline.hidden = editable;
+    if (editable) setStatus(`Authenticated · ${chapter.title ?? selectedChapterId} loaded · change set ${changeSetId.slice(0, 8)} · version ${expectedVersion}.`);
+    else { offline.hidden = false; offline.textContent = "Read-only: this chapter remains repository-authoritative until its controlled D1 cutover."; setStatus(`${chapter.title ?? selectedChapterId} loaded read-only. Browse and inspect it here; editing remains locked until cutover.`); }
+  }
+
   async function start() {
     if (!gatewayOrigin) { offline.hidden = false; setStatus("Services are not configured. Nothing entered here will be persisted."); return; }
     try {
@@ -491,18 +518,18 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       if (sessionResponse.status === 401 || sessionResponse.status === 403) { login.hidden = false; setStatus("Authentication service healthy · no active instructor session."); return; }
       if (!sessionResponse.ok) throw new Error("auth unavailable");
       const sessionData = await sessionResponse.json(); authenticated = true; csrfToken = String(sessionData.csrf_token ?? ""); logout.hidden = false; setStatus(`Authenticated as ${sessionData.user.login}. Checking content API…`);
-      const schemaResponse = await fetch(`${gatewayOrigin}/v1/schema`, { credentials: "include" });
-      if (!schemaResponse.ok) throw new Error("schema unavailable");
+      const [schemaResponse, chaptersResponse] = await Promise.all([fetch(`${gatewayOrigin}/v1/schema`, { credentials: "include" }), fetch(`${gatewayOrigin}/v1/chapters`, { credentials: "include" })]);
+      if (!schemaResponse.ok || !chaptersResponse.ok) throw new Error("content API unavailable");
       const schemaData = await schemaResponse.json();
       for (const operation of ["text.replace", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
-      const chapterResponse = await fetch(`${gatewayOrigin}/v1/documents/chapter_ch07`, { credentials: "include" });
-      if (!chapterResponse.ok) throw new Error("content unavailable");
-      const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId); contentOnline = true;
-      await createOrResumeChangeSet(); renderChapter(); renderCheckpointState(); offline.hidden = true; setStatus(`Authenticated · Chapter 7 loaded · change set ${changeSetId.slice(0, 8)} · version ${expectedVersion}.`);
+      const chapterIndex = await chaptersResponse.json();
+      for (const item of chapterIndex.chapters ?? []) { const option = [...chapterPicker.options].find((candidate) => candidate.value === item.id); if (option) option.dataset.editable = String(item.authoringState === "editable"); }
+      await loadSelectedChapter();
     } catch { offline.hidden = false; setStatus(authenticated ? "Authentication is healthy, but the content API is unavailable. Nothing entered here will be persisted." : "Authentication service unavailable. Nothing entered here will be persisted."); }
   }
 
   root.querySelectorAll<HTMLButtonElement>("[data-workspace]").forEach((button) => button.addEventListener("click", () => { root.querySelectorAll("[data-workspace]").forEach((item) => item.classList.toggle("selected", item === button)); setStatus(`${button.dataset.workspace} workspace selected.`); }));
+  chapterPicker.addEventListener("change", async () => { try { setStatus("Loading selected chapter…"); await loadSelectedChapter(); } catch { contentOnline = false; offline.hidden = false; setStatus("The selected chapter could not be loaded. No changes were made."); } });
   root.querySelector<HTMLButtonElement>("[data-nav-toggle]")?.addEventListener("click", (event) => { const button = event.currentTarget as HTMLButtonElement; const expanded = button.getAttribute("aria-expanded") !== "true"; button.setAttribute("aria-expanded", String(expanded)); root.querySelector("[data-nav-items]")?.classList.toggle("open", expanded); });
   root.querySelector<HTMLButtonElement>("[data-collapse-nav]")?.addEventListener("click", () => root.classList.toggle("nav-collapsed"));
   root.querySelector<HTMLButtonElement>("[data-inspector-close]")?.addEventListener("click", () => inspector.classList.remove("open"));
@@ -594,7 +621,17 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       setStatus("Media or embed insertion did not complete. No placement was applied unless the final operation succeeded.");
     }
   });
-  root.querySelector<HTMLButtonElement>("[data-preview]")?.addEventListener("click", () => { root.classList.toggle("previewing"); setStatus(root.classList.contains("previewing") ? "Inline preview enabled." : "Editing view restored."); });
+  root.querySelector<HTMLButtonElement>("[data-preview]")?.addEventListener("click", async () => {
+    if (!contentOnline || !changeSetId || dirty) { setStatus("Protected preview requires an editable online change set with no unsaved form edits."); return; }
+    const previewWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
+    try {
+      setStatus("Freezing an immutable one-time draft preview…");
+      const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:renderPreview`, { baseRevisionId, expectedVersion, idempotencyKey: key(), surface: window.matchMedia("(max-width: 430px)").matches ? "mobile" : "web" });
+      const data = await response.json(); if (!response.ok || typeof data.previewUrl !== "string" || data.oneTime !== true) throw new Error("preview unavailable");
+      if (previewWindow) previewWindow.location.replace(data.previewUrl); else window.open(data.previewUrl, "_blank", "noopener,noreferrer");
+      setStatus(`Protected preview issued for working version ${data.workingVersion}; it expires at ${new Date(data.expiresAt).toLocaleTimeString()} and can be opened once.`);
+    } catch { previewWindow?.close(); setStatus("Protected preview could not be created. The draft was not submitted or published."); }
+  });
   root.querySelector<HTMLButtonElement>("[data-review]")?.addEventListener("click", () => { const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const toggle = root.querySelector<HTMLButtonElement>("[data-agent-toggle]")!; drawer.classList.remove("collapsed"); toggle.setAttribute("aria-expanded", "true"); reviewSummary.focus(); });
   root.querySelector<HTMLButtonElement>("[data-validate]")?.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Validation requires an online change set with no unsaved form edits."); return; } try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:validate`, {}); const data = await response.json(); if (!response.ok) throw new Error(); setStatus(`Validation passed · ${data.validationHash ?? data.contentHash}.`); } catch { setStatus("Validation failed. Review the chapter requirements before submission."); } });
   submitReview.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Review submission requires an online, saved change set."); return; } try { const idempotencyKey = key(); const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:submitReview`, { baseRevisionId, expectedVersion, idempotencyKey }); const data = await response.json(); if (!response.ok) throw new Error(); showHumanReview(data); snapshotReceipt.hidden = false; snapshotReceipt.textContent = `Submitted immutable snapshot ${data.snapshotHash} at revision ${data.snapshotRevision}.`; setStatus("Submitted for human review. Approval remains a separate explicit action and does not publish."); } catch { setStatus("Review submission failed validation or the working version changed."); } });

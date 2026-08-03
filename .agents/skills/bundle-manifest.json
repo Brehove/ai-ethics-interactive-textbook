@@ -12,11 +12,11 @@
     },
     {
       "path": "author-textbook-chapter/references/mcp-workflow.md",
-      "sha256": "2b83bab43445b006e691d1a7072e56ec2b22bfe2e33d84c330eaca14b5e5b285"
+      "sha256": "621ff4475f44a4c261df76ae17d5de1e5bc8a026e67f11158b81f8b6fcf89713"
     },
     {
       "path": "manage-prompt-checkpoints/SKILL.md",
-      "sha256": "15f3a35dda4980cab1df1312f8ec8f1cd7d1e7132caaa8fbeccad81297fab178"
+      "sha256": "0d322840c6a302d49ce26776c1a28d80dc588024010b4e3c66413308bb63dd04"
     },
     {
       "path": "manage-prompt-checkpoints/agents/openai.yaml",
@@ -24,7 +24,7 @@
     },
     {
       "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
-      "sha256": "dfd6922fe59c0e0f0f44d3d509fcab79280aa2f4b92ec25ce684be09843ff6cf"
+      "sha256": "ea386a8da3e565bae304a9a4cbc8a47c599f5f8e14a43b49c1ed29fa22df578a"
     },
     {
       "path": "publish-textbook-media/SKILL.md",
@@ -40,7 +40,7 @@
     },
     {
       "path": "release-steward/SKILL.md",
-      "sha256": "e0c644dd9e1882dc7233eee9c06269760203c695f09e62ba6249ee202eff733f"
+      "sha256": "97b5ef318ae2e6f88b069d70c0f337fd2aaf967191a7621eeb2535aef34a74bf"
     },
     {
       "path": "release-steward/agents/openai.yaml",

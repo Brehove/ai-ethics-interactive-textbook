@@ -136,8 +136,38 @@ test('agent and service identities cannot approve, reject, or publish even when 
   }
 });
 
+test('a rejected or merely submitted changeset cannot publish even if an older release approval still exists', async () => {
+  for (const state of ['rejected', 'submitted']) {
+    const CONTENT_DB = fakeDb((sql) => {
+      if (sql.includes('FROM idempotency_records')) return null;
+      if (sql.includes('FROM submitted_snapshots s')) return { id: 'snapshot-1', state, snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev-1' };
+      if (sql.includes('FROM approvals')) return { id: 'stale-release-approval' };
+      return null;
+    });
+    const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-1:publish', {
+      method: 'POST', headers: gatewayHeaders('content:publish'), body: JSON.stringify({ snapshotHash: 'a'.repeat(64), snapshotRevision: 'snapshotrev-1', idempotencyKey: `publish-${state}-key` })
+    }), { CONTENT_DB });
+    assert.equal(response.status, 409);
+    assert.equal((await response.json()).error.code, 'CHANGESET_NOT_APPROVED');
+    assert.equal(CONTENT_DB.statements.some((item) => item.sql.includes('SELECT id FROM approvals')), false);
+  }
+});
+
+test('even an approved snapshot fails closed at the API until deployment receipts and active-release CAS are implemented', async () => {
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM submitted_snapshots s')) return { id: 'snapshot-1', state: 'approved', snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev-1' };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-1:publish', { method: 'POST', headers: gatewayHeaders('content:publish'), body: JSON.stringify({ snapshotHash: 'a'.repeat(64), snapshotRevision: 'snapshotrev-1', idempotencyKey: 'publish-approved-key' }) }), { CONTENT_DB });
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).error.code, 'DEPLOYMENT_RECEIPT_REQUIRED');
+  assert.equal(CONTENT_DB.statements.some((item) => item.sql.includes('SELECT id FROM approvals')), false);
+});
+
 test('restore-as-draft seeds historical content but bases the new changeset on current canonical revision', async () => {
   const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('SELECT authority FROM authority_registry')) return { authority: 'd1' };
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('JOIN document_revisions target')) return {
       current_revision_id: 'revision-current', current_content_hash: 'current-hash', target_content_hash: 'historical-hash',
@@ -159,6 +189,20 @@ test('restore-as-draft seeds historical content but bases the new changeset on c
   const workingInsert = CONTENT_DB.batchItems[1];
   assert.equal(workingInsert.args[3], 'revision-current');
   assert.equal(workingInsert.args[4], 'historical-hash');
+});
+
+test('chapter index exposes per-chapter authoring state and repository-authoritative chapters reject browser drafts', async () => {
+  const CONTENT_DB = fakeDb((sql, _args, mode) => {
+    if (sql.includes('FROM documents d LEFT JOIN authority_registry') && mode === 'all') return { results: [{ id: 'chapter_ch07', authority: 'git' }, { id: 'chapter_ch08', authority: 'git' }, { id: 'chapter_ch09', authority: 'd1' }] };
+    if (sql.includes('SELECT authority FROM authority_registry')) return { authority: 'git' };
+    if (sql.includes('FROM idempotency_records')) return null;
+    return null;
+  });
+  let response = await worker.fetch(new Request('https://content.example/v1/chapters', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  assert.equal(response.status, 200); const index = await response.json();
+  assert.deepEqual(index.chapters.map((item) => item.authoringState), ['editable', 'readOnly', 'editable']);
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch08/changesets', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ title: 'Forbidden shadow write', idempotencyKey: 'authoring-gate-key' }) }), { CONTENT_DB });
+  assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'AUTHORING_NOT_ENABLED');
 });
 
 test('release metadata is reconstructed from frozen snapshot, authority, approvals, and pointer rows', async () => {
@@ -235,6 +279,15 @@ test('chapter passage and dependency reads are revision-bound and bounded', asyn
   body = await response.json();
   assert.equal(body.edges.some((edge) => edge.source === 'figure-1' && edge.target === 'version-1' && edge.kind === 'pinsVersion'), true);
   assert.equal(body.edges.some((edge) => edge.source === 'checkpoint-work' && edge.target === 'p-work'), true);
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/dependencies?passageId=p-work&limit=1', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  assert.equal(response.status, 200);
+  body = await response.json();
+  assert.equal(body.passageId, 'p-work');
+  assert.equal(body.edges.every((edge) => edge.source === 'p-work' || edge.target === 'p-work'), true);
+  assert.equal(body.page.totalEdges >= 2, true);
+  assert.equal(body.page.nextCursor, '1');
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/dependencies?passageId=missing', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  assert.equal(response.status, 404);
 });
 
 test('fixed-window mutation limits persist hashed actor-client keys and fail closed', async () => {
@@ -576,6 +629,7 @@ test('Worker serves the versioned operation envelope to authenticated readers wi
   assert.equal(body.media.search.query.limit, '1-50');
   assert.equal(body.providers.resolve.networkAccess, false);
   assert.equal(body.reads.dependencies.route, 'GET /v1/chapters/{chapterId}/dependencies');
+  assert.equal(body.reads.dependencies.query.passageId, 'optional stable passage ID');
   assert.equal(body.release.asset.requiresExactReleaseApproval, true);
   assert.equal(body.rateLimits.persistence, 'D1 fail-closed');
   assert.equal(body.canaryAuthority.route, 'POST /v1/authority/chapter_ch07:activateD1');
@@ -586,6 +640,7 @@ test('Worker serves the versioned operation envelope to authenticated readers wi
   assert.equal(body.release.snapshot.scope, 'content:releaseSnapshot');
   assert.equal(body.release.metadata.route, 'GET /v1/releases/{releaseId}');
   assert.equal(body.release.publish.humanActorRequired, true);
+  assert.equal(body.release.publish.enabled, false);
 });
 
 test('media upload policy accepts supported bounded files and fails closed on MIME, captions, and budgets', () => {

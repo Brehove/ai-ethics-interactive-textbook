@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ai-ethics-textbook-preview",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-08-03",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "preview.ethicsandai.your-digital-life.org", "custom_domain": true }],
+  "d1_databases": [{ "binding": "CONTENT_DB", "database_name": "ai-ethics-content", "database_id": "1f82c4fa-228b-4cf7-9b40-ff10eebeadfb" }],
+  "r2_buckets": [{ "binding": "CONTENT_SNAPSHOTS", "bucket_name": "ai-ethics-snapshots" }]
+}

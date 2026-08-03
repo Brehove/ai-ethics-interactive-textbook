@@ -1,6 +1,6 @@
 import {
   ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, deterministicId, readJsonBody,
-  finalizeChapterRevision, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
+  finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
   validateChapter, validateMediaReviewPackage, validateUploadRequest, verifyHmacSignature
 } from './services.mjs';
 
@@ -97,9 +97,10 @@ function idempotencyStatement(env, idem, key, status, response, createdAt) {
 }
 
 async function listChapters(env) {
-  const rows = await env.CONTENT_DB.prepare(`SELECT id, canonical_path, title, state, current_revision_id, current_content_hash, updated_at
-    FROM documents WHERE media_kind = 'text' AND state = 'active' ORDER BY canonical_path`).all();
-  return json({ chapters: rows.results || [] });
+  const rows = await env.CONTENT_DB.prepare(`SELECT d.id, d.canonical_path, d.title, d.state, d.current_revision_id, d.current_content_hash, d.updated_at,
+    a.authority, a.source_revision AS authority_source_revision FROM documents d LEFT JOIN authority_registry a ON a.document_id = d.id AND a.active = 1
+    WHERE d.media_kind = 'text' AND d.state = 'active' ORDER BY d.canonical_path`).all();
+  return json({ chapters: (rows.results || []).map((row) => ({ ...row, authoringState: row.id === 'chapter_ch07' || row.authority === 'd1' ? 'editable' : 'readOnly' })) });
 }
 
 async function loadCanonicalChapter(env, id) {
@@ -115,7 +116,14 @@ async function loadCanonicalChapter(env, id) {
 
 async function getChapter(env, id) {
   const { row, chapter } = await loadCanonicalChapter(env, id);
-  return json({ id: row.id, canonicalPath: row.canonical_path, title: row.title, state: row.state, revisionId: row.current_revision_id, contentHash: row.current_content_hash, revisionCreatedAt: row.revision_created_at, chapter, metadata: parseStoredJson(row.metadata_json || '{}', 'Chapter metadata') });
+  const authority = await env.CONTENT_DB.prepare('SELECT authority, source_path, source_revision, normalized_snapshot_hash FROM authority_registry WHERE document_id = ? AND active = 1').bind(id).first();
+  return json({ id: row.id, canonicalPath: row.canonical_path, title: row.title, state: row.state, revisionId: row.current_revision_id, contentHash: row.current_content_hash, revisionCreatedAt: row.revision_created_at, authoringState: id === 'chapter_ch07' || authority?.authority === 'd1' ? 'editable' : 'readOnly', authority: authority || null, chapter, metadata: parseStoredJson(row.metadata_json || '{}', 'Chapter metadata') });
+}
+
+async function requireAuthoringAuthority(env, chapterId) {
+  const authority = await env.CONTENT_DB.prepare('SELECT authority FROM authority_registry WHERE document_id = ? AND active = 1').bind(chapterId).first();
+  if (chapterId !== 'chapter_ch07' && authority?.authority !== 'd1') throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'This chapter remains repository-authoritative and is read-only in the browser until its controlled D1 cutover');
+  return authority;
 }
 
 const passageProjection = (block, index) => ({
@@ -143,6 +151,8 @@ async function getChapterPassage(env, chapterId, passageId) {
 async function getChapterDependencies(env, chapterId, url) {
   const { row, chapter } = await loadCanonicalChapter(env, chapterId);
   const { limit, cursor } = pageParams(url, { defaultLimit: 50, maxLimit: 100, maxCursor: 10000 });
+  const passageId = boundedQuery(url.searchParams.get('passageId'), 'passageId', 200);
+  if (passageId) validId(passageId, 'passageId');
   const nodeMap = new Map();
   const edges = [];
   const addNode = (id, kind, details = {}) => { if (id && !nodeMap.has(id)) nodeMap.set(id, { id, kind, ...details }); };
@@ -164,11 +174,13 @@ async function getChapterDependencies(env, chapterId, url) {
   }
   edges.sort((a, b) => `${a.source}\0${a.kind}\0${a.target}`.localeCompare(`${b.source}\0${b.kind}\0${b.target}`));
   if (edges.length > 20000 || nodeMap.size > 10000) throw new ApiError(500, 'DEPENDENCY_GRAPH_TOO_LARGE', 'Canonical dependency graph exceeds the read safety bound');
-  const pageEdges = edges.slice(cursor, cursor + limit);
+  if (passageId && !nodeMap.has(passageId)) throw new ApiError(404, 'NOT_FOUND', 'Passage was not found');
+  const selectedEdges = passageId ? edges.filter((edge) => edge.source === passageId || edge.target === passageId) : edges;
+  const pageEdges = selectedEdges.slice(cursor, cursor + limit);
   const pageNodeIds = new Set(pageEdges.flatMap((edge) => [edge.source, edge.target]));
   const nodes = [...pageNodeIds].map((id) => nodeMap.get(id) || { id, kind: 'unresolved' }).sort((a, b) => a.id.localeCompare(b.id));
-  const nextCursor = cursor + pageEdges.length < edges.length ? String(cursor + pageEdges.length) : null;
-  return json({ chapterId, revisionId: row.current_revision_id, contentHash: row.current_content_hash, nodes, edges: pageEdges, unresolvedTargets: nodes.filter((item) => item.kind === 'unresolved').map((item) => item.id), page: { limit, cursor: String(cursor), nextCursor, totalEdges: edges.length, totalNodes: nodeMap.size } });
+  const nextCursor = cursor + pageEdges.length < selectedEdges.length ? String(cursor + pageEdges.length) : null;
+  return json({ chapterId, passageId: passageId || null, revisionId: row.current_revision_id, contentHash: row.current_content_hash, nodes, edges: pageEdges, unresolvedTargets: nodes.filter((item) => item.kind === 'unresolved').map((item) => item.id), page: { limit, cursor: String(cursor), nextCursor, totalEdges: selectedEdges.length, totalNodes: nodeMap.size } });
 }
 
 async function getChangeset(env, id) {
@@ -189,12 +201,53 @@ async function getChangeset(env, id) {
   });
 }
 
+const base64Url = (value) => btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+async function renderPreview(request, env, identity, changesetId) {
+  requireScope(identity, 'content:write'); runIdentity(identity);
+  const body = await readJsonBody(request, { allowedFields: ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'surface'] });
+  validId(body.baseRevisionId, 'baseRevisionId');
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
+  if (body.surface !== undefined && !['web', 'mobile', 'print', 'offline'].includes(body.surface)) throw new ApiError(422, 'PREVIEW_SURFACE_INVALID', 'surface must be web, mobile, print, or offline');
+  if (!env.CONTENT_SNAPSHOTS || !env.CONTENT_DB || typeof env.PREVIEW_TOKEN_SECRET !== 'string' || env.PREVIEW_TOKEN_SECRET.length < 32 || typeof env.PREVIEW_ORIGIN !== 'string') throw new ApiError(503, 'PREVIEW_UNAVAILABLE', 'Protected preview storage or signing configuration is unavailable');
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:preview`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const working = await env.CONTENT_DB.prepare(`SELECT w.document_id, w.base_revision_id, w.content_hash, w.content_text, w.version, c.state, d.current_revision_id
+    FROM working_documents w JOIN changesets c ON c.id = w.changeset_id JOIN documents d ON d.id = w.document_id WHERE w.changeset_id = ?`).bind(changesetId).first();
+  if (!working) throw new ApiError(404, 'NOT_FOUND', 'Changeset was not found');
+  if (working.state !== 'open') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open changeset can render a draft preview');
+  if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id || body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'Preview preconditions are stale', { baseRevisionId: working.base_revision_id, currentRevisionId: working.current_revision_id, currentVersion: working.version });
+  const chapter = parseStoredJson(working.content_text, 'Working document');
+  const validation = validateChapter(chapter, { publishable: false });
+  if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Draft preview contains structurally invalid content', validation);
+  const snapshot = { schemaVersion: 1, kind: 'draftPreview', changesetId, documentId: working.document_id, baseRevisionId: working.base_revision_id, workingVersion: working.version, contentHash: working.content_hash, surface: body.surface || 'web', chapter };
+  const snapshotJson = stableStringify(snapshot);
+  const snapshotHash = await sha256(snapshotJson);
+  const objectKey = `previews/${snapshotHash}.json`;
+  if (!await env.CONTENT_SNAPSHOTS.head(objectKey)) await env.CONTENT_SNAPSHOTS.put(objectKey, snapshotJson, { httpMetadata: { contentType: 'application/json' }, customMetadata: { sha256: snapshotHash, changesetId } });
+  const issuedAt = Math.floor(Date.now() / 1000); const expiresAtEpoch = issuedAt + 300; const grantId = await deterministicId('preview', { changesetId, snapshotHash, idempotencyKey: body.idempotencyKey });
+  const payload = base64Url(JSON.stringify({ v: 1, jti: grantId, sh: snapshotHash, exp: expiresAtEpoch }));
+  const signature = await hmacSha256(env.PREVIEW_TOKEN_SECRET, payload); const token = `v1.${payload}.${signature}`; const tokenHash = await sha256(token); const createdAt = now(); const expiresAt = new Date(expiresAtEpoch * 1000).toISOString();
+  const previewOrigin = new URL(env.PREVIEW_ORIGIN); if (previewOrigin.protocol !== 'https:' || previewOrigin.username || previewOrigin.password || previewOrigin.pathname !== '/') throw new ApiError(503, 'PREVIEW_UNAVAILABLE', 'Preview origin configuration is invalid');
+  const previewUrl = `${previewOrigin.origin}/preview?token=${encodeURIComponent(token)}`;
+  const response = { previewId: grantId, changesetId, snapshotHash, contentHash: working.content_hash, workingVersion: working.version, surface: body.surface || 'web', previewUrl, expiresAt, oneTime: true };
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare(`INSERT INTO preview_grants (id, token_hash, changeset_id, snapshot_hash, r2_object_key, surface, created_by, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(grantId, tokenHash, changesetId, snapshotHash, objectKey, body.surface || 'web', identity.actorId, createdAt, expiresAt),
+    idempotencyStatement(env, idem, body.idempotencyKey, 201, response, createdAt),
+    await audit(env, identity, 'preview.issued', 'preview', grantId, { changesetId, snapshotHash, surface: body.surface || 'web', expiresAt }, { baseRevisionId: working.base_revision_id, idempotencyHash: idem.requestHash })
+  ]);
+  return json(response, 201);
+}
+
 async function createOrResumeChangeset(request, env, identity, chapterId) {
   requireScope(identity, 'content:write'); runIdentity(identity);
   const body = await readJsonBody(request, { allowedFields: ['title', 'description', 'idempotencyKey', 'resume'] });
   if (typeof body.title !== 'string' || body.title.trim().length < 1 || body.title.length > 200) throw new ApiError(422, 'VALIDATION_FAILED', 'title is required and must be at most 200 characters');
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) throw new ApiError(422, 'VALIDATION_FAILED', 'description must be at most 2000 characters');
   await enforceRateLimit(env, identity, 'mutation');
+  await requireAuthoringAuthority(env, chapterId);
   const idem = await beginIdempotency(env, identity, `chapter:${chapterId}:changeset`, body.idempotencyKey, body);
   if (idem.replay) return idem.replay;
   const canonical = await env.CONTENT_DB.prepare(`SELECT d.id, d.current_revision_id, r.content_hash, r.content_text, r.r2_object_key, r.metadata_json
@@ -233,6 +286,7 @@ async function restoreRevisionAsDraft(request, env, identity, chapterId, revisio
   if (typeof body.title !== 'string' || body.title.trim().length < 1 || body.title.length > 200) throw new ApiError(422, 'VALIDATION_FAILED', 'title is required and must be at most 200 characters');
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) throw new ApiError(422, 'VALIDATION_FAILED', 'description must be at most 2000 characters');
   await enforceRateLimit(env, identity, 'mutation');
+  await requireAuthoringAuthority(env, chapterId);
   const idem = await beginIdempotency(env, identity, `chapter:${chapterId}:revision:${revisionId}:restore`, body.idempotencyKey, body);
   if (idem.replay) return idem.replay;
   const row = await env.CONTENT_DB.prepare(`SELECT d.current_revision_id, current.content_hash AS current_content_hash,
@@ -476,55 +530,12 @@ async function publishChangeset(request, env, identity, changesetId) {
   if (idem.replay) return idem.replay;
   const snapshot = await env.CONTENT_DB.prepare(`SELECT s.*, c.state FROM submitted_snapshots s JOIN changesets c ON c.id = s.changeset_id WHERE s.changeset_id = ?`).bind(changesetId).first();
   if (!snapshot) throw new ApiError(404, 'NOT_FOUND', 'Submitted snapshot was not found');
+  if (snapshot.state !== 'approved') throw new ApiError(409, 'CHANGESET_NOT_APPROVED', 'Publication requires the changeset to remain approved; a rejected or merely submitted snapshot cannot publish');
   if (body.snapshotHash !== snapshot.snapshot_hash || body.snapshotRevision !== snapshot.snapshot_revision) throw new ApiError(409, 'REVISION_CONFLICT', 'Publish request does not match the submitted snapshot');
-  const approval = await env.CONTENT_DB.prepare(`SELECT id FROM approvals WHERE changeset_id = ? AND submitted_snapshot_hash = ? AND submitted_snapshot_revision = ?
-    AND decision_kind = 'release' AND decision = 'approved' LIMIT 1`).bind(changesetId, snapshot.snapshot_hash, snapshot.snapshot_revision).first();
-  if (!approval) throw new ApiError(409, 'APPROVAL_REQUIRED', 'Exact submitted snapshot lacks release approval');
-  const working = await env.CONTENT_DB.prepare(`SELECT w.*, d.current_revision_id FROM working_documents w JOIN documents d ON d.id = w.document_id WHERE w.changeset_id = ?`).bind(changesetId).first();
-  if (!working) throw new ApiError(404, 'NOT_FOUND', 'Working document was not found');
-  if (working.current_revision_id !== working.base_revision_id) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter changed before publish', { expected: working.base_revision_id, current: working.current_revision_id });
-  const stored = await env.CONTENT_SNAPSHOTS.get(snapshot.r2_object_key);
-  if (!stored) throw new ApiError(503, 'SNAPSHOT_STORE_UNAVAILABLE', 'Approved snapshot object is unavailable');
-  const snapshotText = await stored.text();
-  if (await sha256(snapshotText) !== snapshot.snapshot_hash) throw new ApiError(500, 'SNAPSHOT_HASH_MISMATCH', 'Stored submitted snapshot failed integrity verification');
-  const publishedAt = now();
-  const approvedSnapshot = parseStoredJson(snapshotText, 'Submitted snapshot');
-  const approvedDocument = approvedSnapshot.documents?.find((item) => item.documentId === working.document_id);
-  if (!approvedDocument || approvedDocument.editorialContentHash !== working.content_hash || approvedDocument.revisionId !== `revision_${working.content_hash.slice(0, 24)}`) throw new ApiError(500, 'SNAPSHOT_REVISION_MISMATCH', 'Submitted snapshot does not bind the approved editorial payload');
-  const published = { revisionId: approvedDocument.revisionId, editorialContentHash: approvedDocument.editorialContentHash, content: approvedDocument.content, contentHash: approvedDocument.submittedContentHash };
-  if (await sha256(published.content) !== published.contentHash || published.content.revisionId !== published.revisionId || published.content.status !== 'published') throw new ApiError(500, 'SNAPSHOT_FINALIZATION_MISMATCH', 'Approved snapshot publishable content failed identity verification');
-  const revisionId = published.revisionId;
-  const sequenceRow = await env.CONTENT_DB.prepare('SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM releases').first();
-  const sequence = sequenceRow?.sequence || 1;
-  const releaseId = await deterministicId('release', { sequence, snapshotHash: snapshot.snapshot_hash });
-  const authorities = await env.CONTENT_DB.prepare('SELECT document_id, authority, source_path, source_revision, normalized_snapshot_hash FROM authority_registry WHERE active = 1 ORDER BY document_id').all();
-  const workingAuthority = (authorities.results || []).find((item) => item.document_id === working.document_id);
-  if (!workingAuthority || workingAuthority.authority !== 'd1') throw new ApiError(409, 'AUTHORITY_CONFLICT', 'Chapter is not D1-authoritative and cannot be published through this API');
-  const authorityId = await deterministicId('authority', { documentId: working.document_id, revisionId });
-  const response = { releaseId, sequence, changesetId, snapshotHash: snapshot.snapshot_hash, editorialContentHash: approvedDocument.editorialContentHash, finalContentHash: published.contentHash, revisionId, state: 'published', publishedAt };
-  const statements = [
-    env.CONTENT_DB.prepare(`INSERT INTO document_revisions
-      (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_actor_type, created_client_id, created_run_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(revisionId, working.document_id, working.base_revision_id, published.contentHash, stableStringify(published.content), working.r2_object_key, working.metadata_json, identity.actorId, identity.actorType, identity.clientId, identity.runId, publishedAt),
-    env.CONTENT_DB.prepare('UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ? WHERE id = ? AND current_revision_id = ?').bind(revisionId, published.contentHash, publishedAt, working.document_id, working.base_revision_id),
-    env.CONTENT_DB.prepare("INSERT INTO releases (id, sequence, changeset_id, state, manifest_hash, created_by, created_at, published_at) VALUES (?, ?, ?, 'published', ?, ?, ?, ?)").bind(releaseId, sequence, changesetId, snapshot.snapshot_hash, identity.actorId, publishedAt, publishedAt),
-    env.CONTENT_DB.prepare("UPDATE changesets SET state = 'applied', applied_at = ?, updated_at = ? WHERE id = ? AND state = 'approved'").bind(publishedAt, publishedAt, changesetId),
-    env.CONTENT_DB.prepare('UPDATE authority_registry SET active = 0, valid_until = ? WHERE document_id = ? AND active = 1').bind(publishedAt, working.document_id),
-    env.CONTENT_DB.prepare(`INSERT INTO authority_registry (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at)
-      VALUES (?, ?, 'd1', NULL, ?, ?, 1, ?, ?)`).bind(authorityId, working.document_id, revisionId, published.contentHash, publishedAt, publishedAt),
-    env.CONTENT_DB.prepare(`INSERT INTO release_pointers (name, release_id, updated_by, updated_at) VALUES ('active', ?, ?, ?)
-      ON CONFLICT(name) DO UPDATE SET release_id = excluded.release_id, updated_by = excluded.updated_by, updated_at = excluded.updated_at`).bind(releaseId, identity.actorId, publishedAt)
-  ];
-  for (const item of authorities.results || []) {
-    const frozen = item.document_id === working.document_id ? { ...item, source_revision: revisionId, normalized_snapshot_hash: published.contentHash } : item;
-    statements.push(env.CONTENT_DB.prepare(`INSERT INTO release_authority_entries
-      (release_id, document_id, authority, source_path, source_revision, normalized_snapshot_hash) VALUES (?, ?, ?, ?, ?, ?)`).bind(releaseId, frozen.document_id, frozen.authority, frozen.source_path, frozen.source_revision, frozen.normalized_snapshot_hash));
-  }
-  statements.push(idempotencyStatement(env, idem, body.idempotencyKey, 201, response, publishedAt));
-  statements.push(await audit(env, identity, 'release.published', 'release', releaseId, { changesetId, snapshotHash: snapshot.snapshot_hash, approvalId: approval.id, revisionFinalization: { editorialContentHash: approvedDocument.editorialContentHash, submittedContentHash: approvedDocument.submittedContentHash, finalContentHash: published.contentHash, revisionId, status: 'published', transformation: 'verified-exact-approved-publishable-candidate' } }, { baseRevisionId: working.base_revision_id, resultRevisionId: revisionId, idempotencyHash: idem.requestHash }));
-  const batch = await env.CONTENT_DB.batch(statements);
-  if (batch[1]?.meta?.changes === 0) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter was concurrently modified');
-  return json(response, 201);
+  // The immutable GitHub/Cloudflare workflow is the only production promotion
+  // path until deployment attestations, receipts, and expected-active CAS are
+  // persisted here. Fail closed instead of advancing D1 ahead of live traffic.
+  throw new ApiError(503, 'DEPLOYMENT_RECEIPT_REQUIRED', 'Direct Content API publication is disabled; use the protected immutable release workflow and record its deployment receipt before authority activation');
 }
 
 async function createMediaReviewPackage(request, env, identity) {
@@ -931,7 +942,7 @@ export default {
         reads: {
           passages: { route: 'GET /v1/chapters/{chapterId}/passages', query: { limit: '1-100', cursor: '0-10000' } },
           passage: { route: 'GET /v1/chapters/{chapterId}/passages/{passageId}' },
-          dependencies: { route: 'GET /v1/chapters/{chapterId}/dependencies', query: { limit: '1-100', cursor: '0-10000' } }
+          dependencies: { route: 'GET /v1/chapters/{chapterId}/dependencies', query: { passageId: 'optional stable passage ID', limit: '1-100', cursor: '0-10000' } }
         },
         review: {
           diff: { route: 'POST /v1/changesets/{changesetId}:diff', required: [], scope: 'content:read' },
@@ -939,9 +950,10 @@ export default {
           reject: { route: 'POST /v1/changesets/{changesetId}:reject', required: ['snapshotHash', 'snapshotRevision', 'decisionKind', 'comment', 'idempotencyKey'], scope: 'content:approve', humanActorRequired: true },
           restoreAsDraft: { route: 'POST /v1/chapters/{chapterId}/revisions/{revisionId}:restoreAsDraft', required: ['title', 'idempotencyKey'], optional: ['description'], scope: 'content:write' }
         },
+        preview: { route: 'POST /v1/changesets/{changesetId}:renderPreview', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], optional: ['surface'], surfaces: ['web', 'mobile', 'print', 'offline'], ttlSeconds: 300, oneTime: true, immutableSnapshot: true, scope: 'content:write' },
         release: {
           metadata: { route: 'GET /v1/releases/{releaseId}', scope: 'content:read' },
-          publish: { route: 'POST /v1/changesets/{changesetId}:publish', scope: 'content:publish', humanActorRequired: true },
+          publish: { route: 'POST /v1/changesets/{changesetId}:publish', scope: 'content:publish', humanActorRequired: true, enabled: false, requires: 'deployment attestation + receipt + expected-active CAS' },
           snapshot: { route: 'GET /v1/release-snapshots/{snapshotHash}', scope: 'content:releaseSnapshot', integrity: 'exact SHA-256 bytes', requiresExactReleaseApproval: true },
           asset: { route: 'GET /v1/release-assets/{sha256}', scope: 'content:releaseSnapshot', integrity: 'DB-referenced exact SHA-256 bytes', requiresExactReleaseApproval: true }
         },
@@ -984,12 +996,13 @@ export default {
       if (request.method === 'GET' && match) return await getMediaJob(env, validId(decodeURIComponent(match[1]), 'jobId'));
       match = url.pathname.match(/^\/v1\/media\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getMediaAsset(env, validId(decodeURIComponent(match[1]), 'mediaId'));
-      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|submitReview|approve|reject|diff|publish)$/);
+      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|submitReview|approve|reject|diff|renderPreview|publish)$/);
       if (request.method === 'POST' && match) {
         const changesetId = validId(decodeURIComponent(match[1]), 'changesetId');
         if (match[2] === 'diff') { requireScope(identity, 'content:read'); return await diffChangeset(env, changesetId); }
         if (match[2] === 'apply') return await applyOperation(request, env, identity, changesetId);
         if (match[2] === 'validate') return await validateChangeset(request, env, identity, changesetId);
+        if (match[2] === 'renderPreview') return await renderPreview(request, env, identity, changesetId);
         if (match[2] === 'submitReview') return await submitChangeset(request, env, identity, changesetId);
         if (match[2] === 'approve') return await approveChangeset(request, env, identity, changesetId);
         if (match[2] === 'reject') return await rejectChangeset(request, env, identity, changesetId);

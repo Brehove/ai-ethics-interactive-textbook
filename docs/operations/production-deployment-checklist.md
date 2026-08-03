@@ -5,7 +5,7 @@ This is the operator checklist for the Chapter 7 canary. It records names and ve
 ## Already provisioned
 
 - Cloudflare D1 database: `ai-ethics-content` (`1f82c4fa-228b-4cf7-9b40-ff10eebeadfb`).
-- D1 migrations `0001`–`0005` and an idempotent 18-document shadow seed.
+- D1 migrations `0001`–`0006` and an idempotent 18-document shadow seed.
 - Queue/DLQ pairs: `ai-ethics-media-jobs`, `ai-ethics-media-jobs-dlq`, `ai-ethics-release-jobs`, `ai-ethics-release-jobs-dlq`.
 - GitHub environments:
   - `content-release-candidate`: `main` and `agent/agent-native-authoring` only;
@@ -37,7 +37,7 @@ Cloudflare Worker secrets:
 
 - editor/auth gateway: existing GitHub OAuth/App/session values and `RELEASE_SNAPSHOT_READ_TOKEN`;
 - textbook MCP: `MCP_ACCESS_TOKEN`;
-- Content API: `MEDIA_CALLBACK_SECRET` and any separately documented service credential. Its value must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs.
+- Content API: `MEDIA_CALLBACK_SECRET`, `PREVIEW_TOKEN_SECRET`, and any separately documented service credential. `MEDIA_CALLBACK_SECRET` must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs. `PREVIEW_TOKEN_SECRET` is also set independently on the preview Worker and never sent to a browser.
 
 GitHub Actions secrets:
 
@@ -63,18 +63,19 @@ Generate values locally, pass them directly to the secret commands, and do not p
 1. Create/verify R2 buckets and lifecycle rules.
 2. Apply all D1 migrations remotely and run the drift audit.
 3. Deploy the private Content API Worker and verify `/health` through a service binding.
-4. Set the shared media/release tokens, then deploy the editor/auth gateway.
-5. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected.
-6. Deploy the reader build containing `/admin/`; do not change the Chapter 7 authority record yet.
-7. Run browser login, Chapter 7 read/edit/checkpoint/diff/validate/submit tests.
-8. Upload one still image, one animated GIF, one short MP4, one short audio file, and one safe document through quarantine; verify immutable versions, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
-9. Insert and activate one YouTube, Vimeo, and X fixture; verify no provider request occurs before explicit activation. Verify Spotify consent and SoundCloud/Bluesky/link-card fallbacks.
-10. Run **Immutable content release** with `promote=false`; inspect the signed candidate, built asset digests, and canary preview.
-11. Re-run the exact snapshot/revision/commit with `promote=true`, then approve the `content-production` environment.
-12. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar.
-13. Only then switch `chapter_ch07` to its exact D1 revision/hash authority.
-14. Run and record a rollback drill before expanding beyond Chapter 7.
-15. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest before relying on the schedule.
+4. Deploy the protected preview Worker; verify invalid, expired, and replayed tokens fail and responses are uncached/noindexed.
+5. Set the shared media/release tokens, then deploy the editor/auth gateway.
+6. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected.
+7. Deploy the reader build containing `/admin/`; do not change the Chapter 7 authority record yet.
+8. Run browser login, Chapter 7 read/edit/checkpoint/diff/preview/validate/submit tests.
+9. Upload one still image, one animated GIF, one short MP4, one short audio file, and one safe document through quarantine; verify immutable versions, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
+10. Insert and activate one YouTube, Vimeo, and X fixture; verify no provider request occurs before explicit activation. Verify Spotify consent and SoundCloud/Bluesky/link-card fallbacks.
+11. Run **Immutable content release** with `promote=false`; inspect the signed candidate, built asset digests, and canary preview.
+12. Re-run the exact snapshot/revision/commit with `promote=true`, then approve the `content-production` environment.
+13. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar.
+14. Only then switch `chapter_ch07` to its exact D1 revision/hash authority.
+15. Run and record a rollback drill before expanding beyond Chapter 7.
+16. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest before relying on the schedule.
 
 ## Verification commands
 
@@ -88,6 +89,7 @@ npx wrangler deploy --dry-run
 npx wrangler deploy --dry-run --config workers/editor-auth/wrangler.jsonc
 npx wrangler deploy --dry-run --config workers/content-api/wrangler.jsonc
 npx wrangler deploy --dry-run --config workers/textbook-mcp/wrangler.jsonc
+npx wrangler deploy --dry-run --config workers/textbook-preview/wrangler.jsonc
 ```
 
 After deployment, record Worker version IDs, snapshot/revision hashes, workflow run URLs, smoke results, and rollback evidence in the release provenance artifact. Never record tokens.

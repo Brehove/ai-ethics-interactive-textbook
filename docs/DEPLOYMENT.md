@@ -6,9 +6,13 @@
 - Reader origin: `https://ethicsandai.your-digital-life.org`
 - Editor auth Worker: `ethicsandai-editor-auth`
 - Editor auth origin: `https://auth.ethicsandai.your-digital-life.org`
+- Protected preview Worker: `ai-ethics-textbook-preview`
+- Protected preview origin: `https://preview.ethicsandai.your-digital-life.org`
+- Content API Worker: `ethicsandai-content-api` (service binding only)
+- Textbook MCP Worker: `ai-ethics-textbook-mcp`
 - Canonical repository: `Brehove/ai-ethics-interactive-textbook`
 
-The two public hostnames are custom domains in the existing `your-digital-life.org` Cloudflare zone. They are deliberately same-site so the editor can use its host-only, Secure, HttpOnly, `SameSite=Strict` session cookie. Do not replace the auth hostname with an unrelated `workers.dev` preview origin.
+The reader and auth hostnames are custom domains in the existing `your-digital-life.org` Cloudflare zone. They are deliberately same-site so the editor can use its host-only, Secure, HttpOnly, `SameSite=Strict` session cookie. The preview origin is separate and receives only a one-time snapshot token; it has no authoring cookie, Content API mutation scope, or public indexability.
 
 ## Reader deployment
 
