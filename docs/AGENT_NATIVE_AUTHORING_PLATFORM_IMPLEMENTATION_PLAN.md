@@ -1436,7 +1436,7 @@ docs/
     ci.yml
     deploy-editor.yml
     content-release.yml
-    content-backup.yml
+    content-snapshot-export.yml
     content-drift-audit.yml
     media-process.yml
     deploy-mcp.yml
