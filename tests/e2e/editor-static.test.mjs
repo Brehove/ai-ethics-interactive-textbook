@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 test("editor shell exposes the structured authoring workflow", async () => {
-  const [page, shell, css, externalEmbed, placements, richLink, nativeMedia] = await Promise.all([
+  const [page, shell, css, externalEmbed, placements, richLink, nativeMedia, readingRecord] = await Promise.all([
     readFile(new URL("../../src/pages/admin/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/components/editor/EditorShell.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/styles/editor.css", import.meta.url), "utf8"),
@@ -11,6 +11,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
     readFile(new URL("../../src/components/media/InlineReleasePlacements.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/components/media/RichLinkCard.astro", import.meta.url), "utf8"),
     readFile(new URL("../../src/components/media/NativeMedia.astro", import.meta.url), "utf8"),
+    readFile(new URL("../../src/components/ReadingRecord.astro", import.meta.url), "utf8"),
   ]);
   assert.match(page, /noindex/);
   for (const label of ["Preview", "Review changes", "Validate", "Submit review", "Human release review", "Approve release snapshot", "Reject this snapshot", "Paste or import chapter", "Save", "Visual", "Markdown", "Checkpoints", "Add checkpoint", "Save checkpoint", "Remove checkpoint", "Remove structured block", "Image or GIF", "YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Audio/Video", "PDF", "Link card", "Semantic review", "Authored fallback"]) assert.match(shell, new RegExp(label.replace("/", "\\/")));
@@ -161,4 +162,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(nativeMedia, /native-media__transcript > :not\(summary\)[\s\S]*display: block !important/);
   assert.match(`${nativeMedia}\n${externalEmbed}\n${richLink}`, /Canonical URL/);
   assert.doesNotMatch(`${placements}\n${richLink}`, /fetch\(|oembed|innerHTML|<iframe|<script[^>]+src=/i);
+  assert.match(readingRecord, /restoreStaticPlacements/);
+  assert.match(readingRecord, /querySelectorAll<HTMLElement>\("\[data-inline-placed\]"\)/);
+  assert.match(readingRecord, /Missing anchors must degrade to visible media, never silent deletion/);
 });
