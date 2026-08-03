@@ -1519,24 +1519,29 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
     if (!chapter) throw new ApiError(404, 'NOT_FOUND', `${item.documentId} was not found`);
     const submitted = snapshotDocuments.get(item.documentId);
     if (!submitted?.content || submitted.revisionId !== item.sourceRevision || submitted.submittedContentHash !== item.normalizedSnapshotHash || await sha256(submitted.content) !== item.normalizedSnapshotHash || submitted.content.revisionId !== item.sourceRevision || submitted.content.chapterVersion !== item.sourceRevision) throw new ApiError(409, 'AUTHORITY_HASH_MISMATCH', 'Authority cutover must bind the exact finalized document in the active release snapshot', { documentId: item.documentId });
-    if (chapter.current_revision_id !== item.sourceRevision && chapter.current_revision_id !== submitted.baseRevisionId) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical document head changed after the submitted snapshot was created', { documentId: item.documentId, baseRevisionId: submitted.baseRevisionId, currentRevisionId: chapter.current_revision_id });
+    let liveAdvance = null;
+    if (chapter.current_revision_id !== item.sourceRevision && chapter.current_revision_id !== submitted.baseRevisionId) {
+      liveAdvance = await verifiedLiveSaveLineage(env, item.documentId, item.sourceRevision, chapter.current_revision_id);
+      if (!liveAdvance || liveAdvance.currentContentHash !== chapter.current_content_hash) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical document head changed after the submitted snapshot was created', { documentId: item.documentId, baseRevisionId: submitted.baseRevisionId, currentRevisionId: chapter.current_revision_id });
+    }
     const releaseEntry = await env.CONTENT_DB.prepare(`SELECT authority, source_revision, normalized_snapshot_hash FROM release_authority_entries
       WHERE release_id = ? AND document_id = ?`).bind(body.releaseId, item.documentId).first();
     if (releaseEntry?.authority !== 'd1' || releaseEntry.source_revision !== item.sourceRevision || releaseEntry.normalized_snapshot_hash !== item.normalizedSnapshotHash) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'The active release does not contain the exact requested D1 authority entry', { documentId: item.documentId });
     const current = await env.CONTENT_DB.prepare('SELECT authority, source_revision, normalized_snapshot_hash FROM authority_registry WHERE document_id = ? AND active = 1').bind(item.documentId).first();
+    if (liveAdvance && (current?.authority !== 'd1' || current.source_revision !== item.sourceRevision || current.normalized_snapshot_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'A code-only release may preserve a live-saved canonical head only when the existing D1 authority already matches the exact release snapshot', { documentId: item.documentId });
     const revision = await env.CONTENT_DB.prepare('SELECT document_id, content_hash FROM document_revisions WHERE id = ?').bind(item.sourceRevision).first();
     if (revision && (revision.document_id !== item.documentId || revision.content_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'REVISION_CONFLICT', 'Finalized revision ID already exists with conflicting content', { documentId: item.documentId });
-    prepared.push({ ...item, submitted, chapter, current, revisionExists: Boolean(revision) });
+    prepared.push({ ...item, submitted, chapter, current, revisionExists: Boolean(revision), liveAdvance });
   }
   const changedAt = now();
   const activated = []; const statements = [];
   for (const item of prepared) {
     const authorityId = await deterministicId('authority', item);
-    activated.push({ documentId: item.documentId, sourceRevision: item.sourceRevision, normalizedSnapshotHash: item.normalizedSnapshotHash, authority: 'd1', headPromoted: item.chapter.current_revision_id !== item.sourceRevision });
+    activated.push({ documentId: item.documentId, sourceRevision: item.sourceRevision, normalizedSnapshotHash: item.normalizedSnapshotHash, authority: 'd1', headPromoted: !item.liveAdvance && item.chapter.current_revision_id !== item.sourceRevision, liveAdvance: Boolean(item.liveAdvance), liveRevisionCount: item.liveAdvance?.revisionCount || 0 });
     if (!item.revisionExists) statements.push(env.CONTENT_DB.prepare(`INSERT INTO document_revisions
       (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at)
       VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)`).bind(item.sourceRevision, item.documentId, item.submitted.baseRevisionId, item.normalizedSnapshotHash, stableStringify(item.submitted.content), stableStringify({ status: 'published', releaseId: body.releaseId, snapshotHash: snapshotRow.snapshot_hash }), identity.actorId, changedAt));
-    if (item.chapter.current_revision_id !== item.sourceRevision) statements.push(env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ?
+    if (!item.liveAdvance && item.chapter.current_revision_id !== item.sourceRevision) statements.push(env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ?
       WHERE id = ? AND current_revision_id = ?`).bind(item.sourceRevision, item.normalizedSnapshotHash, changedAt, item.documentId, item.submitted.baseRevisionId));
     if (item.current?.authority !== 'd1' || item.current.source_revision !== item.sourceRevision || item.current.normalized_snapshot_hash !== item.normalizedSnapshotHash) {
       statements.push(env.CONTENT_DB.prepare('UPDATE authority_registry SET active = 0, valid_until = ? WHERE document_id = ? AND active = 1').bind(changedAt, item.documentId));
@@ -1551,7 +1556,7 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
   statements.push(env.CONTENT_DB.prepare("UPDATE changesets SET state = 'applied', applied_at = ?, updated_at = ? WHERE id = ? AND state = 'approved'").bind(changedAt, changedAt, snapshotRow.changeset_id));
   const response = { releaseId: body.releaseId, authority: 'd1', activated, activatedAt: changedAt };
   statements.push(idempotencyStatement(env, idem, body.idempotencyKey, 201, response, changedAt));
-  statements.push(await audit(env, identity, fixedDocumentId ? 'authority.canary.activated' : 'authority.batch.activated', 'release', body.releaseId, { documentIds: activated.map((item) => item.documentId), documentCount: activated.length }, { idempotencyHash: idem.requestHash }));
+  statements.push(await audit(env, identity, fixedDocumentId ? 'authority.canary.activated' : 'authority.batch.activated', 'release', body.releaseId, { documentIds: activated.map((item) => item.documentId), documentCount: activated.length, liveAdvances: activated.filter((item) => item.liveAdvance).map((item) => ({ documentId: item.documentId, revisionCount: item.liveRevisionCount })) }, { idempotencyHash: idem.requestHash }));
   await env.CONTENT_DB.batch(statements);
   return json(response, 201);
 }
