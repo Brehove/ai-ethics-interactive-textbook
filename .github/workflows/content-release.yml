@@ -11,6 +11,11 @@ on:
         description: Immutable submitted snapshot revision from D1 approval
         required: true
         type: string
+      d1_document_ids:
+        description: Complete comma-separated D1 authority set; default is the Chapter 7 canary
+        required: true
+        type: string
+        default: chapter_ch07
       commit_sha:
         description: Full immutable Git commit to release
         required: true
@@ -86,7 +91,7 @@ jobs:
         run: |
           test -n "$RELEASE_SIGNING_KEY"
           npx tsx scripts/content/export-snapshot.mts release-artifacts/git-baseline.snapshot.json
-          node scripts/release/release-cli.mjs candidate --snapshot release-artifacts/submitted.snapshot.json --baseline release-artifacts/git-baseline.snapshot.json --snapshot-hash '${{ inputs.snapshot_hash }}' --snapshot-revision '${{ inputs.snapshot_revision }}' --commit-sha '${{ inputs.commit_sha }}' --out release-artifacts/candidate.json
+          node scripts/release/release-cli.mjs candidate --snapshot release-artifacts/submitted.snapshot.json --baseline release-artifacts/git-baseline.snapshot.json --d1-documents '${{ inputs.d1_document_ids }}' --snapshot-hash '${{ inputs.snapshot_hash }}' --snapshot-revision '${{ inputs.snapshot_revision }}' --commit-sha '${{ inputs.commit_sha }}' --out release-artifacts/candidate.json
           node -e "const x=require('./release-artifacts/candidate.json'); console.log('candidate_id='+x.candidateId)" >> "$GITHUB_OUTPUT"
       - name: Generate, validate, build, and public-boundary gates
         env:
@@ -94,7 +99,7 @@ jobs:
         run: node scripts/release/release-cli.mjs gates --candidate release-artifacts/candidate.json --out release-artifacts/build.json
       - name: Capture immutable built-asset digests
         run: (cd release-artifacts/dist && find . -type f -print0 | sort -z | xargs -0 sha256sum | sed 's#  \./#  #') > release-artifacts/assets.sha256
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-candidate-${{ inputs.snapshot_hash }}
           path: release-artifacts/
@@ -117,7 +122,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: release-candidate-${{ inputs.snapshot_hash }}
           path: release-artifacts
@@ -126,7 +131,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
           RELEASE_EXECUTE: "1"
         run: node scripts/release/release-cli.mjs deploy --candidate release-artifacts/candidate.json --built-assets release-artifacts/dist --asset-digests release-artifacts/assets.sha256 --preview-url '${{ vars.CLOUDFLARE_RELEASE_PREVIEW_URL }}' --state release-artifacts/state.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-deployment-${{ inputs.snapshot_hash }}
           path: release-artifacts/
@@ -149,7 +154,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: release-deployment-${{ inputs.snapshot_hash }}
           path: release-artifacts
@@ -171,12 +176,16 @@ jobs:
         run: |
           node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --asset-digests release-artifacts/assets.sha256 --out release-artifacts/production-verification.json
           node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
+      - name: Activate only the exact D1 revisions now present in the active release
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs activate-authority --candidate release-artifacts/candidate.json --transaction release-artifacts/deployment-transaction.json --receipt release-artifacts/deployment-receipt.json --out release-artifacts/authority-activation.json
       - name: Restore prior Cloudflare version if verification or receipt recording fails
         if: ${{ failure() && steps.stage.outcome == 'success' && steps.receipt.outcome != 'success' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
         run: node scripts/release/control-plane.mjs emergency-rollback --transaction release-artifacts/deployment-transaction.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-provenance-${{ inputs.snapshot_hash }}
           path: |
@@ -184,4 +193,5 @@ jobs:
             release-artifacts/deployment-transaction.json
             release-artifacts/production-verification.json
             release-artifacts/deployment-receipt.json
+            release-artifacts/authority-activation.json
           retention-days: 90

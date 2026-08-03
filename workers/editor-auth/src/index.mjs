@@ -257,6 +257,7 @@ async function forwardReleaseControl(request, env) {
   const body = await request.arrayBuffer();
   if (body.byteLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
   const url = new URL(request.url);
+  const scope = url.pathname.startsWith('/v1/authority') ? 'content:authority' : 'content:deployReceipt';
   const headers = new Headers({
     "content-type": "application/json",
     "x-content-gateway-verified": "v1",
@@ -264,7 +265,7 @@ async function forwardReleaseControl(request, env) {
     "x-content-actor-type": "service",
     "x-content-client-id": "github-content-release",
     "x-content-run-id": runId,
-    "x-content-scopes": "content:deployReceipt",
+    "x-content-scopes": scope,
   });
   const upstream = await env.CONTENT_API.fetch(new Request(`https://content-api.internal${url.pathname}`, { method: "POST", headers, body }));
   const responseHeaders = new Headers(baseSecurityHeaders);
@@ -301,7 +302,10 @@ export function createEditorAuthApp(dependencies = {}) {
 
         if (url.pathname === "/v1/release-deployments:stage"
           || /^\/v1\/release-deployments\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:recordReceipt$/.test(url.pathname)
-          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:stageRollback$/.test(url.pathname)) {
+          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:stageRollback$/.test(url.pathname)
+          || url.pathname === "/v1/authority:prepareCutover"
+          || url.pathname === "/v1/authority:activateD1"
+          || url.pathname === "/v1/authority/chapter_ch07:activateD1") {
           if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
           return await forwardReleaseControl(request, env);
         }

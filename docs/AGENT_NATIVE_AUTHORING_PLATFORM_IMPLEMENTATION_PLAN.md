@@ -3,11 +3,11 @@
 ## End-to-End Implementation Plan
 
 - **Status:** Implementation in progress; Chapter 7 production canary awaiting R2 account activation
-- **Plan version:** 1.2
+- **Plan version:** 1.3
 - **Last updated:** 2026-08-03
 - **Target repository:** `Brehove/ai-ethics-interactive-textbook`
 - **Migration baseline:** `origin/main` at `0a2716182953f492a654aa8b704d420216f39450`
-- **Confidence:** High on the architecture and guardrails; moderate on the schedule until the vertical spike is complete
+- **Confidence:** High on the implemented architecture and guardrails; moderate on live cutover timing because R2 activation still requires account-owner approval
 
 ---
 
@@ -19,17 +19,17 @@ This document remains the end-to-end implementation plan. The implementation bra
 |---|---|---|
 | 0 — governance/baseline | Complete: clean worktree, five ADRs, signed baseline, archived visual/runtime evidence | None |
 | 1 — contract/spike | Complete for the Chapter 7 canary: shared schemas, Git/D1 repository paths, deterministic import/export/round-trip, media/embed projections | Live R2 upload/restore proof after account activation |
-| 2 — control plane/shadow migration | Implemented and remotely seeded: 18 documents/revisions/authority records, semantic operations, CAS, idempotency, audit provenance, human-only review, restore-as-draft, paginated passage/dependency reads, immutable one-time preview issuance, serialized deployment staging, exact receipts, pointer history, and rollback selection | Production Worker/preview deployment; real multi-document merge/rebase and complete graph repositories remain |
+| 2 — control plane/shadow migration | Implemented and remotely seeded: 18 documents/revisions/authority records; isolated 1–18 document change sets; document-targeted edits; aggregate diff/validation; all-target CAS submission; inherited live-D1 snapshot closure; idempotency, audit, human-only review, restore, passage/dependency reads, preview issuance, deployment staging, exact receipts, pointer history, and rollback selection | Production Worker/preview deployment and remaining non-chapter graph repositories |
 | 3 — instructor editor/checkpoints | Chapter 7 write canary plus gated all-book browser selection: real Chapter, Checkpoints, Media, Embeds, and Review workspaces load every chapter/block type, keep repository-authoritative chapters read-only, and support prose, block insertion/reordering, checkpoint/media/embed authoring, diff/history/dependency receipts, validation, preview, submit, and exact-snapshot human approve/reject | Behavioral accessibility tests and live authenticated browser smoke test |
 | 4 — native media | Private-original preservation plus quarantined processing for PNG, JPEG, GIF, WebP, MP3, WAV, M4A, MP4, WebM, PDF, and UTF-8 text; callbacks, GIF poster/playback, responsive images, document cards, and media policy tests implemented | R2 buckets/credentials and one real end-to-end production upload |
 | 5 — provider registry | YouTube, Vimeo, X, safe rich links, and fallback-first extended adapters implemented with no arbitrary HTML | Live multi-browser/network smoke checks |
-| 6 — API hardening | Actor provenance, scope separation, CAS/idempotency, exact snapshot verification, semantic diff, reject, restore, authority-gated authoring, paginated passage dependencies, one-time preview grants, service-only deployment staging/receipts/rollback, and hostile-input tests implemented | Multi-document merge/rebase, generated exhaustive response schemas, and broader operational limits |
-| 7 — MCP/Skills | Hosted/local MCP registry and four versioned Skills implemented; agents can paginate/get passages, inspect changeset/release evidence, edit, create protected previews, validate, diff, and submit but cannot approve or publish | Deploy Worker, set its bearer, complete remaining OpenAPI schemas, and run one live client smoke test |
-| 8 — immutable release | Signed candidate, exact snapshot route, isolated materialization/build, asset digests, commit-pinned checkouts, expected-active CAS, service-only staged promotion, hash-bound deployment receipts, pointer history, exact-version rollback, and protected GitHub environments implemented | Cloudflare release and receipt tokens; live canary upload, smoke, human approval, promotion, rollback drill |
-| 9 — cutover | Chapter 7 is the only permitted canary in code and UI; D1 remains nonauthoritative in production | Complete the live canary before changing its authority record; then batch the other 17 chapters |
+| 6 — API hardening | Actor provenance, scope separation, CAS/idempotency, exact snapshot verification, multi-document diff/validation/submission, reject/restore, authority gating, passage dependencies, one-time preview, service-only deployment/authority controls, canonical-head promotion, and hostile-input tests implemented | Generated exhaustive response schemas, crash reconciliation, and broader operational limits |
+| 7 — MCP/Skills | Hosted/local MCP registry and four versioned Skills implemented; agents can create and address multi-chapter proposals, paginate/get passages, inspect evidence, edit checkpoints/media/embeds, preview, validate, diff, and submit but cannot approve or publish | Deploy Worker, set its bearer, complete remaining response schemas, and run one live client smoke test |
+| 8 — immutable release | Signed explicit 1–18 chapter D1 authority policy; exact snapshot route; inherited-live-content preservation; general multi-chapter materialization/build; asset digests; commit-pinned checkouts; expected-active CAS; complete 18-entry release maps; hash-bound receipts; atomic canonical-head promotion; database cutover triggers; pointer history; rollback selection; and protected environments implemented | Cloudflare release and receipt tokens; live canary upload, smoke, human approval, promotion, rollback/restore drill |
+| 9 — cutover | Chapter 7 remains the default canary; D1 remains nonauthoritative in production. A service-only read-only cutover-proposal path now removes the Chapter 8–18 migration deadlock without opening dual-authority editing. | Complete the live Chapter 7 canary before changing its authority record; then prepare, review, and release explicit remaining-chapter batches |
 | 10 — extended media | Spotify click-to-load plus SoundCloud and Bluesky link-first adapters are implemented in contract, editor, reader, print, and conformance tests | Live provider smoke checks and post-canary quarterly operational drills |
 
-The only account-level blocker to the live media canary is Cloudflare R2 activation. The dashboard currently presents a $0-due-now subscription with usage overages; activation is intentionally not performed without the account owner’s explicit confirmation. No authority registry entry is switched to D1 until the production release is green and reversible.
+The only account-level blocker to the live media canary is Cloudflare R2 activation. The dashboard currently presents a $0-due-now subscription with usage overages; activation is intentionally not performed without the account owner’s explicit confirmation. Remote D1 migrations through `0012_cutover_proposals.sql` are applied, but verified production state remains **0 D1-authoritative chapters**. No authority registry entry is switched until the production release is green and reversible.
 
 ---
 

@@ -35,28 +35,42 @@ export async function materializeReleaseAssets({ projection, publicDir, token, f
     const publicPath = `/release-assets/${filename}`; written.set(asset.sha256, { bytes: asset.bytes, mimeType: asset.mimeType, publicPath }); assets.push({ ...asset, publicPath });
   } return assets;
 }
-export function assertCanary(snapshot) {
-  const d1 = Object.entries(snapshot.authorityRegistry ?? {}).filter(([, source]) => source.authority === "d1").map(([id]) => id);
-  if (d1.some((id) => id !== CANARY_D1_DOCUMENT) || (d1.length && !d1.includes(CANARY_D1_DOCUMENT))) fail("E_CANARY_POLICY", "Canary permits D1 authority only for Chapter 7 (chapter_ch07).");
+function normalizedAuthorityIds(ids) {
+  if (!Array.isArray(ids) || ids.length < 1 || ids.length > 18 || ids.some((id) => !/^chapter_ch(?:0[1-9]|1[0-8])$/.test(id)) || new Set(ids).size !== ids.length) fail("E_AUTHORITY_POLICY", "The release authority policy must contain 1 to 18 unique canonical chapter IDs.");
+  return [...ids].sort();
 }
-/** Bind a submitted one-document D1 snapshot into an otherwise Git-authoritative full book snapshot. */
-export function assembleReleaseSnapshot({ submittedSnapshot, baselineSnapshot }) {
-  const document = submittedSnapshot?.documents?.find((item) => item.documentId === CANARY_D1_DOCUMENT);
-  if (!document?.content || submittedSnapshot.documents.length !== 1) fail("E_SUBMITTED_SCOPE", "A canary submission must contain exactly Chapter 7.");
-  const finalizedChapter = document.content;
-  const finalizedHash = sha256(finalizedChapter);
-  if (!/^[a-f0-9]{64}$/i.test(document.submittedContentHash ?? "") || finalizedHash !== document.submittedContentHash) {
-    fail("E_SUBMITTED_CONTENT_HASH", "Submitted Chapter 7 bytes do not match the immutable submitted content hash.");
+export function assertAuthorityPolicy(snapshot, allowedD1DocumentIds) {
+  const expected = normalizedAuthorityIds(allowedD1DocumentIds);
+  const actual = Object.entries(snapshot.authorityRegistry ?? {}).filter(([, source]) => source.authority === "d1").map(([id]) => id).sort();
+  if (stableJson(actual) !== stableJson(expected)) fail("E_AUTHORITY_POLICY", "The signed release authority set does not exactly match the D1-authoritative chapters in the release snapshot.");
+}
+export function assertCanary(snapshot) { assertAuthorityPolicy(snapshot, [CANARY_D1_DOCUMENT]); }
+/** Bind every submitted D1 document into an otherwise Git-authoritative full-book snapshot. */
+export function assembleReleaseSnapshot({ submittedSnapshot, baselineSnapshot, allowedD1DocumentIds = [CANARY_D1_DOCUMENT] }) {
+  const allowed = normalizedAuthorityIds(allowedD1DocumentIds);
+  const documents = submittedSnapshot?.documents;
+  if (!Array.isArray(documents) || documents.length !== allowed.length || new Set(documents.map((item) => item?.documentId)).size !== documents.length || stableJson(documents.map((item) => item.documentId).sort()) !== stableJson(allowed)) fail("E_SUBMITTED_SCOPE", "The submitted snapshot must contain exactly the complete signed D1 authority set.");
+  if (!Array.isArray(baselineSnapshot?.chapters) || baselineSnapshot.chapters.length !== 18) fail("E_BASELINE_SCOPE", "The Git baseline must contain the complete 18-chapter book.");
+  const baselineIds = new Set(baselineSnapshot.chapters.map((chapter) => chapter.chapterId));
+  const replacements = new Map();
+  const authorityRegistry = { ...baselineSnapshot.authorityRegistry };
+  const contentObjects = { ...baselineSnapshot.contentObjects };
+  for (const document of documents) {
+    if (!document?.content || document.content.chapterId !== document.documentId || !baselineIds.has(document.documentId)) fail("E_SUBMITTED_SCOPE", `Submitted document ${document?.documentId || "unknown"} is not a canonical chapter in the Git baseline.`);
+    const finalizedChapter = document.content;
+    const finalizedHash = sha256(finalizedChapter);
+    if (!/^[a-f0-9]{64}$/i.test(document.submittedContentHash ?? "") || finalizedHash !== document.submittedContentHash) fail("E_SUBMITTED_CONTENT_HASH", `Submitted ${document.documentId} bytes do not match the immutable submitted content hash.`);
+    if (document.revisionId !== finalizedChapter.revisionId || finalizedChapter.chapterVersion !== document.revisionId || finalizedChapter.status !== "published") fail("E_SUBMITTED_FINALIZATION", `Submitted ${document.documentId} was not server-finalized into the declared publishable revision.`);
+    const sourcePath = baselineSnapshot.authorityRegistry?.[document.documentId]?.sourcePath;
+    if (typeof sourcePath !== "string" || !/^content\/chapters\/[A-Za-z0-9._/-]+\/$/.test(sourcePath) || sourcePath.includes("..")) fail("E_MATERIALIZATION_PATH", `No safe Git source path exists for ${document.documentId}.`);
+    replacements.set(document.documentId, finalizedChapter);
+    authorityRegistry[document.documentId] = { authority: "d1", documentId: document.documentId, domainRevisionId: finalizedChapter.revisionId, normalizedSnapshotHash: finalizedHash };
+    contentObjects[document.documentId] = { type: "chapter", domainRevisionId: finalizedChapter.revisionId, sha256: finalizedHash };
   }
-  if (document.revisionId !== finalizedChapter.revisionId || finalizedChapter.chapterVersion !== document.revisionId || finalizedChapter.status !== "published") {
-    fail("E_SUBMITTED_FINALIZATION", "Submitted Chapter 7 was not server-finalized into the declared publishable revision.");
-  }
-  const chapters = baselineSnapshot?.chapters?.map((chapter) => chapter.chapterId === CANARY_D1_DOCUMENT ? finalizedChapter : chapter);
-  if (!chapters?.some((chapter) => chapter.chapterId === CANARY_D1_DOCUMENT)) fail("E_CANARY_MISSING", "Git baseline does not contain Chapter 7.");
-  const authorityRegistry = { ...baselineSnapshot.authorityRegistry, [CANARY_D1_DOCUMENT]: { authority: "d1", documentId: CANARY_D1_DOCUMENT, domainRevisionId: finalizedChapter.revisionId, normalizedSnapshotHash: finalizedHash } };
-  const contentObjects = { ...baselineSnapshot.contentObjects, [CANARY_D1_DOCUMENT]: { type: "chapter", domainRevisionId: finalizedChapter.revisionId, sha256: finalizedHash } };
+  const chapters = baselineSnapshot.chapters.map((chapter) => replacements.get(chapter.chapterId) || chapter);
   const releaseSnapshot = { ...baselineSnapshot, chapters, authorityRegistry, contentObjects, ...(submittedSnapshot.mediaProjection ? { mediaProjection: submittedSnapshot.mediaProjection } : {}) };
-  assertCanary(releaseSnapshot); return releaseSnapshot;
+  assertAuthorityPolicy(releaseSnapshot, allowed);
+  return releaseSnapshot;
 }
 function decodeImportedLegacy(block) {
   if (/_metadata$/.test(block.blockId)) return "";
@@ -78,13 +92,10 @@ function markdownForBlock(block, includePassageMarker = true) {
   if (["externalEmbed", "richLink", "mediaFigure"].includes(block.type)) return "";
   fail("E_BLOCK_PROJECTION", `No reviewed Markdown projection exists for block type ${block.type}.`);
 }
-export async function materializeChapterSeven({ sourceRoot, workspace, releaseSnapshot, releaseAssetToken, fetcher }) {
-  await cp(sourceRoot, workspace, { recursive: true, filter: (entry) => {
-    const first = path.relative(sourceRoot, entry).split(path.sep)[0];
-    return !["node_modules", ".git", "dist", "artifacts", ".wrangler"].includes(first);
-  } });
-  const chapter = releaseSnapshot.chapters.find((item) => item.chapterId === CANARY_D1_DOCUMENT); if (!chapter) fail("E_CANARY_MISSING", "Release snapshot has no Chapter 7.");
-  const dir = path.join(workspace, "content/chapters/07-aristotle-character-and-ai-assisted-life");
+async function materializeChapter({ workspace, releaseSnapshot, chapter, materializationPath, materializedAssets }) {
+  const dir = path.resolve(workspace, materializationPath);
+  const chapterRoot = `${path.resolve(workspace, "content/chapters")}${path.sep}`;
+  if (!dir.startsWith(chapterRoot)) fail("E_MATERIALIZATION_PATH", `Materialization path escaped the chapter root for ${chapter.chapterId}.`);
   let priorPassage = null;
   const markdownBlocks = chapter.body.map((block) => {
     const passage = block.passageId || block.anchorPassageId || null;
@@ -96,7 +107,6 @@ export async function materializeChapterSeven({ sourceRoot, workspace, releaseSn
   const record = JSON.parse(await readFile(path.join(dir, "reading-record.json"), "utf8"));
   record.reasoningObjective = chapter.reasoningObjective; record.checkpoints = chapter.checkpoints.map((item) => ({ id: item.legacyId || item.checkpointId.replace(/^checkpoint_/, ""), passageId: item.passageId.replace(/^passage_/, ""), stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure || item.responseFormat, minWords: item.minWords, maxWords: item.maxWords, showInSidebar: item.showInSidebar, rationale: item.rationale }));
   await writeFile(path.join(dir, "reading-record.json"), `${JSON.stringify(record, null, 2)}\n`);
-  const materializedAssets = releaseSnapshot.mediaProjection ? await materializeReleaseAssets({ projection: releaseSnapshot.mediaProjection, publicDir: path.join(workspace, "public/release-assets"), token: releaseAssetToken, fetcher }) : [];
   const placements = chapter.body.filter((block) => ["externalEmbed", "richLink", "mediaFigure"].includes(block.type)).map((block) => {
     if (block.type === "mediaFigure") {
       const version = releaseSnapshot.mediaProjection?.versions?.find((item) => item.mediaVersionId === block.mediaVersionId);
@@ -114,15 +124,41 @@ export async function materializeChapterSeven({ sourceRoot, workspace, releaseSn
     return { type: block.type, blockId: block.blockId, anchorPassageId: block.anchorPassageId, ...(block.type === "externalEmbed" ? { identity: block.identity, canonicalUrl: block.canonicalUrl, caption: block.caption, teachingUse: block.teachingUse, fallback: block.fallback, adapterVersion: block.adapterVersion } : {}), ...(block.type === "richLink" ? { canonicalUrl: block.canonicalUrl, title: block.title, summary: block.summary, linkLabel: block.linkLabel, teachingUse: block.teachingUse } : {}) };
   });
   const sidecar = path.join(dir, "release-placements.json"); await writeFile(sidecar, `${JSON.stringify({ schemaVersion: 1, chapterId: chapter.chapterId, placements }, null, 2)}\n`);
-  return { chapterPath: path.join(dir, "chapter.md"), readingRecordPath: path.join(dir, "reading-record.json"), placementsPath: sidecar, chapterDigest: sha256(await readFile(path.join(dir, "chapter.md"))), readingRecordDigest: sha256(await readFile(path.join(dir, "reading-record.json"))), placementsDigest: sha256(await readFile(sidecar)) };
+  return { documentId: chapter.chapterId, materializationPath, chapterPath: path.join(dir, "chapter.md"), readingRecordPath: path.join(dir, "reading-record.json"), placementsPath: sidecar, chapterDigest: sha256(await readFile(path.join(dir, "chapter.md"))), readingRecordDigest: sha256(await readFile(path.join(dir, "reading-record.json"))), placementsDigest: sha256(await readFile(sidecar)) };
+}
+export async function materializeReleaseDocuments({ sourceRoot, workspace, releaseSnapshot, releaseAssetToken, fetcher }) {
+  await cp(sourceRoot, workspace, { recursive: true, filter: (entry) => {
+    const first = path.relative(sourceRoot, entry).split(path.sep)[0];
+    return !["node_modules", ".git", "dist", "artifacts", ".wrangler"].includes(first);
+  } });
+  const d1Entries = Object.entries(releaseSnapshot.authorityRegistry ?? {}).filter(([, source]) => source.authority === "d1").sort(([a], [b]) => a.localeCompare(b));
+  if (!d1Entries.length) fail("E_AUTHORITY_POLICY", "A database-authored release must contain at least one D1-authoritative chapter.");
+  const book = JSON.parse(await readFile(path.join(workspace, "content/book.json"), "utf8"));
+  const sourcePaths = new Map((book.parts ?? []).flatMap((part) => part.chapters ?? []).map((item) => [`chapter_${item.id}`, `content/chapters/${String(item.order).padStart(2, "0")}-${item.slug}/`]));
+  const materializedAssets = releaseSnapshot.mediaProjection ? await materializeReleaseAssets({ projection: releaseSnapshot.mediaProjection, publicDir: path.join(workspace, "public/release-assets"), token: releaseAssetToken, fetcher }) : [];
+  const chapters = [];
+  for (const [documentId] of d1Entries) {
+    const chapter = releaseSnapshot.chapters.find((item) => item.chapterId === documentId);
+    if (!chapter) fail("E_SUBMITTED_SCOPE", `Release snapshot has no chapter content for ${documentId}.`);
+    const materializationPath = sourcePaths.get(documentId);
+    if (!materializationPath) fail("E_MATERIALIZATION_PATH", `The protected book manifest has no source path for ${documentId}.`);
+    chapters.push(await materializeChapter({ workspace, releaseSnapshot, chapter, materializationPath, materializedAssets }));
+  }
+  return { documentCount: chapters.length, documents: chapters, assetCount: materializedAssets.length };
+}
+export async function materializeChapterSeven(options) {
+  assertCanary(options.releaseSnapshot);
+  const materialized = await materializeReleaseDocuments(options);
+  return materialized.documents[0];
 }
 export function makeCandidate({ snapshot, submittedSnapshot = snapshot, releaseSnapshot = snapshot, snapshotHash, snapshotRevision, commitSha, createdAt = new Date().toISOString(), signingKey }) {
   if (!/^[a-f0-9]{64}$/i.test(snapshotHash)) fail("E_SNAPSHOT_HASH", "snapshotHash must be a SHA-256 hex digest.");
   if (!snapshotRevision || typeof snapshotRevision !== "string") fail("E_SNAPSHOT_REVISION", "snapshotRevision is required.");
   const actual = sha256(submittedSnapshot);
   if (actual !== snapshotHash) fail("E_SNAPSHOT_HASH_MISMATCH", "Submitted snapshot bytes do not match the requested immutable snapshot hash.");
-  assertCanary(releaseSnapshot);
-  const unsigned = { schemaVersion: 1, candidateId: `candidate_${snapshotHash.slice(0, 24)}`, createdAt, submittedSnapshot: { sha256: snapshotHash, revision: snapshotRevision, bytes: Buffer.byteLength(stableJson(submittedSnapshot)), value: submittedSnapshot }, releaseSnapshot, code: { commitSha }, canary: { d1AuthoritativeDocuments: Object.entries(releaseSnapshot.authorityRegistry ?? {}).filter(([, v]) => v.authority === "d1").map(([id]) => id) } };
+  const d1AuthoritativeDocuments = Object.entries(releaseSnapshot.authorityRegistry ?? {}).filter(([, value]) => value.authority === "d1").map(([id]) => id).sort();
+  assertAuthorityPolicy(releaseSnapshot, d1AuthoritativeDocuments);
+  const unsigned = { schemaVersion: 2, candidateId: `candidate_${snapshotHash.slice(0, 24)}`, createdAt, submittedSnapshot: { sha256: snapshotHash, revision: snapshotRevision, bytes: Buffer.byteLength(stableJson(submittedSnapshot)), value: submittedSnapshot }, releaseSnapshot, code: { commitSha }, authorityPolicy: { d1AuthoritativeDocuments } };
   const manifestSha256 = sha256(unsigned);
   const signature = signingKey ? sign(null, Buffer.from(manifestSha256), signingKey).toString("base64") : null;
   return { ...unsigned, manifestSha256, signature, signatureAlgorithm: signature ? "ed25519" : null };
@@ -131,7 +167,7 @@ export function verifyCandidate(candidate, publicKey, { requireSignature = true 
   const { manifestSha256, signature, signatureAlgorithm, ...unsigned } = candidate;
   if (sha256(unsigned) !== manifestSha256) fail("E_MANIFEST_HASH_MISMATCH", "Candidate manifest has been modified.");
   if (sha256(candidate.submittedSnapshot.value) !== candidate.submittedSnapshot.sha256) fail("E_STALE_SNAPSHOT", "Candidate no longer contains its submitted snapshot.");
-  assertCanary(candidate.releaseSnapshot);
+  assertAuthorityPolicy(candidate.releaseSnapshot, candidate.authorityPolicy?.d1AuthoritativeDocuments);
   if (requireSignature && (!signature || signatureAlgorithm !== "ed25519" || !publicKey || !verify(null, Buffer.from(manifestSha256), publicKey, Buffer.from(signature, "base64")))) fail("E_SIGNATURE_INVALID", "Candidate signature is missing or invalid.");
   return true;
 }

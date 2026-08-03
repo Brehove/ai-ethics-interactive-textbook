@@ -43,6 +43,13 @@ test("frozen OpenAPI is valid JSON and exposes the complete agent and human boun
   assert.equal(spec.paths["/v1/changesets/{changesetId}:approve"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:publish"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:publish"].post["x-enabled"], false);
+  assert.equal(spec.paths["/v1/changesets"].post["x-atomic-working-copy"], true);
+  assert.equal(spec.paths["/v1/changesets/{changesetId}:submitReview"].post["x-all-target-cas"], true);
+  assert.equal(spec.paths["/v1/authority:activateD1"].post["x-exact-active-release-binding"], true);
+  assert.equal(spec.paths["/v1/authority:activateD1"].post["x-database-guarded"], true);
+  assert.equal(spec.paths["/v1/authority:prepareCutover"].post["x-read-only-proposal"], true);
+  assert.equal(spec.components.requestBodies.createMultiDocumentChangeset.content["application/json"].schema.properties.targets.maxItems, 18);
+  assert.ok(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.documentId);
   assert.equal(spec.paths["/v1/release-deployments:stage"].post["x-service-only"], true);
   assert.equal(spec.paths["/v1/release-deployments/{transactionId}:recordReceipt"].post["x-active-pointer-cas"], true);
   assert.equal(spec.paths["/v1/releases/{releaseId}:stageRollback"].post["x-agent-safe"], undefined);

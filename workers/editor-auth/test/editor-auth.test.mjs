@@ -556,6 +556,14 @@ test("release control proxy uses a separate bearer and fixed deploy-receipt serv
   assert.equal(forwarded.headers.get("x-content-run-id"), "123456");
   assert.equal(forwarded.headers.get("x-content-scopes"), "content:deployReceipt");
   assert.equal(await forwarded.text(), body);
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/authority:activateD1`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/authority:activateD1");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/authority:prepareCutover`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/authority:prepareCutover");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
   response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json" }, body }), env);
   assert.equal(response.status, 401);
   response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: "Bearer wrong", "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);

@@ -33,7 +33,13 @@ async function post(pathname, body) {
   return JSON.parse(text);
 }
 
-if (command === "stage") {
+if (command === "prepare-cutover") {
+  const targets = required("--documents").split(",").map((item) => item.trim()).filter(Boolean);
+  if (!targets.length || targets.length > 18 || new Set(targets).size !== targets.length || targets.some((item) => !/^chapter_ch(?:0[1-9]|1[0-8])$/.test(item))) throw new Error("--documents must contain 1 to 18 unique canonical chapter IDs");
+  const proposal = await post("/v1/authority:prepareCutover", { title: required("--title"), description: value("--description"), targets, idempotencyKey: deterministicUuid("prepare-cutover") });
+  await writeFile(required("--out"), `${JSON.stringify(proposal, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(proposal));
+} else if (command === "stage") {
   const candidate = await readJson(required("--candidate"));
   const state = await readJson(required("--state"));
   const buildAttestation = await readFile(required("--build-attestation"));
@@ -42,6 +48,14 @@ if (command === "stage") {
   const expectedInput = required("--expected-active");
   const expectedActiveReleaseId = expectedInput === "none" ? null : expectedInput;
   const fallbackRollbackVersion = required("--fallback-rollback-version");
+  const authorityEntries = Object.entries(candidate.releaseSnapshot?.authorityRegistry || {}).map(([documentId, source]) => ({
+    documentId,
+    authority: source.authority,
+    sourcePath: source.authority === "git" ? source.sourcePath : null,
+    sourceRevision: source.domainRevisionId || source.gitSha || candidate.releaseSnapshot?.contentObjects?.[documentId]?.domainRevisionId,
+    normalizedSnapshotHash: source.normalizedSnapshotHash,
+  })).sort((a, b) => a.documentId.localeCompare(b.documentId));
+  if (authorityEntries.length !== 18) throw new Error("Candidate must contain the complete 18-chapter authority map");
   const staged = await post("/v1/release-deployments:stage", {
     candidateId: candidate.candidateId,
     snapshotHash: candidate.submittedSnapshot.sha256,
@@ -50,6 +64,7 @@ if (command === "stage") {
     buildAttestationHash: sha256(buildAttestation),
     expectedActiveReleaseId,
     cloudflareVersionId: record.versionId,
+    authorityEntries,
     idempotencyKey: deterministicUuid("stage"),
   });
   if (staged.previousCloudflareVersionId && staged.previousCloudflareVersionId !== fallbackRollbackVersion) throw new Error("Configured emergency rollback version does not match the active release receipt");
@@ -79,6 +94,19 @@ if (command === "stage") {
   });
   await writeFile(required("--out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx", mode: 0o444 });
   console.log(JSON.stringify(receipt));
+} else if (command === "activate-authority") {
+  const candidate = await readJson(required("--candidate"));
+  const transaction = await readJson(required("--transaction"));
+  const receipt = await readJson(required("--receipt"));
+  if (transaction.action !== "promote" || receipt.action !== "promote" || receipt.releaseId !== transaction.releaseId || receipt.activeReleaseId !== transaction.releaseId || transaction.candidateManifestHash !== candidate.manifestSha256) throw new Error("Authority activation requires the exact promoted candidate, transaction, and active-release receipt");
+  const documents = Object.entries(candidate.releaseSnapshot?.authorityRegistry || {})
+    .filter(([, source]) => source.authority === "d1")
+    .map(([documentId, source]) => ({ documentId, sourceRevision: source.domainRevisionId, normalizedSnapshotHash: source.normalizedSnapshotHash }))
+    .sort((a, b) => a.documentId.localeCompare(b.documentId));
+  if (!documents.length || documents.some((item) => !item.sourceRevision || !/^[a-f0-9]{64}$/.test(item.normalizedSnapshotHash || ""))) throw new Error("Candidate has no valid D1 authority entries to activate");
+  const activated = await post("/v1/authority:activateD1", { releaseId: receipt.releaseId, documents, idempotencyKey: deterministicUuid("activate-authority") });
+  await writeFile(required("--out"), `${JSON.stringify(activated, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(activated));
 } else if (command === "emergency-rollback") {
   const transaction = await readJson(required("--transaction"));
   const versionId = transaction.emergencyRollbackVersionId;
@@ -86,5 +114,5 @@ if (command === "stage") {
   await exec("npx", ["wrangler", "versions", "deploy", `${versionId}@100`, "--name", "ethicsandai", "--yes"]);
   console.log(JSON.stringify({ rolledBackTo: versionId, transactionId: transaction.transactionId }));
 } else {
-  throw new Error("usage: stage|receipt|emergency-rollback");
+  throw new Error("usage: prepare-cutover|stage|receipt|activate-authority|emergency-rollback");
 }

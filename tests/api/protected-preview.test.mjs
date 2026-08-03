@@ -11,9 +11,8 @@ const dbForIssue = () => ({
   batches: [],
   prepare(sql) { const statement = { sql, args: [], bind(...args) { this.args = args; return this; }, async first() {
     if (sql.includes('FROM idempotency_records')) return null;
-    if (sql.includes('FROM working_documents w')) return { document_id: 'chapter_ch07', base_revision_id: 'revision-base', content_hash: 'a'.repeat(64), content_text: stableStringify(chapter), version: 2, state: 'open', current_revision_id: 'revision-base' };
     return null;
-  } }; return statement; },
+  }, async all() { return sql.includes('FROM working_documents w') ? { results: [{ document_id: 'chapter_ch07', base_revision_id: 'revision-base', content_hash: 'a'.repeat(64), content_text: stableStringify(chapter), version: 2, state: 'open', current_revision_id: 'revision-base' }] } : { results: [] }; } }; return statement; },
   async batch(items) { this.batches.push(items); return items.map((item) => item.sql.includes('INSERT INTO api_rate_limits') ? { results: [{ request_count: 1 }], meta: { changes: 1 } } : { meta: { changes: 1 } }); }
 });
 

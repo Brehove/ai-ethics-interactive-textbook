@@ -4,7 +4,7 @@ import path from "node:path";
 import os from "node:os";
 import { cp, mkdtemp, readFile, symlink } from "node:fs/promises";
 import {
-  assembleReleaseSnapshot, deployCandidate, makeCandidate, materializeChapterSeven,
+  assembleReleaseSnapshot, deployCandidate, makeCandidate, materializeReleaseDocuments,
   promoteCandidate, readJson, rollback, verifyCandidate, writeJsonImmutable,
 } from "./release.mjs";
 
@@ -17,6 +17,7 @@ const required = (name) => value(name) ?? (() => { throw new Error(`${name} is r
 const stateFile = () => value("--state") ?? path.join(root, ".release", "state.json");
 const dryRun = () => args.includes("--dry-run") || process.env.RELEASE_EXECUTE !== "1";
 const allowUnsigned = () => args.includes("--allow-unsigned") || process.env.RELEASE_ALLOW_UNSIGNED === "1";
+const d1Documents = () => (value("--d1-documents") ?? "chapter_ch07").split(",").map((item) => item.trim()).filter(Boolean);
 
 async function verifyForRelease(candidate) {
   const publicKey = process.env.RELEASE_PUBLIC_KEY
@@ -44,7 +45,7 @@ const adapter = {
 if (command === "candidate") {
   if (!process.env.RELEASE_SIGNING_KEY && !allowUnsigned()) throw new Error("RELEASE_SIGNING_KEY is required outside an explicit local unsigned self-test");
   const submittedSnapshot = await readJson(required("--snapshot"));
-  const releaseSnapshot = assembleReleaseSnapshot({ submittedSnapshot, baselineSnapshot: await readJson(required("--baseline")) });
+  const releaseSnapshot = assembleReleaseSnapshot({ submittedSnapshot, baselineSnapshot: await readJson(required("--baseline")), allowedD1DocumentIds: d1Documents() });
   const candidate = makeCandidate({ submittedSnapshot, releaseSnapshot, snapshotHash: required("--snapshot-hash"), snapshotRevision: required("--snapshot-revision"), commitSha: required("--commit-sha"), signingKey: process.env.RELEASE_SIGNING_KEY });
   await verifyForRelease(candidate);
   await writeJsonImmutable(required("--out"), candidate);
@@ -56,7 +57,7 @@ if (command === "candidate") {
   const candidate = await readJson(required("--candidate"));
   await verifyForRelease(candidate);
   const workspace = await mkdtemp(path.join(os.tmpdir(), "ai-ethics-release-"));
-  const materialized = await materializeChapterSeven({ sourceRoot: root, workspace, releaseSnapshot: candidate.releaseSnapshot, releaseAssetToken: process.env.RELEASE_ASSET_TOKEN });
+  const materialized = await materializeReleaseDocuments({ sourceRoot: root, workspace, releaseSnapshot: candidate.releaseSnapshot, releaseAssetToken: process.env.RELEASE_ASSET_TOKEN });
   await symlink(path.join(root, "node_modules"), path.join(workspace, "node_modules"), "dir");
   for (const [bin, argv] of [["npm", ["run", "content:generate"]], ["npm", ["run", "validate"]], ["npm", ["run", "build"]]]) await exec(bin, argv, { cwd: workspace });
   const out = path.resolve(required("--out"));

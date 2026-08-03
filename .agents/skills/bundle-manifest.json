@@ -4,7 +4,7 @@
   "files": [
     {
       "path": "author-textbook-chapter/SKILL.md",
-      "sha256": "c6f6f3c4ad4458a7f0924176edfe592f2aeca14f778f2d92e4668c1f9fedbfda"
+      "sha256": "29e5752d87883cff04353f2eca594cc5b356e9edd71331ede2572fbbf00a1b70"
     },
     {
       "path": "author-textbook-chapter/agents/openai.yaml",
@@ -12,7 +12,7 @@
     },
     {
       "path": "author-textbook-chapter/references/mcp-workflow.md",
-      "sha256": "621ff4475f44a4c261df76ae17d5de1e5bc8a026e67f11158b81f8b6fcf89713"
+      "sha256": "379cd56ffe178c7142691f1a9d5f54e5e022796ee5b087571b1049c64baf8075"
     },
     {
       "path": "manage-prompt-checkpoints/SKILL.md",

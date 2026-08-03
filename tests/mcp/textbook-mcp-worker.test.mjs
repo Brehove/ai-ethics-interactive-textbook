@@ -18,10 +18,33 @@ test('protocol initializes, lists tools, and calls a read tool', async () => {
   assert.equal(tools.tools.some(tool => tool.name === 'approve_changeset' || tool.name === 'publish_changeset'), false);
   assert.equal(tools.tools.some(tool => tool.name === 'upload_media_base64' || tool.name === 'request_media_upload'), false);
   assert.ok(tools.tools.some(tool => tool.name === 'replace_text'));
+  assert.ok(tools.tools.some(tool => tool.name === 'create_changeset'));
   assert.equal(tools.tools.every(tool => typeof tool.annotations?.idempotentHint === 'boolean'), true);
   const response = await client.callTool({ name: 'list_chapters', arguments: {} });
   assert.equal(response.isError, undefined);
   assert.match(response.content[0].text, /chapters/);
+  await client.close(); await server.close();
+});
+
+test('MCP exposes document-targeted multi-chapter creation, mutation, diff, preview, and atomic submission', async () => {
+  const calls = [];
+  const routeEnv = { CONTENT_API: { fetch: async (request) => {
+    calls.push({ pathname: new URL(request.url).pathname, body: request.method === 'GET' ? null : await request.clone().json().catch(() => null) });
+    return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
+  } } };
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createMcp(routeEnv, 'run_multi'); const client = new Client({ name: 'multi-client', version: '1.0.0' });
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
+  await client.callTool({ name: 'create_changeset', arguments: { title: 'Two chapter repair', targets: ['chapter_ch07', 'chapter_ch08'], idempotencyKey: key } });
+  await client.callTool({ name: 'replace_text', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 2, idempotencyKey: key, operation: { type: 'text.replace', blockId: 'block_1', text: 'Revised.' } } });
+  await client.callTool({ name: 'diff_changeset', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08' } });
+  await client.callTool({ name: 'render_preview', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 3, idempotencyKey: key } });
+  await client.callTool({ name: 'submit_changeset', arguments: { changeSetId: 'cs_multi', documents: [{ documentId: 'chapter_ch07', baseRevisionId: 'revision_a', expectedVersion: 1 }, { documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 3 }], idempotencyKey: key } });
+  assert.equal(calls[0].pathname, '/v1/changesets'); assert.deepEqual(calls[0].body.targets, ['chapter_ch07', 'chapter_ch08']);
+  assert.equal(calls[1].pathname, '/v1/changesets/cs_multi:apply'); assert.equal(calls[1].body.documentId, 'chapter_ch08');
+  assert.equal(calls[2].pathname, '/v1/changesets/cs_multi:diff'); assert.deepEqual(calls[2].body, { documentId: 'chapter_ch08' });
+  assert.equal(calls[3].body.documentId, 'chapter_ch08'); assert.equal(calls[4].body.documents.length, 2); assert.equal(calls[4].body.baseRevisionId, undefined);
   await client.close(); await server.close();
 });
 

@@ -41,6 +41,18 @@ const makeDb = (resolve, batchHook) => {
   };
 };
 
+const completeAuthorityEntries = () => Array.from({ length: 18 }, (_, index) => {
+  const chapter = String(index + 1).padStart(2, '0');
+  const d1 = chapter === '07';
+  return {
+    documentId: `chapter_ch${chapter}`,
+    authority: d1 ? 'd1' : 'git',
+    sourcePath: d1 ? null : `content/chapters/${chapter}-chapter-${chapter}/`,
+    sourceRevision: d1 ? 'revision_ch07_release_17' : `${(index % 15).toString(16)}`.repeat(64),
+    normalizedSnapshotHash: `${((index + 1) % 15).toString(16)}`.repeat(64)
+  };
+});
+
 const stageBody = (overrides = {}) => ({
   candidateId: 'candidate_ch07_17',
   snapshotHash: 'a'.repeat(64),
@@ -49,6 +61,7 @@ const stageBody = (overrides = {}) => ({
   buildAttestationHash: 'c'.repeat(64),
   expectedActiveReleaseId: null,
   cloudflareVersionId: 'version_cf_17',
+  authorityEntries: completeAuthorityEntries(),
   idempotencyKey: 'stage-release-17',
   ...overrides
 });

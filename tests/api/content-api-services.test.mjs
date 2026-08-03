@@ -90,10 +90,10 @@ test('changeset diff endpoint returns a structured content-free comparison tied 
   const base = baseChapter();
   const working = structuredClone(base);
   working.body[1].text = 'Changed prose';
-  const CONTENT_DB = fakeDb((sql) => sql.includes('FROM changesets c JOIN working_documents') ? {
+  const CONTENT_DB = fakeDb((sql) => sql.includes('FROM changesets c JOIN working_documents') ? { results: [{
     state: 'open', document_id: 'chapter-07', base_revision_id: 'revision-base', content_hash: 'working-hash', content_text: JSON.stringify(working), version: 2,
     base_content_hash: 'base-hash', base_content_text: JSON.stringify(base)
-  } : null);
+  }] } : null);
   const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-1:diff', { method: 'POST', headers: gatewayHeaders('content:read') }), { CONTENT_DB });
   assert.equal(response.status, 200);
   const body = await response.json();
@@ -101,6 +101,116 @@ test('changeset diff endpoint returns a structured content-free comparison tied 
   assert.equal(body.workingContentHash, 'working-hash');
   assert.deepEqual(body.diff.blocks.modified, [{ blockId: 'b-work', beforeType: 'paragraph', afterType: 'paragraph', changedFields: ['text'] }]);
   assert.equal(JSON.stringify(body).includes('Changed prose'), false);
+});
+
+test('multi-document changesets create isolated working copies in one batch', async () => {
+  const chapters = { chapter_ch07: { ...baseChapter(), chapterId: 'chapter_ch07' }, chapter_ch08: { ...baseChapter(), chapterId: 'chapter_ch08' } };
+  const CONTENT_DB = fakeDb((sql, args) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT authority FROM authority_registry')) return { authority: 'd1' };
+    if (sql.includes('FROM documents d JOIN document_revisions')) return { id: args[0], current_revision_id: `revision-${args[0]}`, content_hash: `${args[0]}-hash`, content_text: JSON.stringify(chapters[args[0]]), r2_object_key: null, metadata_json: '{}' };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/changesets', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ title: 'Cross-chapter terminology repair', targets: ['chapter_ch08', 'chapter_ch07'], idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b887' }) }), { CONTENT_DB });
+  const text = await response.text(); assert.equal(response.status, 201, text); const body = JSON.parse(text);
+  assert.deepEqual(body.documents.map((item) => item.documentId), ['chapter_ch07', 'chapter_ch08']);
+  const workingInserts = CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO working_documents'));
+  assert.equal(workingInserts.length, 2);
+  assert.deepEqual(workingInserts.map((item) => item.args[2]), ['chapter_ch07', 'chapter_ch08']);
+});
+
+test('service-only cutover proposals snapshot Git chapters without opening an edit lane', async () => {
+  const canonical = { id: 'chapter_ch08', current_revision_id: 'revision-git-8', content_hash: '8'.repeat(64), content_text: JSON.stringify(baseChapter()), r2_object_key: null, metadata_json: '{}' };
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql === 'SELECT authority FROM authority_registry WHERE document_id = ? AND active = 1') return { authority: 'git' };
+    if (sql.includes('FROM documents d JOIN document_revisions')) return canonical;
+    return null;
+  });
+  const headers = { 'content-type': 'application/json', 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_release_workflow', 'x-content-actor-type': 'service', 'x-content-client-id': 'github-content-release', 'x-content-run-id': '123456', 'x-content-scopes': 'content:authority' };
+  const response = await worker.fetch(new Request('https://content.example/v1/authority:prepareCutover', { method: 'POST', headers, body: JSON.stringify({ title: 'Prepare Chapter 8 cutover', targets: ['chapter_ch08'], idempotencyKey: 'prepare-cutover-8' }) }), { CONTENT_DB });
+  const text = await response.text(); assert.equal(response.status, 201, text); const body = JSON.parse(text);
+  assert.equal(body.purpose, 'authority_cutover'); assert.equal(body.readOnly, true);
+  const changesetInsert = CONTENT_DB.batchItems.find((item) => item.sql.includes('INSERT INTO changesets'));
+  assert.match(changesetInsert.sql, /purpose/); assert.equal(changesetInsert.args.at(-1), 'authority_cutover');
+  const agent = await worker.fetch(new Request('https://content.example/v1/authority:prepareCutover', { method: 'POST', headers: { ...headers, 'x-content-actor-type': 'agent' }, body: JSON.stringify({ title: 'No', targets: ['chapter_ch08'], idempotencyKey: 'prepare-cutover-agent' }) }), { CONTENT_DB });
+  assert.equal(agent.status, 403);
+
+  const readOnlyDb = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: [{ id: 'working-cutover', document_id: 'chapter_ch08', base_revision_id: 'revision-git-8', content_hash: canonical.content_hash, content_text: canonical.content_text, version: 1, state: 'open', purpose: 'authority_cutover', current_revision_id: 'revision-git-8', current_content_hash: canonical.content_hash }] };
+    return null;
+  });
+  const edit = await worker.fetch(new Request('https://content.example/v1/changesets/cutover-8:apply', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ documentId: 'chapter_ch08', baseRevisionId: 'revision-git-8', expectedVersion: 1, idempotencyKey: 'cutover-edit-denied', operation: { type: 'text.replace', blockId: 'b-work', text: 'Not allowed.' } }) }), { CONTENT_DB: readOnlyDb });
+  assert.equal(edit.status, 409); assert.equal((await edit.json()).error.code, 'CUTOVER_PROPOSAL_READ_ONLY');
+});
+
+test('multi-document edits require and honor an exact document target', async () => {
+  const chapterA = baseChapter(); const chapterB = baseChapter();
+  const workingRows = [
+    { id: 'working-a', document_id: 'chapter_ch07', base_revision_id: 'revision-a', content_hash: 'hash-a', content_text: JSON.stringify(chapterA), version: 1, state: 'open', current_revision_id: 'revision-a' },
+    { id: 'working-b', document_id: 'chapter_ch08', base_revision_id: 'revision-b', content_hash: 'hash-b', content_text: JSON.stringify(chapterB), version: 3, state: 'open', current_revision_id: 'revision-b' }
+  ];
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: workingRows };
+    return null;
+  });
+  const operation = { type: 'text.replace', blockId: 'b-work', text: 'Only chapter eight changes.' };
+  let response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:apply', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ baseRevisionId: 'revision-b', expectedVersion: 3, idempotencyKey: 'multi-apply-key-1', operation }) }), { CONTENT_DB });
+  assert.equal(response.status, 422); assert.equal((await response.json()).error.code, 'DOCUMENT_TARGET_REQUIRED');
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:apply', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ documentId: 'chapter_ch08', baseRevisionId: 'revision-b', expectedVersion: 3, idempotencyKey: 'multi-apply-key-2', operation }) }), { CONTENT_DB });
+  const text = await response.text(); assert.equal(response.status, 200, text); const body = JSON.parse(text);
+  assert.equal(body.documentId, 'chapter_ch08'); assert.equal(body.chapter.body[1].text, 'Only chapter eight changes.');
+  const update = CONTENT_DB.batchItems.find((item) => item.sql.includes('UPDATE working_documents SET'));
+  assert.equal(update.args[5], 'working-b');
+});
+
+test('multi-document diff returns one content-free result per working copy', async () => {
+  const base = baseChapter(); const changed = structuredClone(base); changed.body[0].text = 'Changed without leaking into the diff.';
+  const CONTENT_DB = fakeDb((sql) => sql.includes('FROM changesets c JOIN working_documents') ? { results: [
+    { state: 'open', document_id: 'chapter_ch07', base_revision_id: 'revision-a', content_hash: 'hash-a2', content_text: JSON.stringify(changed), version: 2, base_content_hash: 'hash-a1', base_content_text: JSON.stringify(base) },
+    { state: 'open', document_id: 'chapter_ch08', base_revision_id: 'revision-b', content_hash: 'hash-b1', content_text: JSON.stringify(base), version: 1, base_content_hash: 'hash-b1', base_content_text: JSON.stringify(base) }
+  ] } : null);
+  const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:diff', { method: 'POST', headers: gatewayHeaders('content:read'), body: '{}' }), { CONTENT_DB });
+  const text = await response.text(); assert.equal(response.status, 200, text); const body = JSON.parse(text);
+  assert.equal(body.documentCount, 2); assert.deepEqual(body.documents.map((item) => item.documentId), ['chapter_ch07', 'chapter_ch08']);
+  assert.equal(body.documents[0].diff.summary.changed, true); assert.equal(body.documents[1].diff.summary.changed, false);
+  assert.equal(JSON.stringify(body).includes('Changed without leaking'), false);
+});
+
+test('multi-document submission is all-target CAS and freezes every document atomically', async () => {
+  const publishable = (chapterId) => ({ ...baseChapter(), chapterId, checkpoints: ['commit', 'work', 'reconcile'].map((slot) => ({ checkpointId: `${chapterId}-${slot}`, ...checkpoint(slot, `p-${slot}`) })) });
+  const chapterA = publishable('chapter_ch07'); const chapterB = publishable('chapter_ch08');
+  const hashA = await sha256(chapterA); const hashB = await sha256(chapterB);
+  let inheritedRows = [];
+  let rows = [
+    { id: 'working-a', document_id: 'chapter_ch07', base_revision_id: 'revision-a', content_hash: hashA, content_text: JSON.stringify(chapterA), version: 2, state: 'open', current_revision_id: 'revision-a' },
+    { id: 'working-b', document_id: 'chapter_ch08', base_revision_id: 'revision-b', content_hash: hashB, content_text: JSON.stringify(chapterB), version: 4, state: 'open', current_revision_id: 'revision-newer' }
+  ];
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: rows };
+    if (sql.includes('FROM authority_registry a JOIN documents')) return { results: inheritedRows };
+    return null;
+  });
+  let snapshotText = null;
+  const CONTENT_SNAPSHOTS = { head: async () => null, put: async (_key, value) => { snapshotText = value; } };
+  const requestBody = { documents: [{ documentId: 'chapter_ch07', baseRevisionId: 'revision-a', expectedVersion: 2 }, { documentId: 'chapter_ch08', baseRevisionId: 'revision-b', expectedVersion: 4 }], idempotencyKey: 'multi-submit-key-1' };
+  let response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:submitReview', { method: 'POST', headers: gatewayHeaders('content:submit'), body: JSON.stringify(requestBody) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  assert.equal(response.status, 409); const conflict = await response.json(); assert.equal(conflict.error.code, 'REVISION_CONFLICT'); assert.equal(conflict.error.details.conflicts[0].documentId, 'chapter_ch08'); assert.equal(snapshotText, null);
+  rows = rows.map((item) => ({ ...item, current_revision_id: item.base_revision_id }));
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:submitReview', { method: 'POST', headers: gatewayHeaders('content:submit'), body: JSON.stringify({ ...requestBody, idempotencyKey: 'multi-submit-key-2' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  const text = await response.text(); assert.equal(response.status, 201, text); const body = JSON.parse(text); const snapshot = JSON.parse(snapshotText);
+  assert.equal(body.documentCount, 2); assert.equal(snapshot.documents.length, 2); assert.deepEqual(snapshot.documents.map((item) => item.documentId), ['chapter_ch07', 'chapter_ch08']);
+  const submittedInsert = CONTENT_DB.batchItems.find((item) => item.sql.includes('INSERT INTO submitted_snapshots'));
+  assert.equal(submittedInsert.args[5], 2);
+  const inheritedChapter = { ...publishable('chapter_ch09'), revisionId: 'revision-live-ch09', chapterVersion: 'revision-live-ch09', status: 'published' };
+  inheritedRows = [{ document_id: 'chapter_ch09', current_revision_id: inheritedChapter.revisionId, current_content_hash: await sha256(inheritedChapter), content_text: stableStringify(inheritedChapter), r2_object_key: null, metadata_json: '{}' }];
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-multi:submitReview', { method: 'POST', headers: gatewayHeaders('content:submit'), body: JSON.stringify({ ...requestBody, idempotencyKey: 'multi-submit-key-3' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  const inheritedText = await response.text(); assert.equal(response.status, 201, inheritedText); const inheritedBody = JSON.parse(inheritedText); const inheritedSnapshot = JSON.parse(snapshotText);
+  assert.equal(inheritedBody.documentCount, 3); assert.equal(inheritedBody.changedDocumentCount, 2); assert.equal(inheritedBody.inheritedDocumentCount, 1);
+  assert.equal(inheritedSnapshot.documents.find((item) => item.documentId === 'chapter_ch09').inherited, true);
 });
 
 test('reject endpoint requires a reason, binds the exact snapshot, and records actor provenance', async () => {
@@ -399,7 +509,7 @@ test('submit freezes exact cleared media versions and immutable derivative metad
   let submittedText;
   const CONTENT_DB = fakeDb((sql) => {
     if (sql.includes('FROM idempotency_records')) return null;
-    if (sql.includes('SELECT w.*, c.state')) return { id: 'working-1', document_id: 'chapter-07', base_revision_id: 'revision-base', content_hash: editorialHash, content_text: JSON.stringify(chapter), r2_object_key: null, metadata_json: '{}', version: 1, state: 'open', current_revision_id: 'revision-base' };
+    if (sql.includes('SELECT w.*, c.state')) return { results: [{ id: 'working-1', document_id: 'chapter-07', base_revision_id: 'revision-base', content_hash: editorialHash, content_text: JSON.stringify(chapter), r2_object_key: null, metadata_json: '{}', version: 1, state: 'open', current_revision_id: 'revision-base' }] };
     if (sql.includes('FROM media_assets a JOIN media_asset_versions')) return { media_id: 'media-1', title: 'Case diagram', media_state: 'ready', media_version_id: 'version-1', source_sha256: 'a'.repeat(64), source_bytes: 100, detected_mime: 'image/png', immutable_address: `sha256:${'a'.repeat(64)}`, technical_json: '{"animated":false}', rights_case_id: 'rights-1', review_id: 'rights-review-1', rights_status: 'cleared', review_package_id: 'review-package-1', review_package_state: 'cleared', rights_json: '{"attribution":"Author, CC BY"}', editorial_json: '{}', accessibility_json: '{}', declaration_hash: 'b'.repeat(64) };
     if (sql.includes('FROM media_version_objects')) return { results: [{ id: 'object-1', role: 'derivative', object_key: 'media/job/sha256/source/display.webp', object_sha256: derivativeHash, object_bytes: derivativeBytes.byteLength, content_type: 'image/webp' }] };
     return null;
@@ -417,7 +527,7 @@ test('submit freezes exact cleared media versions and immutable derivative metad
   assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('INSERT INTO submitted_snapshot_media_assets')), true);
   const unclearedDb = fakeDb((sql) => {
     if (sql.includes('FROM idempotency_records')) return null;
-    if (sql.includes('SELECT w.*, c.state')) return { id: 'working-2', document_id: 'chapter-07', base_revision_id: 'revision-base', content_hash: editorialHash, content_text: JSON.stringify(chapter), r2_object_key: null, metadata_json: '{}', version: 1, state: 'open', current_revision_id: 'revision-base' };
+    if (sql.includes('SELECT w.*, c.state')) return { results: [{ id: 'working-2', document_id: 'chapter-07', base_revision_id: 'revision-base', content_hash: editorialHash, content_text: JSON.stringify(chapter), r2_object_key: null, metadata_json: '{}', version: 1, state: 'open', current_revision_id: 'revision-base' }] };
     if (sql.includes('FROM media_assets a JOIN media_asset_versions')) return { media_id: 'media-1', title: 'Case diagram', media_state: 'ready', media_version_id: 'version-1', source_sha256: 'a'.repeat(64), source_bytes: 100, detected_mime: 'image/png', immutable_address: `sha256:${'a'.repeat(64)}`, technical_json: '{}', rights_case_id: 'rights-1', review_id: 'rights-review-1', rights_status: 'reviewRequired', review_package_id: 'review-package-1', review_package_state: 'pending', rights_json: '{}', editorial_json: '{}', accessibility_json: '{}', declaration_hash: 'b'.repeat(64) };
     return null;
   });
@@ -478,6 +588,24 @@ test('responsive-media migration preserves immutable references and allowlists o
   assert.match(schema, /INSERT INTO media_version_objects SELECT \* FROM media_version_objects_v1/);
   assert.match(schema, /INSERT INTO submitted_snapshot_media_assets SELECT \* FROM submitted_snapshot_media_assets_v1/);
   assert.doesNotMatch(schema, /responsive-(?:320|768|1024|2560)/);
+});
+
+test('authority cutover migration rejects D1 authority ahead of an exact active published release', async () => {
+  const schema = await readFile(new URL('../../workers/content-api/migrations/0010_authority_cutover_guard.sql', import.meta.url), 'utf8');
+  assert.match(schema, /CREATE TRIGGER authority_d1_requires_active_release/);
+  assert.match(schema, /JOIN release_authority_entries e ON e\.release_id = p\.release_id/);
+  assert.match(schema, /r\.state = 'published'/);
+  assert.match(schema, /e\.source_revision = NEW\.source_revision/);
+  assert.match(schema, /e\.normalized_snapshot_hash = NEW\.normalized_snapshot_hash/);
+  assert.match(schema, /SELECT RAISE\(ABORT, 'authority_d1_active_release_required'\);/);
+  const headGuard = await readFile(new URL('../../workers/content-api/migrations/0011_authority_head_guard.sql', import.meta.url), 'utf8');
+  assert.match(headGuard, /DROP TRIGGER authority_d1_requires_active_release/);
+  assert.match(headGuard, /JOIN documents d ON d\.id = e\.document_id/);
+  assert.match(headGuard, /d\.current_revision_id = NEW\.source_revision/);
+  assert.match(headGuard, /d\.current_content_hash = NEW\.normalized_snapshot_hash/);
+  const cutover = await readFile(new URL('../../workers/content-api/migrations/0012_cutover_proposals.sql', import.meta.url), 'utf8');
+  assert.match(cutover, /purpose TEXT NOT NULL DEFAULT 'authoring'/);
+  assert.match(cutover, /'authority_cutover'/);
 });
 
 const baseChapter = () => ({
@@ -678,7 +806,9 @@ test('Worker serves the versioned operation envelope to authenticated readers wi
   assert.equal(body.reads.dependencies.query.passageId, 'optional stable passage ID');
   assert.equal(body.release.asset.requiresExactReleaseApproval, true);
   assert.equal(body.rateLimits.persistence, 'D1 fail-closed');
-  assert.equal(body.canaryAuthority.route, 'POST /v1/authority/chapter_ch07:activateD1');
+  assert.equal(body.authority.activateBatch.route, 'POST /v1/authority:activateD1');
+  assert.equal(body.authority.activateBatch.databaseGuarded, true);
+  assert.equal(body.authority.canaryCompatibility.fixedDocumentId, 'chapter_ch07');
   assert.equal(body.review.diff.route, 'POST /v1/changesets/{changesetId}:diff');
   assert.equal(body.review.reject.scope, 'content:approve');
   assert.equal(body.review.approve.humanActorRequired, true);
@@ -742,6 +872,43 @@ test('media upload request rejects missing private bindings before accepting dat
   const response = await worker.fetch(new Request('https://content.example/v1/media:requestUpload', { method: 'POST', headers, body: '{}' }), {});
   assert.equal(response.status, 503);
   assert.equal((await response.json()).error.code, 'MEDIA_BINDING_UNAVAILABLE');
+});
+
+test('authority batch activation is service-only and binds exact canonical heads to the active release', async () => {
+  const contentA = { ...baseChapter(), chapterId: 'chapter_ch07', revisionId: 'revision-a', chapterVersion: 'revision-a', status: 'published' };
+  const contentB = { ...baseChapter(), chapterId: 'chapter_ch08', revisionId: 'revision-b', chapterVersion: 'revision-b', status: 'published' };
+  const entries = {
+    chapter_ch07: { sourceRevision: 'revision-a', baseRevision: 'revision-base-a', content: contentA, hash: await sha256(contentA) },
+    chapter_ch08: { sourceRevision: 'revision-b', baseRevision: 'revision-base-b', content: contentB, hash: await sha256(contentB) }
+  };
+  const submittedSnapshot = { schemaVersion: 2, changesetId: 'changeset-live', documents: Object.entries(entries).map(([documentId, item]) => ({ documentId, baseRevisionId: item.baseRevision, revisionId: item.sourceRevision, submittedContentHash: item.hash, content: item.content })) };
+  const snapshotText = stableStringify(submittedSnapshot);
+  const snapshotHash = await sha256(snapshotText);
+  const CONTENT_DB = fakeDb((sql, args) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_pointers')) return { release_id: 'release-live' };
+    if (sql.includes('FROM releases r JOIN submitted_snapshots')) return { snapshot_hash: snapshotHash, r2_object_key: 'submitted/live.json', changeset_id: 'changeset-live' };
+    if (sql.includes('FROM documents WHERE id')) return { id: args[0], current_revision_id: entries[args[0]].baseRevision, current_content_hash: '0'.repeat(64) };
+    if (sql.includes('FROM release_authority_entries')) return { authority: 'd1', source_revision: entries[args[1]].sourceRevision, normalized_snapshot_hash: entries[args[1]].hash };
+    if (sql.includes('FROM authority_registry')) return { authority: 'git' };
+    if (sql.includes('FROM document_revisions')) return null;
+    return null;
+  });
+  const CONTENT_SNAPSHOTS = { get: async (key) => key === 'submitted/live.json' ? { text: async () => snapshotText } : null };
+  const headers = { 'content-type': 'application/json', 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_release_workflow', 'x-content-actor-type': 'service', 'x-content-client-id': 'github-content-release', 'x-content-run-id': '123456', 'x-content-scopes': 'content:authority' };
+  const requestBody = { releaseId: 'release-live', documents: Object.entries(entries).map(([documentId, item]) => ({ documentId, sourceRevision: item.sourceRevision, normalizedSnapshotHash: item.hash })), idempotencyKey: 'authority-cutover-key-1' };
+  let response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers, body: JSON.stringify(requestBody) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  const text = await response.text(); assert.equal(response.status, 201, text); const body = JSON.parse(text);
+  assert.deepEqual(body.activated.map((item) => item.documentId), ['chapter_ch07', 'chapter_ch08']);
+  assert.equal(body.activated.every((item) => item.headPromoted), true);
+  assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO document_revisions')).length, 2);
+  assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('UPDATE documents SET current_revision_id')).length, 2);
+  assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO authority_registry')).length, 2);
+  response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers: { ...headers, 'x-content-actor-type': 'agent' }, body: JSON.stringify({ ...requestBody, idempotencyKey: 'authority-cutover-key-2' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'RELEASE_WORKFLOW_REQUIRED');
+  const staleDb = fakeDb((sql) => sql.includes('FROM idempotency_records') ? null : sql.includes('FROM release_pointers') ? { release_id: 'release-newer' } : null);
+  response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers, body: JSON.stringify({ ...requestBody, idempotencyKey: 'authority-cutover-key-3' }) }), { CONTENT_DB: staleDb, CONTENT_SNAPSHOTS });
+  assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'ACTIVE_RELEASE_CONFLICT');
 });
 
 test('processor callback rejects tampered HMAC before touching D1 and canary route is fixed to Chapter 7', async () => {

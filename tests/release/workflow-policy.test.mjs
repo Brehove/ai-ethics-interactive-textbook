@@ -14,6 +14,8 @@ test("release workflow derives an immutable snapshot route from the hash", async
   assert.match(workflow, /x-content-snapshot-revision:/);
   assert.match(workflow, /test "\$returned_revision" = "\$SNAPSHOT_REVISION"/);
   assert.match(workflow, /RELEASE_ASSET_TOKEN: \$\{\{ secrets\.SUBMITTED_SNAPSHOT_READ_TOKEN \}\}/);
+  assert.match(workflow, /d1_document_ids:/);
+  assert.match(workflow, /--d1-documents '\$\{\{ inputs\.d1_document_ids \}\}'/);
 });
 
 test("release workflow requires signed candidates and human-gated promotion", async () => {
@@ -25,10 +27,13 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /id: stage/);
   assert.match(workflow, /control-plane\.mjs stage/);
   assert.match(workflow, /control-plane\.mjs receipt/);
+  assert.match(workflow, /control-plane\.mjs activate-authority/);
+  assert.match(workflow, /--receipt release-artifacts\/deployment-receipt\.json/);
   assert.match(workflow, /RELEASE_DEPLOY_RECEIPT_TOKEN: \$\{\{ secrets\.RELEASE_DEPLOY_RECEIPT_TOKEN \}\}/);
   assert.match(workflow, /control-plane\.mjs emergency-rollback/);
   assert.match(workflow, /steps\.stage\.outcome == 'success'/);
   assert.match(workflow, /--base-url https:\/\/ethicsandai\.your-digital-life\.org/);
+  assert.doesNotMatch(workflow, /actions\/(?:upload|download)-artifact@v4(?:\s|$)/);
   const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n\s+with:\n([\s\S]*?)(?=\n\s+- (?:uses|name|run):)/g)];
   assert.equal(checkouts.length, 3);
   for (const checkout of checkouts) assert.match(checkout[1], /ref: \$\{\{ inputs\.commit_sha \}\}/);
