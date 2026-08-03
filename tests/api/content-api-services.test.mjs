@@ -1011,6 +1011,40 @@ test('authority batch activation is service-only and binds exact canonical heads
   assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'ACTIVE_RELEASE_CONFLICT');
 });
 
+test('authority activation preserves a verified instructor live-save lineage during a code-only release', async () => {
+  const content = { ...baseChapter(), chapterId: 'chapter_ch07', revisionId: 'revision-release', chapterVersion: 'revision-release', status: 'published' };
+  const contentHash = await sha256(content);
+  const submittedSnapshot = { schemaVersion: 2, changesetId: 'changeset-code-only', documents: [{ documentId: 'chapter_ch07', baseRevisionId: 'revision-base', revisionId: 'revision-release', submittedContentHash: contentHash, content }] };
+  const snapshotText = stableStringify(submittedSnapshot);
+  const snapshotHash = await sha256(snapshotText);
+  const lineage = [
+    { id: 'revision-live-2', parent_revision_id: 'revision-live-1', content_hash: 'live-hash-2', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 0 },
+    { id: 'revision-live-1', parent_revision_id: 'revision-release', content_hash: 'live-hash-1', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 1 },
+    { id: 'revision-release', parent_revision_id: 'revision-base', content_hash: contentHash, metadata_json: '{}', depth: 2 }
+  ];
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_pointers')) return { release_id: 'release-code-only' };
+    if (sql.includes('FROM releases r JOIN submitted_snapshots')) return { snapshot_hash: snapshotHash, r2_object_key: 'submitted/code-only.json', changeset_id: 'changeset-code-only' };
+    if (sql.includes('FROM documents WHERE id')) return { id: 'chapter_ch07', current_revision_id: 'revision-live-2', current_content_hash: 'live-hash-2' };
+    if (sql.includes('WITH RECURSIVE lineage')) return { results: lineage };
+    if (sql.includes('FROM release_authority_entries')) return { authority: 'd1', source_revision: 'revision-release', normalized_snapshot_hash: contentHash };
+    if (sql.includes('FROM authority_registry')) return { authority: 'd1', source_revision: 'revision-release', normalized_snapshot_hash: contentHash };
+    if (sql.includes('FROM document_revisions')) return { document_id: 'chapter_ch07', content_hash: contentHash };
+    return null;
+  });
+  const CONTENT_SNAPSHOTS = { get: async () => ({ text: async () => snapshotText }) };
+  const headers = { 'content-type': 'application/json', 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_release_workflow', 'x-content-actor-type': 'service', 'x-content-client-id': 'github-content-release', 'x-content-run-id': 'code-only-run', 'x-content-scopes': 'content:authority' };
+  const requestBody = { releaseId: 'release-code-only', documents: [{ documentId: 'chapter_ch07', sourceRevision: 'revision-release', normalizedSnapshotHash: contentHash }], idempotencyKey: 'authority-code-only-key' };
+  const response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers, body: JSON.stringify(requestBody) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  const result = await response.json(); assert.equal(response.status, 201, JSON.stringify(result));
+  assert.equal(result.activated[0].liveAdvance, true);
+  assert.equal(result.activated[0].liveRevisionCount, 2);
+  assert.equal(result.activated[0].headPromoted, false);
+  assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('UPDATE documents SET current_revision_id')), false);
+  assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('INSERT INTO authority_registry')), false);
+});
+
 test('processor callback rejects tampered HMAC before touching D1 and canary route is fixed to Chapter 7', async () => {
   let response = await worker.fetch(new Request('https://content.example/v1/media:processorCallback', { method: 'POST', headers: { 'content-type': 'application/json', 'x-media-signature': `sha256=${'0'.repeat(64)}` }, body: '{}' }), { CONTENT_DB: {}, CONTENT_MEDIA: {}, MEDIA_CALLBACK_SECRET: 'processor-callback-secret-at-least-32-bytes' });
   assert.equal(response.status, 401);
