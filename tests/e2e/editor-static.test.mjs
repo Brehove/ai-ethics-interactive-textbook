@@ -13,7 +13,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
     readFile(new URL("../../src/components/media/NativeMedia.astro", import.meta.url), "utf8"),
   ]);
   assert.match(page, /noindex/);
-  for (const label of ["Preview", "Review changes", "Validate", "Submit review", "Human release review", "Approve release snapshot", "Reject this snapshot", "Checkpoints", "Add checkpoint", "Save checkpoint", "Remove checkpoint", "Remove structured block", "Save text change", "Image or GIF", "YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Audio/Video", "PDF", "Link card", "Semantic review", "Authored fallback"]) assert.match(shell, new RegExp(label.replace("/", "\\/")));
+  for (const label of ["Preview", "Review changes", "Validate", "Submit review", "Human release review", "Approve release snapshot", "Reject this snapshot", "Paste or import chapter", "Save draft", "Visual", "Markdown", "Checkpoints", "Add checkpoint", "Save checkpoint", "Remove checkpoint", "Remove structured block", "Image or GIF", "YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Audio/Video", "PDF", "Link card", "Semantic review", "Authored fallback"]) assert.match(shell, new RegExp(label.replace("/", "\\/")));
   assert.match(shell, /Browse all 18 chapters here\. Chapter 7 is the writable canary/);
   assert.doesNotMatch(shell, /disabled=\{chapter\.order !== 7\}/);
   assert.match(shell, /chapter\.order === 7 \? "editable canary" : "read-only until cutover"/);
@@ -36,6 +36,12 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /checkpoint\.upsert/);
   assert.match(shell, /checkpoint\.remove[\s\S]*slot[\s\S]*checkpointId/);
   assert.match(shell, /text\.replace[\s\S]*blockId[\s\S]*text/);
+  assert.match(shell, /chapter\.replaceBody[\s\S]*body/);
+  assert.match(shell, /data-document-visual contenteditable="false"/);
+  assert.match(shell, /data-document-markdown hidden/);
+  assert.match(shell, /serializeVisualDocument/);
+  assert.match(shell, /reconcileImportedBlocks/);
+  assert.match(shell, /stable checkpoint or media anchor/);
   assert.match(shell, /data-insert-block-form[\s\S]*data-insert-block-type[\s\S]*data-insert-position/);
   assert.match(shell, /type: "block\.insert"[\s\S]*block,[\s\S]*position/);
   assert.match(shell, /type: "block\.move"[\s\S]*blockId: selectedBlockId[\s\S]*position/);
@@ -122,6 +128,9 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(css, /textbook-editor:not\(\[data-workspace="Checkpoints"\]\) \.checkpoint-inspector\{display:none\}/);
   assert.match(css, /media-inspector \[hidden\]\{display:none!important\}/);
   assert.match(css, /--editor-canvas:#fff/);
+  assert.match(css, /\.continuous-document/);
+  assert.match(css, /\.document-toolbar/);
+  assert.doesNotMatch(css, /\.continuous-document \[data-block-id\][^{]*\{[^}]*border:1px/);
 
   assert.match(externalEmbed, /provider: "youtube" \| "vimeo" \| "x" \| "spotify"/);
   assert.match(externalEmbed, /frame-src https:\/\/open\.spotify\.com/);

@@ -726,6 +726,36 @@ test('text.replace and block.move preserve every stable identity and legacy mark
   await assert.rejects(applySemanticOperation(locked, { type: 'text.replace', blockId: 'legacy-1', text: 'replacement' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
 });
 
+test('chapter.replaceBody atomically saves a continuous document while preserving stable anchors', async () => {
+  const source = baseChapter();
+  source.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
+  source.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  const body = [
+    { ...source.body[0], text: 'Revised commit passage.' },
+    { ...source.body[1], text: 'Revised work passage.' },
+    { type: 'paragraph', text: 'A newly pasted paragraph.' },
+    { blockId: 'b-reconcile', preserve: true },
+    { blockId: 'b-legacy', preserve: true }
+  ];
+  const result = await applySemanticOperation(source, { type: 'chapter.replaceBody', body });
+  assert.equal(result.chapter.body[0].blockId, 'b-commit');
+  assert.equal(result.chapter.body[1].passageId, 'p-work');
+  assert.equal(result.chapter.body[2].text, 'A newly pasted paragraph.');
+  assert.match(result.chapter.body[2].blockId, /^block_/);
+  assert.equal(result.chapter.body.at(-1).sanitizedHtml, '<aside>Legacy</aside>');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Revised work passage.'));
+});
+
+test('chapter.replaceBody refuses client IDs, altered locked content, and orphaned anchors', async () => {
+  const source = baseChapter();
+  source.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
+  await assert.rejects(applySemanticOperation(source, { type: 'chapter.replaceBody', body: [{ blockId: 'not-real', type: 'paragraph', text: 'No.' }] }), (error) => error instanceof ApiError && error.code === 'CLIENT_ASSIGNED_ID_FORBIDDEN');
+  await assert.rejects(applySemanticOperation(source, { type: 'chapter.replaceBody', body: source.body.filter((item) => item.blockId !== 'b-work').map((item) => ({ blockId: item.blockId, preserve: true })) }), (error) => error instanceof ApiError && error.code === 'DEPENDENCIES_REQUIRE_REANCHOR');
+  const locked = baseChapter();
+  locked.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  await assert.rejects(applySemanticOperation(locked, { type: 'chapter.replaceBody', body: [...locked.body.slice(0, -1), { blockId: 'b-legacy', type: 'paragraph', text: 'Changed.' }] }), (error) => error instanceof ApiError && error.code === 'STRUCTURED_BLOCK_REQUIRES_PRESERVE');
+});
+
 test('block.insert creates deterministic unique IDs from a stable anchor and rejects raw markup', async () => {
   const operation = { type: 'block.insert', block: { type: 'callout', tone: 'question', text: 'What assumption changes the result?' }, position: { afterBlockId: 'b-work' } };
   const first = await applySemanticOperation(baseChapter(), operation);
@@ -785,6 +815,7 @@ test('richLink uses an authored public-HTTPS fallback and rejects local targets'
 
 test('operation schemas expose exact required and optional top-level payload fields', () => {
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['text.replace'], { required: ['type', 'blockId', 'text'], optional: [] });
+  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['chapter.replaceBody'], { required: ['type', 'body'], optional: [] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['block.remove'], { required: ['type', 'blockId'], optional: ['replacementPassageId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type', 'slot'], optional: ['checkpointId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['media.place'], { required: ['type', 'placement'], optional: ['position'] });
