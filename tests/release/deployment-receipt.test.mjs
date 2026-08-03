@@ -45,3 +45,10 @@ test('deployment receipt migration serializes active-pointer CAS and keeps histo
   assert.match(schema, /RAISE\(ABORT, 'RELEASE_POINTER_CAS_MISMATCH'\)/);
   assert.match(schema, /CREATE TRIGGER release_pointer_commands_apply[\s\S]+INSERT INTO release_pointers[\s\S]+INSERT INTO release_pointer_history/);
 });
+
+test('release CLI hashes the shared canonical receipt payload', async () => {
+  const cli = await readFile(new URL('../../scripts/release/control-plane.mjs', import.meta.url), 'utf8');
+  assert.match(cli, /import \{ deploymentReceiptPayload \} from "\.\.\/\.\.\/workers\/content-api\/src\/services\.mjs"/);
+  assert.match(cli, /receiptHash: sha256\(deploymentReceiptPayload\(payload\)\)/);
+  assert.doesNotMatch(cli, /receiptHash: sha256\(payload\)/);
+});
