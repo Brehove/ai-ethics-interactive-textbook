@@ -7,6 +7,7 @@ interface ReadingPrompt {
   trigger: string;
   prompt: string;
   guidance: string;
+  strategy?: string;
   responseStructure?: "prose" | "movement-plus-prose";
 }
 
@@ -16,6 +17,7 @@ interface Props {
   chapterPath: string;
   chapterVersion: string;
   prompts: ReadingPrompt[];
+  activityPreview?: boolean;
 }
 
 const {
@@ -24,14 +26,21 @@ const {
   chapterPath,
   chapterVersion,
   prompts,
+  activityPreview = false,
 } = Astro.props;
+
+const strategyPreview: Record<string, string> = {
+  "initial-judgment": "Commit to a provisional verdict and identify the feature doing the ethical work.",
+  "contrast-case": "Change one feature of the case to test where your boundary really lies.",
+  "metacognitive-trace": "Trace whether the reading changed, qualified, strengthened, or left your judgment unchanged.",
+};
 ---
 
 <button type="button" class="selection-note-button interactive-only" hidden data-selection-note>Add note</button>
 
 <aside
   id="context-panel"
-  class="reading-record interactive-only"
+  class:list={["reading-record", "interactive-only", { "reading-record--pilot": activityPreview }]}
   aria-labelledby="reading-record-title"
   data-reading-record
   data-chapter-number={chapterNumber}
@@ -39,6 +48,7 @@ const {
   data-chapter-path={chapterPath}
   data-chapter-version={chapterVersion}
   data-prompts={JSON.stringify(prompts)}
+  data-activity-preview={activityPreview ? "true" : undefined}
   tabindex="-1"
 >
   <header class="record-head">
@@ -50,6 +60,28 @@ const {
   </header>
 
   <p id="reading-record-privacy" class="record-privacy"><b>Page memory only.</b> Typed responses stay in this page and are not stored or transmitted by the textbook.</p>
+
+  {activityPreview && (
+    <section class="record-map" aria-labelledby="record-map-title" data-record-map>
+      <h2 id="record-map-title">Three moments to stop and think</h2>
+      <p>This map shows the kind of thinking the chapter will ask for without giving away every question before you reach it.</p>
+      <ol>
+        {prompts.map((item, index) => (
+          <li data-record-map-item={item.id}>
+            <div class="map-item-head">
+              <p><span>Checkpoint {String(index + 1).padStart(2, "0")}</span><b data-map-status>{index === 0 ? "Ready" : index === prompts.length - 1 ? "Near the end" : "Later in chapter"}</b></p>
+              <h3>{item.title}</h3>
+              <p class="map-location" data-map-location={item.passageId}>In this chapter</p>
+            </div>
+            <details>
+              <summary>{index === 0 ? "Preview full question" : "What will this ask me to do?"}</summary>
+              <p>{index === 0 ? item.prompt : strategyPreview[item.strategy ?? ""] ?? "Use the chapter's central philosophical move before forming a considered judgment."}</p>
+            </details>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
 
   <section class="record-prompt" aria-labelledby="active-prompt-title" hidden data-record-prompt>
     <p class="prompt-stage" data-active-stage></p>
@@ -125,16 +157,24 @@ const {
     <ol class="note-list" data-note-list></ol>
   </section>
 
-  <footer class="record-export" hidden data-record-export>
+  <footer class="record-export" hidden={!activityPreview} data-record-export>
     <label class="student-name">
       <span>Name for the downloaded record <small>(optional)</small></span>
       <input type="text" maxlength="100" autocomplete="name" data-student-name />
     </label>
-    <div class="export-actions">
-      <button type="button" class="download-button" data-download-record>Download draft reading record</button>
-      <button type="button" class="copy-button" data-copy-record>Copy reading record</button>
-    </div>
-    <p data-export-note>Your download will be marked incomplete until all three responses are preserved.</p>
+    {activityPreview ? (
+      <div class="export-actions export-actions--pilot">
+        <button type="button" class="copy-button" data-download-draft>Download draft</button>
+        <button type="button" class="download-button" data-download-final disabled>Download submission-ready record</button>
+        <button type="button" class="copy-button" data-copy-record>Copy reading record</button>
+      </div>
+    ) : (
+      <div class="export-actions">
+        <button type="button" class="download-button" data-download-record>Download draft reading record</button>
+        <button type="button" class="copy-button" data-copy-record>Copy reading record</button>
+      </div>
+    )}
+    <p data-export-note>{activityPreview ? "The submission-ready record unlocks after all three responses are preserved. You can download a draft at any time." : "Your download will be marked incomplete until all three responses are preserved."}</p>
   </footer>
 
   <dialog class="preserve-dialog" data-preserve-dialog aria-labelledby="preserve-dialog-title">
@@ -168,6 +208,7 @@ const {
     trigger: string;
     prompt: string;
     guidance: string;
+    strategy?: string;
     responseStructure?: "prose" | "movement-plus-prose";
   }
 
@@ -198,12 +239,14 @@ const {
     record.dataset.enhanced = "true";
 
     const prompts = JSON.parse(record.dataset.prompts ?? "[]") as PromptRecord[];
+    const activityPreview = record.dataset.activityPreview === "true";
     const responses = new Map<string, PreservedResponse>();
     const notes: ReadingNote[] = [];
     let activePrompt: PromptRecord | null = null;
     let returnControl: HTMLButtonElement | null = null;
 
     const promptPanel = record.querySelector<HTMLElement>("[data-record-prompt]");
+    const recordMap = record.querySelector<HTMLElement>("[data-record-map]");
     const stage = record.querySelector<HTMLElement>("[data-active-stage]");
     const title = record.querySelector<HTMLElement>("[data-active-title]");
     const promptCopy = record.querySelector<HTMLElement>("[data-active-prompt]");
@@ -222,12 +265,16 @@ const {
     const exportPanel = record.querySelector<HTMLElement>("[data-record-export]");
     const exportNote = record.querySelector<HTMLElement>("[data-export-note]");
     const downloadButton = record.querySelector<HTMLButtonElement>("[data-download-record]");
+    const draftButton = record.querySelector<HTMLButtonElement>("[data-download-draft]");
+    const finalButton = record.querySelector<HTMLButtonElement>("[data-download-final]");
     const copyButton = record.querySelector<HTMLButtonElement>("[data-copy-record]");
     const studentName = record.querySelector<HTMLInputElement>("[data-student-name]");
     const dialog = record.querySelector<HTMLDialogElement>("[data-preserve-dialog]");
     const status = record.querySelector<HTMLElement>("[data-record-status]");
     const selectionNoteButton = document.querySelector<HTMLButtonElement>("[data-selection-note]");
     const noteEntryButton = document.querySelector<HTMLButtonElement>("[data-open-notes]");
+    const recordEntryButton = document.querySelector<HTMLButtonElement>("[data-open-reading-record]");
+    const headerProgress = Array.from(document.querySelectorAll<HTMLElement>("[data-header-record-progress]"));
     const addNoteButton = record.querySelector<HTMLButtonElement>("[data-add-note]");
     const noteForm = record.querySelector<HTMLFormElement>("[data-note-form]");
     const noteAnchor = record.querySelector<HTMLElement>("[data-note-anchor]");
@@ -273,12 +320,29 @@ const {
       }
     };
 
+    const openOverview = (control: HTMLButtonElement) => {
+      activePrompt = null;
+      returnControl = control;
+      promptPanel?.setAttribute("hidden", "");
+      recordMap?.removeAttribute("hidden");
+      document.querySelectorAll<HTMLButtonElement>("[data-reading-record-trigger] button").forEach((button) => {
+        button.setAttribute("aria-expanded", "false");
+      });
+      control.setAttribute("aria-expanded", "true");
+      shell?.removeAttribute("data-context-closed");
+      if (mobileQuery.matches) shell?.setAttribute("data-context-mobile-open", "true");
+      setMobileModal(true);
+      requestAnimationFrame(() => record.querySelector<HTMLButtonElement>("[data-context-close]")?.focus({ preventScroll: true }));
+    };
+
     const openRecord = (selected: PromptRecord, control: HTMLButtonElement) => {
       activePrompt = selected;
       returnControl = control;
       document.querySelectorAll<HTMLButtonElement>("[data-reading-record-trigger] button").forEach((button) => {
         button.setAttribute("aria-expanded", String(button === control));
       });
+      recordEntryButton?.setAttribute("aria-expanded", "false");
+      recordMap?.setAttribute("hidden", "");
       promptPanel?.removeAttribute("hidden");
       if (stage) stage.textContent = selected.stage;
       if (title) title.textContent = selected.title;
@@ -331,7 +395,17 @@ const {
       const trigger = document.createElement("div");
       trigger.className = "reading-record-trigger interactive-only";
       trigger.dataset.readingRecordTrigger = item.id;
-      trigger.innerHTML = `
+      if (activityPreview) trigger.dataset.activityPreview = "true";
+      trigger.innerHTML = activityPreview ? `
+        <span class="reading-record-trigger__number">${String(index + 1).padStart(2, "0")}</span>
+        <span class="reading-record-trigger__stage">Reading checkpoint ${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage)}</span>
+        <span class="reading-record-trigger__question">${escapeHtml(item.trigger)}</span>
+        <span class="reading-record-trigger__guidance">${escapeHtml(item.guidance)}</span>
+        <button type="button" class="reading-record-trigger__button" aria-controls="context-panel" aria-expanded="false" aria-label="Respond to checkpoint ${index + 1}: ${escapeHtml(item.title)}">
+          Respond <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>
+        </button>
+        <span class="reading-record-trigger__connector" aria-hidden="true"></span>
+      ` : `
         <span class="reading-record-trigger__number">${String(index + 1).padStart(2, "0")}</span>
         <span class="reading-record-trigger__question">${escapeHtml(item.trigger)}</span>
         <button type="button" class="reading-record-trigger__button" aria-controls="context-panel" aria-expanded="false" aria-label="Respond to checkpoint ${index + 1}: ${escapeHtml(item.title)}">
@@ -354,10 +428,17 @@ const {
       window.addEventListener("resize", sizeConnector, { passive: true });
     });
 
+    record.querySelectorAll<HTMLElement>("[data-map-location]").forEach((location) => {
+      let previous = document.getElementById(location.dataset.mapLocation ?? "")?.previousElementSibling;
+      while (previous && previous.tagName !== "H2") previous = previous.previousElementSibling;
+      if (previous?.textContent?.trim()) location.textContent = `After “${previous.textContent.trim()}”`;
+    });
+
     const closeRecord = () => {
       shell?.setAttribute("data-context-closed", "true");
       shell?.removeAttribute("data-context-mobile-open");
       setMobileModal(false);
+      recordEntryButton?.setAttribute("aria-expanded", "false");
       returnControl?.setAttribute("aria-expanded", "false");
       returnControl?.focus({ preventScroll: true });
     };
@@ -365,6 +446,7 @@ const {
     const updateProgress = () => {
       const count = responses.size;
       if (progress) progress.textContent = `${count} of ${prompts.length} responses preserved`;
+      headerProgress.forEach((item) => { item.textContent = `${count}/${prompts.length}`; });
       prompts.forEach((item) => {
         const completed = responses.has(item.id);
         const trigger = document.querySelector<HTMLElement>(`[data-reading-record-trigger="${item.id}"]`);
@@ -374,13 +456,23 @@ const {
           triggerButton.firstChild!.textContent = completed ? "Review " : "Respond ";
           triggerButton.setAttribute("aria-label", `${completed ? "Review" : "Respond to"} checkpoint ${prompts.indexOf(item) + 1}: ${item.title}`);
         }
+        const mapItem = record.querySelector<HTMLElement>(`[data-record-map-item="${item.id}"]`);
+        const mapStatus = mapItem?.querySelector<HTMLElement>("[data-map-status]");
+        mapItem?.toggleAttribute("data-complete", completed);
+        if (mapStatus) {
+          const itemIndex = prompts.indexOf(item);
+          mapStatus.textContent = completed ? "Recorded" : itemIndex === 0 ? "Ready" : itemIndex === prompts.length - 1 ? "Near the end" : "Later in chapter";
+        }
       });
-      exportPanel?.toggleAttribute("hidden", count === 0 && notes.length === 0);
+      exportPanel?.toggleAttribute("hidden", !activityPreview && count === 0 && notes.length === 0);
       const complete = count === prompts.length;
       if (downloadButton) downloadButton.textContent = complete ? "Download complete reading record" : "Download draft reading record";
+      if (finalButton) finalButton.disabled = !complete;
       if (exportNote) exportNote.textContent = complete
         ? "All three responses are preserved. This download is ready to submit to Canvas."
-        : `Your download will be marked incomplete: ${count} of ${prompts.length} responses preserved.`;
+        : activityPreview
+          ? `Submission-ready export is locked: ${count} of ${prompts.length} responses preserved. Draft download remains available.`
+          : `Your download will be marked incomplete: ${count} of ${prompts.length} responses preserved.`;
     };
 
     const updateNotes = () => {
@@ -485,6 +577,7 @@ const {
 
     addNoteButton?.addEventListener("click", () => openNoteComposer(null, addNoteButton));
     noteEntryButton?.addEventListener("click", () => openNoteComposer(null, noteEntryButton));
+    recordEntryButton?.addEventListener("click", () => openOverview(recordEntryButton));
     record.querySelector<HTMLButtonElement>("[data-cancel-note]")?.addEventListener("click", () => {
       noteForm?.setAttribute("hidden", "");
       addNoteButton?.focus();
@@ -598,18 +691,28 @@ const {
       return lines.filter((line, index) => line || index > 2).join("\n");
     };
 
-    downloadButton?.addEventListener("click", () => {
+    const downloadRecord = (submissionReady: boolean, legacy = false) => {
+      if (submissionReady && responses.size !== prompts.length) return;
       const blob = new Blob([buildDownload()], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `phil-123-ch${String(record.dataset.chapterNumber).padStart(2, "0")}-reading-record.html`;
+      const suffix = legacy || submissionReady ? "reading-record" : "reading-record-draft";
+      anchor.download = `phil-123-ch${String(record.dataset.chapterNumber).padStart(2, "0")}-${suffix}.html`;
       document.body.append(anchor);
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-      if (status) status.textContent = `Reading record downloaded. ${responses.size === prompts.length ? "Complete and ready for Canvas." : "The file is marked incomplete."}`;
-    });
+      if (status) status.textContent = legacy
+        ? `Reading record downloaded. ${responses.size === prompts.length ? "Complete and ready for Canvas." : "The file is marked incomplete."}`
+        : submissionReady
+          ? "Submission-ready reading record downloaded."
+          : `Draft reading record downloaded. ${responses.size === prompts.length ? "All checkpoints are complete." : "The file is marked incomplete."}`;
+    };
+
+    downloadButton?.addEventListener("click", () => downloadRecord(false, true));
+    draftButton?.addEventListener("click", () => downloadRecord(false));
+    finalButton?.addEventListener("click", () => downloadRecord(true));
 
     copyButton?.addEventListener("click", async () => {
       const text = buildPlainText();
@@ -691,6 +794,20 @@ const {
   .record-close { width: 2.25rem; height: 2.25rem; border: 0; background: transparent; color: var(--ink); font-size: 1.65rem; line-height: 1; cursor: pointer; }
   .record-privacy { margin: 0.85rem 0 0; color: var(--ink-soft); font: var(--record-tiny)/1.5 var(--sans); }
   .record-privacy b { color: var(--ink); }
+  .record-map { margin-top: 1.3rem; }
+  .record-map > h2 { margin: 0; font-size: 1.45rem; font-weight: 400; line-height: 1.12; }
+  .record-map > p { margin: 0.65rem 0 1rem; color: var(--ink-soft); font: var(--record-small)/1.5 var(--sans); }
+  .record-map ol { list-style: none; margin: 0; padding: 0; }
+  .record-map li { padding: 1.05rem 0; border-top: 1px solid var(--line); }
+  .record-map li:last-child { border-bottom: 1px solid var(--line); }
+  .map-item-head > p:first-child { display: flex; justify-content: space-between; gap: 0.75rem; margin: 0; color: var(--rust); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
+  .map-item-head > p:first-child b { color: var(--ink-soft); font: inherit; letter-spacing: 0.04em; }
+  .record-map li[data-complete] .map-item-head > p:first-child b { color: #315d48; }
+  .record-map h3 { margin: 0.35rem 0 0; font-size: 1.2rem; font-weight: 400; line-height: 1.15; }
+  .map-location { margin: 0.35rem 0 0; color: var(--ink-soft); font-size: 0.8rem; font-style: italic; line-height: 1.35; }
+  .record-map details { margin-top: 0.75rem; }
+  .record-map summary { min-height: 2.75rem; display: flex; align-items: center; color: #174f8a; font: 700 var(--record-tiny)/1.3 var(--sans); cursor: pointer; }
+  .record-map details p { margin: 0 0 0.4rem; padding: 0.7rem 0.8rem; border-left: 2px solid #6f8da4; background: #eef1f2; font-size: 0.84rem; line-height: 1.5; }
   .record-prompt { padding-top: 1.4rem; }
   .prompt-stage, .dialog-kicker { margin: 0; color: var(--rust); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
   .record-prompt h2 { margin: 0.45rem 0 0; font-size: clamp(1.55rem, 2.3vw, 2rem); font-weight: 400; line-height: 1.08; }
@@ -710,6 +827,7 @@ const {
   .response-meta { display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 0.45rem; color: var(--ink-soft); font: var(--record-tiny)/1.4 var(--sans); }
   .response-error { min-height: 1.35em; margin: 0.65rem 0; color: #8f2d1e; font: 700 var(--record-tiny)/1.4 var(--sans); }
   .preserve-button, .download-button { width: 100%; min-height: 2.75rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper-light); padding: 0.8rem 1rem; font: 700 var(--record-small)/1.3 var(--sans); letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; }
+  .download-button:disabled { border-color: var(--line-dark); background: #d8d4ca; color: #6f706f; cursor: not-allowed; }
   .preserved-response { padding: 1rem 0 0; }
   .preserved-response:focus { outline: 2px solid var(--rust); outline-offset: 4px; }
   .preserved-label { margin: 0; color: #315d48; font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -719,6 +837,7 @@ const {
   .return-link { display: flex; min-height: 2.75rem; align-items: center; justify-content: space-between; margin-top: 1.3rem; border-top: 1px solid var(--line); padding-top: 0.8rem; color: var(--rust-dark); font: 700 var(--record-small)/1.3 var(--sans); text-decoration: none; }
   .record-export { margin-top: 1.8rem; padding-top: 1.25rem; border-top: 1px solid var(--line-dark); }
   .export-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  .export-actions--pilot { grid-template-columns: 1fr; }
   .copy-button { min-height: 2.75rem; border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 0.75rem; font: 700 var(--record-tiny)/1.3 var(--sans); cursor: pointer; }
   .student-name { display: grid; gap: 0.4rem; margin-bottom: 0.85rem; }
   .student-name small { font-weight: 400; letter-spacing: 0; text-transform: none; }
@@ -736,6 +855,8 @@ const {
 
   .selection-note-button { position: fixed; z-index: 80; min-width: 6.2rem; min-height: 2.75rem; border: 1px solid var(--gold); background: var(--frame); color: var(--paper-deep); padding: 0.55rem 0.75rem; box-shadow: 0 8px 24px rgb(0 0 0 / 28%); font: 700 0.72rem/1.2 var(--sans); cursor: pointer; }
   .record-notes { margin-top: 1.8rem; padding-top: 1.25rem; border-top: 1px solid var(--line-dark); }
+  .reading-record--pilot .record-notes { border-top: 3px solid #6f8da4; }
+  .reading-record--pilot .record-notes .prompt-stage { color: #315d78; }
   .record-notes > header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
   .record-notes h2 { margin: 0.25rem 0 0; font-size: 1.3rem; font-weight: 400; }
   .record-notes > header button,
@@ -743,6 +864,7 @@ const {
   .note-list button { min-height: 2.75rem; border: 1px solid var(--line-dark); background: transparent; color: var(--ink); padding: 0.6rem 0.75rem; font: 700 var(--record-tiny)/1.25 var(--sans); cursor: pointer; }
   .notes-summary, .note-form #note-guidance, .note-anchor { color: var(--ink-soft); font: var(--record-tiny)/1.5 var(--sans); }
   .note-form { margin-top: 1rem; padding: 1rem; border: 1px solid var(--line); background: var(--paper); }
+  .reading-record--pilot .note-form { border-color: #9cafbb; background: #eef1f2; }
   .note-form label { display: grid; gap: 0.35rem; margin-top: 0.85rem; color: var(--ink); font: 700 var(--record-tiny)/1.4 var(--sans); letter-spacing: 0.04em; text-transform: uppercase; }
   .note-form label small { font-weight: 400; letter-spacing: 0; text-transform: none; }
   .note-form textarea { width: 100%; resize: vertical; border: 1px solid var(--line-dark); border-radius: 0; background: var(--paper-light); color: var(--ink); padding: 0.7rem; font: 0.9rem/1.5 var(--serif); }
@@ -751,6 +873,7 @@ const {
   .note-list li { padding: 1rem 0; border-top: 1px solid var(--line); }
   .note-list li > p { margin: 0.5rem 0; font-size: 0.88rem; line-height: 1.5; }
   .note-list blockquote { margin: 0.7rem 0; border-left: 2px solid var(--rust); padding-left: 0.8rem; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; }
+  .reading-record--pilot .note-list blockquote { border-left-color: #6f8da4; }
   .note-list .note-meta { color: var(--rust-dark); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
 
   :global(.reading-record-trigger) { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; max-width: var(--content-width); align-items: center; gap: 0.65rem; margin: 0.2rem 0 1.35rem; border-block: 1px solid var(--line); padding: 0.65rem 0; }
@@ -763,6 +886,57 @@ const {
   :global(.reading-record-trigger[data-complete]) { border-color: #8da596; }
   :global(.reading-record-trigger[data-complete] .reading-record-trigger__number) { color: #315d48; }
 
+  :global(.reading-record-trigger[data-activity-preview]) {
+    grid-template-columns: 2.3rem minmax(0, 1fr);
+    gap: 0;
+    margin: 1.5rem 0 2rem;
+    border: 1px solid #a7926e;
+    border-left: 4px solid var(--rust);
+    background: #f1e7cd;
+    box-shadow: 0 8px 24px rgb(54 40 18 / 9%);
+    padding: 0;
+  }
+  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__number) {
+    grid-row: 1 / 5;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    background: rgb(169 116 53 / 11%);
+    font-size: 0.78rem;
+  }
+  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__stage) {
+    padding: 1rem 1.1rem 0;
+    color: var(--rust-dark);
+    font: 700 0.7rem/1.3 var(--sans);
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__question) {
+    padding: 0.4rem 1.1rem 0;
+    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    font-style: normal;
+    line-height: 1.25;
+  }
+  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__guidance) {
+    padding: 0.55rem 1.1rem 1rem;
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    font-style: italic;
+    line-height: 1.4;
+  }
+  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__button) {
+    grid-column: 2;
+    width: 100%;
+    min-height: 3rem;
+    justify-content: space-between;
+    background: var(--ink);
+    color: var(--paper-light);
+    padding: 0.75rem 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  :global(.reading-record-trigger[data-activity-preview][data-complete]) { border-color: #6f8d7c; border-left-color: #315d48; background: #edf1eb; }
+
   :global(body[data-text-scale="large"]) .reading-record { --record-small: 0.84rem; --record-tiny: 0.8rem; }
   :global(body[data-text-scale="largest"]) .reading-record { --record-small: 0.9rem; --record-tiny: 0.86rem; }
 
@@ -770,6 +944,7 @@ const {
     .reading-record { padding-inline: 1.3rem; }
     :global(.reading-record-trigger) { grid-template-columns: auto 1fr; }
     :global(.reading-record-trigger__button) { grid-column: 2; justify-self: start; }
+    :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__button) { justify-self: stretch; }
   }
   @media (max-width: 900px) {
     .reading-record {
@@ -790,6 +965,7 @@ const {
     }
     :global(.reader-shell[data-context-mobile-open]) .reading-record { display: block; }
     :global(.reading-record-trigger) { grid-template-columns: auto minmax(0, 1fr); }
+    :global(.reading-record-trigger[data-activity-preview]) { grid-template-columns: 2.1rem minmax(0, 1fr); }
     :global(.reading-record-trigger__connector) { display: none; }
     .export-actions { grid-template-columns: 1fr; }
   }

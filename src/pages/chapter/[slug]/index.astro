@@ -20,7 +20,13 @@ const chapterArtifacts = await getChapterArtifacts(meta.id);
 const chapterDiagrams = getChapterDiagrams(meta.id);
 ---
 
-<SiteLayout title={meta.title} description={meta.description} chapterNumber={meta.order} canonicalPath={meta.path}>
+<SiteLayout
+  title={meta.title}
+  description={meta.description}
+  chapterNumber={meta.order}
+  canonicalPath={meta.path}
+  readingRecordPilot={meta.id === "ch07"}
+>
   <ReaderShell
     slug={meta.slug}
     title={meta.title}
@@ -45,6 +51,7 @@ const chapterDiagrams = getChapterDiagrams(meta.id);
       chapterPath={meta.path}
       chapterVersion={meta.websiteBaseline.canonicalMarkdownSha256.slice(0, 12)}
       prompts={readingRecord.checkpoints}
+      activityPreview={meta.id === "ch07"}
     />
   </ReaderShell>
 </SiteLayout>

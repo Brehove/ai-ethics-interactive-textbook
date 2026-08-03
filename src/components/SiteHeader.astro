@@ -2,9 +2,10 @@
 interface Props {
   chapterNumber?: number;
   chapterTotal?: number;
+  readingRecordPilot?: boolean;
 }
 
-const { chapterNumber, chapterTotal = 18 } = Astro.props;
+const { chapterNumber, chapterTotal = 18, readingRecordPilot = false } = Astro.props;
 ---
 
 <header class="site-header">
@@ -14,7 +15,13 @@ const { chapterNumber, chapterTotal = 18 } = Astro.props;
     <a href="/contents/">Contents</a>
     {!chapterNumber && <a href="/instructors/reading-records/">Instructors</a>}
     {!chapterNumber && <a href="/about/">About</a>}
-    {chapterNumber && <button type="button" data-open-notes>Notes</button>}
+    {chapterNumber && readingRecordPilot && (
+      <button type="button" class="record-header-button" data-open-reading-record aria-controls="context-panel" aria-expanded="false">
+        <span class="record-label-wide">Reading record · <b data-header-record-progress>0/3</b></span>
+        <span class="record-label-short">Record · <b data-header-record-progress>0/3</b></span>
+      </button>
+    )}
+    {chapterNumber && !readingRecordPilot && <button type="button" data-open-notes>Notes</button>}
     <button type="button" class="type-toggle" data-type-toggle aria-label="Change text size">Aa</button>
     {chapterNumber && <button type="button" data-print-header>Print</button>}
   </nav>
@@ -78,10 +85,14 @@ const { chapterNumber, chapterTotal = 18 } = Astro.props;
     cursor: pointer;
   }
   nav a:hover, nav button:hover { color: var(--gold); }
+  .record-header-button b { font: inherit; }
+  .record-label-short { display: none; }
   @media (max-width: 640px) {
     .site-header { grid-template-columns: 1fr auto; }
     .chapter-count { display: none; }
     nav a:first-child { display: none; }
     .brand { font-size: 0.9rem; }
+    .record-label-wide { display: none; }
+    .record-label-short { display: inline; }
   }
 </style>
