@@ -112,6 +112,9 @@ async function callbackStage(stage, operation) {
       kind: error instanceof GitHubUpstreamError ? "github_upstream" : error instanceof HttpError ? "policy" : "internal",
       name: typeof error?.name === "string" ? error.name : "UnknownError",
       ...(error instanceof GitHubUpstreamError ? { upstreamStatus: error.status, upstreamOperation: error.operation } : {}),
+      ...(!(error instanceof GitHubUpstreamError) && !(error instanceof HttpError) && typeof error?.message === "string"
+        ? { internalMessage: error.message.replace(/[A-Za-z0-9_-]{20,}/g, "[redacted]").slice(0, 160) }
+        : {}),
     };
     console.error(JSON.stringify(diagnostic));
     throw error;
@@ -291,7 +294,7 @@ async function forwardReleaseControl(request, env) {
 }
 
 export function createEditorAuthApp(dependencies = {}) {
-  const fetchImpl = dependencies.fetchImpl ?? globalThis.fetch.bind(globalThis);
+  const fetchImpl = dependencies.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
   const nowProvider = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
   const randomBytes = dependencies.randomBytes;
   const mintToken = dependencies.mintInstallationToken ?? mintInstallationToken;
@@ -480,7 +483,7 @@ export function createEditorAuthApp(dependencies = {}) {
 const app = createEditorAuthApp();
 
 export async function dispatchMediaJobs(batch, env, dependencies = {}) {
-  const fetchImpl = dependencies.fetchImpl ?? globalThis.fetch.bind(globalThis);
+  const fetchImpl = dependencies.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
   const now = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
   const mintToken = dependencies.mintInstallationToken ?? mintInstallationToken;
   const token = await mintToken(env, { fetchImpl, now });

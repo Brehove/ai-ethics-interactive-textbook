@@ -62,7 +62,7 @@ async function githubRequest(fetchImpl, path, {
       "X-GitHub-Api-Version": GITHUB_API_VERSION,
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    redirect: "error",
+    redirect: "manual",
   });
   if (!response.ok) throw new GitHubUpstreamError(response.status, operation);
   return parse ? parseJson(response, operation) : response;
@@ -84,7 +84,7 @@ export async function exchangeOAuthCode(env, code, redirectUri, fetchImpl = fetc
       code,
       redirect_uri: redirectUri,
     }),
-    redirect: "error",
+    redirect: "manual",
   });
   if (!response.ok) throw new GitHubUpstreamError(response.status, "OAuth code exchange");
   const payload = await parseJson(response, "OAuth code exchange");
