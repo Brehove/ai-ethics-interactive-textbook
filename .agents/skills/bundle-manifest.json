@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "bundleVersion": "1.0.0",
+  "files": [
+    {
+      "path": "author-textbook-chapter/SKILL.md",
+      "sha256": "29e5752d87883cff04353f2eca594cc5b356e9edd71331ede2572fbbf00a1b70"
+    },
+    {
+      "path": "author-textbook-chapter/agents/openai.yaml",
+      "sha256": "7ebf3611a18425e3b9b50d6d8f2ef0e2fcbe4320954b8f249375c8626566387e"
+    },
+    {
+      "path": "author-textbook-chapter/references/mcp-workflow.md",
+      "sha256": "379cd56ffe178c7142691f1a9d5f54e5e022796ee5b087571b1049c64baf8075"
+    },
+    {
+      "path": "manage-prompt-checkpoints/SKILL.md",
+      "sha256": "0d322840c6a302d49ce26776c1a28d80dc588024010b4e3c66413308bb63dd04"
+    },
+    {
+      "path": "manage-prompt-checkpoints/agents/openai.yaml",
+      "sha256": "858a066e4b342511a404ea2d2e5cb998514e639cae9f2c057efcda7b65fa5e3c"
+    },
+    {
+      "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
+      "sha256": "ea386a8da3e565bae304a9a4cbc8a47c599f5f8e14a43b49c1ed29fa22df578a"
+    },
+    {
+      "path": "publish-textbook-media/SKILL.md",
+      "sha256": "2d443ce3c870294d95e2574884103de6940583b50985a5da62608dcd60bb89a2"
+    },
+    {
+      "path": "publish-textbook-media/agents/openai.yaml",
+      "sha256": "a49c302e9dfbecf168528dd1440722a1d71fb1befef5f49329fda24837858735"
+    },
+    {
+      "path": "publish-textbook-media/references/media-workflow.md",
+      "sha256": "37e81b867702fd83dc9a8d3b48e3f54c976967c5b48059550f95946121871edf"
+    },
+    {
+      "path": "publish-textbook-media/scripts/upload-media.mjs",
+      "sha256": "6acab78ff5d5be429041697035877c9de25d93faead86bafe14e22fa82126aa5"
+    },
+    {
+      "path": "release-steward/SKILL.md",
+      "sha256": "7ccb3407ed8a87d9b8b5e770f0a669dcc3de0cb176e1114f70c1b48569116ea7"
+    },
+    {
+      "path": "release-steward/agents/openai.yaml",
+      "sha256": "b8edb8098860d4d1e3d9662dba8c1d25e12acd03d4920bf2043ac4d41293ab20"
+    },
+    {
+      "path": "release-steward/references/handoff.md",
+      "sha256": "3ea37f1e58fe2ff0a3469f88374a011f51d4eb6cba13342c6ddd2fdfb4508bb8"
+    }
+  ]
+}

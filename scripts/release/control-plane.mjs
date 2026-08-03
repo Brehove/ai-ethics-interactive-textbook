@@ -1,0 +1,161 @@
+#!/usr/bin/env node
+import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
+import { promisify } from "node:util";
+
+const exec = promisify(execFile);
+const args = process.argv.slice(2);
+const command = args.shift();
+const value = (name) => { const index = args.indexOf(name); return index < 0 ? undefined : args[index + 1]; };
+const required = (name) => value(name) ?? (() => { throw new Error(`${name} is required`); })();
+const stableJson = (item) => Array.isArray(item) ? `[${item.map(stableJson).join(",")}]` : item && typeof item === "object" ? `{${Object.keys(item).sort().map((key) => `${JSON.stringify(key)}:${stableJson(item[key])}`).join(",")}}` : JSON.stringify(item);
+const sha256 = (item) => createHash("sha256").update(Buffer.isBuffer(item) ? item : typeof item === "string" ? item : stableJson(item)).digest("hex");
+const deterministicUuid = (purpose) => {
+  const hex = sha256(`${purpose}:${runId}:${runAttempt}`);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+};
+const readJson = async (file) => JSON.parse(await readFile(file, "utf8"));
+const runId = process.env.GITHUB_RUN_ID;
+const runAttempt = process.env.GITHUB_RUN_ATTEMPT ?? "1";
+if (!/^\d{1,30}$/.test(runId ?? "") || !/^\d{1,10}$/.test(runAttempt)) throw new Error("GITHUB_RUN_ID and GITHUB_RUN_ATTEMPT are required");
+
+async function post(pathname, body) {
+  const token = process.env.RELEASE_DEPLOY_RECEIPT_TOKEN;
+  if (typeof token !== "string" || token.length < 32) throw new Error("RELEASE_DEPLOY_RECEIPT_TOKEN is required");
+  const response = await fetch(`https://auth.ethicsandai.your-digital-life.org${pathname}`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json", "x-github-run-id": runId },
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  if (!response.ok) throw new Error(`Release control plane returned ${response.status}: ${text}`);
+  return JSON.parse(text);
+}
+
+if (command === "prepare-cutover") {
+  const targets = required("--documents").split(",").map((item) => item.trim()).filter(Boolean);
+  if (!targets.length || targets.length > 18 || new Set(targets).size !== targets.length || targets.some((item) => !/^chapter_ch(?:0[1-9]|1[0-8])$/.test(item))) throw new Error("--documents must contain 1 to 18 unique canonical chapter IDs");
+  const proposal = await post("/v1/authority:prepareCutover", { title: required("--title"), description: value("--description"), targets, idempotencyKey: deterministicUuid("prepare-cutover") });
+  await writeFile(required("--out"), `${JSON.stringify(proposal, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(proposal));
+} else if (command === "stage") {
+  const candidate = await readJson(required("--candidate"));
+  const state = await readJson(required("--state"));
+  const buildAttestation = await readFile(required("--build-attestation"));
+  const record = state.candidates?.[candidate.candidateId];
+  if (!record || record.status !== "verified" || record.manifestSha256 !== candidate.manifestSha256 || !record.versionId) throw new Error("Candidate state is not the exact smoke-tested immutable version");
+  const expectedInput = required("--expected-active");
+  const expectedActiveReleaseId = expectedInput === "none" ? null : expectedInput;
+  const fallbackRollbackVersion = required("--fallback-rollback-version");
+  const authorityEntries = Object.entries(candidate.releaseSnapshot?.authorityRegistry || {}).map(([documentId, source]) => ({
+    documentId,
+    authority: source.authority,
+    sourcePath: source.authority === "git" ? source.sourcePath : null,
+    sourceRevision: source.domainRevisionId || source.gitSha || candidate.releaseSnapshot?.contentObjects?.[documentId]?.domainRevisionId,
+    normalizedSnapshotHash: source.normalizedSnapshotHash,
+  })).sort((a, b) => a.documentId.localeCompare(b.documentId));
+  if (authorityEntries.length !== 18) throw new Error("Candidate must contain the complete 18-chapter authority map");
+  const staged = await post("/v1/release-deployments:stage", {
+    candidateId: candidate.candidateId,
+    snapshotHash: candidate.submittedSnapshot.sha256,
+    snapshotRevision: candidate.submittedSnapshot.revision,
+    candidateManifestHash: candidate.manifestSha256,
+    buildAttestationHash: sha256(buildAttestation),
+    expectedActiveReleaseId,
+    previousCloudflareVersionId: fallbackRollbackVersion,
+    cloudflareVersionId: record.versionId,
+    authorityEntries,
+    idempotencyKey: deterministicUuid("stage"),
+  });
+  if (staged.previousCloudflareVersionId && staged.previousCloudflareVersionId !== fallbackRollbackVersion) throw new Error("Configured emergency rollback version does not match the active release receipt");
+  const output = { ...staged, emergencyRollbackVersionId: staged.previousCloudflareVersionId || fallbackRollbackVersion };
+  await writeFile(required("--out"), `${JSON.stringify(output, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(output));
+} else if (command === "stage-rollback") {
+  const targetReleaseId = required("--target-release");
+  const expectedActiveReleaseId = required("--expected-active");
+  const staged = await post(`/v1/releases/${encodeURIComponent(targetReleaseId)}:stageRollback`, { expectedActiveReleaseId, idempotencyKey: deterministicUuid("stage-rollback") });
+  if (!staged.previousCloudflareVersionId || staged.previousCloudflareVersionId === staged.cloudflareVersionId) throw new Error("Rollback stage did not return distinct target and recovery Cloudflare versions");
+  const output = { ...staged, emergencyRollbackVersionId: staged.previousCloudflareVersionId };
+  await writeFile(required("--out"), `${JSON.stringify(output, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(output));
+} else if (command === "pending") {
+  const result = await post("/v1/release-deployments:pending", {});
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
+} else if (command === "receipt" || command === "reconcile-receipt") {
+  const transactionState = await readJson(required("--transaction"));
+  const transaction = transactionState.pending || transactionState;
+  if (!transaction?.transactionId) throw new Error("A staged deployment transaction is required");
+  const verification = await readFile(required("--verification"));
+  const cloudflareDeploymentId = `cfdeploy_${runId}_${runAttempt}`;
+  const verificationHash = sha256(verification);
+  const payload = {
+    transactionId: transaction.transactionId, action: transaction.action, releaseId: transaction.releaseId,
+    previousActiveReleaseId: transaction.expectedActiveReleaseId ?? null, candidateId: transaction.candidateId ?? null,
+    snapshotHash: transaction.snapshotHash ?? null, snapshotRevision: transaction.snapshotRevision ?? null,
+    candidateManifestHash: transaction.candidateManifestHash, buildAttestationHash: transaction.buildAttestationHash,
+    cloudflareDeploymentId, cloudflareVersionId: transaction.cloudflareVersionId, verificationHash,
+  };
+  const receipt = await post(`/v1/release-deployments/${encodeURIComponent(transaction.transactionId)}:${command === "receipt" ? "recordReceipt" : "reconcileReceipt"}`, {
+    candidateManifestHash: transaction.candidateManifestHash,
+    buildAttestationHash: transaction.buildAttestationHash,
+    cloudflareDeploymentId,
+    cloudflareVersionId: transaction.cloudflareVersionId,
+    verificationHash,
+    receiptHash: sha256(payload),
+    idempotencyKey: deterministicUuid(command),
+  });
+  await writeFile(required("--out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(receipt));
+} else if (command === "activate-authority") {
+  const candidate = await readJson(required("--candidate"));
+  const transaction = await readJson(required("--transaction"));
+  const receipt = await readJson(required("--receipt"));
+  if (transaction.action !== "promote" || receipt.action !== "promote" || receipt.releaseId !== transaction.releaseId || receipt.activeReleaseId !== transaction.releaseId || transaction.candidateManifestHash !== candidate.manifestSha256) throw new Error("Authority activation requires the exact promoted candidate, transaction, and active-release receipt");
+  const documents = Object.entries(candidate.releaseSnapshot?.authorityRegistry || {})
+    .filter(([, source]) => source.authority === "d1")
+    .map(([documentId, source]) => ({ documentId, sourceRevision: source.domainRevisionId, normalizedSnapshotHash: source.normalizedSnapshotHash }))
+    .sort((a, b) => a.documentId.localeCompare(b.documentId));
+  if (!documents.length || documents.some((item) => !item.sourceRevision || !/^[a-f0-9]{64}$/.test(item.normalizedSnapshotHash || ""))) throw new Error("Candidate has no valid D1 authority entries to activate");
+  const activated = await post("/v1/authority:activateD1", { releaseId: receipt.releaseId, documents, idempotencyKey: deterministicUuid("activate-authority") });
+  await writeFile(required("--out"), `${JSON.stringify(activated, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(activated));
+} else if (command === "activate-authority-map") {
+  const state = await readJson(required("--state"));
+  const releaseId = required("--release");
+  const source = state.pending?.releaseId === releaseId ? state.pending : state.activeRelease?.releaseId === releaseId ? state.activeRelease : null;
+  if (!source || source.authorityDocumentCount !== 18 || !Array.isArray(source.d1Documents)) throw new Error("Recovery state does not contain the exact complete release authority map");
+  const documents = source.d1Documents;
+  if (documents.some((item) => !item.documentId || !item.sourceRevision || !/^[a-f0-9]{64}$/.test(item.normalizedSnapshotHash || ""))) throw new Error("Recovery authority map contains an invalid D1 binding");
+  const activated = documents.length ? await post("/v1/authority:activateD1", { releaseId, documents, idempotencyKey: deterministicUuid("activate-authority-map") }) : { releaseId, authority: "git", activated: [], noOp: true };
+  await writeFile(required("--out"), `${JSON.stringify(activated, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(activated));
+} else if (command === "abandon") {
+  const state = await readJson(required("--state"));
+  const observed = await readJson(required("--observed"));
+  const verification = await readFile(required("--verification"));
+  if (!state.pending?.transactionId || !observed.cloudflareVersionId) throw new Error("Pending transaction and observed active Cloudflare version are required");
+  const result = await post(`/v1/release-deployments/${encodeURIComponent(state.pending.transactionId)}:abandon`, {
+    observedCloudflareVersionId: observed.cloudflareVersionId,
+    verificationHash: sha256(verification),
+    idempotencyKey: deterministicUuid("abandon")
+  });
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
+} else if (command === "audit-state") {
+  const releaseId = required("--release");
+  const result = await post(`/v1/releases/${encodeURIComponent(releaseId)}:auditState`, {});
+  if (result.valid !== true || result.releaseId !== releaseId || result.documentCount !== 18 || !result.expectedCloudflareVersionId) throw new Error("Release-state audit returned an incomplete success result");
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
+} else if (command === "emergency-rollback") {
+  const transaction = await readJson(required("--transaction"));
+  const versionId = transaction.emergencyRollbackVersionId;
+  if (typeof versionId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(versionId)) throw new Error("A validated emergency rollback version is required");
+  await exec("npx", ["wrangler", "versions", "deploy", `${versionId}@100`, "--name", "ethicsandai", "--yes"]);
+  console.log(JSON.stringify({ rolledBackTo: versionId, transactionId: transaction.transactionId }));
+} else {
+  throw new Error("usage: prepare-cutover|stage|stage-rollback|pending|receipt|reconcile-receipt|activate-authority|activate-authority-map|abandon|audit-state|emergency-rollback");
+}

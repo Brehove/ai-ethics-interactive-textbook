@@ -1,0 +1,213 @@
+name: Immutable content release
+
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot_hash:
+        description: SHA-256 for the submitted snapshot bytes
+        required: true
+        type: string
+      snapshot_revision:
+        description: Immutable submitted snapshot revision from D1 approval
+        required: true
+        type: string
+      d1_document_ids:
+        description: Complete comma-separated D1 authority set; default is the Chapter 7 canary
+        required: true
+        type: string
+        default: chapter_ch07
+      commit_sha:
+        description: Full immutable Git commit to release
+        required: true
+        type: string
+      promote:
+        description: Promote only after candidate deployment and preview smoke pass
+        type: boolean
+        required: true
+        default: false
+      expected_active_release_id:
+        description: Current D1 release ID, or none only for the bootstrapped first canary
+        required: true
+        type: string
+        default: none
+      rollback_version_id:
+        description: Exact currently active Cloudflare version for automatic emergency rollback
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-production-release
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: content-release-candidate
+    outputs:
+      candidate_id: ${{ steps.candidate.outputs.candidate_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Fetch exactly one immutable submitted snapshot
+        env:
+          SNAPSHOT_HASH: ${{ inputs.snapshot_hash }}
+          SNAPSHOT_REVISION: ${{ inputs.snapshot_revision }}
+          SNAPSHOT_TOKEN: ${{ secrets.SUBMITTED_SNAPSHOT_READ_TOKEN }}
+        run: |
+          case "$SNAPSHOT_HASH" in
+            *[!0-9a-f]*|'') exit 64 ;;
+          esac
+          test "${#SNAPSHOT_HASH}" -eq 64
+          printf '%s' "$SNAPSHOT_REVISION" | grep -Eq '^snapshotrev_[A-Za-z0-9_-]+$'
+          test -n "$SNAPSHOT_TOKEN"
+          SNAPSHOT_URL="https://auth.ethicsandai.your-digital-life.org/v1/release-snapshots/$SNAPSHOT_HASH"
+          mkdir -p release-artifacts
+          curl --fail --silent --show-error \
+            --proto '=https' \
+            --header "Authorization: Bearer $SNAPSHOT_TOKEN" \
+            --header "X-GitHub-Run-Id: $GITHUB_RUN_ID" \
+            "$SNAPSHOT_URL" \
+            --dump-header release-artifacts/submitted.headers \
+            --output release-artifacts/submitted.snapshot.json
+          printf '%s  %s\n' "$SNAPSHOT_HASH" release-artifacts/submitted.snapshot.json | sha256sum --check --status
+          returned_revision="$(awk 'tolower($1) == "x-content-snapshot-revision:" { gsub("\r", "", $2); print $2 }' release-artifacts/submitted.headers | tail -1)"
+          test "$returned_revision" = "$SNAPSHOT_REVISION"
+      - name: Create signed immutable candidate
+        id: candidate
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          test -n "$RELEASE_SIGNING_KEY"
+          npx tsx scripts/content/export-snapshot.mts release-artifacts/git-baseline.snapshot.json
+          node scripts/release/release-cli.mjs candidate --snapshot release-artifacts/submitted.snapshot.json --baseline release-artifacts/git-baseline.snapshot.json --d1-documents '${{ inputs.d1_document_ids }}' --snapshot-hash '${{ inputs.snapshot_hash }}' --snapshot-revision '${{ inputs.snapshot_revision }}' --commit-sha '${{ inputs.commit_sha }}' --out release-artifacts/candidate.json
+          node -e "const x=require('./release-artifacts/candidate.json'); console.log('candidate_id='+x.candidateId)" >> "$GITHUB_OUTPUT"
+      - name: Generate, validate, build, and public-boundary gates
+        env:
+          RELEASE_ASSET_TOKEN: ${{ secrets.SUBMITTED_SNAPSHOT_READ_TOKEN }}
+        run: node scripts/release/release-cli.mjs gates --candidate release-artifacts/candidate.json --out release-artifacts/build.json
+      - name: Capture immutable built-asset digests
+        run: (cd release-artifacts/dist && find . -type f -print0 | sort -z | xargs -0 sha256sum | sed 's#  \./#  #') > release-artifacts/assets.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-candidate-${{ inputs.snapshot_hash }}
+          path: release-artifacts/
+          if-no-files-found: error
+          retention-days: 90
+
+  deploy-canary:
+    needs: candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: content-release-candidate
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-candidate-${{ inputs.snapshot_hash }}
+          path: release-artifacts
+      - name: Upload a Worker version without changing active traffic
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          RELEASE_EXECUTE: "1"
+        run: node scripts/release/release-cli.mjs deploy --candidate release-artifacts/candidate.json --built-assets release-artifacts/dist --asset-digests release-artifacts/assets.sha256 --state release-artifacts/state.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-deployment-${{ inputs.snapshot_hash }}
+          path: release-artifacts/
+          retention-days: 90
+
+  promote:
+    if: ${{ inputs.promote }}
+    needs: [candidate, deploy-canary]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: content-production # configure required reviewers; this is the manual approval gate
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-deployment-${{ inputs.snapshot_hash }}
+          path: release-artifacts
+      - name: Verify production is entirely on the declared recovery version
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: |
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/pre-promotion-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/pre-promotion-cloudflare-status.json --out release-artifacts/pre-promotion-version.json
+          observed="$(node -e "console.log(require('./release-artifacts/pre-promotion-version.json').cloudflareVersionId)")"
+          test "$observed" = '${{ inputs.rollback_version_id }}'
+      - name: Stage the exact deployment against the active release
+        id: stage
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs stage --candidate release-artifacts/candidate.json --state 'release-artifacts/state.json.${{ needs.candidate.outputs.candidate_id }}.json' --build-attestation release-artifacts/build.json --expected-active '${{ inputs.expected_active_release_id }}' --fallback-rollback-version '${{ inputs.rollback_version_id }}' --out release-artifacts/deployment-transaction.json
+      - name: Atomically promote the smoke-tested version
+        id: promote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          RELEASE_EXECUTE: "1"
+        run: node scripts/release/release-cli.mjs promote --candidate release-artifacts/candidate.json --state 'release-artifacts/state.json.${{ needs.candidate.outputs.candidate_id }}.json' --out release-artifacts/release-provenance.json
+      - name: Verify active production and record its immutable receipt
+        id: receipt
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: |
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --asset-digests release-artifacts/assets.sha256 --out release-artifacts/production-verification.json
+          node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
+      - name: Activate only the exact D1 revisions now present in the active release
+        id: authority
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs activate-authority --candidate release-artifacts/candidate.json --transaction release-artifacts/deployment-transaction.json --receipt release-artifacts/deployment-receipt.json --out release-artifacts/authority-activation.json
+      - name: Audit the complete active release state
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs audit-state --release "$(node -e \"console.log(require('./release-artifacts/deployment-receipt.json').releaseId)\")" --out release-artifacts/release-state-audit.json
+      - name: Restore prior Cloudflare version if verification or receipt recording fails
+        if: ${{ failure() && steps.stage.outcome == 'success' && steps.receipt.outcome != 'success' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: node scripts/release/control-plane.mjs emergency-rollback --transaction release-artifacts/deployment-transaction.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-provenance-${{ inputs.snapshot_hash }}
+          path: |
+            release-artifacts/release-provenance.json
+            release-artifacts/deployment-transaction.json
+            release-artifacts/production-verification.json
+            release-artifacts/deployment-receipt.json
+            release-artifacts/authority-activation.json
+            release-artifacts/release-state-audit.json
+            release-artifacts/pre-promotion-cloudflare-status.json
+            release-artifacts/pre-promotion-version.json
+          retention-days: 90

@@ -1,0 +1,11 @@
+interface:
+  display_name: "Manage Prompt Checkpoints"
+  short_description: "Safely revise reading record prompts"
+  default_prompt: "Use $manage-prompt-checkpoints to revise a prompt checkpoint."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "ai-ethics-textbook"
+      description: "PHIL 123 content changeset workflow"
+      transport: "streamable_http"
+      url: "https://mcp.ethicsandai.your-digital-life.org/mcp"

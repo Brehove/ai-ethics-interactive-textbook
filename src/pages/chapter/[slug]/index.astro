@@ -5,6 +5,7 @@ import ReadingRecord from "../../../components/ReadingRecord.astro";
 import InlineScholarFigures from "../../../components/InlineScholarFigures.astro";
 import InlineArtifacts from "../../../components/InlineArtifacts.astro";
 import InlineConceptDiagrams from "../../../components/InlineConceptDiagrams.astro";
+import InlineReleasePlacements from "../../../components/media/InlineReleasePlacements.astro";
 import { getChapterArtifacts, getChapterSlugs, requireChapter } from "../../../lib/content";
 import { resolveChapterPeople } from "../../../lib/scholarly-layer";
 import { getChapterDiagrams } from "../../../lib/chapter-diagrams";
@@ -14,10 +15,11 @@ export async function getStaticPaths() {
 }
 
 const chapter = await requireChapter(Astro.params.slug!);
-const { meta, Content, headings, world, sourceLinks, readingRecord, previous, next } = chapter;
+const { meta, Content, headings, world, sourceLinks, readingRecord, releasePlacements, previous, next } = chapter;
 const chapterPeople = await resolveChapterPeople(world);
 const chapterArtifacts = await getChapterArtifacts(meta.id);
 const chapterDiagrams = getChapterDiagrams(meta.id);
+const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoint.showInSidebar !== false);
 ---
 
 <SiteLayout
@@ -43,6 +45,7 @@ const chapterDiagrams = getChapterDiagrams(meta.id);
       <InlineConceptDiagrams diagrams={chapterDiagrams} />
       <InlineArtifacts artifacts={chapterArtifacts} />
       <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
+      <InlineReleasePlacements placements={releasePlacements} />
     </div>
     <ReadingRecord
       slot="scholarly-dock"
@@ -50,7 +53,7 @@ const chapterDiagrams = getChapterDiagrams(meta.id);
       chapterTitle={meta.title}
       chapterPath={meta.path}
       chapterVersion={meta.websiteBaseline.canonicalMarkdownSha256.slice(0, 12)}
-      prompts={readingRecord.checkpoints}
+      prompts={visiblePrompts}
       activityPreview={meta.id === "ch07"}
     />
   </ReaderShell>

@@ -1,0 +1,100 @@
+---
+interface MediaDefinition {
+  kind: "image" | "gif" | "audio" | "video" | "pdf" | "document";
+  src: string;
+  srcset?: Array<{ src: string; width: number }>;
+  poster?: string;
+  alt?: string;
+  title?: string;
+  caption: string;
+  credit: string;
+  transcript?: string;
+  mimeType?: string;
+  trackSrc?: string;
+  downloadName?: string;
+  bytes?: number;
+  canonicalSource?: string;
+}
+const { media } = Astro.props as { media: MediaDefinition };
+const isMotion = media.kind === "audio" || media.kind === "video";
+if ((media.kind === "image" || media.kind === "gif") && media.alt === undefined) throw new Error("Image media requires contextual alt text");
+if (isMotion && !media.transcript) throw new Error("Audio and video require a transcript or substantive equivalent");
+if (media.kind === "gif" && !media.poster) throw new Error("Animated GIF media requires a first-frame poster");
+if (media.kind === "video" && !media.poster) throw new Error("Video media requires a dedicated poster frame");
+---
+
+<figure class:list={["native-media", `native-media--${media.kind}`]} data-native-media={media.kind}>
+  {media.kind === "image" && <img src={media.src} srcset={media.srcset?.map((item) => `${item.src} ${item.width}w`).join(", ")} sizes="(min-width: 72rem) 52rem, (min-width: 48rem) 76vw, 100vw" alt={media.alt} loading="lazy" decoding="async" />}
+  {media.kind === "gif" && (
+    <div class="native-media__gif" data-gif-player data-still={media.poster} data-motion={media.src}>
+      <img src={media.poster} alt={media.alt} loading="lazy" decoding="async" data-gif-image />
+      <img class="native-media__print-poster" src={media.poster} alt={media.alt} loading="lazy" decoding="async" />
+      <button type="button" data-gif-toggle aria-pressed="false">Play animation</button>
+      <p data-gif-status class="native-media__status" aria-live="polite">Animation stopped on its first frame.</p>
+    </div>
+  )}
+  {media.kind === "audio" && <audio src={media.src} controls preload="metadata">Your browser cannot play this audio.</audio>}
+  {media.kind === "video" && (
+    <><video src={media.src} poster={media.poster} controls preload="metadata" playsinline>
+        {media.trackSrc && <track kind="captions" src={media.trackSrc} srclang="en" label="English" default />}
+        Your browser cannot play this video.
+      </video><img class="native-media__print-poster" src={media.poster} alt={media.alt ?? "Video poster frame"} loading="lazy" decoding="async" /></>
+  )}
+  {(media.kind === "pdf" || media.kind === "document") && (
+    <div class="native-media__document">
+      <strong>{media.title ?? media.downloadName ?? (media.kind === "pdf" ? "PDF document" : "Text document")}</strong>
+      <p class="native-media__document-meta">{media.mimeType ?? (media.kind === "pdf" ? "application/pdf" : "text/plain")}{media.bytes ? ` · ${new Intl.NumberFormat("en", { style: "unit", unit: media.bytes >= 1024 * 1024 ? "megabyte" : "kilobyte", unitDisplay: "short", maximumFractionDigits: 1 }).format(media.bytes / (media.bytes >= 1024 * 1024 ? 1024 * 1024 : 1024))}` : ""}</p>
+      <p>{media.caption}</p>
+      <a href={media.src} type={media.mimeType ?? (media.kind === "pdf" ? "application/pdf" : "text/plain")} target="_blank" rel="noopener noreferrer">{media.kind === "pdf" ? "Open accessible PDF" : "Open text document"}</a>
+      <small>{media.credit}</small>
+      <p class="native-media__print-source">Canonical URL: {media.canonicalSource ?? media.src}</p>
+    </div>
+  )}
+  {media.kind !== "pdf" && media.kind !== "document" && <figcaption><span>{media.caption}</span> <small>{media.credit}</small><span class="native-media__print-source">Canonical URL: {media.canonicalSource ?? media.src}</span></figcaption>}
+  {isMotion && <details class="native-media__transcript"><summary>Transcript</summary><p>{media.transcript}</p></details>}
+</figure>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>("[data-gif-player]")) {
+    if (root.dataset.ready === "true") continue;
+    root.dataset.ready = "true";
+    const image = root.querySelector<HTMLImageElement>("[data-gif-image]");
+    const button = root.querySelector<HTMLButtonElement>("[data-gif-toggle]");
+    const status = root.querySelector<HTMLElement>("[data-gif-status]");
+    if (!image || !button || !status) continue;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches) {
+      root.dataset.reducedMotion = "true";
+      button.textContent = "Play animation (motion reduced)";
+      status.textContent = "Animation stopped. Your device prefers reduced motion; it plays only if you choose.";
+    }
+    button.addEventListener("click", () => {
+      const playing = button.getAttribute("aria-pressed") === "true";
+      image.src = playing ? root.dataset.still ?? "" : root.dataset.motion ?? "";
+      button.setAttribute("aria-pressed", String(!playing));
+      button.textContent = playing ? (reducedMotion.matches ? "Play animation (motion reduced)" : "Play animation") : "Stop animation";
+      status.textContent = playing ? "Animation stopped on its first frame." : "Animation playing.";
+    });
+  }
+</script>
+
+<style>
+  .native-media { margin: 2rem 0; }
+  img, video { display: block; max-width: 100%; height: auto; }
+  audio { width: min(100%, 42rem); }
+  figcaption { display: grid; gap: 0.2rem; margin-top: 0.65rem; font-size: 0.9rem; line-height: 1.45; }
+  figcaption small { color: var(--ink-soft, #596274); }
+  .native-media__gif { position: relative; width: fit-content; max-width: 100%; }
+  .native-media__gif button { position: absolute; inset: auto auto 0.75rem 0.75rem; min-height: 44px; border: 1px solid white; background: rgb(16 43 77 / 92%); color: white; padding: 0.65rem 0.9rem; font: 700 0.76rem/1 var(--sans, system-ui); cursor: pointer; }
+  .native-media__status { margin: 0.4rem 0 0; color: var(--ink-soft, #596274); font: 0.78rem/1.4 var(--sans, system-ui); }
+  .native-media__document { border-left: 3px solid #bd8610; background: var(--wash, #f3f1eb); padding: 1rem 1.2rem; }
+  .native-media__document p { margin: 0.35rem 0 0.75rem; }
+  .native-media__document .native-media__document-meta { color: var(--ink-soft, #596274); font: 0.78rem/1.4 var(--sans, system-ui); text-transform: uppercase; letter-spacing: 0.04em; }
+  .native-media__document a { min-height: 44px; display: inline-flex; align-items: center; color: inherit; font-weight: 700; }
+  .native-media__document small { display: block; margin-top: 0.6rem; color: var(--ink-soft, #596274); }
+  .native-media__transcript { margin-top: 0.8rem; border-block: 1px solid var(--line, #d8d2c4); padding: 0.7rem 0; }
+  .native-media__print-poster, .native-media__print-source { display: none; }
+  summary { cursor: pointer; font: 700 0.78rem/1.4 var(--sans, system-ui); }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #bd8610; outline-offset: 3px; }
+  @media print { audio, video, .native-media__gif button, .native-media__gif > [data-gif-image], .native-media__status { display: none !important; } .native-media__print-poster { display: block !important; max-width: 100%; break-inside: avoid; } .native-media__print-source { display: block !important; overflow-wrap: anywhere; font-size: 0.75rem; } .native-media__transcript, .native-media__transcript > :not(summary) { display: block !important; } }
+</style>

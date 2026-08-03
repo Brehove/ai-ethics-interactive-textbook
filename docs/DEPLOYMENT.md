@@ -6,9 +6,15 @@
 - Reader origin: `https://ethicsandai.your-digital-life.org`
 - Editor auth Worker: `ethicsandai-editor-auth`
 - Editor auth origin: `https://auth.ethicsandai.your-digital-life.org`
+- Protected preview Worker: `ai-ethics-textbook-preview`
+- Protected preview origin: `https://preview.ethicsandai.your-digital-life.org`
+- Content API Worker: `ethicsandai-content-api` (service binding only)
+- Textbook MCP Worker: `ai-ethics-textbook-mcp`
 - Canonical repository: `Brehove/ai-ethics-interactive-textbook`
 
-The two public hostnames are custom domains in the existing `your-digital-life.org` Cloudflare zone. They are deliberately same-site so the editor can use its host-only, Secure, HttpOnly, `SameSite=Strict` session cookie. Do not replace the auth hostname with an unrelated `workers.dev` preview origin.
+The reader and auth hostnames are custom domains in the existing `your-digital-life.org` Cloudflare zone. They are deliberately same-site so the editor can use its host-only, Secure, HttpOnly, `SameSite=Strict` session cookie. The preview origin is separate and receives only a one-time snapshot token; it has no authoring cookie, Content API mutation scope, or public indexability.
+
+The forward release, explicit rollback, and scheduled recovery workflows share the non-canceling `content-production-release` concurrency key. Every staged transaction stores both the target Worker version and the exact pre-promotion recovery version. The protected reconciler has only three permitted outcomes: finish the receipt when the target is 100% live, abandon the transaction when the recovery version is still 100% live, or fail closed on split/unknown traffic. A successful promotion or rollback is not complete until the service audit matches the active pointer, published release, all 18 frozen/live authority records, and each D1 canonical head.
 
 ## Reader deployment
 
@@ -30,6 +36,8 @@ The auth Worker requires the non-secret runtime values listed in `workers/editor
 - `GITHUB_APP_CLIENT_SECRET`
 - `GITHUB_APP_PRIVATE_KEY`
 - `EDITOR_SESSION_SECRET`
+- `RELEASE_SNAPSHOT_READ_TOKEN`
+- `RELEASE_DEPLOY_RECEIPT_TOKEN`
 
 Deploy it with:
 
@@ -41,4 +49,4 @@ The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `B
 
 ## Publication boundary
 
-A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. The repository is canonical for textbook content and retains reviewed migration and rights records.
+A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. Git remains canonical for code and for chapters whose authority registry entry is `git`; routine browser/API editing begins only for a chapter whose exact D1 revision and normalized hash have been explicitly activated. Production promotion uses the protected release workflow and its recorded deployment receipt, never the direct Content API publish endpoint.

@@ -1,4 +1,5 @@
 import {
+  GITHUB_API,
   GITHUB_WEB,
   MAX_REQUEST_BYTES,
   REPOSITORY,
@@ -160,6 +161,119 @@ function validateOAuthCode(value) {
   return value;
 }
 
+const contentMutationMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const MAX_MEDIA_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+async function forwardContentApi(request, env, session, origin) {
+  if (!env.CONTENT_API || typeof env.CONTENT_API.fetch !== "function") {
+    throw new HttpError(503, "content_api_unavailable", "The authoring content service is unavailable");
+  }
+  const url = new URL(request.url);
+  const headers = new Headers();
+  for (const name of ["accept", "content-type", "content-length", "idempotency-key", "if-match", "x-request-id", "x-content-sha256", "x-upload-token"]) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  headers.set("x-content-gateway-verified", "v1");
+  headers.set("x-content-actor-id", `actor_github_${String(session.sub).replace(/[^A-Za-z0-9_-]/g, "_")}`);
+  headers.set("x-content-actor-type", "human");
+  headers.set("x-content-client-id", "textbook-editor");
+  headers.set("x-content-run-id", `browser_${session.sub}_${session.iat}`);
+  headers.set("x-content-scopes", env.EDITOR_CONTENT_SCOPES || "content:read content:write content:submit content:approve media:upload");
+
+  let body;
+  if (!new Set(["GET", "HEAD"]).has(request.method)) {
+    const declaredLength = Number.parseInt(request.headers.get("Content-Length") ?? "0", 10);
+    const requestLimit = request.method === "PUT" && /^\/v1\/media\/uploads\/[A-Za-z0-9._:-]+$/.test(url.pathname) ? MAX_MEDIA_UPLOAD_BYTES : MAX_REQUEST_BYTES;
+    if (Number.isFinite(declaredLength) && declaredLength > requestLimit) {
+      throw new HttpError(413, "request_too_large", "The editor request is too large");
+    }
+    body = await request.arrayBuffer();
+    if (body.byteLength > requestLimit) {
+      throw new HttpError(413, "request_too_large", "The editor request is too large");
+    }
+  }
+
+  const upstream = await env.CONTENT_API.fetch(new Request(`https://content-api.internal${url.pathname}${url.search}`, {
+    method: request.method,
+    headers,
+    body,
+  }));
+  const responseHeaders = secureHeaders(origin);
+  responseHeaders.set("Content-Type", upstream.headers.get("Content-Type") ?? "application/json; charset=utf-8");
+  for (const name of ["etag", "idempotent-replay", "retry-after", "x-request-id"]) {
+    const value = upstream.headers.get(name);
+    if (value) responseHeaders.set(name, value);
+  }
+  return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
+async function forwardProcessorCallback(request, env) {
+  if (!env.CONTENT_API || typeof env.CONTENT_API.fetch !== "function") return new Response("Unavailable", { status: 503, headers: baseSecurityHeaders });
+  const declaredLength = Number.parseInt(request.headers.get("content-length") ?? "0", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > 131072) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const body = await request.arrayBuffer();
+  if (body.byteLength > 131072) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const headers = new Headers();
+  for (const name of ["content-type", "content-length", "idempotency-key", "x-media-signature"]) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  const upstream = await env.CONTENT_API.fetch(new Request("https://content-api.internal/v1/media:processorCallback", { method: "POST", headers, body }));
+  return new Response(upstream.body, { status: upstream.status, headers: { ...baseSecurityHeaders, "Content-Type": upstream.headers.get("content-type") ?? "application/json; charset=utf-8" } });
+}
+
+async function forwardReleaseArtifact(request, env) {
+  if (!env.CONTENT_API || typeof env.CONTENT_API.fetch !== "function") return new Response("Unavailable", { status: 503, headers: baseSecurityHeaders });
+  const configured = env.RELEASE_SNAPSHOT_READ_TOKEN;
+  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  if (typeof configured !== "string" || configured.length < 32 || !constantTimeEqual(supplied, configured)) return new Response("Unauthorized", { status: 401, headers: { ...baseSecurityHeaders, "WWW-Authenticate": "Bearer" } });
+  const url = new URL(request.url);
+  const headers = new Headers({
+    accept: url.pathname.startsWith("/v1/release-assets/") ? "application/octet-stream, */*" : "application/json",
+    "x-content-gateway-verified": "v1",
+    "x-content-actor-id": "actor_release_workflow",
+    "x-content-actor-type": "service",
+    "x-content-client-id": "github-content-release",
+    "x-content-run-id": request.headers.get("x-github-run-id") || "release_artifact_fetch",
+    "x-content-scopes": "content:releaseSnapshot",
+  });
+  const upstream = await env.CONTENT_API.fetch(new Request(`https://content-api.internal${url.pathname}`, { headers }));
+  const responseHeaders = new Headers(baseSecurityHeaders);
+  responseHeaders.set("Content-Type", upstream.headers.get("content-type") ?? "application/octet-stream");
+  for (const name of ["cache-control", "content-disposition", "content-length", "etag", "x-content-sha256", "x-content-snapshot-revision"]) { const value = upstream.headers.get(name); if (value) responseHeaders.set(name, value); }
+  return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
+async function forwardReleaseControl(request, env) {
+  if (!env.CONTENT_API || typeof env.CONTENT_API.fetch !== "function") return new Response("Unavailable", { status: 503, headers: baseSecurityHeaders });
+  const configured = env.RELEASE_DEPLOY_RECEIPT_TOKEN;
+  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  if (typeof configured !== "string" || configured.length < 32 || !constantTimeEqual(supplied, configured)) return new Response("Unauthorized", { status: 401, headers: { ...baseSecurityHeaders, "WWW-Authenticate": "Bearer" } });
+  const runId = request.headers.get("x-github-run-id") ?? "";
+  if (!/^\d{1,30}$/.test(runId)) return new Response("GitHub run identity required", { status: 401, headers: baseSecurityHeaders });
+  const declaredLength = Number.parseInt(request.headers.get("content-length") ?? "0", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const body = await request.arrayBuffer();
+  if (body.byteLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const url = new URL(request.url);
+  const scope = url.pathname.startsWith('/v1/authority') || url.pathname.endsWith(':auditState') ? 'content:authority' : 'content:deployReceipt';
+  const headers = new Headers({
+    "content-type": "application/json",
+    "x-content-gateway-verified": "v1",
+    "x-content-actor-id": "actor_release_workflow",
+    "x-content-actor-type": "service",
+    "x-content-client-id": "github-content-release",
+    "x-content-run-id": runId,
+    "x-content-scopes": scope,
+  });
+  const upstream = await env.CONTENT_API.fetch(new Request(`https://content-api.internal${url.pathname}`, { method: "POST", headers, body }));
+  const responseHeaders = new Headers(baseSecurityHeaders);
+  responseHeaders.set("Content-Type", upstream.headers.get("content-type") ?? "application/json; charset=utf-8");
+  for (const name of ["idempotent-replay", "retry-after", "x-request-id"]) { const value = upstream.headers.get(name); if (value) responseHeaders.set(name, value); }
+  return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
 export function createEditorAuthApp(dependencies = {}) {
   const fetchImpl = dependencies.fetchImpl ?? globalThis.fetch.bind(globalThis);
   const nowProvider = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
@@ -176,15 +290,37 @@ export function createEditorAuthApp(dependencies = {}) {
           return json({ ok: true, service: "phil123-editor-auth", repository: `${REPOSITORY.owner}/${REPOSITORY.name}` });
         }
 
+        if (url.pathname === "/v1/media:processorCallback") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          return await forwardProcessorCallback(request, env);
+        }
+
+        if (/^\/v1\/release-(?:snapshots|assets)\/[a-f0-9]{64}$/.test(url.pathname)) {
+          if (request.method !== "GET") throw new HttpError(405, "method_not_allowed", "Use GET for this endpoint");
+          return await forwardReleaseArtifact(request, env);
+        }
+
+        if (url.pathname === "/v1/release-deployments:stage"
+          || url.pathname === "/v1/release-deployments:pending"
+          || /^\/v1\/release-deployments\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:(?:recordReceipt|reconcileReceipt|abandon)$/.test(url.pathname)
+          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:stageRollback$/.test(url.pathname)
+          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:auditState$/.test(url.pathname)
+          || url.pathname === "/v1/authority:prepareCutover"
+          || url.pathname === "/v1/authority:activateD1"
+          || url.pathname === "/v1/authority/chapter_ch07:activateD1") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          return await forwardReleaseControl(request, env);
+        }
+
         const config = getRuntimeConfig(env);
 
-        if (request.method === "OPTIONS" && (url.pathname.startsWith("/api/") || url.pathname === "/auth/logout")) {
+        if (request.method === "OPTIONS" && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/v1/") || url.pathname === "/auth/logout")) {
           origin = requireAllowedOrigin(request, config);
           return empty(204, {
             origin,
             headers: {
-              "Access-Control-Allow-Headers": "Content-Type, X-Editor-CSRF",
-              "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key, If-Match, X-Content-Sha256, X-Editor-CSRF, X-Request-Id, X-Upload-Token",
+              "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
               "Access-Control-Max-Age": "600",
             },
           });
@@ -292,6 +428,16 @@ export function createEditorAuthApp(dependencies = {}) {
           return json(result, 201, { origin });
         }
 
+        if (url.pathname.startsWith("/v1/")) {
+          origin = requireAllowedOrigin(request, config);
+          const session = await requireSession(request, config, now);
+          if (contentMutationMethods.has(request.method)) requireCsrf(request, session);
+          if (!["GET", "HEAD", ...contentMutationMethods].includes(request.method)) {
+            throw new HttpError(405, "method_not_allowed", "This method is not supported by the content API gateway");
+          }
+          return await forwardContentApi(request, env, session, origin);
+        }
+
         if (url.pathname === "/auth/logout") {
           if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
           origin = requireAllowedOrigin(request, config);
@@ -317,8 +463,39 @@ export function createEditorAuthApp(dependencies = {}) {
 
 const app = createEditorAuthApp();
 
+export async function dispatchMediaJobs(batch, env, dependencies = {}) {
+  const fetchImpl = dependencies.fetchImpl ?? globalThis.fetch.bind(globalThis);
+  const now = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
+  const mintToken = dependencies.mintInstallationToken ?? mintInstallationToken;
+  const token = await mintToken(env, { fetchImpl, now });
+  for (const message of batch.messages) {
+    const job = message.body;
+    const valid = job?.schemaVersion === 1
+      && /^mediajob_[A-Za-z0-9_-]{8,}$/.test(job.jobId ?? "")
+      && /^jobs\/mediajob_[A-Za-z0-9_-]{8,}\/[a-f0-9]{64}\.json$/.test(job.envelopeObjectKey ?? "")
+      && /^[a-f0-9]{64}$/.test(job.envelopeSha256 ?? "");
+    if (!valid) { message.ack?.(); continue; }
+    const response = await fetchImpl(`${GITHUB_API}/repos/${REPOSITORY.owner}/${REPOSITORY.name}/dispatches`, {
+      method: "POST",
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        "user-agent": "PHIL-123-Media-Dispatcher",
+        "x-github-api-version": "2022-11-28",
+      },
+      body: JSON.stringify({ event_type: "media_process", client_payload: { job_id: job.jobId, envelope_key: job.envelopeObjectKey, envelope_sha256: job.envelopeSha256 } }),
+    });
+    if (response.status === 204) message.ack?.();
+    else message.retry?.({ delaySeconds: Math.min(300, 15 * (message.attempts ?? 1)) });
+  }
+}
+
 export default {
   fetch(request, env) {
     return app.fetch(request, env);
+  },
+  queue(batch, env) {
+    return dispatchMediaJobs(batch, env);
   },
 };

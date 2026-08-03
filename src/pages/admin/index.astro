@@ -1,234 +1,28 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
+import EditorShell from "../../components/editor/EditorShell.astro";
 import { getChapterSummaries } from "../../lib/content";
+import "../../styles/editor.css";
 
 const chapters = await getChapterSummaries();
-const authOrigin = import.meta.env.PUBLIC_EDITOR_AUTH_ORIGIN ?? "";
+const origin = (value: string | undefined) => {
+  if (!value) return "";
+  try {
+    const parsed = new URL(value);
+    const local = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]";
+    return parsed.protocol === "https:" || (parsed.protocol === "http:" && local) ? parsed.origin : "";
+  } catch { return ""; }
+};
+const configuredAuthOrigin = origin(import.meta.env.PUBLIC_EDITOR_AUTH_ORIGIN);
+const configuredContentApiOrigin = origin(import.meta.env.PUBLIC_CONTENT_API_ORIGIN);
+const gatewayOrigin = configuredContentApiOrigin || configuredAuthOrigin || "https://auth.ethicsandai.your-digital-life.org";
+const authOrigin = gatewayOrigin;
+const contentApiOrigin = gatewayOrigin;
+const connectOrigins = [authOrigin, contentApiOrigin].filter(Boolean).join(" ");
+if (connectOrigins) Astro.csp?.insertDirective(`connect-src 'self' ${connectOrigins}`);
+Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<SiteLayout title="Repository editor" description="Instructor-only GitHub App editor for the AI Ethics interactive textbook." noindex>
-  <main id="main-content" class="editor site-width" data-editor-root data-auth-origin={authOrigin}>
-    <header>
-      <p class="eyebrow">Instructor-only · Git-backed authoring</p>
-      <h1>Edit the canonical repository through review.</h1>
-      <p>This editor loads one content file, preserves its raw text, creates a server-named branch, and opens a pull request. It cannot write or merge <code>main</code>. Local Markdown editing and this browser editor meet in the same Git history.</p>
-    </header>
-
-    <section class="auth-card" data-auth-card>
-      <div>
-        <p class="eyebrow">Session</p>
-        <p data-session-status>Checking the repository-scoped editor session…</p>
-      </div>
-      <button class="action-button" type="button" data-login hidden>Sign in with GitHub</button>
-      <button class="action-button" type="button" data-logout hidden>Sign out</button>
-    </section>
-
-    <form class="editor-form" data-editor-form hidden>
-      <div class="picker-grid">
-        <label>Chapter
-          <select data-chapter>
-            {chapters.map((chapter) => <option value={`${String(chapter.order).padStart(2, "0")}-${chapter.slug}`}>{String(chapter.order).padStart(2, "0")} · {chapter.title}</option>)}
-          </select>
-        </label>
-        <label>File
-          <select data-file>
-            <option value="chapter.md">First Read · chapter.md</option>
-            <option value="annotations.json">Deep Read · annotations.json</option>
-            <option value="source-links.json">Sources · source-links.json</option>
-            <option value="world.json">World · world.json</option>
-            <option value="meta.json">Metadata · meta.json</option>
-            <option value="rights.json">Rights · rights.json</option>
-          </select>
-        </label>
-        <button class="action-button" type="button" data-load>Load file</button>
-      </div>
-
-      <p class="file-state" data-file-state aria-live="polite">Choose a file to begin.</p>
-
-      <div class="edit-grid">
-        <label class="editor-pane">Raw source
-          <textarea data-content spellcheck="true" aria-describedby="editor-help"></textarea>
-        </label>
-        <section class="preview-pane" aria-labelledby="preview-title">
-          <h2 id="preview-title">Lossless text preview</h2>
-          <p id="editor-help">The preview deliberately shows the exact text rather than round-tripping it through a visual editor. The pull-request preview renders the final website.</p>
-          <pre data-preview tabindex="0"></pre>
-        </section>
-      </div>
-
-      <fieldset>
-        <legend>Pull request</legend>
-        <label>Commit message<input data-commit required maxlength="120" value="Revise textbook content through editor" /></label>
-        <label>Pull-request title<input data-pr-title required maxlength="120" value="Revise textbook content" /></label>
-        <label>Review note<textarea data-pr-body maxlength="2000" placeholder="What changed, and what should the reviewer inspect?"></textarea></label>
-      </fieldset>
-
-      <div class="submit-row">
-        <button class="submit" type="submit" data-submit disabled>Create branch and pull request</button>
-        <p data-save-status aria-live="polite"></p>
-      </div>
-    </form>
-
-    <noscript><p class="noscript">The browser editor requires JavaScript. The public textbook does not. Edit the same files locally with Git when JavaScript is unavailable.</p></noscript>
-  </main>
+<SiteLayout title="Textbook editor" description="Instructor-only structured editor for the AI Ethics textbook." noindex pageClass="editor-page">
+  <EditorShell chapters={chapters} authOrigin={authOrigin} contentApiOrigin={contentApiOrigin} />
 </SiteLayout>
-
-<script>
-  const root = document.querySelector<HTMLElement>("[data-editor-root]");
-  if (!root) throw new Error("Editor root missing");
-  const authOrigin = root.dataset.authOrigin?.replace(/\/$/, "") ?? "";
-  const sessionStatus = root.querySelector<HTMLElement>("[data-session-status]")!;
-  const login = root.querySelector<HTMLButtonElement>("[data-login]")!;
-  const logout = root.querySelector<HTMLButtonElement>("[data-logout]")!;
-  const form = root.querySelector<HTMLFormElement>("[data-editor-form]")!;
-  const chapter = root.querySelector<HTMLSelectElement>("[data-chapter]")!;
-  const file = root.querySelector<HTMLSelectElement>("[data-file]")!;
-  const load = root.querySelector<HTMLButtonElement>("[data-load]")!;
-  const source = root.querySelector<HTMLTextAreaElement>("[data-content]")!;
-  const preview = root.querySelector<HTMLElement>("[data-preview]")!;
-  const fileState = root.querySelector<HTMLElement>("[data-file-state]")!;
-  const saveStatus = root.querySelector<HTMLElement>("[data-save-status]")!;
-  const submit = root.querySelector<HTMLButtonElement>("[data-submit]")!;
-  const commitMessage = root.querySelector<HTMLInputElement>("[data-commit]")!;
-  const prTitle = root.querySelector<HTMLInputElement>("[data-pr-title]")!;
-  const prBody = root.querySelector<HTMLTextAreaElement>("[data-pr-body]")!;
-
-  let csrfToken = "";
-  let activePath = "";
-  let blobSha = "";
-  let baseCommitSha = "";
-  let originalContent = "";
-
-  const filePath = () => `content/chapters/${chapter.value}/${file.value}`;
-  const request = (path: string, init: RequestInit = {}) => fetch(`${authOrigin}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: { ...(init.headers ?? {}) },
-  });
-
-  async function checkSession() {
-    if (!authOrigin) {
-      sessionStatus.textContent = "The editor auth origin has not been configured for this deployment.";
-      return;
-    }
-    try {
-      const response = await request("/api/session");
-      if (!response.ok) {
-        sessionStatus.textContent = "No active instructor session.";
-        login.hidden = false;
-        return;
-      }
-      const data = await response.json();
-      csrfToken = data.csrf_token;
-      sessionStatus.textContent = `Signed in as ${data.user.login}. Repository: ${data.repository.owner}/${data.repository.name}.`;
-      logout.hidden = false;
-      form.hidden = false;
-    } catch {
-      sessionStatus.textContent = "The secure editor service is unavailable. Local Git editing remains available.";
-    }
-  }
-
-  async function loadFile() {
-    activePath = filePath();
-    submit.disabled = true;
-    fileState.textContent = `Loading ${activePath}…`;
-    const response = await request(`/api/file?path=${encodeURIComponent(activePath)}`);
-    if (!response.ok) {
-      fileState.textContent = `Could not load ${activePath} (${response.status}).`;
-      return;
-    }
-    const data = await response.json();
-    originalContent = data.content;
-    source.value = data.content;
-    preview.textContent = data.content;
-    blobSha = data.blob_sha;
-    baseCommitSha = data.base_commit_sha;
-    fileState.textContent = `Loaded ${data.path} at ${baseCommitSha.slice(0, 10)}. Untouched text will remain byte-for-byte unchanged.`;
-    submit.disabled = true;
-  }
-
-  source.addEventListener("input", () => {
-    preview.textContent = source.value;
-    submit.disabled = source.value === originalContent;
-  });
-  load.addEventListener("click", () => void loadFile());
-  chapter.addEventListener("change", () => { activePath = ""; source.value = ""; preview.textContent = ""; submit.disabled = true; });
-  file.addEventListener("change", () => { activePath = ""; source.value = ""; preview.textContent = ""; submit.disabled = true; });
-  login.addEventListener("click", () => { window.location.assign(`${authOrigin}/auth/start`); });
-  logout.addEventListener("click", async () => {
-    await request("/auth/logout", { method: "POST", headers: { "X-Editor-CSRF": csrfToken } });
-    window.location.reload();
-  });
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!activePath || source.value === originalContent) return;
-    submit.disabled = true;
-    saveStatus.textContent = "Creating a review branch and pull request…";
-    const response = await request("/api/pull-requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken },
-      body: JSON.stringify({
-        path: activePath,
-        content: source.value,
-        base_commit_sha: baseCommitSha,
-        blob_sha: blobSha,
-        commit_message: commitMessage.value,
-        pull_request_title: prTitle.value,
-        pull_request_body: prBody.value,
-      }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.status === 409) {
-      saveStatus.textContent = "The repository changed after this file was loaded. Reload it and reconcile the conflict; nothing was overwritten.";
-      return;
-    }
-    if (!response.ok) {
-      saveStatus.textContent = `The pull request was not created (${data.error ?? response.status}). Your text remains in this open page.`;
-      submit.disabled = false;
-      return;
-    }
-    originalContent = source.value;
-    saveStatus.textContent = "Pull request created. ";
-    const link = document.createElement("a");
-    link.href = String(data.pull_request.url);
-    link.textContent = `Open #${data.pull_request.number}`;
-    link.rel = "noopener noreferrer";
-    saveStatus.append(link, ". Review its checks and preview before merging.");
-  });
-
-  void checkSession();
-</script>
-
-<style>
-  .editor { padding-block: clamp(3rem, 8vw, 6rem); }
-  header { max-width: 60rem; }
-  h1 { max-width: 18ch; margin: 0.5rem 0 1rem; font-size: clamp(2.7rem, 7vw, 5.3rem); font-weight: 500; line-height: 0.98; letter-spacing: -0.045em; }
-  header > p:last-child { max-width: 54rem; color: var(--ink-soft); }
-  code { background: var(--wash); padding: 0.1rem 0.3rem; font-size: 0.85em; }
-  .auth-card { display: flex; justify-content: space-between; gap: 2rem; align-items: center; margin: 2.5rem 0; padding: 1rem 1.2rem; border: 1px solid var(--line); background: var(--wash); }
-  .auth-card p { margin: 0.2rem 0; font: 0.78rem/1.45 var(--sans); }
-  .picker-grid { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 1rem; align-items: end; }
-  label { display: grid; gap: 0.35rem; font: 700 0.7rem/1.2 var(--sans); letter-spacing: 0.05em; }
-  select, input, textarea { width: 100%; border: 1px solid var(--line-dark); background: white; color: var(--ink); padding: 0.65rem; font: 0.9rem/1.45 var(--sans); }
-  .file-state { min-height: 1.5rem; color: var(--ink-soft); font: 0.72rem/1.4 var(--sans); }
-  .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; min-height: 42rem; }
-  .editor-pane textarea, .preview-pane pre { height: 40rem; margin: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .editor-pane textarea { resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
-  .preview-pane { min-width: 0; padding: 1rem; border: 1px solid var(--line); background: var(--wash); }
-  .preview-pane h2 { margin: 0; font: 700 0.72rem/1.2 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
-  .preview-pane p { color: var(--ink-soft); font: 0.7rem/1.4 var(--sans); }
-  .preview-pane pre { padding: 0.8rem; background: var(--paper-light); font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  fieldset { display: grid; gap: 1rem; margin-top: 1.5rem; padding: 1.2rem; border: 1px solid var(--line); }
-  legend { padding-inline: 0.4rem; font: 700 0.72rem/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
-  fieldset textarea { min-height: 6rem; }
-  .submit-row { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; }
-  .submit { min-height: 3rem; border: 1px solid var(--ink); background: var(--ink); color: white; padding: 0.7rem 1rem; font: 700 0.72rem/1.2 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
-  .submit:disabled { opacity: 0.45; cursor: not-allowed; }
-  .submit-row p { font: 0.76rem/1.4 var(--sans); }
-  .noscript { padding: 1rem; border-left: 3px solid var(--rust); background: var(--rust-wash); }
-  @media (max-width: 820px) {
-    .picker-grid, .edit-grid { grid-template-columns: 1fr; }
-    .auth-card, .submit-row { align-items: stretch; flex-direction: column; }
-  }
-</style>

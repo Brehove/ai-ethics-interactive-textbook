@@ -1,0 +1,110 @@
+name: Process quarantined media
+
+on:
+  repository_dispatch:
+    types: [media_process]
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: Immutable media job ID from Content API queue
+        required: true
+        type: string
+      envelope_key:
+        description: Exact private R2 job-envelope object key
+        required: true
+        type: string
+      envelope_sha256:
+        description: SHA-256 of the immutable job envelope
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  process:
+    # This environment is restricted to main. It intentionally has no reviewer pause so
+    # signed, hash-bound repository_dispatch jobs can process quarantine automatically.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: media-quarantine
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install processor and inspection tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clamav ffmpeg qpdf mupdf-tools awscli
+          npm ci
+      - name: Download and verify immutable R2 job envelope
+        id: job
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEDIA_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEDIA_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: 'true'
+          R2_ENDPOINT_URL: ${{ vars.MEDIA_R2_ENDPOINT_URL }}
+          R2_JOB_BUCKET: ${{ vars.MEDIA_R2_JOBS_BUCKET }}
+          JOB_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.job_id || github.event.inputs.job_id }}
+          ENVELOPE_KEY: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.envelope_key || github.event.inputs.envelope_key }}
+          ENVELOPE_SHA256: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.envelope_sha256 || github.event.inputs.envelope_sha256 }}
+        run: |
+          test -n "$R2_ENDPOINT_URL" && test -n "$R2_JOB_BUCKET"
+          case "$JOB_ID" in mediajob_*) ;; *) exit 64;; esac
+          case "$ENVELOPE_KEY" in jobs/"$JOB_ID"/*.json) ;; *) exit 64;; esac
+          case "$ENVELOPE_KEY" in *..*|*//* ) exit 64;; esac
+          printf '%s' "$ENVELOPE_SHA256" | grep -Eq '^[a-f0-9]{64}$'
+          mkdir -p .media-job
+          aws --endpoint-url "$R2_ENDPOINT_URL" s3 cp "s3://$R2_JOB_BUCKET/$ENVELOPE_KEY" .media-job/envelope.json --no-progress
+          printf '%s  %s\n' "$ENVELOPE_SHA256" .media-job/envelope.json | sha256sum --check --status
+          MEDIA_EXPECTED_JOB_ID="$JOB_ID" node scripts/media/prepare-job.mjs .media-job/envelope.json
+      - name: Update and verify ClamAV-signed definitions
+        run: |
+          sudo freshclam --stdout
+          test -f /var/lib/clamav/main.cvd -o -f /var/lib/clamav/main.cld
+      - name: Download only the requested quarantine object
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEDIA_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEDIA_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: 'true'
+          R2_ENDPOINT_URL: ${{ vars.MEDIA_R2_ENDPOINT_URL }}
+          R2_QUARANTINE_BUCKET: ${{ vars.MEDIA_R2_QUARANTINE_BUCKET }}
+          QUARANTINE_KEY: ${{ steps.job.outputs.quarantine_key }}
+          BASENAME: ${{ steps.job.outputs.basename }}
+        run: |
+          test -n "$R2_ENDPOINT_URL" && test -n "$R2_QUARANTINE_BUCKET"
+          mkdir -p .media-inbox .media-output
+          aws --endpoint-url "$R2_ENDPOINT_URL" s3 cp "s3://$R2_QUARANTINE_BUCKET/$QUARANTINE_KEY" ".media-inbox/$BASENAME" --no-progress
+      - name: Process without executing uploaded content
+        env:
+          MEDIA_INBOX_DIR: ${{ github.workspace }}/.media-inbox
+          MEDIA_OUTPUT_DIR: ${{ github.workspace }}/.media-output
+          MEDIA_REQUIRE_MALWARE_SCAN: '1'
+          MEDIA_CLAMAV_DB_DIR: /var/lib/clamav
+        run: node scripts/media/process-media.mjs --job .media-job/envelope.json
+      - name: Upload only derived files and immutable manifests
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.MEDIA_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MEDIA_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: 'true'
+          R2_ENDPOINT_URL: ${{ vars.MEDIA_R2_ENDPOINT_URL }}
+          R2_MEDIA_BUCKET: ${{ vars.MEDIA_R2_MEDIA_BUCKET }}
+          OUTPUT_PREFIX: ${{ steps.job.outputs.output_prefix }}
+        run: |
+          test -n "$R2_ENDPOINT_URL" && test -n "$R2_MEDIA_BUCKET"
+          aws --endpoint-url "$R2_ENDPOINT_URL" s3 cp .media-output/ "s3://$R2_MEDIA_BUCKET/$OUTPUT_PREFIX/" --recursive --exclude 'source' --exclude '*/source' --exclude '.manifest-*' --exclude '*/.manifest-*' --no-progress
+      - name: Post signed idempotent completion
+        env:
+          MEDIA_CALLBACK_TOKEN: ${{ secrets.MEDIA_CALLBACK_TOKEN }}
+        run: |
+          test -n "$MEDIA_CALLBACK_TOKEN"
+          manifest=$(find .media-output/sha256 -mindepth 2 -maxdepth 2 -name manifest.json -print -quit)
+          test -n "$manifest"
+          node scripts/media/post-callback.mjs .media-job/envelope.json "$manifest"

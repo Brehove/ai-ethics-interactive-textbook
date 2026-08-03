@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ai-ethics-textbook-mcp",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-08-02",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": { "MCP_ALLOW_LEGACY_TOKEN": "0" },
+  "routes": [{ "pattern": "mcp.ethicsandai.your-digital-life.org", "custom_domain": true }],
+  "services": [{ "binding": "CONTENT_API", "service": "ethicsandai-content-api" }]
+}

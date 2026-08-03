@@ -1,0 +1,41 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { GitContentRepository, sha256, stableStringify } from "../../packages/content-repository/src/index.ts";
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const output = path.resolve(process.argv[2] ?? "artifacts/migration/seed-content.sql");
+const sourceRevision = process.env.CONTENT_SOURCE_REVISION ?? "0a2716182953f492a654aa8b704d420216f39450";
+const importedAt = "2026-08-02T00:00:00.000Z";
+const quote = (value: string | null) => value === null ? "NULL" : `'${value.replaceAll("'", "''")}'`;
+
+const exported = await new GitContentRepository(path.join(repositoryRoot, "content")).exportSnapshot();
+// Wrangler's remote D1 import endpoint rejects explicit BEGIN/COMMIT. Every
+// statement below is idempotent so an interrupted seed can be safely retried.
+const statements = ["PRAGMA foreign_keys = ON;"];
+
+for (const chapter of exported.snapshot.chapters) {
+  const canonicalJson = stableStringify(chapter);
+  const contentHash = sha256(canonicalJson);
+  const sourcePath = `content/chapters/${chapter.contentKey}/chapter.md`;
+  const revisionId = chapter.revisionId;
+  const authorityId = `authority_${contentHash.slice(0, 24)}`;
+  const metadata = stableStringify({
+    schemaVersion: chapter.schemaVersion,
+    contentKey: chapter.contentKey,
+    slug: chapter.slug,
+    bookSnapshotHash: exported.sha256,
+    importSource: "git-markdown-v1",
+  });
+
+  statements.push(
+    `INSERT OR IGNORE INTO documents (id, canonical_path, media_kind, title, state, created_at, updated_at) VALUES (${quote(chapter.chapterId)}, ${quote(sourcePath)}, 'text', ${quote(chapter.title)}, 'active', ${quote(importedAt)}, ${quote(importedAt)});`,
+    `INSERT OR IGNORE INTO document_revisions (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at) VALUES (${quote(revisionId)}, ${quote(chapter.chapterId)}, NULL, ${quote(contentHash)}, ${quote(canonicalJson)}, NULL, ${quote(metadata)}, 'service_git_importer', ${quote(importedAt)});`,
+    `UPDATE documents SET current_revision_id = ${quote(revisionId)}, current_content_hash = ${quote(contentHash)}, updated_at = ${quote(importedAt)} WHERE id = ${quote(chapter.chapterId)} AND current_revision_id IS NULL;`,
+    `INSERT OR IGNORE INTO authority_registry (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at) VALUES (${quote(authorityId)}, ${quote(chapter.chapterId)}, 'git', ${quote(sourcePath)}, ${quote(sourceRevision)}, ${quote(contentHash)}, 1, ${quote(importedAt)}, ${quote(importedAt)});`,
+  );
+}
+
+await mkdir(path.dirname(output), { recursive: true });
+await writeFile(output, `${statements.join("\n")}\n`);
+process.stdout.write(`${JSON.stringify({ output, chapters: exported.snapshot.chapters.length, snapshotHash: exported.sha256, sourceRevision }, null, 2)}\n`);

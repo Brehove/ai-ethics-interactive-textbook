@@ -1,0 +1,93 @@
+name: Reconcile interrupted content release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-production-release
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: content-production-recovery
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Read the serialized deployment state
+        id: pending
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: |
+          node scripts/release/control-plane.mjs pending --out recovery-state.json
+          node -e "const fs=require('fs');const s=require('./recovery-state.json');fs.appendFileSync(process.env.GITHUB_OUTPUT, 'exists='+(s.pending?'true':'false')+'\nactive_release='+(s.activeRelease?.releaseId||'none')+'\n')"
+      - name: Repair a completed release whose authority activation was interrupted
+        if: ${{ steps.pending.outputs.exists == 'false' && steps.pending.outputs.active_release != 'none' }}
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: |
+          if node scripts/release/control-plane.mjs audit-state --release '${{ steps.pending.outputs.active_release }}' --out release-state-audit.json; then
+            exit 0
+          fi
+          node scripts/release/control-plane.mjs activate-authority-map --state recovery-state.json --release '${{ steps.pending.outputs.active_release }}' --out recovered-authority.json
+          node scripts/release/control-plane.mjs audit-state --release '${{ steps.pending.outputs.active_release }}' --out recovered-release-state-audit.json
+      - name: Observe the exact live Cloudflare version
+        if: ${{ steps.pending.outputs.exists == 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: |
+          npx wrangler deployments status --name ethicsandai --json > cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in cloudflare-status.json --out observed-version.json
+      - name: Classify the interrupted transaction
+        if: ${{ steps.pending.outputs.exists == 'true' }}
+        id: classify
+        run: |
+          node -e "const fs=require('fs');const p=require('./recovery-state.json').pending;const o=require('./observed-version.json').cloudflareVersionId;const outcome=o===p.cloudflareVersionId?'target':o===p.previousCloudflareVersionId?'previous':'ambiguous';fs.appendFileSync(process.env.GITHUB_OUTPUT,'outcome='+outcome+'\n');if(outcome==='ambiguous')process.exit(2)"
+      - name: Finish the exact receipt and authority transition when traffic moved
+        if: ${{ steps.pending.outputs.exists == 'true' && steps.classify.outputs.outcome == 'target' }}
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: |
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out recovery-verification.json
+          node scripts/release/control-plane.mjs reconcile-receipt --transaction recovery-state.json --verification recovery-verification.json --out recovered-receipt.json
+          release_id="$(node -e "console.log(require('./recovery-state.json').pending.releaseId)")"
+          action="$(node -e "console.log(require('./recovery-state.json').pending.action)")"
+          if [ "$action" = "promote" ]; then
+            node scripts/release/control-plane.mjs activate-authority-map --state recovery-state.json --release "$release_id" --out recovered-authority.json
+          fi
+          node scripts/release/control-plane.mjs audit-state --release "$release_id" --out recovered-release-state-audit.json
+      - name: Abandon the transaction when traffic never moved
+        if: ${{ steps.pending.outputs.exists == 'true' && steps.classify.outputs.outcome == 'previous' }}
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs abandon --state recovery-state.json --observed observed-version.json --verification cloudflare-status.json --out abandoned-transaction.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ always() }}
+        with:
+          name: content-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            recovery-state.json
+            cloudflare-status.json
+            observed-version.json
+            recovery-verification.json
+            recovered-receipt.json
+            recovered-authority.json
+            release-state-audit.json
+            recovered-release-state-audit.json
+            abandoned-transaction.json
+          if-no-files-found: warn
+          retention-days: 90

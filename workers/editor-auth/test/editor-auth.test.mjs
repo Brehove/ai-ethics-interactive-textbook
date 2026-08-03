@@ -12,7 +12,7 @@ import {
   signToken,
   verifyToken,
 } from "../src/crypto.mjs";
-import { createEditorAuthApp } from "../src/index.mjs";
+import { createEditorAuthApp, dispatchMediaJobs } from "../src/index.mjs";
 import { validateEditablePath } from "../src/policy.mjs";
 
 const NOW = 1_785_600_000;
@@ -407,4 +407,175 @@ test("a PR creation failure cleans up only the new editor branch", async () => {
   assert.equal(deletes.length, 1);
   assert.match(deletes[0].url, /\/git\/refs\/heads\/editor\//);
   assert.doesNotMatch(deletes[0].url, /\/heads\/main$/);
+});
+
+test("content gateway derives actor identity from the signed session and strips browser authority", async () => {
+  const { payload, token } = await sessionFixture();
+  let forwarded;
+  const contentApi = {
+    async fetch(request) {
+      forwarded = request;
+      return jsonResponse({ id: "changeset_test", state: "open" }, 201);
+    },
+  };
+  const app = createEditorAuthApp({ now: () => NOW });
+  const response = await app.fetch(apiRequest("/v1/changesets", token, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": "request-1",
+      "X-Content-Actor": "attacker",
+      "X-Editor-CSRF": payload.csrf,
+    },
+    body: JSON.stringify({ title: "Revise checkpoint", documents: [{ document_id: "chapter_07", base_revision_id: "revision_01" }] }),
+  }), runtimeEnv({ CONTENT_API: contentApi }));
+  assert.equal(response.status, 201);
+  assert.equal(forwarded.url, "https://content-api.internal/v1/changesets");
+  assert.equal(forwarded.headers.get("x-content-gateway-verified"), "v1");
+  assert.equal(forwarded.headers.get("x-content-actor-id"), "actor_github_123456");
+  assert.equal(forwarded.headers.get("x-content-actor-type"), "human");
+  assert.equal(forwarded.headers.get("x-content-client-id"), "textbook-editor");
+  assert.match(forwarded.headers.get("x-content-run-id"), /^browser_123456_/);
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:read content:write content:submit content:approve media:upload");
+  assert.doesNotMatch(forwarded.headers.get("x-content-scopes"), /content:publish/);
+  assert.equal(forwarded.headers.get("x-content-actor"), null);
+  assert.equal(forwarded.headers.get("cookie"), null);
+  assert.equal(forwarded.headers.get("x-editor-csrf"), null);
+  assert.equal(forwarded.headers.get("idempotency-key"), "request-1");
+});
+
+test("content gateway requires CSRF for mutation and never calls its service on failure", async () => {
+  const { token } = await sessionFixture();
+  let calls = 0;
+  const app = createEditorAuthApp({ now: () => NOW });
+  const response = await app.fetch(apiRequest("/v1/changesets", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  }), runtimeEnv({ CONTENT_API: { fetch: async () => { calls += 1; return jsonResponse({}); } } }));
+  assert.equal(response.status, 403);
+  assert.equal(calls, 0);
+});
+
+test("content gateway rejects unauthenticated reads", async () => {
+  let calls = 0;
+  const app = createEditorAuthApp({ now: () => NOW });
+  const response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/documents/chapter_07`, {
+    headers: { Origin: READER_ORIGIN },
+  }), runtimeEnv({ CONTENT_API: { fetch: async () => { calls += 1; return jsonResponse({}); } } }));
+  assert.equal(response.status, 401);
+  assert.equal(calls, 0);
+});
+
+test("media queue dispatches an immutable envelope without exposing the installation token", async () => {
+  const fakeInstallationToken = ["installation", "secret", "token"].join("-");
+  const calls = [];
+  let acked = 0;
+  await dispatchMediaJobs({ messages: [{
+    body: { schemaVersion: 1, jobId: "mediajob_12345678", envelopeObjectKey: `jobs/mediajob_12345678/${"a".repeat(64)}.json`, envelopeSha256: "a".repeat(64) },
+    ack: () => { acked += 1; },
+    retry: () => assert.fail("valid dispatch should not retry"),
+  }] }, {}, {
+    mintInstallationToken: async () => fakeInstallationToken,
+    fetchImpl: async (url, init) => { calls.push({ url, init }); return new Response(null, { status: 204 }); },
+    now: () => NOW,
+  });
+  assert.equal(acked, 1);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\/repos\/Brehove\/ai-ethics-interactive-textbook\/dispatches$/);
+  assert.equal(calls[0].init.headers.authorization, `Bearer ${fakeInstallationToken}`);
+  assert.deepEqual(JSON.parse(calls[0].init.body), { event_type: "media_process", client_payload: { job_id: "mediajob_12345678", envelope_key: `jobs/mediajob_12345678/${"a".repeat(64)}.json`, envelope_sha256: "a".repeat(64) } });
+  assert.equal(calls[0].init.body.includes(fakeInstallationToken), false);
+});
+
+test("content gateway permits bounded raw media upload headers and adds media scope", async () => {
+  const { payload, token } = await sessionFixture();
+  let forwarded;
+  const app = createEditorAuthApp({ now: () => NOW });
+  const bytes = new Uint8Array([1, 2, 3, 4]);
+  const response = await app.fetch(apiRequest("/v1/media/uploads/upload_12345678", token, {
+    method: "PUT",
+    headers: { "Content-Type": "image/png", "Content-Length": "4", "X-Content-Sha256": "b".repeat(64), "X-Upload-Token": "one-time", "X-Editor-CSRF": payload.csrf },
+    body: bytes,
+  }), runtimeEnv({ CONTENT_API: { fetch: async (request) => { forwarded = request; return jsonResponse({ state: "queued" }); } } }));
+  assert.equal(response.status, 200);
+  assert.equal(forwarded.headers.get("content-length"), "4");
+  assert.equal(forwarded.headers.get("x-content-sha256"), "b".repeat(64));
+  assert.equal(forwarded.headers.get("x-upload-token"), "one-time");
+  assert.match(forwarded.headers.get("x-content-scopes"), /media:upload/);
+  assert.deepEqual([...new Uint8Array(await forwarded.arrayBuffer())], [...bytes]);
+});
+
+test("processor callback proxy preserves only the signed raw completion envelope", async () => {
+  let forwarded;
+  const app = createEditorAuthApp();
+  const body = JSON.stringify({ schemaVersion: 1, jobId: "mediajob_12345678" });
+  const response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/media:processorCallback`, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": "media:job:hash", "X-Media-Signature": `sha256=${"a".repeat(64)}`, "Authorization": "Bearer must-not-forward" }, body }), runtimeEnv({ CONTENT_API: { fetch: async (request) => { forwarded = request; return jsonResponse({ state: "ready" }, 201); } } }));
+  assert.equal(response.status, 201);
+  assert.equal(forwarded.headers.get("x-media-signature"), `sha256=${"a".repeat(64)}`);
+  assert.equal(forwarded.headers.get("idempotency-key"), "media:job:hash");
+  assert.equal(forwarded.headers.get("authorization"), null);
+  assert.equal(await forwarded.text(), body);
+});
+
+test("release artifact proxy requires its dedicated bearer and derives service authority", async () => {
+  const app = createEditorAuthApp();
+  const readToken = ["release", "snapshot", "read", "token", "long", "enough"].join("-");
+  const hash = "b".repeat(64);
+  let forwarded;
+  const env = runtimeEnv({ RELEASE_SNAPSHOT_READ_TOKEN: readToken, CONTENT_API: { fetch: async (request) => { forwarded = request; return new Response('{"ok":true}', { headers: { "content-type": "application/json", "x-content-sha256": hash, "x-content-snapshot-revision": "snapshotrev_approved" } }); } } });
+  const denied = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-snapshots/${hash}`), env);
+  assert.equal(denied.status, 401);
+  const response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-snapshots/${hash}`, { headers: { Authorization: `Bearer ${readToken}` } }), env);
+  assert.equal(response.status, 200);
+  assert.equal(forwarded.headers.get("authorization"), null);
+  assert.equal(forwarded.headers.get("x-content-actor-id"), "actor_release_workflow");
+  assert.equal(forwarded.headers.get("x-content-actor-type"), "service");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:releaseSnapshot");
+  assert.equal(response.headers.get("x-content-snapshot-revision"), "snapshotrev_approved");
+
+  const asset = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-assets/${hash}`, { headers: { Authorization: `Bearer ${readToken}` } }), env);
+  assert.equal(asset.status, 200);
+  assert.equal(forwarded.url, `https://content-api.internal/v1/release-assets/${hash}`);
+  assert.equal(forwarded.headers.get("authorization"), null);
+  assert.equal(forwarded.headers.get("accept"), "application/octet-stream, */*");
+});
+
+test("release control proxy uses a separate bearer and fixed deploy-receipt service identity", async () => {
+  const app = createEditorAuthApp();
+  const deployToken = ["release", "deploy", "receipt", "token", "long", "enough"].join("-");
+  let forwarded;
+  const env = runtimeEnv({ RELEASE_DEPLOY_RECEIPT_TOKEN: deployToken, CONTENT_API: { fetch: async (request) => { forwarded = request; return jsonResponse({ transactionId: "deployment_123" }, 201); } } });
+  const body = JSON.stringify({ candidateId: "candidate_123" });
+  let response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(forwarded.headers.get("authorization"), null);
+  assert.equal(forwarded.headers.get("x-content-actor-id"), "actor_release_workflow");
+  assert.equal(forwarded.headers.get("x-content-actor-type"), "service");
+  assert.equal(forwarded.headers.get("x-content-client-id"), "github-content-release");
+  assert.equal(forwarded.headers.get("x-content-run-id"), "123456");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:deployReceipt");
+  assert.equal(await forwarded.text(), body);
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/authority:activateD1`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/authority:activateD1");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/authority:prepareCutover`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/authority:prepareCutover");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
+  for (const path of ["/v1/release-deployments:pending", "/v1/release-deployments/deployment_123:reconcileReceipt", "/v1/release-deployments/deployment_123:abandon"]) {
+    response = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+    assert.equal(response.status, 201);
+    assert.equal(new URL(forwarded.url).pathname, path);
+    assert.equal(forwarded.headers.get("x-content-scopes"), "content:deployReceipt");
+  }
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/releases/release_123:auditState`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/releases/release_123:auditState");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json" }, body }), env);
+  assert.equal(response.status, 401);
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: "Bearer wrong", "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 401);
 });

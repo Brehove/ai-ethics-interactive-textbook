@@ -330,8 +330,11 @@ const readingRecordCheckpointSchema = z.object({
   prompt: z.string().min(1),
   guidance: z.string().min(1),
   responseStructure: z.enum(["prose", "movement-plus-prose"]),
+  minWords: z.number().int().min(1).max(1000).default(30),
+  maxWords: z.number().int().min(1).max(1000).default(250),
+  showInSidebar: z.boolean().default(true),
   rationale: z.string().min(1),
-});
+}).refine((value) => value.minWords <= value.maxWords, { message: "minWords must not exceed maxWords" });
 
 const chapterReadingRecords = defineCollection({
   loader: glob({ pattern: "**/reading-record.json", base: "./content/chapters" }),
@@ -339,6 +342,24 @@ const chapterReadingRecords = defineCollection({
     license: z.literal("CC0-1.0"),
     reasoningObjective: z.string().min(1),
     checkpoints: z.array(readingRecordCheckpointSchema).length(3),
+  }),
+});
+
+const chapterReleasePlacements = defineCollection({
+  loader: glob({ pattern: "**/release-placements.json", base: "./content/chapters" }),
+  schema: z.object({
+    schemaVersion: z.literal(1),
+    chapterId: z.string(),
+    placements: z.array(z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("externalEmbed"), blockId: z.string(), anchorPassageId: z.string().optional(),
+        identity: z.object({ provider: z.enum(["youtube", "vimeo", "x", "spotify", "soundcloud", "bluesky"]), resourceType: z.string(), resourceId: z.string(), unlistedHash: z.string().optional() }),
+        canonicalUrl: z.url(), caption: z.string(), teachingUse: z.string(), adapterVersion: z.string(),
+        fallback: z.object({ title: z.string(), summary: z.string(), linkLabel: z.string(), accessedAt: z.string(), creator: z.string().optional(), transcript: z.string().optional() }),
+      }),
+      z.object({ type: z.literal("richLink"), blockId: z.string(), anchorPassageId: z.string().optional(), canonicalUrl: z.url(), title: z.string(), summary: z.string(), linkLabel: z.string(), teachingUse: z.string() }),
+      z.object({ type: z.literal("mediaFigure"), blockId: z.string(), anchorPassageId: z.string().optional(), figureId: z.string(), mediaId: z.string(), mediaVersionId: z.string(), rightsCaseId: z.string(), alt: z.string().optional(), caption: z.string().optional(), teachingUse: z.string(), displayPreset: z.string(), kind: z.enum(["image", "gif", "audio", "video", "pdf", "document"]).optional(), src: z.string().optional(), poster: z.string().optional(), credit: z.string().optional(), transcript: z.string().optional() }),
+    ])),
   }),
 });
 
@@ -406,6 +427,7 @@ export const collections = {
   chapterRights,
   chapterReading,
   chapterReadingRecords,
+  chapterReleasePlacements,
   people,
   peopleWikimedia,
   media,

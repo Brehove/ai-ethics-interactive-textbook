@@ -1,0 +1,85 @@
+name: Complete content release rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_release_id:
+        description: Previously promoted immutable release ID to restore
+        required: true
+        type: string
+      expected_active_release_id:
+        description: Exact release ID currently active before rollback
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-production-release
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: content-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Stage exact prior release against the current active pointer
+        id: stage
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs stage-rollback --target-release '${{ inputs.target_release_id }}' --expected-active '${{ inputs.expected_active_release_id }}' --out rollback-transaction.json
+      - name: Verify production is entirely on the recorded recovery version
+        id: precheck
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: |
+          npx wrangler deployments status --name ethicsandai --json > pre-rollback-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in pre-rollback-cloudflare-status.json --out pre-rollback-version.json
+          recovery_version="$(node -e "console.log(require('./rollback-transaction.json').previousCloudflareVersionId)")"
+          observed_version="$(node -e "console.log(require('./pre-rollback-version.json').cloudflareVersionId)")"
+          test "$observed_version" = "$recovery_version"
+      - name: Restore the exact recorded Cloudflare version
+        id: restore
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: |
+          target_version="$(node -e "console.log(require('./rollback-transaction.json').cloudflareVersionId)")"
+          npx wrangler versions deploy "${target_version}@100" --name ethicsandai --yes --message "rollback to ${{ inputs.target_release_id }}"
+      - name: Verify production and atomically restore release pointer, authority map, and D1 heads
+        id: receipt
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: |
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out rollback-verification.json
+          node scripts/release/control-plane.mjs receipt --transaction rollback-transaction.json --verification rollback-verification.json --out rollback-receipt.json
+          node scripts/release/control-plane.mjs audit-state --release '${{ inputs.target_release_id }}' --out rollback-state-audit.json
+      - name: Restore the formerly active Cloudflare version if rollback verification or receipt fails
+        if: ${{ failure() && steps.precheck.outcome == 'success' && steps.receipt.outcome != 'success' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: node scripts/release/control-plane.mjs emergency-rollback --transaction rollback-transaction.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ always() && steps.stage.outcome == 'success' }}
+        with:
+          name: rollback-provenance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            rollback-transaction.json
+            rollback-verification.json
+            rollback-receipt.json
+            rollback-state-audit.json
+            pre-rollback-cloudflare-status.json
+            pre-rollback-version.json
+          if-no-files-found: warn
+          retention-days: 90

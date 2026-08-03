@@ -1,0 +1,10 @@
+{
+  "name": "@ai-ethics/content-api",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "node --test --test-reporter=spec ../../tests/api/*.test.mjs",
+    "check": "node --check src/index.mjs && node --check src/services.mjs"
+  }
+}
