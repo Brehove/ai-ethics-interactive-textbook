@@ -6,6 +6,7 @@ interface Props {
   title: string;
   description?: string;
   chapterNumber?: number;
+  readingRecordPilot?: boolean;
   canonicalPath?: string;
   noindex?: boolean;
   pageClass?: string;
@@ -15,6 +16,7 @@ const {
   title,
   description = "An interactive, open textbook for PHIL 123: AI and Ethics.",
   chapterNumber,
+  readingRecordPilot = false,
   canonicalPath = Astro.url.pathname,
   noindex = false,
   pageClass = "",
@@ -35,7 +37,7 @@ const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
   </head>
   <body class={pageClass}>
     <a class="skip-link" href="#main-content">Skip to main content</a>
-    <SiteHeader chapterNumber={chapterNumber} />
+    <SiteHeader chapterNumber={chapterNumber} readingRecordPilot={readingRecordPilot} />
     <slot />
   </body>
 </html>
