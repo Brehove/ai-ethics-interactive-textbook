@@ -777,15 +777,25 @@ async function stageReleaseDeployment(request, env, identity) {
     FROM submitted_snapshots s JOIN changesets c ON c.id = s.changeset_id
     WHERE s.snapshot_hash = ? AND s.snapshot_revision = ?`).bind(body.snapshotHash, body.snapshotRevision).first();
   if (!snapshot) throw new ApiError(404, 'SUBMITTED_SNAPSHOT_NOT_FOUND', 'The staged candidate does not reference a persisted submitted snapshot');
-  if (snapshot.state !== 'approved') throw new ApiError(409, 'CHANGESET_NOT_APPROVED', 'A staged deployment requires an exact still-approved change set');
+  const currentActiveReleaseId = await activeReleaseId(env);
+  assertExpectedActive(expectedActiveReleaseId, currentActiveReleaseId);
+  const activeRelease = expectedActiveReleaseId ? await env.CONTENT_DB.prepare(`SELECT id, changeset_id, state, snapshot_hash, snapshot_revision, cloudflare_version_id
+    FROM releases WHERE id = ?`).bind(expectedActiveReleaseId).first() : null;
+  const reusesActiveSnapshot = snapshot.state === 'applied'
+    && activeRelease?.state === 'published'
+    && activeRelease.changeset_id === snapshot.changeset_id
+    && activeRelease.snapshot_hash === body.snapshotHash
+    && activeRelease.snapshot_revision === body.snapshotRevision;
+  if (snapshot.state !== 'approved' && !reusesActiveSnapshot) throw new ApiError(409, 'CHANGESET_NOT_APPROVED', 'A staged deployment requires an exact still-approved change set, or the unchanged snapshot of the expected active release for a code-only deployment');
   const approval = await env.CONTENT_DB.prepare(`SELECT id FROM approvals WHERE changeset_id = ? AND submitted_snapshot_hash = ? AND submitted_snapshot_revision = ?
     AND decision_kind = 'release' AND decision = 'approved' LIMIT 1`).bind(snapshot.changeset_id, body.snapshotHash, body.snapshotRevision).first();
   if (!approval) throw new ApiError(409, 'APPROVAL_REQUIRED', 'The staged candidate lacks exact human release approval');
-  const stale = await env.CONTENT_DB.prepare(`SELECT COUNT(*) AS stale_count FROM working_documents w JOIN documents d ON d.id = w.document_id
-    WHERE w.changeset_id = ? AND d.current_revision_id <> w.base_revision_id`).bind(snapshot.changeset_id).first();
-  if ((stale?.stale_count || 0) > 0) throw new ApiError(409, 'REVISION_CONFLICT', 'A submitted changeset target became stale before release staging');
-  assertExpectedActive(expectedActiveReleaseId, await activeReleaseId(env));
-  const previousRelease = expectedActiveReleaseId ? await env.CONTENT_DB.prepare('SELECT cloudflare_version_id FROM releases WHERE id = ?').bind(expectedActiveReleaseId).first() : null;
+  if (!reusesActiveSnapshot) {
+    const stale = await env.CONTENT_DB.prepare(`SELECT COUNT(*) AS stale_count FROM working_documents w JOIN documents d ON d.id = w.document_id
+      WHERE w.changeset_id = ? AND d.current_revision_id <> w.base_revision_id`).bind(snapshot.changeset_id).first();
+    if ((stale?.stale_count || 0) > 0) throw new ApiError(409, 'REVISION_CONFLICT', 'A submitted changeset target became stale before release staging');
+  }
+  const previousRelease = activeRelease;
   if (expectedActiveReleaseId && !previousRelease?.cloudflare_version_id) throw new ApiError(409, 'ROLLBACK_VERSION_UNAVAILABLE', 'The active release lacks an immutable Cloudflare version for emergency rollback');
   if (previousRelease?.cloudflare_version_id && previousRelease.cloudflare_version_id !== body.previousCloudflareVersionId) throw new ApiError(409, 'ROLLBACK_VERSION_MISMATCH', 'Provided recovery version does not match the active release receipt');
   const stagedAt = now();
@@ -814,7 +824,7 @@ async function stageReleaseDeployment(request, env, identity) {
        expected_active_release_id, previous_cloudflare_version_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
       VALUES (?, 'promote', 'staged', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, body.candidateId, snapshot.id, body.snapshotHash, body.snapshotRevision, body.candidateManifestHash, body.buildAttestationHash, expectedActiveReleaseId, body.previousCloudflareVersionId, body.cloudflareVersionId, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
     idempotencyStatement(env, idem, body.idempotencyKey, 201, response, stagedAt),
-    await audit(env, identity, 'release.deployment.staged', 'release', releaseId, { transactionId, candidateId: body.candidateId, snapshotHash: body.snapshotHash, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, cloudflareVersionId: body.cloudflareVersionId, approvalId: approval.id, authorityDocumentCount: authorityEntries.length }, { idempotencyHash: idem.requestHash }));
+    await audit(env, identity, 'release.deployment.staged', 'release', releaseId, { transactionId, candidateId: body.candidateId, snapshotHash: body.snapshotHash, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, cloudflareVersionId: body.cloudflareVersionId, approvalId: approval.id, authorityDocumentCount: authorityEntries.length, reusesActiveSnapshot }, { idempotencyHash: idem.requestHash }));
   await env.CONTENT_DB.batch(statements);
   return json(response, 201);
 }

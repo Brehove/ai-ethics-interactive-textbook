@@ -122,6 +122,44 @@ test('staging persists one exact approved candidate and replays idempotently', a
   assert.deepEqual(await replayResponse.json(), { replayed: true });
 });
 
+test('code-only staging may reuse only the exact human-approved snapshot of the expected active release', async () => {
+  const body = stageBody({
+    expectedActiveReleaseId: 'release_current',
+    previousCloudflareVersionId: 'version_cf_current',
+    cloudflareVersionId: 'version_cf_code_fix',
+    idempotencyKey: 'stage-code-only-fix'
+  });
+  const db = makeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM submitted_snapshots s JOIN changesets')) return { id: 'snapshot-1', changeset_id: 'cs-1', snapshot_hash: body.snapshotHash, snapshot_revision: body.snapshotRevision, state: 'applied' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_current' };
+    if (sql.includes('FROM releases WHERE id = ?')) return { id: 'release_current', changeset_id: 'cs-1', state: 'published', snapshot_hash: body.snapshotHash, snapshot_revision: body.snapshotRevision, cloudflare_version_id: 'version_cf_current' };
+    if (sql.includes('FROM approvals')) return { id: 'approval-human-1' };
+    if (sql.includes('UPDATE release_sequences SET')) return { sequence: 18 };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/release-deployments:stage', { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+  assert.equal(response.status, 201);
+  assert.equal(db.statements.some((item) => item.sql.includes('FROM working_documents')), false, 'later instructor live saves must not stale an otherwise exact code-only release');
+  const auditStatement = db.batches.at(-1).find((item) => item.sql.includes('INSERT INTO audit_events'));
+  assert.match(auditStatement.args.find((item) => typeof item === 'string' && item.includes('reusesActiveSnapshot')), /"reusesActiveSnapshot":true/);
+});
+
+test('code-only staging rejects an applied snapshot that is not the exact active release snapshot', async () => {
+  const body = stageBody({ expectedActiveReleaseId: 'release_current', previousCloudflareVersionId: 'version_cf_current' });
+  const db = makeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM submitted_snapshots s JOIN changesets')) return { id: 'snapshot-1', changeset_id: 'cs-1', snapshot_hash: body.snapshotHash, snapshot_revision: body.snapshotRevision, state: 'applied' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_current' };
+    if (sql.includes('FROM releases WHERE id = ?')) return { id: 'release_current', changeset_id: 'cs-other', state: 'published', snapshot_hash: 'f'.repeat(64), snapshot_revision: 'snapshotrev_other', cloudflare_version_id: 'version_cf_current' };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/release-deployments:stage', { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).error.code, 'CHANGESET_NOT_APPROVED');
+  assert.equal(db.statements.some((item) => item.sql.includes('FROM approvals')), false);
+});
+
 test('a retried candidate receives a distinct release identity for each immutable Worker version', async () => {
   const responses = [];
   for (const cloudflareVersionId of ['version_cf_retry_1', 'version_cf_retry_2']) {
