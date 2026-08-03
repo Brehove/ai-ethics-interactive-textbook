@@ -40,6 +40,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data-document-visual contenteditable="false"/);
   assert.match(shell, /data-document-markdown hidden/);
   assert.match(shell, /serializeVisualDocument/);
+  assert.match(shell, /reconcileDuplicateStableBlockIds/);
   assert.match(shell, /bodyReplacementPayload[\s\S]*block\.preserve === true[\s\S]*\{ blockId: block\.blockId, preserve: true \}/);
   assert.match(shell, /const body = bodyReplacementPayload\(documentMode === "markdown"/);
   assert.match(shell, /reconcileImportedBlocks/);
@@ -49,6 +50,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /openToolbarWorkspace/);
   assert.match(shell, /renderLegacyPreview/);
   assert.match(shell, /Your edits remain in this browser/);
+  assert.doesNotMatch(shell, /first stable chapter passage could not be reconciled/);
   assert.match(shell, /data\?\.error\?\.message[\s\S]*data\?\.error\?\.code/);
   assert.match(shell, /data-insert-block-form[\s\S]*data-insert-block-type[\s\S]*data-insert-position/);
   assert.match(shell, /type: "block\.insert"[\s\S]*block,[\s\S]*position/);

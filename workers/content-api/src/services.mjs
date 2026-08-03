@@ -324,6 +324,39 @@ const normalizeInsertedBlock = async (chapter, input, position) => {
 
 const editableBodyTypes = new Set(['paragraph', 'heading', 'blockquote', 'callout', 'list', 'codeBlock', 'table']);
 const visualStyleTypes = new Set(['paragraph', 'heading', 'blockquote', 'callout', 'list']);
+const replacementText = (block) => String(block?.text ?? block?.code ?? block?.items?.join(' ') ?? block?.rows?.flat().join(' ') ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+const replacementSimilarity = (candidate, original) => {
+  const next = replacementText(candidate);
+  const before = replacementText(original);
+  if (next === before) return Number.MAX_SAFE_INTEGER;
+  const beforeWords = new Set(before.split(/\s+/).filter(Boolean));
+  const sharedWords = next.split(/\s+/).filter((word) => beforeWords.has(word)).length;
+  return sharedWords * 10_000
+    + (before && next.includes(before) ? 1_000_000 : 0)
+    + (next && before.includes(next) ? next.length : 0)
+    - Math.abs(before.length - next.length);
+};
+const reconcileDuplicateReplacementIds = (input, originals) => {
+  const indexesById = new Map();
+  input.forEach((candidate, index) => {
+    if (!candidate?.blockId) return;
+    const indexes = indexesById.get(candidate.blockId) || [];
+    indexes.push(index);
+    indexesById.set(candidate.blockId, indexes);
+  });
+  const winners = new Map();
+  for (const [blockId, indexes] of indexesById) {
+    if (indexes.length < 2) continue;
+    const original = originals.get(blockId);
+    if (!original || !editableBodyTypes.has(original.type) || indexes.some((index) => input[index]?.preserve === true)) throw new ApiError(409, 'BLOCK_ID_DUPLICATE', 'A managed block can appear only once in a chapter replacement', { blockId });
+    winners.set(blockId, indexes.reduce((winner, index) => replacementSimilarity(input[index], original) > replacementSimilarity(input[winner], original) ? index : winner));
+  }
+  return input.map((candidate, index) => {
+    if (!candidate?.blockId || !winners.has(candidate.blockId) || winners.get(candidate.blockId) === index) return candidate;
+    const { blockId: _browserDuplicatedId, ...inserted } = candidate;
+    return inserted;
+  });
+};
 const normalizeExistingEditableBlock = async (existing, input, index) => {
   if (input.blockId !== existing.blockId) throw new ApiError(422, 'STABLE_ID_CHANGE_FORBIDDEN', 'Existing block identity cannot be changed', { index });
   if (input.type !== existing.type) {
@@ -361,6 +394,7 @@ const normalizeExistingEditableBlock = async (existing, input, index) => {
 const normalizeChapterBodyReplacement = async (chapter, input) => {
   if (!Array.isArray(input) || input.length < 1 || input.length > 2000) throw new ApiError(422, 'CHAPTER_BODY_INVALID', 'body must contain 1 to 2000 structured blocks');
   const originals = new Map(bodyBlocks(chapter).map((block) => [block.blockId, block]));
+  input = reconcileDuplicateReplacementIds(input, originals);
   const used = new Set();
   const scratch = { ...chapter, body: [] };
   for (let index = 0; index < input.length; index += 1) {
@@ -382,8 +416,9 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
     } else {
       if (candidate.preserve !== undefined) throw new ApiError(422, 'PRESERVE_REQUIRES_BLOCK_ID', 'preserve requires an existing blockId', { index });
       const previous = scratch.body.at(-1)?.blockId;
-      if (!previous) throw new ApiError(422, 'FIRST_BLOCK_ID_REQUIRED', 'A full chapter replacement must retain its first stable block');
-      normalized = await normalizeInsertedBlock(scratch, candidate, { afterBlockId: previous });
+      const following = !previous ? input.slice(index + 1).find((item) => item?.blockId && originals.has(item.blockId))?.blockId : null;
+      if (!previous && !following) throw new ApiError(422, 'STABLE_BLOCK_REQUIRED', 'A full chapter replacement must retain at least one stable block');
+      normalized = await normalizeInsertedBlock(scratch, candidate, previous ? { afterBlockId: previous } : { beforeBlockId: following });
     }
     assertUniqueBodyIds(scratch, normalized);
     scratch.body.push(normalized);
