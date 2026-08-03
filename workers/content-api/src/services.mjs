@@ -94,6 +94,7 @@ export const MEDIA_UPLOAD_POLICY = Object.freeze({
 });
 export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'text.replace': { required: ['type', 'blockId', 'text'], optional: [] },
+  'chapter.replaceBody': { required: ['type', 'body'], optional: [] },
   'block.insert': { required: ['type', 'block', 'position'], optional: [] },
   'block.move': { required: ['type', 'blockId', 'position'], optional: [] },
   'block.remove': { required: ['type', 'blockId'], optional: ['replacementPassageId'] },
@@ -321,6 +322,68 @@ const normalizeInsertedBlock = async (chapter, input, position) => {
   return block;
 };
 
+const editableBodyTypes = new Set(['paragraph', 'heading', 'blockquote', 'callout', 'list', 'codeBlock', 'table']);
+const normalizeExistingEditableBlock = (existing, input, index) => {
+  if (input.type !== existing.type) throw new ApiError(422, 'BLOCK_TYPE_CHANGE_UNSUPPORTED', 'Change paragraph styles with Markdown syntax or insert a new structured block', { blockId: existing.blockId, index });
+  if (input.blockId !== existing.blockId) throw new ApiError(422, 'STABLE_ID_CHANGE_FORBIDDEN', 'Existing block identity cannot be changed', { index });
+  if (['paragraph', 'heading', 'blockquote', 'callout'].includes(existing.type)) {
+    const limit = existing.type === 'heading' ? 1000 : existing.type === 'callout' ? 20000 : 50000;
+    return { ...existing, text: safeText(input.text, `body.${index}.text`, limit) };
+  }
+  if (existing.type === 'list') {
+    if (typeof input.ordered !== 'boolean' || !Array.isArray(input.items) || input.items.length < 1 || input.items.length > 100) throw new ApiError(422, 'LIST_INVALID', 'List requires ordered and 1 to 100 items', { index });
+    const items = input.items.map((item, itemIndex) => safeText(item, `body.${index}.items.${itemIndex}`, 4000));
+    return { ...existing, ordered: input.ordered, text: items.join(' '), items };
+  }
+  if (existing.type === 'codeBlock') return { ...existing, code: requireString(input.code, `body.${index}.code`, 50000), ...(input.language ? { language: requireString(input.language, `body.${index}.language`, 50) } : {}) };
+  if (!Array.isArray(input.rows) || input.rows.length < 1 || input.rows.length > 100 || input.rows.some((row) => !Array.isArray(row) || row.length < 1 || row.length > 20)) throw new ApiError(422, 'TABLE_INVALID', 'Table dimensions are invalid', { index });
+  return { ...existing, rows: input.rows.map((row, rowIndex) => row.map((cell) => safeText(cell, `body.${index}.rows.${rowIndex}`, 4000))) };
+};
+
+const normalizeChapterBodyReplacement = async (chapter, input) => {
+  if (!Array.isArray(input) || input.length < 1 || input.length > 2000) throw new ApiError(422, 'CHAPTER_BODY_INVALID', 'body must contain 1 to 2000 structured blocks');
+  const originals = new Map(bodyBlocks(chapter).map((block) => [block.blockId, block]));
+  const used = new Set();
+  const scratch = { ...chapter, body: [] };
+  for (let index = 0; index < input.length; index += 1) {
+    const candidate = input[index];
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) throw new ApiError(422, 'CHAPTER_BODY_INVALID', 'Every body item must be an object', { index });
+    let normalized;
+    if (candidate.blockId) {
+      if (used.has(candidate.blockId)) throw new ApiError(409, 'BLOCK_ID_DUPLICATE', 'A block can appear only once in a chapter replacement', { blockId: candidate.blockId });
+      const existing = originals.get(candidate.blockId);
+      if (!existing) throw new ApiError(422, 'CLIENT_ASSIGNED_ID_FORBIDDEN', 'New blocks cannot choose their own stable IDs', { index });
+      used.add(candidate.blockId);
+      if (candidate.preserve === true) {
+        rejectUnknown(candidate, ['blockId', 'preserve']);
+        normalized = structuredClone(existing);
+      } else {
+        if (!editableBodyTypes.has(existing.type)) throw new ApiError(422, 'STRUCTURED_BLOCK_REQUIRES_PRESERVE', 'Media, embeds, diagrams, and legacy content must be preserved or changed with their dedicated controls', { blockId: existing.blockId });
+        normalized = normalizeExistingEditableBlock(existing, candidate, index);
+      }
+    } else {
+      if (candidate.preserve !== undefined) throw new ApiError(422, 'PRESERVE_REQUIRES_BLOCK_ID', 'preserve requires an existing blockId', { index });
+      const previous = scratch.body.at(-1)?.blockId;
+      if (!previous) throw new ApiError(422, 'FIRST_BLOCK_ID_REQUIRED', 'A full chapter replacement must retain its first stable block');
+      normalized = await normalizeInsertedBlock(scratch, candidate, { afterBlockId: previous });
+    }
+    assertUniqueBodyIds(scratch, normalized);
+    scratch.body.push(normalized);
+  }
+  const anchors = passageIds(scratch);
+  const missing = [];
+  for (const checkpoint of chapter.checkpoints || []) if (!anchors.has(checkpoint.passageId)) missing.push({ kind: 'checkpoint', id: checkpoint.checkpointId, passageId: checkpoint.passageId });
+  for (const annotation of chapter.annotations || []) if (!anchors.has(annotation.passageId)) missing.push({ kind: 'annotation', id: annotation.annotationId, passageId: annotation.passageId });
+  for (const block of scratch.body) if (block.anchorPassageId && !anchors.has(block.anchorPassageId)) missing.push({ kind: block.type, id: block.blockId, passageId: block.anchorPassageId });
+  if (missing.length) throw new ApiError(409, 'DEPENDENCIES_REQUIRE_REANCHOR', 'The pasted chapter would orphan anchored content; keep those passages or reanchor them first', { dependents: missing });
+  chapter.body = scratch.body;
+  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => {
+    const block = chapter.body.find((item) => item.passageId === checkpoint.passageId);
+    const excerpt = block?.text || block?.items?.join(' ') || '';
+    return excerpt ? { ...checkpoint, passageExcerptHash: await sha256(excerpt) } : checkpoint;
+  }));
+};
+
 const PUBLIC_EMBED_HOSTS = Object.freeze({
   youtube: ['youtube.com', 'www.youtube.com', 'youtu.be'], vimeo: ['vimeo.com', 'www.vimeo.com', 'player.vimeo.com'],
   x: ['x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'], spotify: ['open.spotify.com'],
@@ -486,6 +549,8 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be edited');
     if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type)) throw new ApiError(422, 'BLOCK_NOT_TEXT_EDITABLE', 'Block type does not support text.replace');
     block.text = safeText(operation.text, 'text', block.type === 'heading' ? 1000 : 50000);
+  } else if (operation.type === 'chapter.replaceBody') {
+    await normalizeChapterBodyReplacement(chapter, operation.body);
   } else if (operation.type === 'block.insert') {
     const index = placementIndex(chapter, operation.position);
     const block = await normalizeInsertedBlock(chapter, operation.block, operation.position);

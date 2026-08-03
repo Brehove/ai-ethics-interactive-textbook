@@ -18,6 +18,7 @@ test('protocol initializes, lists tools, and calls a read tool', async () => {
   assert.equal(tools.tools.some(tool => tool.name === 'approve_changeset' || tool.name === 'publish_changeset'), false);
   assert.equal(tools.tools.some(tool => tool.name === 'upload_media_base64' || tool.name === 'request_media_upload'), false);
   assert.ok(tools.tools.some(tool => tool.name === 'replace_text'));
+  assert.ok(tools.tools.some(tool => tool.name === 'replace_chapter_body'));
   assert.ok(tools.tools.some(tool => tool.name === 'create_changeset'));
   assert.equal(tools.tools.every(tool => typeof tool.annotations?.idempotentHint === 'boolean'), true);
   const response = await client.callTool({ name: 'list_chapters', arguments: {} });

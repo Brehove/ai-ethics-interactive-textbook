@@ -430,7 +430,7 @@ async function diffChangeset(request, env, changesetId) {
 
 async function applyOperation(request, env, identity, changesetId) {
   requireScope(identity, 'content:write'); runIdentity(identity);
-  const body = await readJsonBody(request, { allowedFields: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'dryRun', 'operation'] });
+  const body = await readJsonBody(request, { maxBytes: 1024 * 1024, allowedFields: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'dryRun', 'operation'] });
   if (body.baseRevisionId === undefined) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'baseRevisionId is required');
   validId(body.baseRevisionId, 'baseRevisionId');
   if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
