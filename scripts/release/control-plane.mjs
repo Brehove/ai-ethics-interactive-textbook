@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
+import { deploymentReceiptPayload } from "../../workers/content-api/src/services.mjs";
 
 const exec = promisify(execFile);
 const args = process.argv.slice(2);
@@ -104,7 +105,7 @@ if (command === "prepare-cutover") {
     cloudflareDeploymentId,
     cloudflareVersionId: transaction.cloudflareVersionId,
     verificationHash,
-    receiptHash: sha256(payload),
+    receiptHash: sha256(deploymentReceiptPayload(payload)),
     idempotencyKey: deterministicUuid(command),
   });
   await writeFile(required("--out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx", mode: 0o444 });
