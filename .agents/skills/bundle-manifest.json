@@ -40,7 +40,7 @@
     },
     {
       "path": "release-steward/SKILL.md",
-      "sha256": "97b5ef318ae2e6f88b069d70c0f337fd2aaf967191a7621eeb2535aef34a74bf"
+      "sha256": "7ccb3407ed8a87d9b8b5e770f0a669dcc3de0cb176e1114f70c1b48569116ea7"
     },
     {
       "path": "release-steward/agents/openai.yaml",
@@ -48,7 +48,7 @@
     },
     {
       "path": "release-steward/references/handoff.md",
-      "sha256": "b94f103cc1e76b1899196f20ebac0b833c469129efe6aa745a7eb7c583da6fb2"
+      "sha256": "3ea37f1e58fe2ff0a3469f88374a011f51d4eb6cba13342c6ddd2fdfb4508bb8"
     }
   ]
 }

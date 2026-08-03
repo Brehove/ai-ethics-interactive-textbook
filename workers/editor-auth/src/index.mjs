@@ -245,6 +245,34 @@ async function forwardReleaseArtifact(request, env) {
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
 }
 
+async function forwardReleaseControl(request, env) {
+  if (!env.CONTENT_API || typeof env.CONTENT_API.fetch !== "function") return new Response("Unavailable", { status: 503, headers: baseSecurityHeaders });
+  const configured = env.RELEASE_DEPLOY_RECEIPT_TOKEN;
+  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  if (typeof configured !== "string" || configured.length < 32 || !constantTimeEqual(supplied, configured)) return new Response("Unauthorized", { status: 401, headers: { ...baseSecurityHeaders, "WWW-Authenticate": "Bearer" } });
+  const runId = request.headers.get("x-github-run-id") ?? "";
+  if (!/^\d{1,30}$/.test(runId)) return new Response("GitHub run identity required", { status: 401, headers: baseSecurityHeaders });
+  const declaredLength = Number.parseInt(request.headers.get("content-length") ?? "0", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const body = await request.arrayBuffer();
+  if (body.byteLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
+  const url = new URL(request.url);
+  const headers = new Headers({
+    "content-type": "application/json",
+    "x-content-gateway-verified": "v1",
+    "x-content-actor-id": "actor_release_workflow",
+    "x-content-actor-type": "service",
+    "x-content-client-id": "github-content-release",
+    "x-content-run-id": runId,
+    "x-content-scopes": "content:deployReceipt",
+  });
+  const upstream = await env.CONTENT_API.fetch(new Request(`https://content-api.internal${url.pathname}`, { method: "POST", headers, body }));
+  const responseHeaders = new Headers(baseSecurityHeaders);
+  responseHeaders.set("Content-Type", upstream.headers.get("content-type") ?? "application/json; charset=utf-8");
+  for (const name of ["idempotent-replay", "retry-after", "x-request-id"]) { const value = upstream.headers.get(name); if (value) responseHeaders.set(name, value); }
+  return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
 export function createEditorAuthApp(dependencies = {}) {
   const fetchImpl = dependencies.fetchImpl ?? globalThis.fetch.bind(globalThis);
   const nowProvider = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
@@ -269,6 +297,13 @@ export function createEditorAuthApp(dependencies = {}) {
         if (/^\/v1\/release-(?:snapshots|assets)\/[a-f0-9]{64}$/.test(url.pathname)) {
           if (request.method !== "GET") throw new HttpError(405, "method_not_allowed", "Use GET for this endpoint");
           return await forwardReleaseArtifact(request, env);
+        }
+
+        if (url.pathname === "/v1/release-deployments:stage"
+          || /^\/v1\/release-deployments\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:recordReceipt$/.test(url.pathname)
+          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:stageRollback$/.test(url.pathname)) {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          return await forwardReleaseControl(request, env);
         }
 
         const config = getRuntimeConfig(env);

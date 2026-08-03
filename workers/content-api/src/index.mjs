@@ -1,7 +1,7 @@
 import {
   ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, deterministicId, readJsonBody,
-  finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
-  validateChapter, validateMediaReviewPackage, validateUploadRequest, verifyHmacSignature
+  deploymentReceiptHash, finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
+  validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature
 } from './services.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
@@ -20,6 +20,20 @@ const runIdentity = (identity) => {
 };
 const requireHumanIdentity = (identity, action) => {
   if (identity.actorType !== 'human') throw new ApiError(403, 'HUMAN_ACTOR_REQUIRED', `${action} requires an authenticated human actor`);
+};
+const requireReleaseWorkflowIdentity = (identity) => {
+  requireScope(identity, 'content:deployReceipt'); runIdentity(identity);
+  if (identity.actorType !== 'service' || identity.actorId !== 'actor_release_workflow' || identity.clientId !== 'github-content-release') {
+    throw new ApiError(403, 'RELEASE_WORKFLOW_REQUIRED', 'Only the protected release workflow service may stage or record deployments');
+  }
+};
+const exactHash = (value, label) => {
+  if (typeof value !== 'string' || !/^[a-f0-9]{64}$/.test(value)) throw new ApiError(422, 'HASH_INVALID', `${label} must be exact lowercase SHA-256`);
+  return value;
+};
+const optionalReleaseId = (value, label = 'expectedActiveReleaseId') => {
+  if (value === null) return null;
+  return validId(value, label);
 };
 const randomHex = (bytes = 32) => {
   const value = new Uint8Array(bytes); crypto.getRandomValues(value);
@@ -532,10 +546,139 @@ async function publishChangeset(request, env, identity, changesetId) {
   if (!snapshot) throw new ApiError(404, 'NOT_FOUND', 'Submitted snapshot was not found');
   if (snapshot.state !== 'approved') throw new ApiError(409, 'CHANGESET_NOT_APPROVED', 'Publication requires the changeset to remain approved; a rejected or merely submitted snapshot cannot publish');
   if (body.snapshotHash !== snapshot.snapshot_hash || body.snapshotRevision !== snapshot.snapshot_revision) throw new ApiError(409, 'REVISION_CONFLICT', 'Publish request does not match the submitted snapshot');
-  // The immutable GitHub/Cloudflare workflow is the only production promotion
-  // path until deployment attestations, receipts, and expected-active CAS are
-  // persisted here. Fail closed instead of advancing D1 ahead of live traffic.
+  // The protected service routes own deployment staging, receipts, and the
+  // expected-active CAS. Keep this human endpoint permanently fail-closed so
+  // there is only one production promotion control plane.
   throw new ApiError(503, 'DEPLOYMENT_RECEIPT_REQUIRED', 'Direct Content API publication is disabled; use the protected immutable release workflow and record its deployment receipt before authority activation');
+}
+
+const activeReleaseId = async (env) => (await env.CONTENT_DB.prepare("SELECT release_id FROM release_pointers WHERE name = 'active'").first())?.release_id || null;
+const assertExpectedActive = (expected, current) => {
+  if (expected !== current) throw new ApiError(409, 'ACTIVE_RELEASE_CONFLICT', 'Active release changed; the protected workflow must not promote or record a stale deployment', { expectedActiveReleaseId: expected, currentActiveReleaseId: current });
+};
+
+async function allocateReleaseSequence(env, changedAt) {
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare("INSERT OR IGNORE INTO release_sequences (name, next_sequence, updated_at) VALUES ('book', 1, ?)").bind(changedAt)
+  ]);
+  const allocated = await env.CONTENT_DB.prepare("UPDATE release_sequences SET next_sequence = next_sequence + 1, updated_at = ? WHERE name = 'book' RETURNING next_sequence - 1 AS sequence").bind(changedAt).first();
+  if (!Number.isInteger(allocated?.sequence) || allocated.sequence < 1) throw new ApiError(503, 'RELEASE_SEQUENCE_UNAVAILABLE', 'Monotonic release sequence allocation failed closed');
+  return allocated.sequence;
+}
+
+async function stageReleaseDeployment(request, env, identity) {
+  requireReleaseWorkflowIdentity(identity);
+  const body = await readJsonBody(request, { allowedFields: ['candidateId', 'snapshotHash', 'snapshotRevision', 'candidateManifestHash', 'buildAttestationHash', 'expectedActiveReleaseId', 'cloudflareVersionId', 'idempotencyKey'] });
+  validId(body.candidateId, 'candidateId'); exactHash(body.snapshotHash, 'snapshotHash'); validId(body.snapshotRevision, 'snapshotRevision');
+  exactHash(body.candidateManifestHash, 'candidateManifestHash'); exactHash(body.buildAttestationHash, 'buildAttestationHash'); validId(body.cloudflareVersionId, 'cloudflareVersionId');
+  const expectedActiveReleaseId = optionalReleaseId(body.expectedActiveReleaseId);
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, 'release-deployments:stage', body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const snapshot = await env.CONTENT_DB.prepare(`SELECT s.id, s.changeset_id, s.snapshot_hash, s.snapshot_revision, c.state
+    FROM submitted_snapshots s JOIN changesets c ON c.id = s.changeset_id
+    WHERE s.snapshot_hash = ? AND s.snapshot_revision = ?`).bind(body.snapshotHash, body.snapshotRevision).first();
+  if (!snapshot) throw new ApiError(404, 'SUBMITTED_SNAPSHOT_NOT_FOUND', 'The staged candidate does not reference a persisted submitted snapshot');
+  if (snapshot.state !== 'approved') throw new ApiError(409, 'CHANGESET_NOT_APPROVED', 'A staged deployment requires an exact still-approved change set');
+  const approval = await env.CONTENT_DB.prepare(`SELECT id FROM approvals WHERE changeset_id = ? AND submitted_snapshot_hash = ? AND submitted_snapshot_revision = ?
+    AND decision_kind = 'release' AND decision = 'approved' LIMIT 1`).bind(snapshot.changeset_id, body.snapshotHash, body.snapshotRevision).first();
+  if (!approval) throw new ApiError(409, 'APPROVAL_REQUIRED', 'The staged candidate lacks exact human release approval');
+  assertExpectedActive(expectedActiveReleaseId, await activeReleaseId(env));
+  const previousRelease = expectedActiveReleaseId ? await env.CONTENT_DB.prepare('SELECT cloudflare_version_id FROM releases WHERE id = ?').bind(expectedActiveReleaseId).first() : null;
+  if (expectedActiveReleaseId && !previousRelease?.cloudflare_version_id) throw new ApiError(409, 'ROLLBACK_VERSION_UNAVAILABLE', 'The active release lacks an immutable Cloudflare version for emergency rollback');
+  const stagedAt = now();
+  const sequence = await allocateReleaseSequence(env, stagedAt);
+  const releaseId = await deterministicId('release', { candidateId: body.candidateId, candidateManifestHash: body.candidateManifestHash });
+  const transactionId = await deterministicId('deployment', { action: 'promote', releaseId, expectedActiveReleaseId, idempotencyKey: body.idempotencyKey });
+  const expiresAt = new Date(Date.parse(stagedAt) + 10 * 60 * 1000).toISOString();
+  const response = { transactionId, action: 'promote', state: 'staged', releaseId, sequence, candidateId: body.candidateId, snapshotHash: body.snapshotHash, snapshotRevision: body.snapshotRevision, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, previousCloudflareVersionId: previousRelease?.cloudflare_version_id || null, cloudflareVersionId: body.cloudflareVersionId, expiresAt };
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'abandoned' WHERE state = 'staged' AND expires_at <= ?").bind(stagedAt),
+    env.CONTENT_DB.prepare(`INSERT INTO releases
+      (id, sequence, changeset_id, state, manifest_hash, created_by, created_at, candidate_id, snapshot_hash, snapshot_revision, build_attestation_hash, cloudflare_version_id)
+      VALUES (?, ?, ?, 'building', ?, ?, ?, ?, ?, ?, ?, ?)`).bind(releaseId, sequence, snapshot.changeset_id, body.candidateManifestHash, identity.actorId, stagedAt, body.candidateId, body.snapshotHash, body.snapshotRevision, body.buildAttestationHash, body.cloudflareVersionId),
+    env.CONTENT_DB.prepare(`INSERT INTO release_deployment_transactions
+      (id, action, state, release_id, candidate_id, submitted_snapshot_id, snapshot_hash, snapshot_revision, candidate_manifest_hash, build_attestation_hash,
+       expected_active_release_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
+      VALUES (?, 'promote', 'staged', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, body.candidateId, snapshot.id, body.snapshotHash, body.snapshotRevision, body.candidateManifestHash, body.buildAttestationHash, expectedActiveReleaseId, body.cloudflareVersionId, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
+    idempotencyStatement(env, idem, body.idempotencyKey, 201, response, stagedAt),
+    await audit(env, identity, 'release.deployment.staged', 'release', releaseId, { transactionId, candidateId: body.candidateId, snapshotHash: body.snapshotHash, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, cloudflareVersionId: body.cloudflareVersionId, approvalId: approval.id }, { idempotencyHash: idem.requestHash })
+  ]);
+  return json(response, 201);
+}
+
+async function stageReleaseRollback(request, env, identity, releaseId) {
+  requireReleaseWorkflowIdentity(identity);
+  const body = await readJsonBody(request, { allowedFields: ['expectedActiveReleaseId', 'idempotencyKey'] });
+  const expectedActiveReleaseId = optionalReleaseId(body.expectedActiveReleaseId);
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `release:${releaseId}:stageRollback`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const target = await env.CONTENT_DB.prepare(`SELECT r.id, r.state, r.candidate_id, r.manifest_hash, r.snapshot_hash, r.snapshot_revision,
+    r.build_attestation_hash, r.cloudflare_version_id FROM releases r
+    WHERE r.id = ? AND EXISTS (SELECT 1 FROM deployment_receipts d WHERE d.release_id = r.id AND d.action = 'promote')`).bind(releaseId).first();
+  if (!target || !['published', 'superseded'].includes(target.state)) throw new ApiError(409, 'ROLLBACK_TARGET_INVALID', 'Rollback target must be a previously promoted immutable release');
+  const current = await activeReleaseId(env);
+  assertExpectedActive(expectedActiveReleaseId, current);
+  if (releaseId === current) throw new ApiError(409, 'ROLLBACK_TARGET_ACTIVE', 'Rollback target is already active');
+  if (!target.cloudflare_version_id || !target.manifest_hash || !target.build_attestation_hash) throw new ApiError(409, 'ROLLBACK_TARGET_INCOMPLETE', 'Rollback target lacks immutable deployment bindings');
+  const stagedAt = now();
+  const transactionId = await deterministicId('deployment', { action: 'rollback', releaseId, expectedActiveReleaseId, idempotencyKey: body.idempotencyKey });
+  const expiresAt = new Date(Date.parse(stagedAt) + 10 * 60 * 1000).toISOString();
+  const response = { transactionId, action: 'rollback', state: 'staged', releaseId, expectedActiveReleaseId, candidateManifestHash: target.manifest_hash, buildAttestationHash: target.build_attestation_hash, cloudflareVersionId: target.cloudflare_version_id, expiresAt };
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'abandoned' WHERE state = 'staged' AND expires_at <= ?").bind(stagedAt),
+    env.CONTENT_DB.prepare(`INSERT INTO release_deployment_transactions
+      (id, action, state, release_id, candidate_id, submitted_snapshot_id, snapshot_hash, snapshot_revision, candidate_manifest_hash, build_attestation_hash,
+       expected_active_release_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
+      VALUES (?, 'rollback', 'staged', ?, NULL, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, target.manifest_hash, target.build_attestation_hash, expectedActiveReleaseId, target.cloudflare_version_id, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
+    idempotencyStatement(env, idem, body.idempotencyKey, 201, response, stagedAt),
+    await audit(env, identity, 'release.rollback.staged', 'release', releaseId, { transactionId, expectedActiveReleaseId, cloudflareVersionId: target.cloudflare_version_id }, { idempotencyHash: idem.requestHash })
+  ]);
+  return json(response, 201);
+}
+
+async function recordDeploymentReceipt(request, env, identity, transactionId) {
+  requireReleaseWorkflowIdentity(identity);
+  const body = await readJsonBody(request, { allowedFields: ['candidateManifestHash', 'buildAttestationHash', 'cloudflareDeploymentId', 'cloudflareVersionId', 'verificationHash', 'receiptHash', 'idempotencyKey'] });
+  exactHash(body.candidateManifestHash, 'candidateManifestHash'); exactHash(body.buildAttestationHash, 'buildAttestationHash'); exactHash(body.verificationHash, 'verificationHash'); exactHash(body.receiptHash, 'receiptHash');
+  validId(body.cloudflareDeploymentId, 'cloudflareDeploymentId'); validId(body.cloudflareVersionId, 'cloudflareVersionId');
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `release-deployment:${transactionId}:receipt`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const transaction = await env.CONTENT_DB.prepare('SELECT * FROM release_deployment_transactions WHERE id = ?').bind(transactionId).first();
+  if (!transaction) throw new ApiError(404, 'DEPLOYMENT_TRANSACTION_NOT_FOUND', 'Staged deployment transaction was not found');
+  if (transaction.state !== 'staged') throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_CLOSED', 'Only a staged deployment can accept a receipt');
+  if (Date.parse(transaction.expires_at) <= Date.now()) throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_EXPIRED', 'Staged deployment expired; verify live traffic and stage a reconciled operation');
+  if (body.candidateManifestHash !== transaction.candidate_manifest_hash || body.buildAttestationHash !== transaction.build_attestation_hash || body.cloudflareVersionId !== transaction.cloudflare_version_id) {
+    throw new ApiError(409, 'DEPLOYMENT_BINDING_MISMATCH', 'Deployment receipt does not match the exact staged candidate, attestation, and Cloudflare version');
+  }
+  assertExpectedActive(transaction.expected_active_release_id || null, await activeReleaseId(env));
+  const receiptPayload = {
+    transactionId, action: transaction.action, releaseId: transaction.release_id, previousActiveReleaseId: transaction.expected_active_release_id || null,
+    candidateId: transaction.candidate_id || null, snapshotHash: transaction.snapshot_hash || null, snapshotRevision: transaction.snapshot_revision || null,
+    candidateManifestHash: transaction.candidate_manifest_hash, buildAttestationHash: transaction.build_attestation_hash,
+    cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, verificationHash: body.verificationHash
+  };
+  const expectedReceiptHash = await deploymentReceiptHash(receiptPayload);
+  if (body.receiptHash !== expectedReceiptHash) throw new ApiError(409, 'RECEIPT_HASH_MISMATCH', 'Deployment receipt hash does not bind the exact staged transaction and deployed version', { expectedReceiptHash });
+  const recordedAt = now();
+  const receiptId = await deterministicId('receipt', { transactionId, receiptHash: body.receiptHash });
+  const response = { receiptId, receiptHash: body.receiptHash, transactionId, action: transaction.action, releaseId: transaction.release_id, previousActiveReleaseId: transaction.expected_active_release_id || null, activeReleaseId: transaction.release_id, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, recordedAt };
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare(`INSERT INTO deployment_receipts
+      (id, transaction_id, action, release_id, previous_active_release_id, candidate_id, candidate_manifest_hash, build_attestation_hash, snapshot_hash, snapshot_revision,
+       cloudflare_deployment_id, cloudflare_version_id, verification_hash, receipt_hash, recorded_by, recorded_client_id, recorded_run_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(receiptId, transactionId, transaction.action, transaction.release_id, transaction.expected_active_release_id || null, transaction.candidate_id || null, transaction.candidate_manifest_hash, transaction.build_attestation_hash, transaction.snapshot_hash || null, transaction.snapshot_revision || null, body.cloudflareDeploymentId, body.cloudflareVersionId, body.verificationHash, body.receiptHash, identity.actorId, identity.clientId, identity.runId, recordedAt),
+    env.CONTENT_DB.prepare(`INSERT INTO release_pointer_commands
+      (id, receipt_id, action, expected_active_release_id, release_id, changed_by, changed_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(await deterministicId('pointercmd', { receiptId }), receiptId, transaction.action, transaction.expected_active_release_id || null, transaction.release_id, identity.actorId, recordedAt),
+    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'completed', completed_at = ? WHERE id = ? AND state = 'staged'").bind(recordedAt, transactionId),
+    env.CONTENT_DB.prepare("UPDATE releases SET state = 'published', published_at = COALESCE(published_at, ?) WHERE id = ?").bind(recordedAt, transaction.release_id),
+    env.CONTENT_DB.prepare("UPDATE releases SET state = 'superseded' WHERE id = ? AND id <> ? AND state = 'published'").bind(transaction.expected_active_release_id || '', transaction.release_id),
+    idempotencyStatement(env, idem, body.idempotencyKey, 201, response, recordedAt),
+    await audit(env, identity, transaction.action === 'rollback' ? 'release.rollback.receipt_recorded' : 'release.deployment.receipt_recorded', 'release', transaction.release_id, { receiptId, receiptHash: body.receiptHash, transactionId, previousActiveReleaseId: transaction.expected_active_release_id || null, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, verificationHash: body.verificationHash }, { idempotencyHash: idem.requestHash })
+  ]);
+  return json(response, 201);
 }
 
 async function createMediaReviewPackage(request, env, identity) {
@@ -791,12 +934,25 @@ async function getRelease(env, releaseId) {
     s.r2_object_key AS snapshot_object_key, s.document_count AS snapshot_document_count, s.created_at AS snapshot_created_at
     FROM releases r LEFT JOIN submitted_snapshots s ON s.changeset_id = r.changeset_id WHERE r.id = ?`).bind(releaseId).first();
   if (!release) throw new ApiError(404, 'NOT_FOUND', 'Release was not found');
-  const [authorities, approvals, pointer] = await Promise.all([
+  const [authorities, approvals, pointer, deploymentReceipts, pointerHistory, deploymentTransactions] = await Promise.all([
     env.CONTENT_DB.prepare(`SELECT document_id, authority, source_path, source_revision, normalized_snapshot_hash
       FROM release_authority_entries WHERE release_id = ? ORDER BY document_id`).bind(releaseId).all(),
     release.snapshot_hash ? env.CONTENT_DB.prepare(`SELECT id, decision_kind, decision, decided_by, comment, created_at
       FROM approvals WHERE changeset_id = ? AND submitted_snapshot_hash = ? AND submitted_snapshot_revision = ? ORDER BY created_at, id`).bind(release.changeset_id, release.snapshot_hash, release.snapshot_revision).all() : Promise.resolve({ results: [] }),
-    env.CONTENT_DB.prepare("SELECT release_id, updated_by, updated_at FROM release_pointers WHERE name = 'active'").first()
+    env.CONTENT_DB.prepare("SELECT release_id, updated_by, updated_at FROM release_pointers WHERE name = 'active'").first(),
+    env.CONTENT_DB.prepare(`SELECT id, transaction_id, action, previous_active_release_id, candidate_id,
+      candidate_manifest_hash, build_attestation_hash, snapshot_hash, snapshot_revision,
+      cloudflare_deployment_id, cloudflare_version_id, verification_hash, receipt_hash,
+      recorded_by, recorded_client_id, recorded_run_id, created_at
+      FROM deployment_receipts WHERE release_id = ? ORDER BY created_at, id`).bind(releaseId).all(),
+    env.CONTENT_DB.prepare(`SELECT sequence, pointer_name, previous_release_id, release_id, transaction_id,
+      receipt_id, expected_active_release_id, changed_by, changed_client_id, changed_run_id, changed_at
+      FROM release_pointer_history WHERE release_id = ? OR previous_release_id = ? ORDER BY sequence`).bind(releaseId, releaseId).all(),
+    env.CONTENT_DB.prepare(`SELECT id, action, state, expected_active_release_id, previous_release_id,
+      candidate_id, candidate_manifest_hash, build_attestation_hash, snapshot_hash, snapshot_revision,
+      cloudflare_version_id, requested_by, requested_client_id, requested_run_id,
+      created_at, expires_at, completed_at
+      FROM release_deployment_transactions WHERE release_id = ? ORDER BY created_at, id`).bind(releaseId).all()
   ]);
   const snapshot = release.snapshot_id ? {
     id: release.snapshot_id, hash: release.snapshot_hash, revision: release.snapshot_revision,
@@ -805,15 +961,32 @@ async function getRelease(env, releaseId) {
   } : null;
   const publicRelease = { ...release };
   for (const key of ['snapshot_id', 'snapshot_hash', 'snapshot_revision', 'snapshot_object_key', 'snapshot_document_count', 'snapshot_created_at']) delete publicRelease[key];
-  return json({ ...publicRelease, snapshot, authority: authorities.results || [], approvals: approvals.results || [], active: pointer?.release_id === releaseId, activePointer: pointer || null });
+  return json({
+    ...publicRelease,
+    snapshot,
+    authority: authorities.results || [],
+    approvals: approvals.results || [],
+    active: pointer?.release_id === releaseId,
+    activePointer: pointer || null,
+    deploymentReceipts: deploymentReceipts.results || [],
+    pointerHistory: pointerHistory.results || [],
+    deploymentTransactions: deploymentTransactions.results || []
+  });
 }
 
 const mediaObjectMime = (filename) => {
   const lower = filename.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+  if (lower.endsWith('.gif')) return 'image/gif';
   if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.mp3')) return 'audio/mpeg';
+  if (lower.endsWith('.wav')) return 'audio/wav';
   if (lower.endsWith('.mp4')) return 'video/mp4';
   if (lower.endsWith('.m4a')) return 'audio/mp4';
+  if (lower.endsWith('.webm')) return 'video/webm';
   if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.endsWith('.txt')) return 'text/plain';
   throw new ApiError(422, 'DERIVATIVE_MIME_UNSUPPORTED', 'Processor derivative has an unsupported release MIME type');
 };
 
@@ -857,6 +1030,10 @@ async function processorCallback(request, env) {
   const posterCandidate = typeof manifest.technical.poster === 'string' ? manifest.technical.poster : manifest.technical.poster?.file;
   const posterName = typeof posterCandidate === 'string' && /\.(?:webp|png|jpe?g)$/i.test(posterCandidate) ? posterCandidate : null;
   if (posterName && (/[/\\]|\.\./.test(posterName))) throw new ApiError(422, 'DERIVATIVE_REQUIRED', 'Poster filename is invalid');
+  const original = validatePrivateOriginal(manifest.technical.original, { sourceSha256: job.content_hash, sourceBytes: job.uploaded_bytes });
+  if (mediaObjectMime(original.file) !== job.content_type) throw new ApiError(422, 'ORIGINAL_OBJECT_INVALID', 'Private original filename does not match the uploaded MIME');
+  const originalObject = await inspectImmutableMediaObject(env, `${body.outputPrefix}/sha256/${job.content_hash}/${original.file}`, 'original', original.file);
+  if (originalObject.sha256 !== job.content_hash || originalObject.bytes !== job.uploaded_bytes || originalObject.mimeType !== job.content_type) throw new ApiError(422, 'ORIGINAL_OBJECT_MISMATCH', 'Private original bytes do not match the reviewed upload');
   const inspectedObjects = [await inspectImmutableMediaObject(env, derivativeKey, 'derivative', derivativeName)];
   if (posterName && posterName !== derivativeName) inspectedObjects.push(await inspectImmutableMediaObject(env, `${body.outputPrefix}/sha256/${job.content_hash}/${posterName}`, 'poster', posterName));
   const completedAt = now();
@@ -886,6 +1063,9 @@ async function processorCallback(request, env) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(mediaVersionId, mediaId, job.content_hash, job.uploaded_bytes, job.content_type, manifest.immutableAddress, reviewedManifestKey, JSON.stringify(technical), JSON.stringify({ outputPrefix: body.outputPrefix, objects: inspectedObjects, reviewedManifest: { objectKey: reviewedManifestKey, sha256: reviewedManifestHash } }), 'media-workflow-v1', processorIdentity.actorId, completedAt),
     env.CONTENT_DB.prepare(`INSERT INTO media_rights_cases (id, media_version_id, review_id, status, evidence_json, created_at, review_package_id)
       VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(rightsCaseId, mediaVersionId, rightsReviewId, rightsStatus, JSON.stringify(body.reviews.rights), completedAt, reviewPackage.id),
+    env.CONTENT_DB.prepare(`INSERT INTO media_original_objects
+      (id, media_version_id, object_key, object_sha256, object_bytes, content_type, private, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)`)
+      .bind(await deterministicId('mediaoriginal', { mediaVersionId, sha256: originalObject.sha256 }), mediaVersionId, originalObject.objectKey, originalObject.sha256, originalObject.bytes, originalObject.mimeType, completedAt),
     env.CONTENT_DB.prepare("UPDATE media_jobs SET state = 'ready', manifest_object_key = ?, updated_at = ?, completed_at = ? WHERE id = ? AND state IN ('queued', 'processing')").bind(reviewedManifestKey, completedAt, completedAt, job.id),
     env.CONTENT_DB.prepare("UPDATE upload_tickets SET state = 'consumed', consumed_at = ? WHERE id = ? AND state = 'uploaded'").bind(completedAt, job.upload_ticket_id),
     env.CONTENT_DB.prepare("UPDATE media_budget_global SET reserved_bytes = reserved_bytes - ?, stored_bytes = stored_bytes + ?, updated_at = ? WHERE id = 'global'").bind(job.storage_reservation_bytes, job.storage_reservation_bytes, completedAt),
@@ -896,6 +1076,10 @@ async function processorCallback(request, env) {
     (id, media_version_id, role, object_key, object_sha256, object_bytes, content_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(await deterministicId('mediaobject', { mediaVersionId, role: object.role, sha256: object.sha256 }), mediaVersionId, object.role, object.objectKey, object.sha256, object.bytes, object.mimeType, completedAt));
   await env.CONTENT_DB.batch(statements);
+  // The exact original now exists in the immutable private media prefix. The
+  // temporary upload is redundant; lifecycle remains a fail-safe if deletion
+  // is transiently unavailable.
+  try { await env.UPLOAD_QUARANTINE?.delete(body.quarantineObjectKey); } catch {}
   return json(response, 201);
 }
 
@@ -952,8 +1136,11 @@ export default {
         },
         preview: { route: 'POST /v1/changesets/{changesetId}:renderPreview', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], optional: ['surface'], surfaces: ['web', 'mobile', 'print', 'offline'], ttlSeconds: 300, oneTime: true, immutableSnapshot: true, scope: 'content:write' },
         release: {
-          metadata: { route: 'GET /v1/releases/{releaseId}', scope: 'content:read' },
+          metadata: { route: 'GET /v1/releases/{releaseId}', scope: 'content:read', includes: ['snapshot', 'authority', 'approvals', 'activePointer', 'deploymentReceipts', 'pointerHistory', 'deploymentTransactions'] },
           publish: { route: 'POST /v1/changesets/{changesetId}:publish', scope: 'content:publish', humanActorRequired: true, enabled: false, requires: 'deployment attestation + receipt + expected-active CAS' },
+          stageDeployment: { route: 'POST /v1/release-deployments:stage', scope: 'content:deployReceipt', serviceOnly: true, clientId: 'github-content-release' },
+          recordReceipt: { route: 'POST /v1/release-deployments/{transactionId}:recordReceipt', scope: 'content:deployReceipt', serviceOnly: true, exactHashBinding: true, expectedActiveCas: true },
+          stageRollback: { route: 'POST /v1/releases/{releaseId}:stageRollback', scope: 'content:deployReceipt', serviceOnly: true, selectsPreviouslyPromotedVersion: true },
           snapshot: { route: 'GET /v1/release-snapshots/{snapshotHash}', scope: 'content:releaseSnapshot', integrity: 'exact SHA-256 bytes', requiresExactReleaseApproval: true },
           asset: { route: 'GET /v1/release-assets/{sha256}', scope: 'content:releaseSnapshot', integrity: 'DB-referenced exact SHA-256 bytes', requiresExactReleaseApproval: true }
         },
@@ -970,6 +1157,11 @@ export default {
       if (request.method === 'GET' && releaseAssetMatch) return await getReleaseAsset(env, identity, releaseAssetMatch[1]);
       let releaseMatch = url.pathname.match(/^\/v1\/releases\/([^/:]+)$/);
       if (request.method === 'GET' && releaseMatch) return await getRelease(env, validId(decodeURIComponent(releaseMatch[1]), 'releaseId'));
+      if (request.method === 'POST' && url.pathname === '/v1/release-deployments:stage') return await stageReleaseDeployment(request, env, identity);
+      let deploymentReceiptMatch = url.pathname.match(/^\/v1\/release-deployments\/([^/:]+):recordReceipt$/);
+      if (request.method === 'POST' && deploymentReceiptMatch) return await recordDeploymentReceipt(request, env, identity, validId(decodeURIComponent(deploymentReceiptMatch[1]), 'transactionId'));
+      let rollbackMatch = url.pathname.match(/^\/v1\/releases\/([^/:]+):stageRollback$/);
+      if (request.method === 'POST' && rollbackMatch) return await stageReleaseRollback(request, env, identity, validId(decodeURIComponent(rollbackMatch[1]), 'releaseId'));
       if (request.method === 'POST' && url.pathname === '/v1/media:requestUpload') return await requestMediaUpload(request, env, identity);
       if (request.method === 'POST' && url.pathname === '/v1/media-review-packages') return await createMediaReviewPackage(request, env, identity);
       if (request.method === 'POST' && url.pathname === '/v1/embeds:resolve') return await resolveEmbed(request, identity);
@@ -1012,6 +1204,8 @@ export default {
     } catch (error) {
       if (error instanceof ApiError) return errorJson(error.status, error.code, error.message, error.details);
       if (error instanceof ConflictError) return errorJson(409, error.code.toUpperCase(), error.message, error.current);
+      if (/RELEASE_POINTER_CAS_MISMATCH/.test(error?.message || '')) return errorJson(409, 'ACTIVE_RELEASE_CONFLICT', 'Active release changed while the deployment receipt was being recorded');
+      if (/release_deployment_one_staged_book|release_deployment_transactions\.book_key/.test(error?.message || '')) return errorJson(409, 'RELEASE_BUSY', 'Another protected release or rollback transaction is already staged');
       if (/constraint failed|UNIQUE constraint/i.test(error?.message || '')) return errorJson(409, 'REVISION_CONFLICT', 'A concurrent or duplicate mutation was rejected');
       return errorJson(500, 'INTERNAL_ERROR', 'Internal server error');
     }

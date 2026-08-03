@@ -1,6 +1,6 @@
 ---
 interface MediaDefinition {
-  kind: "image" | "gif" | "audio" | "video" | "pdf";
+  kind: "image" | "gif" | "audio" | "video" | "pdf" | "document";
   src: string;
   poster?: string;
   alt?: string;
@@ -37,16 +37,16 @@ if (media.kind === "video" && !media.poster) throw new Error("Video media requir
         Your browser cannot play this video.
       </video><img class="native-media__print-poster" src={media.poster} alt={media.alt ?? "Video poster frame"} loading="lazy" decoding="async" /></>
   )}
-  {media.kind === "pdf" && (
+  {(media.kind === "pdf" || media.kind === "document") && (
     <div class="native-media__document">
-      <strong>{media.title ?? media.downloadName ?? "PDF document"}</strong>
+      <strong>{media.title ?? media.downloadName ?? (media.kind === "pdf" ? "PDF document" : "Text document")}</strong>
       <p>{media.caption}</p>
-      <a href={media.src} type={media.mimeType ?? "application/pdf"} target="_blank" rel="noopener noreferrer">Open accessible PDF</a>
+      <a href={media.src} type={media.mimeType ?? (media.kind === "pdf" ? "application/pdf" : "text/plain")} target="_blank" rel="noopener noreferrer">{media.kind === "pdf" ? "Open accessible PDF" : "Open text document"}</a>
       <small>{media.credit}</small>
       <p class="native-media__print-source">Canonical URL: {media.src}</p>
     </div>
   )}
-  {media.kind !== "pdf" && <figcaption><span>{media.caption}</span> <small>{media.credit}</small></figcaption>}
+  {media.kind !== "pdf" && media.kind !== "document" && <figcaption><span>{media.caption}</span> <small>{media.credit}</small></figcaption>}
   {isMotion && <details class="native-media__transcript"><summary>Transcript</summary><p>{media.transcript}</p></details>}
 </figure>
 

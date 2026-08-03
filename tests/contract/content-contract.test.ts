@@ -32,6 +32,10 @@ test("frozen OpenAPI is valid JSON and exposes the complete agent and human boun
   assert.equal(spec.paths["/v1/changesets/{changesetId}:approve"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:publish"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:publish"].post["x-enabled"], false);
+  assert.equal(spec.paths["/v1/release-deployments:stage"].post["x-service-only"], true);
+  assert.equal(spec.paths["/v1/release-deployments/{transactionId}:recordReceipt"].post["x-active-pointer-cas"], true);
+  assert.equal(spec.paths["/v1/releases/{releaseId}:stageRollback"].post["x-agent-safe"], undefined);
+  assert.deepEqual(spec.paths["/v1/release-deployments:stage"].post["x-required-identity"], { actorType: "service", actorId: "actor_release_workflow", clientId: "github-content-release" });
   assert.deepEqual(spec.paths["/v1/changesets/{changesetId}:renderPreview"].post["x-preview-properties"], { immutableSnapshot: true, oneTime: true, ttlSeconds: 300, authoringCredentials: false });
   assert.deepEqual(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.operation.properties.type.enum, ["text.replace", "block.insert", "block.move", "checkpoint.upsert", "checkpoint.replace", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]);
   assert.equal(spec.paths["/v1/release-assets/{sha256}"].get["x-exact-sha256-bytes"], true);

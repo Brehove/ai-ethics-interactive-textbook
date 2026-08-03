@@ -15,7 +15,7 @@ export function stableJson(value) {
 }
 export function fail(code, message) { const error = new Error(message); error.code = code; throw error; }
 const RELEASE_ASSET_ORIGIN = "https://auth.ethicsandai.your-digital-life.org";
-const SAFE_MIME = new Map([["image/png", "png"], ["image/jpeg", "jpg"], ["image/webp", "webp"], ["image/gif", "gif"], ["audio/mpeg", "mp3"], ["audio/mp4", "m4a"], ["video/mp4", "mp4"], ["application/pdf", "pdf"]]);
+const SAFE_MIME = new Map([["image/png", "png"], ["image/jpeg", "jpg"], ["image/webp", "webp"], ["image/gif", "gif"], ["audio/mpeg", "mp3"], ["audio/mp4", "m4a"], ["video/mp4", "mp4"], ["application/pdf", "pdf"], ["text/plain", "txt"]]);
 export async function materializeReleaseAssets({ projection, publicDir, token, fetcher = fetch }) {
   if (!token) fail("E_RELEASE_ASSET_TOKEN", "RELEASE_ASSET_TOKEN is required for content-addressed media materialization.");
   if (!projection || !Array.isArray(projection.assets) || !Array.isArray(projection.versions)) fail("E_MEDIA_PROJECTION", "Submitted snapshot must include mediaProjection assets and versions.");
@@ -106,7 +106,7 @@ export async function materializeChapterSeven({ sourceRoot, workspace, releaseSn
       if (!primary) fail("E_MEDIA_NOT_MATERIALIZED", `Media figure ${block.figureId} lacks an exact projected media version.`);
       const poster = versionAssets.find((item) => item.role === "poster");
       const detectedMime = primary.mimeType;
-      const kind = version.kind ?? (detectedMime.startsWith("image/") ? (poster ? "gif" : "image") : detectedMime.startsWith("audio/") ? "audio" : detectedMime.startsWith("video/") ? "video" : detectedMime === "application/pdf" ? "pdf" : null);
+      const kind = version.kind ?? (detectedMime.startsWith("image/") ? (poster ? "gif" : "image") : detectedMime.startsWith("audio/") ? "audio" : detectedMime.startsWith("video/") ? "video" : detectedMime === "application/pdf" ? "pdf" : detectedMime === "text/plain" ? "document" : null);
       if (!kind) fail("E_MEDIA_PROJECTION", `Media figure ${block.figureId} has no supported release kind.`);
       return { type: block.type, blockId: block.blockId, anchorPassageId: block.anchorPassageId, figureId: block.figureId, mediaId: block.mediaId, mediaVersionId: block.mediaVersionId, rightsCaseId: block.rightsCaseId, kind, src: primary.publicPath, ...(poster ? { poster: poster.publicPath } : {}), title: version.title, downloadName: `${version.title || block.figureId}.${SAFE_MIME.get(primary.mimeType)}`.replace(/[^A-Za-z0-9._-]+/g, "-"), alt: block.alt, caption: block.caption, captionOmissionReason: block.captionOmissionReason, teachingUse: block.teachingUse, credit: block.creditOverride ?? version.rights?.credit ?? "Source and rights recorded in this release.", transcript: version.transcriptEquivalent?.text ?? version.technical?.transcriptEquivalent?.text, mimeType: detectedMime, downloadable: block.downloadable, printPolicy: block.printPolicy, displayPreset: block.displayPreset, align: block.align };
     }

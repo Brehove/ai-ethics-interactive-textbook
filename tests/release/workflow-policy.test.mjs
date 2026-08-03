@@ -22,4 +22,14 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /environment: content-production/);
   assert.match(workflow, /if: \$\{\{ inputs\.promote \}\}/);
   assert.doesNotMatch(workflow, /RELEASE_ALLOW_UNSIGNED/);
+  assert.match(workflow, /id: stage/);
+  assert.match(workflow, /control-plane\.mjs stage/);
+  assert.match(workflow, /control-plane\.mjs receipt/);
+  assert.match(workflow, /RELEASE_DEPLOY_RECEIPT_TOKEN: \$\{\{ secrets\.RELEASE_DEPLOY_RECEIPT_TOKEN \}\}/);
+  assert.match(workflow, /control-plane\.mjs emergency-rollback/);
+  assert.match(workflow, /steps\.stage\.outcome == 'success'/);
+  assert.match(workflow, /--base-url https:\/\/ethicsandai\.your-digital-life\.org/);
+  const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n\s+with:\n([\s\S]*?)(?=\n\s+- (?:uses|name|run):)/g)];
+  assert.equal(checkouts.length, 3);
+  for (const checkout of checkouts) assert.match(checkout[1], /ref: \$\{\{ inputs\.commit_sha \}\}/);
 });

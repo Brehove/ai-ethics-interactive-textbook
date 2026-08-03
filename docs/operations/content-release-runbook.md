@@ -11,14 +11,15 @@ Initial canary scope is deliberately narrow: only `chapter_ch07` may be D1-autho
 1. In the Textbook Editor, inspect the semantic diff and explicitly approve the exact snapshot for release. This records the immutable snapshot hash/revision; it does not publish.
 2. In GitHub Actions, run **Immutable content release** with that submitted snapshot SHA-256, snapshot revision, and full approved commit SHA. Set `promote` to false first. The workflow derives the only permitted download URLs from hashes and the fixed `auth.ethicsandai.your-digital-life.org` gateway.
 3. Review the candidate and deployment artifacts. Confirm Chapter 7 is the only D1-authoritative document and that the preview smoke result is green.
-4. Re-run with the same three immutable inputs and `promote=true`. The `content-production` protected environment requires a manual reviewer approval. Promotion moves Cloudflare traffic to the already-uploaded, already-smoke-tested version in one version-pointer operation.
-5. Preserve the workflow URL plus candidate, deployment, and provenance artifacts for 90 days. The provenance artifact names the snapshot hash/revision, commit, manifest digest, and exact Worker version.
+4. Re-run with the same three immutable inputs, the exact current `expected_active_release_id` (or `none` only for the first deployment), an exact known-good `rollback_version_id`, and `promote=true`. The `content-production` protected environment requires a manual reviewer approval.
+5. The protected job stages a service-only D1 transaction, moves Cloudflare traffic to the already-uploaded and already-smoke-tested version, runs production smoke checks, and records a hash-bound receipt. A trigger-enforced expected-active compare-and-swap advances the D1 pointer only when the receipt matches the staged candidate, attestation, snapshot, version, and prior active release.
+6. Inspect `GET /v1/releases/{releaseId}` and preserve the workflow URL plus candidate, deployment, verification, receipt, and provenance artifacts for 90 days. The evidence names the snapshot hash/revision, commit, manifest digest, exact Worker version, receipt hash, transaction, and pointer history.
 
 The release workflow has one non-canceling concurrency lock. Do not run `wrangler deploy` directly for this service. Local commands are dry-run unless `RELEASE_EXECUTE=1`; tests use adapters and cannot call Cloudflare.
 
 ## Rollback drill
 
-Run the drill quarterly in the protected environment against a known prior provenance artifact:
+Run the drill quarterly through the protected workflow against a previously promoted release. The service stages only a version already recorded in deployment receipts and applies the same expected-active compare-and-swap. The lower-level CLI remains useful for a controlled recovery test against a downloaded provenance artifact:
 
 ```bash
 RELEASE_EXECUTE=1 node scripts/release/release-cli.mjs rollback \

@@ -17,6 +17,14 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /Browse all 18 chapters here\. Chapter 7 is the writable canary/);
   assert.doesNotMatch(shell, /disabled=\{chapter\.order !== 7\}/);
   assert.match(shell, /chapter\.order === 7 \? "editable canary" : "read-only until cutover"/);
+  for (const workspace of ["Chapter", "Checkpoints", "Media", "Embeds", "Review"]) {
+    assert.match(shell, new RegExp(`data-workspace="${workspace}"`));
+    assert.match(shell, new RegExp(`data-workspace-panel="${workspace}"`));
+  }
+  assert.match(shell, /function switchWorkspace\(name: string\)/);
+  assert.match(shell, /panel\.hidden = panel\.dataset\.workspacePanel !== name/);
+  assert.match(shell, /button\.setAttribute\("aria-current", "page"\)/);
+  assert.match(shell, /editable && selectedChapterId === "chapter_ch07"/);
   assert.match(shell, /aria-controls="editor-navigation-items"/);
   assert.match(shell, /aria-controls="media-insert-choices"/);
   assert.match(shell, /PUBLIC_CONTENT_API_ORIGIN|contentApiOrigin/);
@@ -28,6 +36,10 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /checkpoint\.upsert/);
   assert.match(shell, /checkpoint\.remove[\s\S]*slot[\s\S]*checkpointId/);
   assert.match(shell, /text\.replace[\s\S]*blockId[\s\S]*text/);
+  assert.match(shell, /data-insert-block-form[\s\S]*data-insert-block-type[\s\S]*data-insert-position/);
+  assert.match(shell, /type: "block\.insert"[\s\S]*block,[\s\S]*position/);
+  assert.match(shell, /type: "block\.move"[\s\S]*blockId: selectedBlockId[\s\S]*position/);
+  assert.match(shell, /type: "media\.remove"[\s\S]*figureId: block\.figureId/);
   assert.match(shell, /media\.place[\s\S]*placement[\s\S]*mediaId[\s\S]*mediaVersionId[\s\S]*rightsCaseId/);
   assert.match(shell, /type="file"[\s\S]*data-media-file/);
   assert.match(shell, /Use existing reviewed asset IDs[\s\S]*Advanced option for agent-prepared media/);
@@ -75,6 +87,11 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data\.chapter/);
   assert.match(shell, /canonicalChapter = structuredClone\(documentData\.chapter\)/);
   assert.match(shell, /function renderSemanticReview\(\)/);
+  assert.match(shell, /\/v1\/chapters\/\$\{encodeURIComponent\(selectedChapterId\)\}\/dependencies\?limit=100/);
+  assert.match(shell, /\/v1\/changesets\/\$\{encodeURIComponent\(changeSetId\)\}:diff/);
+  assert.match(shell, /function renderExactDiff[\s\S]*summary\.derivativesAffected/);
+  assert.match(shell, /stableHeading\.textContent = "Stable-ID impact"/);
+  assert.match(shell, /data-revision-evidence[\s\S]*data-dependency-evidence[\s\S]*data-exact-diff/);
   assert.match(shell, /No semantic differences from canonical \$\{chapter\.title \?\? selectedChapterId\}/);
   for (const blockType of ["list", "table", "codeBlock", "callout", "mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"]) assert.match(shell, new RegExp(`block\\.type === \\\"${blockType}\\\"|\\[\\\"mediaFigure\\\", \\\"externalEmbed\\\", \\\"richLink\\\", \\\"diagram\\\"\\]`));
   assert.doesNotMatch(shell, /slice\(headingIndex, headingIndex \+ 8\)/);
@@ -91,6 +108,10 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(css, /top-actions button\{flex:0 0 auto;min-width:44px;min-height:44px/);
   assert.doesNotMatch(css, /top-actions button span\{display:none\}/);
   assert.match(css, /mobile-nav-toggle\{display:block;min-height:44px/);
+  assert.match(css, /top-actions button span\{display:inline\}/);
+  assert.match(css, /checkpoint-card-grid/);
+  assert.match(css, /evidence-receipt/);
+  assert.match(css, /textbook-editor:not\(\[data-workspace="Checkpoints"\]\) \.checkpoint-inspector\{display:none\}/);
   assert.match(css, /media-inspector \[hidden\]\{display:none!important\}/);
   assert.match(css, /--editor-canvas:#fff/);
 

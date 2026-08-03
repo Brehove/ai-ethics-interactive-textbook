@@ -540,3 +540,24 @@ test("release artifact proxy requires its dedicated bearer and derives service a
   assert.equal(forwarded.headers.get("authorization"), null);
   assert.equal(forwarded.headers.get("accept"), "application/octet-stream, */*");
 });
+
+test("release control proxy uses a separate bearer and fixed deploy-receipt service identity", async () => {
+  const app = createEditorAuthApp();
+  const deployToken = ["release", "deploy", "receipt", "token", "long", "enough"].join("-");
+  let forwarded;
+  const env = runtimeEnv({ RELEASE_DEPLOY_RECEIPT_TOKEN: deployToken, CONTENT_API: { fetch: async (request) => { forwarded = request; return jsonResponse({ transactionId: "deployment_123" }, 201); } } });
+  const body = JSON.stringify({ candidateId: "candidate_123" });
+  let response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(forwarded.headers.get("authorization"), null);
+  assert.equal(forwarded.headers.get("x-content-actor-id"), "actor_release_workflow");
+  assert.equal(forwarded.headers.get("x-content-actor-type"), "service");
+  assert.equal(forwarded.headers.get("x-content-client-id"), "github-content-release");
+  assert.equal(forwarded.headers.get("x-content-run-id"), "123456");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:deployReceipt");
+  assert.equal(await forwarded.text(), body);
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json" }, body }), env);
+  assert.equal(response.status, 401);
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: "Bearer wrong", "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 401);
+});

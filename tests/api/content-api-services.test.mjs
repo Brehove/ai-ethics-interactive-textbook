@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
+import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
 import worker from '../../workers/content-api/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
@@ -153,7 +153,7 @@ test('a rejected or merely submitted changeset cannot publish even if an older r
   }
 });
 
-test('even an approved snapshot fails closed at the API until deployment receipts and active-release CAS are implemented', async () => {
+test('even an approved snapshot cannot use the permanently disabled direct publication endpoint', async () => {
   const CONTENT_DB = fakeDb((sql) => {
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('FROM submitted_snapshots s')) return { id: 'snapshot-1', state: 'approved', snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev-1' };
@@ -205,11 +205,14 @@ test('chapter index exposes per-chapter authoring state and repository-authorita
   assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'AUTHORING_NOT_ENABLED');
 });
 
-test('release metadata is reconstructed from frozen snapshot, authority, approvals, and pointer rows', async () => {
+test('release metadata reconstructs the frozen snapshot, authority, approvals, pointer, and deployment audit trail', async () => {
   const CONTENT_DB = fakeDb((sql) => {
     if (sql.includes('FROM releases r')) return { id: 'release-1', changeset_id: 'cs-1', state: 'published', manifest_hash: 'a'.repeat(64), snapshot_id: 'snapshot-1', snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev-1', snapshot_object_key: `submitted/${'a'.repeat(64)}.json`, snapshot_document_count: 1, snapshot_created_at: '2026-08-03T00:00:00Z' };
     if (sql.includes('FROM release_authority_entries')) return { results: [{ document_id: 'chapter-07', authority: 'd1', source_path: null, source_revision: 'revision-7', normalized_snapshot_hash: 'chapter-hash' }] };
     if (sql.includes('FROM approvals')) return { results: [{ id: 'approval-1', decision_kind: 'release', decision: 'approved', decided_by: 'actor_reviewer_1' }] };
+    if (sql.includes('FROM deployment_receipts')) return { results: [{ id: 'receipt-1', transaction_id: 'transaction-1', action: 'promote', receipt_hash: 'b'.repeat(64), cloudflare_version_id: 'version-1' }] };
+    if (sql.includes('FROM release_pointer_history')) return { results: [{ sequence: 7, previous_release_id: 'release-0', release_id: 'release-1', transaction_id: 'transaction-1', receipt_id: 'receipt-1' }] };
+    if (sql.includes('FROM release_deployment_transactions')) return { results: [{ id: 'transaction-1', action: 'promote', state: 'completed', expected_active_release_id: 'release-0', cloudflare_version_id: 'version-1' }] };
     if (sql.includes('FROM release_pointers')) return { release_id: 'release-1', updated_by: 'actor_publisher', updated_at: '2026-08-03T00:00:00Z' };
     return null;
   });
@@ -220,6 +223,9 @@ test('release metadata is reconstructed from frozen snapshot, authority, approva
   assert.equal(body.snapshot.downloadPath, `/v1/release-snapshots/${'a'.repeat(64)}`);
   assert.equal(body.authority[0].source_revision, 'revision-7');
   assert.equal(body.approvals[0].id, 'approval-1');
+  assert.equal(body.deploymentReceipts[0].receipt_hash, 'b'.repeat(64));
+  assert.equal(body.pointerHistory[0].sequence, 7);
+  assert.equal(body.deploymentTransactions[0].state, 'completed');
   assert.equal(body.snapshot_hash, undefined);
 });
 
@@ -348,6 +354,8 @@ test('upload requests require a persisted review package and substantive transcr
   assert.throws(() => validateUploadRequest({ ...imageUpload, filename: 'clip.mp4', mimeType: 'video/mp4' }), (error) => error instanceof ApiError && error.code === 'TRANSCRIPT_EQUIVALENT_REQUIRED');
   const transcript = 'A substantive transcript describing the complete spoken content.';
   assert.equal(validateUploadRequest({ ...imageUpload, filename: 'clip.mp4', mimeType: 'video/mp4', transcriptEquivalent: { provided: true, language: 'en', text: transcript }, poster: { provided: true, alt: 'Video poster.' } }).transcriptEquivalent.text, transcript);
+  assert.equal(validateUploadRequest({ ...imageUpload, filename: 'clip.webm', mimeType: 'video/webm', transcriptEquivalent: { provided: true, language: 'en', text: transcript }, poster: { provided: true, alt: 'Video poster.' } }).mimeType, 'video/webm');
+  assert.equal(validateUploadRequest({ ...imageUpload, filename: 'notes.txt', mimeType: 'text/plain', bytes: 128 }).maxBytes, 5 * 1024 * 1024);
 });
 
 test('release assets stream only approved DB-referenced immutable bytes with exact integrity', async () => {
@@ -652,6 +660,16 @@ test('media upload policy accepts supported bounded files and fails closed on MI
   assert.throws(() => validateUploadRequest({ ...valid, filename: 'clip.mp4', mimeType: 'video/mp4' }), (error) => error instanceof ApiError && error.code === 'TRANSCRIPT_EQUIVALENT_REQUIRED');
   assert.throws(() => assertMediaBudget({ storedBytes: MEDIA_UPLOAD_POLICY.totalStorageLimitBytes - 1024, reservedStorageBytes: 0, monthlyIngestedBytes: 0, monthlyReservedBytes: 0 }, upload), (error) => error instanceof ApiError && error.code === 'STORAGE_BUDGET_EXCEEDED');
   assert.throws(() => assertMediaBudget({ storedBytes: 0, reservedStorageBytes: 0, monthlyIngestedBytes: MEDIA_UPLOAD_POLICY.monthlyIngestLimitBytes, monthlyReservedBytes: 0 }, upload), (error) => error instanceof ApiError && error.code === 'MONTHLY_INGEST_BUDGET_EXCEEDED');
+});
+
+test('private originals bind exact uploaded hash and bytes without becoming release objects', async () => {
+  const descriptor = { file: 'original.gif', private: true, sha256: 'a'.repeat(64), bytes: 1024 };
+  assert.equal(validatePrivateOriginal(descriptor, { sourceSha256: 'a'.repeat(64), sourceBytes: 1024 }), descriptor);
+  assert.throws(() => validatePrivateOriginal({ ...descriptor, file: '../original.gif' }, { sourceSha256: 'a'.repeat(64), sourceBytes: 1024 }), (error) => error instanceof ApiError && error.code === 'ORIGINAL_OBJECT_INVALID');
+  assert.throws(() => validatePrivateOriginal({ ...descriptor, sha256: 'b'.repeat(64) }, { sourceSha256: 'a'.repeat(64), sourceBytes: 1024 }), (error) => error instanceof ApiError && error.code === 'ORIGINAL_OBJECT_INVALID');
+  const migration = await readFile(new URL('../../workers/content-api/migrations/0008_media_original_objects.sql', import.meta.url), 'utf8');
+  assert.match(migration, /private INTEGER NOT NULL DEFAULT 1 CHECK \(private = 1\)/);
+  assert.doesNotMatch(migration, /submitted_snapshot_media_assets/);
 });
 
 test('processor callback HMAC is canonical and rejects tampering', async () => {

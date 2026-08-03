@@ -34,6 +34,8 @@ The auth Worker requires the non-secret runtime values listed in `workers/editor
 - `GITHUB_APP_CLIENT_SECRET`
 - `GITHUB_APP_PRIVATE_KEY`
 - `EDITOR_SESSION_SECRET`
+- `RELEASE_SNAPSHOT_READ_TOKEN`
+- `RELEASE_DEPLOY_RECEIPT_TOKEN`
 
 Deploy it with:
 
@@ -45,4 +47,4 @@ The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `B
 
 ## Publication boundary
 
-A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. The repository is canonical for textbook content and retains reviewed migration and rights records.
+A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. Git remains canonical for code and for chapters whose authority registry entry is `git`; routine browser/API editing begins only for a chapter whose exact D1 revision and normalized hash have been explicitly activated. Production promotion uses the protected release workflow and its recorded deployment receipt, never the direct Content API publish endpoint.

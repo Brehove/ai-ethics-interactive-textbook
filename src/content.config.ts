@@ -358,7 +358,7 @@ const chapterReleasePlacements = defineCollection({
         fallback: z.object({ title: z.string(), summary: z.string(), linkLabel: z.string(), accessedAt: z.string(), creator: z.string().optional(), transcript: z.string().optional() }),
       }),
       z.object({ type: z.literal("richLink"), blockId: z.string(), anchorPassageId: z.string().optional(), canonicalUrl: z.url(), title: z.string(), summary: z.string(), linkLabel: z.string(), teachingUse: z.string() }),
-      z.object({ type: z.literal("mediaFigure"), blockId: z.string(), anchorPassageId: z.string().optional(), figureId: z.string(), mediaId: z.string(), mediaVersionId: z.string(), rightsCaseId: z.string(), alt: z.string().optional(), caption: z.string().optional(), teachingUse: z.string(), displayPreset: z.string(), kind: z.enum(["image", "gif", "audio", "video", "pdf"]).optional(), src: z.string().optional(), poster: z.string().optional(), credit: z.string().optional(), transcript: z.string().optional() }),
+      z.object({ type: z.literal("mediaFigure"), blockId: z.string(), anchorPassageId: z.string().optional(), figureId: z.string(), mediaId: z.string(), mediaVersionId: z.string(), rightsCaseId: z.string(), alt: z.string().optional(), caption: z.string().optional(), teachingUse: z.string(), displayPreset: z.string(), kind: z.enum(["image", "gif", "audio", "video", "pdf", "document"]).optional(), src: z.string().optional(), poster: z.string().optional(), credit: z.string().optional(), transcript: z.string().optional() }),
     ])),
   }),
 });

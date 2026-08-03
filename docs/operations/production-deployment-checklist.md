@@ -5,7 +5,7 @@ This is the operator checklist for the Chapter 7 canary. It records names and ve
 ## Already provisioned
 
 - Cloudflare D1 database: `ai-ethics-content` (`1f82c4fa-228b-4cf7-9b40-ff10eebeadfb`).
-- D1 migrations `0001`–`0006` and an idempotent 18-document shadow seed.
+- D1 migrations `0001`–`0008` and an idempotent 18-document shadow seed. Verify the remote migration table before treating this item as complete.
 - Queue/DLQ pairs: `ai-ethics-media-jobs`, `ai-ethics-media-jobs-dlq`, `ai-ethics-release-jobs`, `ai-ethics-release-jobs-dlq`.
 - GitHub environments:
   - `content-release-candidate`: `main` and `agent/agent-native-authoring` only;
@@ -35,15 +35,16 @@ Keep public development URLs disabled. Set a 24-hour lifecycle deletion rule on 
 
 Cloudflare Worker secrets:
 
-- editor/auth gateway: existing GitHub OAuth/App/session values and `RELEASE_SNAPSHOT_READ_TOKEN`;
+- editor/auth gateway: existing GitHub OAuth/App/session values, `RELEASE_SNAPSHOT_READ_TOKEN`, and `RELEASE_DEPLOY_RECEIPT_TOKEN`;
 - textbook MCP: `MCP_ACCESS_TOKEN`;
-- Content API: `MEDIA_CALLBACK_SECRET`, `PREVIEW_TOKEN_SECRET`, and any separately documented service credential. `MEDIA_CALLBACK_SECRET` must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs. `PREVIEW_TOKEN_SECRET` is also set independently on the preview Worker and never sent to a browser.
+- Content API: `MEDIA_CALLBACK_SECRET` and `PREVIEW_TOKEN_SECRET`. `MEDIA_CALLBACK_SECRET` must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs. `PREVIEW_TOKEN_SECRET` is also set independently on the preview Worker and never sent to a browser. The release receipt credential terminates at the editor/auth gateway; the gateway derives the fixed service identity and never forwards the bearer token.
 
 GitHub Actions secrets:
 
 - `RELEASE_SIGNING_KEY` — already configured;
 - `SUBMITTED_SNAPSHOT_READ_TOKEN` — exact same value as the gateway's `RELEASE_SNAPSHOT_READ_TOKEN`;
 - `CLOUDFLARE_RELEASE_TOKEN` — least-privilege version upload/deploy token;
+- `RELEASE_DEPLOY_RECEIPT_TOKEN` — exact same value as the editor/auth gateway secret, used only by the protected release job to stage and record deployment receipts;
 - `MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY`, `MEDIA_CALLBACK_TOKEN`.
 - `CLOUDFLARE_BACKUP_TOKEN`, `BACKUP_R2_ACCESS_KEY_ID`, `BACKUP_R2_SECRET_ACCESS_KEY` for the private scheduled export only.
 
@@ -68,13 +69,13 @@ Generate values locally, pass them directly to the secret commands, and do not p
 6. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected.
 7. Deploy the reader build containing `/admin/`; do not change the Chapter 7 authority record yet.
 8. Run browser login, Chapter 7 read/edit/checkpoint/diff/preview/validate/submit tests.
-9. Upload one still image, one animated GIF, one short MP4, one short audio file, and one safe document through quarantine; verify immutable versions, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
+9. Upload representative PNG/JPEG, animated GIF, WebP, MP3/WAV/M4A, MP4/WebM, PDF, and UTF-8 text fixtures through quarantine; verify exact private originals, public clean derivatives, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
 10. Insert and activate one YouTube, Vimeo, and X fixture; verify no provider request occurs before explicit activation. Verify Spotify consent and SoundCloud/Bluesky/link-card fallbacks.
 11. Run **Immutable content release** with `promote=false`; inspect the signed candidate, built asset digests, and canary preview.
-12. Re-run the exact snapshot/revision/commit with `promote=true`, then approve the `content-production` environment.
+12. Re-run the exact snapshot/revision/commit with `promote=true`, the exact `expected_active_release_id`, and the exact known-good `rollback_version_id`; then approve the `content-production` environment.
 13. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar.
 14. Only then switch `chapter_ch07` to its exact D1 revision/hash authority.
-15. Run and record a rollback drill before expanding beyond Chapter 7.
+15. Verify the D1 release record exposes the completed deployment transaction, receipt hash, active-pointer history, and exact Cloudflare version. Run and record a rollback drill before expanding beyond Chapter 7.
 16. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest before relying on the schedule.
 
 ## Verification commands

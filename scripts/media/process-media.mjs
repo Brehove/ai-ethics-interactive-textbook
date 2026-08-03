@@ -28,7 +28,30 @@ function command(name, args) {
   if (result.error) fail("E_TOOL_FAILED", `${name} failed: ${result.error.message}`);
   return { available: true, ...result };
 }
-function sniff(bytes) {
+const SUPPORTED_MIME = new Set([
+  "image/png", "image/jpeg", "image/gif", "image/webp",
+  "audio/mpeg", "audio/wav", "audio/mp4",
+  "video/mp4", "video/webm",
+  "application/pdf", "text/plain",
+]);
+const ORIGINAL_EXTENSION = Object.freeze({
+  "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/webp": "webp",
+  "audio/mpeg": "mp3", "audio/wav": "wav", "audio/mp4": "m4a",
+  "video/mp4": "mp4", "video/webm": "webm",
+  "application/pdf": "pdf", "text/plain": "txt",
+});
+
+function isUtf8PlainText(bytes) {
+  let decoded;
+  try { decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+  catch { return false; }
+  if (!decoded || decoded.includes("\u0000")) return false;
+  // Permit tabs and line endings, but not terminal/control payloads. Unicode
+  // formatting remains intact and the derivative is always served as text.
+  return !/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(decoded);
+}
+
+export function sniffMedia(bytes) {
   const head = bytes.subarray(0, 65_536);
   const text = head.toString("latin1").toLowerCase();
   const has = (needle) => text.includes(needle);
@@ -43,8 +66,15 @@ function sniff(bytes) {
   if (head.subarray(0, 4).toString("ascii") === "RIFF" && head.subarray(8, 12).toString("ascii") === "WEBP") magic.push("image/webp");
   if (head.subarray(0, 5).toString("ascii") === "%PDF-") magic.push("application/pdf");
   if (head.subarray(0, 4).toString("ascii") === "RIFF" && head.subarray(8, 12).toString("ascii") === "WAVE") magic.push("audio/wav");
-  if (head.subarray(0, 3).toString("ascii") === "ID3" || (head[0] === 0xff && (head[1] & 0xe0) === 0xe0)) magic.push("audio/mpeg");
-  if (head.subarray(4, 8).toString("ascii") === "ftyp") magic.push("video/mp4");
+  if (head.subarray(0, 3).toString("ascii") === "ID3" || (head.length >= 4 && head[0] === 0xff && (head[1] & 0xe6) === 0xe2)) magic.push("audio/mpeg");
+  if (head.length >= 12 && head.subarray(4, 8).toString("ascii") === "ftyp") {
+    const brand = head.subarray(8, 12).toString("ascii");
+    if (["M4A ", "M4B ", "M4P "].includes(brand)) magic.push("audio/mp4");
+    else if (["isom", "iso2", "mp41", "mp42", "avc1", "dash"].includes(brand)) magic.push("video/mp4");
+    else fail("E_MAGIC_UNSUPPORTED", "ISO base-media brand is unsupported");
+  }
+  if (head.length >= 16 && head.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])) && /webm/i.test(head.toString("latin1"))) magic.push("video/webm");
+  if (magic.length === 0 && isUtf8PlainText(bytes)) magic.push("text/plain");
   if (magic.length !== 1) fail(magic.length ? "E_POLYGLOT" : "E_MAGIC_UNSUPPORTED", "file magic is unsupported or ambiguous");
   if (magic[0] === "application/pdf") {
     const pdfText = bytes.toString("latin1").toLowerCase();
@@ -52,13 +82,14 @@ function sniff(bytes) {
       fail("E_PDF_UNSAFE", "active or embedded PDF feature detected");
     }
   }
-  const conflicting = ["%pdf-", "<svg", "mz", "\x7felf"].some((needle) => has(needle) && !((needle === "%pdf-") && magic[0] === "application/pdf"));
+  const conflicting = ["%pdf-", "<svg"].some((needle) => has(needle) && !((needle === "%pdf-") && magic[0] === "application/pdf"));
   if (conflicting) fail("E_POLYGLOT", "conflicting active-content signature detected");
   return magic[0];
 }
 function validateJob(job) {
-  if (!job || typeof job !== "object" || Array.isArray(job) || Object.keys(job).some((key) => !["basename", "captions", "poster", "rights", "editorial", "accessibility"].includes(key))) fail("E_JOB_INVALID", "job has unsupported fields");
+  if (!job || typeof job !== "object" || Array.isArray(job) || Object.keys(job).some((key) => !["basename", "declaredMime", "captions", "poster", "rights", "editorial", "accessibility"].includes(key))) fail("E_JOB_INVALID", "job has unsupported fields");
   if (!safeBasename(job.basename)) fail("E_NAME_INVALID", "job.basename must be a sanitized basename");
+  if (job.declaredMime !== undefined && !SUPPORTED_MIME.has(job.declaredMime)) fail("E_JOB_INVALID", "job.declaredMime is unsupported");
   if (job.captions !== undefined && (!job.captions || job.captions.provided !== true || typeof job.captions.language !== "string")) fail("E_JOB_INVALID", "captions must be a reviewed provided/language declaration");
   if (job.poster !== undefined && (!job.poster || job.poster.provided !== true || typeof job.poster.alt !== "string" || !job.poster.alt.trim())) fail("E_JOB_INVALID", "poster must be a reviewed provided/alt declaration");
   return job;
@@ -109,6 +140,15 @@ function disarmPdf(source, destination) {
   if (rewrite.status !== 0) fail("E_PDF_UNSAFE", "qpdf could not produce a disarmed PDF");
   return { mime: "application/pdf", scan: "qpdf-check-passed", disarm: "qpdf-qdf-object-streams-disabled", accessibility: "manual-review-required", output: "disarmed.pdf" };
 }
+async function normalizeText(bytes, destination) {
+  let text;
+  try { text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+  catch { fail("E_TEXT_ENCODING", "plain text must be valid UTF-8"); }
+  if (text.includes("\u0000") || /[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) fail("E_TEXT_CONTROL", "plain text contains unsupported control characters");
+  const normalized = text.replace(/\r\n?/g, "\n");
+  await writeFile(path.join(destination, "display.txt"), normalized, { encoding: "utf8", mode: 0o444 });
+  return { mime: "text/plain", encoding: "utf-8", derivative: "display.txt", characters: [...normalized].length, lines: normalized.length ? normalized.split("\n").length : 0 };
+}
 async function maybeScan(source) {
   const database = process.env.MEDIA_CLAMAV_DB_DIR;
   const result = command(database ? "clamscan" : "clamdscan", database ? ["--no-summary", "--database", database, source] : ["--no-summary", source]);
@@ -127,7 +167,8 @@ export async function processMediaJob({ job, inboxDir, outputDir, limits = {} })
   try { await access(source); } catch { fail("E_SOURCE_MISSING", "inbox file is missing"); }
   const info = await stat(source); if (!info.isFile()) fail("E_SOURCE_MISSING", "inbox target is not a regular file");
   const maxBytes = limits.maxBytes ?? DEFAULTS.maxBytes; if (info.size > maxBytes || info.size === 0) fail("E_SIZE_LIMIT", `file must be 1-${maxBytes} bytes`);
-  const bytes = await readFile(source); const sha256 = createHash("sha256").update(bytes).digest("hex"); const mime = sniff(bytes);
+  const bytes = await readFile(source); const sha256 = createHash("sha256").update(bytes).digest("hex"); const mime = sniffMedia(bytes);
+  if (job.declaredMime && job.declaredMime !== mime) fail("E_MIME_MISMATCH", `declared MIME ${job.declaredMime} does not match detected ${mime}`);
   const destination = path.join(outputDir, "sha256", sha256);
   await mkdir(destination, { recursive: true });
   const existing = path.join(destination, "manifest.json");
@@ -139,7 +180,11 @@ export async function processMediaJob({ job, inboxDir, outputDir, limits = {} })
   let technical;
   if (mime.startsWith("image/")) technical = await inspectImage(bytes, mime, destination);
   else if (mime === "application/pdf") technical = disarmPdf(stagedSource, destination);
+  else if (mime === "text/plain") technical = await normalizeText(bytes, destination);
   else technical = probeMedia(stagedSource, mime, job, limits.maxDurationSeconds ?? DEFAULTS.maxDurationSeconds, destination);
+  const originalName = `original.${ORIGINAL_EXTENSION[mime]}`;
+  await rename(stagedSource, path.join(destination, originalName));
+  technical = { ...technical, original: { file: originalName, private: true, sha256, bytes: bytes.length } };
   let outputBytes = 0;
   for (const entry of await readdir(destination, { withFileTypes: true })) if (entry.isFile()) outputBytes += (await stat(path.join(destination, entry.name))).size;
   if (limits.maxOutputBytes && outputBytes + 1024 * 1024 > limits.maxOutputBytes) fail("E_STORAGE_RESERVATION", "source, derivatives, and manifest exceed the immutable job storage reservation");
@@ -157,7 +202,7 @@ async function cli() {
   if (flag !== "--job" || !jobFile || process.argv.length !== 4) fail("E_JOB_INVALID", "usage: process-media.mjs --job <manifest.json>");
   const { readEnvelope } = await import("./media-job.mjs");
   const envelope = await readEnvelope(jobFile);
-  const job = { basename: envelope.basename, captions: envelope.captions, poster: envelope.poster, rights: envelope.rights, editorial: envelope.editorial, accessibility: envelope.accessibility };
+  const job = { basename: envelope.basename, declaredMime: envelope.expectedSource.mimeType, captions: envelope.captions, poster: envelope.poster, rights: envelope.rights, editorial: envelope.editorial, accessibility: envelope.accessibility };
   const inboxDir = process.env.MEDIA_INBOX_DIR; const outputDir = process.env.MEDIA_OUTPUT_DIR;
   if (!inboxDir || !outputDir) fail("E_JOB_INVALID", "MEDIA_INBOX_DIR and MEDIA_OUTPUT_DIR are required trusted configuration");
   process.stdout.write(`${JSON.stringify(await processMediaJob({ job, inboxDir, outputDir, limits: { maxBytes: envelope.expectedSource.bytes, maxOutputBytes: envelope.expectedSource.storageReservationBytes } }))}\n`);

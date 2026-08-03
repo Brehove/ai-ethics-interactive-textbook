@@ -18,6 +18,34 @@ export const sha256Bytes = async (value) => {
 
 export const deterministicId = async (namespace, value) => `${namespace}_${(await sha256(value)).slice(0, 24)}`;
 
+/** Canonical hash-bound receipt written only after the protected workflow changes traffic. */
+export const deploymentReceiptPayload = (value) => ({
+  schemaVersion: 1,
+  transactionId: value.transactionId,
+  action: value.action,
+  releaseId: value.releaseId,
+  previousActiveReleaseId: value.previousActiveReleaseId ?? null,
+  candidateId: value.candidateId ?? null,
+  snapshotHash: value.snapshotHash ?? null,
+  snapshotRevision: value.snapshotRevision ?? null,
+  candidateManifestHash: value.candidateManifestHash,
+  buildAttestationHash: value.buildAttestationHash,
+  cloudflareDeploymentId: value.cloudflareDeploymentId,
+  cloudflareVersionId: value.cloudflareVersionId,
+  verificationHash: value.verificationHash
+});
+
+export const deploymentReceiptHash = async (value) => sha256(deploymentReceiptPayload(value));
+
+export const validatePrivateOriginal = (descriptor, { sourceSha256, sourceBytes }) => {
+  if (!descriptor || typeof descriptor !== 'object' || Array.isArray(descriptor) || descriptor.private !== true
+    || typeof descriptor.file !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(descriptor.file) || descriptor.file.includes('..')
+    || descriptor.sha256 !== sourceSha256 || descriptor.bytes !== sourceBytes) {
+    throw new ApiError(422, 'ORIGINAL_OBJECT_INVALID', 'A private exact original bound to the uploaded hash and bytes is required');
+  }
+  return descriptor;
+};
+
 export class ConflictError extends Error {
   constructor(code, current) {
     super(code);
@@ -59,7 +87,9 @@ export const MEDIA_UPLOAD_POLICY = Object.freeze({
     'audio/wav': 25 * 1024 * 1024,
     'audio/mp4': 25 * 1024 * 1024,
     'video/mp4': 25 * 1024 * 1024,
-    'application/pdf': 25 * 1024 * 1024
+    'video/webm': 25 * 1024 * 1024,
+    'application/pdf': 25 * 1024 * 1024,
+    'text/plain': 5 * 1024 * 1024
   })
 });
 export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({

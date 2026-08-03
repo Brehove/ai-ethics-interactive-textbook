@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import sharp from "sharp";
-import { MediaError, processMediaJob } from "../../scripts/media/process-media.mjs";
+import { MediaError, processMediaJob, sniffMedia } from "../../scripts/media/process-media.mjs";
 import { callbackPayload, callbackSignature, validateEnvelope } from "../../scripts/media/media-job.mjs";
 
 async function fixture(bytes, name = "safe.png") {
@@ -18,6 +18,8 @@ async function rejects(promise, code) { await assert.rejects(promise, (error) =>
 test("accepts a still image and emits a SHA-addressed immutable manifest", async () => {
   const f = await fixture(png); const manifest = await processMediaJob({ job: { basename: f.name }, inboxDir: f.inbox, outputDir: f.output });
   assert.equal(manifest.source.sha256, createHash("sha256").update(png).digest("hex")); assert.equal(manifest.technical.width, 1);
+  assert.equal(createHash("sha256").update(await readFile(path.join(f.output, "sha256", manifest.source.sha256, "original.png"))).digest("hex"), manifest.source.sha256);
+  assert.deepEqual(manifest.technical.original, { file: "original.png", private: true, sha256: manifest.source.sha256, bytes: png.length });
   assert.equal(JSON.parse(await readFile(path.join(f.output, "sha256", manifest.source.sha256, "manifest.json"))).publication.rightsReview, "required");
 });
 test("rejects path traversal, SVG, executables, and a PDF polyglot", async () => {
@@ -32,8 +34,24 @@ test("rejects path traversal, SVG, executables, and a PDF polyglot", async () =>
   const pdf = await fixture(Buffer.from("%PDF-1.7\n/JavaScript (evil)", "ascii"), "bad.pdf");
   await rejects(processMediaJob({ job: { basename: pdf.name }, inboxDir: pdf.inbox, outputDir: pdf.output }), "E_PDF_UNSAFE");
 });
+test("supports bounded MP4, M4A, WebM, and UTF-8 text signatures", () => {
+  assert.equal(sniffMedia(Buffer.concat([Buffer.alloc(4), Buffer.from("ftypisom"), Buffer.alloc(16)])), "video/mp4");
+  assert.equal(sniffMedia(Buffer.concat([Buffer.alloc(4), Buffer.from("ftypM4A "), Buffer.alloc(16)])), "audio/mp4");
+  assert.equal(sniffMedia(Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.from("\u0000webm\u0000", "latin1"), Buffer.alloc(8)])), "video/webm");
+  assert.equal(sniffMedia(Buffer.from("A UTF-8 transcript with café.\n", "utf8")), "text/plain");
+  assert.throws(() => sniffMedia(Buffer.concat([Buffer.alloc(4), Buffer.from("ftypzzzz"), Buffer.alloc(16)])), (error) => error.code === "E_MAGIC_UNSUPPORTED");
+});
+test("normalizes plain text and enforces declared-versus-detected MIME", async () => {
+  const f = await fixture(Buffer.from("Line one\r\nLine two\r", "utf8"), "notes.txt");
+  const manifest = await processMediaJob({ job: { basename: f.name, declaredMime: "text/plain" }, inboxDir: f.inbox, outputDir: f.output });
+  assert.equal(manifest.source.detectedMime, "text/plain");
+  assert.equal(await readFile(path.join(f.output, "sha256", manifest.source.sha256, "display.txt"), "utf8"), "Line one\nLine two\n");
+  assert.equal(await readFile(path.join(f.output, "sha256", manifest.source.sha256, "original.txt"), "utf8"), "Line one\r\nLine two\r");
+  const mismatch = await fixture(png, "wrong.png");
+  await rejects(processMediaJob({ job: { basename: mismatch.name, declaredMime: "image/jpeg" }, inboxDir: mismatch.inbox, outputDir: mismatch.output }), "E_MIME_MISMATCH");
+});
 test("rejects unsupported magic and refuses unexpected manifest fields", async () => {
-  const f = await fixture(Buffer.from("not media"), "bad.dat");
+  const f = await fixture(Buffer.from([0, 159, 146, 150]), "bad.dat");
   await rejects(processMediaJob({ job: { basename: f.name }, inboxDir: f.inbox, outputDir: f.output }), "E_MAGIC_UNSUPPORTED");
   await rejects(processMediaJob({ job: { basename: f.name, sourcePath: "/tmp/x" }, inboxDir: f.inbox, outputDir: f.output }), "E_JOB_INVALID");
 });

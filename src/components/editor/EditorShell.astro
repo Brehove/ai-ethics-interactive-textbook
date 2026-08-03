@@ -6,7 +6,7 @@ const { chapters, authOrigin, contentApiOrigin } = Astro.props;
 const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 ---
 
-<main id="main-content" class="textbook-editor" data-editor-root data-auth-origin={authOrigin} data-content-api-origin={contentApiOrigin}>
+<main id="main-content" class="textbook-editor" data-editor-root data-workspace="Chapter" data-auth-origin={authOrigin} data-content-api-origin={contentApiOrigin}>
   <header class="editor-topbar">
     <button class="product-mark" type="button" aria-label="AI Ethics Textbook home"><span aria-hidden="true">▯</span> AI Ethics Textbook</button>
     <label class="chapter-picker"><span class="visually-hidden">Current chapter</span><select data-chapter aria-describedby="chapter-canary-note">{chapters.map((chapter) => <option value={`chapter_ch${String(chapter.order).padStart(2, "0")}`} selected={chapter.slug === active.slug} data-order={chapter.order} data-title={chapter.title} data-editable={chapter.order === 7 ? "true" : "false"}>{chapter.order}. {chapter.title} — {chapter.order === 7 ? "editable canary" : "read-only until cutover"}</option>)}</select><small id="chapter-canary-note">Browse all 18 chapters here. Chapter 7 is the writable canary; each later chapter unlocks only after its controlled D1 cutover.</small></label>
@@ -18,32 +18,66 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     <nav class="editor-nav" aria-label="Editor workspace">
       <button class="mobile-nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="editor-navigation-items">☰ <span>Menu</span></button>
       <div class="nav-items" id="editor-navigation-items" data-nav-items>
-        <button type="button" data-workspace="Chapter">▤ <span>Chapter</span></button><button class="selected" type="button" data-workspace="Checkpoints">▱ <span>Checkpoints</span></button><button type="button" data-workspace="Media">▧ <span>Media</span></button><button type="button" data-workspace="Sources">❝ <span>Sources</span></button><button type="button" data-workspace="Rights">♧ <span>Rights</span></button><button type="button" data-workspace="Releases">▣ <span>Releases</span></button>
+        <button class="selected" type="button" data-workspace="Chapter" aria-current="page"><span aria-hidden="true">▤</span> <span>Chapter</span></button><button type="button" data-workspace="Checkpoints"><span aria-hidden="true">▱</span> <span>Checkpoints</span></button><button type="button" data-workspace="Media"><span aria-hidden="true">▧</span> <span>Media</span></button><button type="button" data-workspace="Embeds"><span aria-hidden="true">↗</span> <span>Embeds</span></button><button type="button" data-workspace="Review"><span aria-hidden="true">✓</span> <span>Review</span></button>
       </div>
       <button class="collapse-nav" type="button" data-collapse-nav>« <span>Collapse sidebar</span></button>
     </nav>
 
     <section class="chapter-canvas" aria-label="Structured chapter editor">
       <p class="editor-status" data-editor-status aria-live="polite">Checking editor session…</p>
-      <article class="chapter-prose" data-prose>
-        <h1>7.3 &nbsp; Eudaimonia and the AI-Assisted Life</h1>
-        <p>For Aristotle, <em>eudaimonia</em> is not a feeling but an activity of soul in accordance with virtue over a complete life. It is neither fleeting pleasure nor momentary success, but a stable disposition to choose, act, and perceive well.</p>
-        <p>AI systems can support many human activities, yet they do not, by themselves, constitute a good life. They are tools, environments, and interlocutors, not ends. The question is not whether AI can make us happy, but whether and how its use can be integrated into a life oriented by practical wisdom.</p>
-        <p class="passage selected-passage" tabindex="0" data-passage-id="ch07-p0041"><button class="passage-marker" type="button" aria-label="Add a checkpoint anchored to this passage" data-anchor>▱<span class="visually-hidden">Add checkpoint</span><small>1</small></button>Character is formed through repeated actions chosen for their own sake (NE II.1). If we routinely rely on AI to deliberate, remember, or judge, we risk cultivating habits of dependence that erode the virtues of practical reason. Conversely, if we use AI with discernment—recognizing its limits, correcting its errors, and refusing its vices—we may strengthen our own capacities.</p>
-        <h2>7.4 &nbsp; Friends, Communities, and Digital Participation</h2>
-        <p>Aristotle emphasizes that we become just by acting justly with others (NE II.1). The AI-mediated spaces in which we speak, learn, and decide together are now central to our moral formation. These spaces can cultivate friendship and cooperation, or corrode them through manipulation, anonymity, and scale.</p>
-      </article>
-      <div class="media-toolbar" role="group" aria-label="Insert media"><button type="button" class="add-media" data-media-menu aria-expanded="true" aria-controls="media-insert-choices" aria-label="Show or hide media choices">+</button><div class="media-menu" id="media-insert-choices" data-media-options><button type="button" data-media="Image or GIF">▧ Image or GIF</button><button type="button" data-media="YouTube">▹ YouTube</button><button type="button" data-media="Vimeo">∨ Vimeo</button><button type="button" data-media="X post">𝕏 X post</button><button type="button" data-media="Spotify">♫ Spotify</button><button type="button" data-media="SoundCloud">◒ SoundCloud</button><button type="button" data-media="Bluesky">☁ Bluesky</button><button type="button" data-media="Audio/Video">♬ Audio/Video</button><button type="button" data-media="PDF">□ PDF</button><button type="button" data-media="Link card">↗ Link card</button></div></div>
-      <div class="text-block-editor" data-text-editor hidden><label>Selected text block<textarea data-text-value></textarea></label><button type="button" data-save-text>Save text change</button></div>
-      <p class="snapshot-receipt" data-snapshot-receipt hidden></p>
-      <section class="human-release-review" data-human-review hidden aria-labelledby="human-review-title">
-        <div class="human-review-heading"><div><p class="review-eyebrow">Submitted snapshot</p><h2 id="human-review-title">Human release review</h2></div><strong data-review-state>Awaiting decision</strong></div>
-        <dl class="snapshot-identity"><div><dt>Immutable snapshot hash</dt><dd><code data-snapshot-hash>—</code></dd></div><div><dt>Snapshot revision</dt><dd><code data-snapshot-revision>—</code></dd></div></dl>
-        <p class="release-warning" id="release-review-warning"><strong>Approval does not publish.</strong> It records a human release decision for this exact immutable snapshot. Final promotion remains GitHub-gated.</p>
-        <label>Optional approval note<textarea data-approval-comment maxlength="2000" aria-describedby="release-review-warning"></textarea></label>
-        <button class="approve-release" type="button" data-approve-release aria-describedby="release-review-warning">Approve release snapshot</button>
-        <details class="reject-review"><summary>Reject this snapshot</summary><label>Reason for rejection<textarea data-rejection-comment maxlength="2000" required aria-describedby="release-review-warning"></textarea></label><button type="button" data-reject-release aria-describedby="release-review-warning">Reject snapshot</button></details>
-        <p class="decision-status" data-decision-status aria-live="polite"></p>
+
+      <section class="workspace-panel" data-workspace-panel="Chapter" aria-labelledby="chapter-workspace-title">
+        <div class="workspace-heading"><div><p class="review-eyebrow">Structured body</p><h1 id="chapter-workspace-title" data-chapter-heading>Chapter</h1></div><strong class="authority-badge" data-authority-badge>Checking authority…</strong></div>
+        <p class="workspace-help">Select a block to edit or position a structured operation. Stable IDs remain visible in the selection receipt and review evidence.</p>
+        <article class="chapter-prose" data-prose><p>Loading the canonical chapter…</p></article>
+        <section class="structure-toolbar" aria-labelledby="structure-tools-title">
+          <div class="structure-toolbar__heading"><div><p class="review-eyebrow">Selected structure</p><h2 id="structure-tools-title" data-selected-block>No block selected</h2></div><div class="structure-actions"><button type="button" data-move-block="up" disabled>Move up</button><button type="button" data-move-block="down" disabled>Move down</button><button class="danger-control" type="button" data-remove-media disabled>Remove media placement</button></div></div>
+          <form class="insert-block-form" data-insert-block-form>
+            <label>Insert block<select data-insert-block-type><option value="paragraph">Paragraph</option><option value="heading">Heading</option><option value="blockquote">Block quote</option><option value="callout">Callout</option><option value="list">List</option></select></label>
+            <label>Relative position<select data-insert-position><option value="after">After selected block</option><option value="before">Before selected block</option></select></label>
+            <label class="insert-copy">Content<textarea data-insert-copy rows="3" placeholder="Write the block content. Enter one list item per line."></textarea></label>
+            <button type="submit" data-insert-block>Insert structured block</button>
+          </form>
+        </section>
+        <div class="text-block-editor" data-text-editor hidden><label>Selected text block<textarea data-text-value></textarea></label><button type="button" data-save-text>Save text change</button></div>
+      </section>
+
+      <section class="workspace-panel" data-workspace-panel="Checkpoints" aria-labelledby="checkpoints-workspace-title" hidden>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Commit · Work · Reconcile</p><h1 id="checkpoints-workspace-title">Prompt checkpoints</h1></div><strong data-checkpoint-summary>Loading…</strong></div>
+        <p class="workspace-help">Choose a checkpoint card to inspect its stable identity, anchor, prompt, and student-facing projections.</p>
+        <div class="checkpoint-card-grid" data-checkpoint-cards></div>
+        <section class="checkpoint-projection" data-checkpoint-projection aria-live="polite"><p>Select an existing checkpoint or add the next immutable slot.</p></section>
+      </section>
+
+      <section class="workspace-panel" data-workspace-panel="Media" aria-labelledby="media-workspace-title" hidden>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Native assets</p><h1 id="media-workspace-title">Media placements</h1></div><strong data-media-summary>0 placements</strong></div>
+        <p class="workspace-help">Select a passage in the Chapter workspace first, then place a reviewed image, animated media, audio/video file, or PDF relative to that stable block.</p>
+        <div class="placement-list" data-media-placements></div>
+        <div class="media-toolbar" role="group" aria-label="Insert native media"><button type="button" class="add-media" data-media-menu="native" aria-expanded="true" aria-controls="media-insert-choices" aria-label="Show or hide native media choices">+</button><div class="media-menu" id="media-insert-choices" data-media-options="native"><button type="button" data-media="Image or GIF">Image or GIF</button><button type="button" data-media="Audio/Video">Audio or video</button><button type="button" data-media="PDF">PDF</button></div></div>
+      </section>
+
+      <section class="workspace-panel" data-workspace-panel="Embeds" aria-labelledby="embeds-workspace-title" hidden>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Typed providers and safe links</p><h1 id="embeds-workspace-title">Embeds and link cards</h1></div><strong data-embed-summary>0 embeds</strong></div>
+        <p class="workspace-help">Only allowlisted provider identities and instructor-authored fallbacks are saved. Raw embed HTML is never accepted.</p>
+        <div class="placement-list" data-embed-placements></div>
+        <div class="media-toolbar" role="group" aria-label="Insert embed or link"><button type="button" class="add-media" data-media-menu="embed" aria-expanded="true" aria-controls="embed-insert-choices" aria-label="Show or hide embed choices">+</button><div class="media-menu" id="embed-insert-choices" data-media-options="embed"><button type="button" data-media="YouTube">YouTube</button><button type="button" data-media="Vimeo">Vimeo</button><button type="button" data-media="X post">X post</button><button type="button" data-media="Spotify">Spotify</button><button type="button" data-media="SoundCloud">SoundCloud</button><button type="button" data-media="Bluesky">Bluesky</button><button type="button" data-media="Link card">Link card</button></div></div>
+      </section>
+
+      <section class="workspace-panel" data-workspace-panel="Review" aria-labelledby="review-workspace-title" hidden>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Server evidence</p><h1 id="review-workspace-title">Diff, revision, and dependency review</h1></div><button type="button" data-refresh-evidence>Refresh evidence</button></div>
+        <p class="workspace-help">These receipts come from the current content API. Review identity and impact before validation or submission.</p>
+        <div class="evidence-grid"><section aria-labelledby="revision-evidence-title"><h2 id="revision-evidence-title">Revision identity</h2><div data-revision-evidence><p>Loading revision evidence…</p></div></section><section aria-labelledby="dependency-evidence-title"><h2 id="dependency-evidence-title">Dependency graph</h2><div data-dependency-evidence><p>Loading dependency evidence…</p></div></section></div>
+        <section class="exact-diff" aria-labelledby="exact-diff-title"><h2 id="exact-diff-title">Exact semantic diff</h2><div data-exact-diff><p>No editable change set is selected.</p></div></section>
+        <p class="snapshot-receipt" data-snapshot-receipt hidden></p>
+        <section class="human-release-review" data-human-review hidden aria-labelledby="human-review-title">
+          <div class="human-review-heading"><div><p class="review-eyebrow">Submitted snapshot</p><h2 id="human-review-title">Human release review</h2></div><strong data-review-state>Awaiting decision</strong></div>
+          <dl class="snapshot-identity"><div><dt>Immutable snapshot hash</dt><dd><code data-snapshot-hash>—</code></dd></div><div><dt>Snapshot revision</dt><dd><code data-snapshot-revision>—</code></dd></div></dl>
+          <p class="release-warning" id="release-review-warning"><strong>Approval does not publish.</strong> It records a human release decision for this exact immutable snapshot. Final promotion remains GitHub-gated.</p>
+          <label>Optional approval note<textarea data-approval-comment maxlength="2000" aria-describedby="release-review-warning"></textarea></label>
+          <button class="approve-release" type="button" data-approve-release aria-describedby="release-review-warning">Approve release snapshot</button>
+          <details class="reject-review"><summary>Reject this snapshot</summary><label>Reason for rejection<textarea data-rejection-comment maxlength="2000" required aria-describedby="release-review-warning"></textarea></label><button type="button" data-reject-release aria-describedby="release-review-warning">Reject snapshot</button></details>
+          <p class="decision-status" data-decision-status aria-live="polite"></p>
+        </section>
       </section>
     </section>
 
@@ -62,8 +96,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       <label>Student response format<select data-response-format><option value="prose" selected>Prose</option><option value="movement-plus-prose">Movement plus prose</option></select></label>
       <div class="word-limits"><label>Min. words<input data-min-words type="number" min="1" max="1000" value="250" /></label><label>Max. words<input data-max-words type="number" min="1" max="1000" value="750" /></label></div>
       <label>Rationale<textarea class="short-textarea" data-checkpoint-rationale></textarea></label>
-      <button class="inspection-row" type="button" data-a11y>Accessibility check <span class="good">✓ No issues detected</span> ›</button>
-      <label>Editorial approval<select><option selected>● Needs review</option><option>✓ Approved</option></select></label>
+      <button class="inspection-row" type="button" data-a11y>Run checkpoint checks <span data-a11y-result>Not checked</span> ›</button>
+      <p class="inspection-row">Editorial status <span>Needs human review</span></p>
       <button class="add-checkpoint" type="button" data-add-checkpoint>+ Add checkpoint</button><button class="save-checkpoint" type="button" data-save-checkpoint hidden>▱ Save checkpoint</button><button class="remove-checkpoint" type="button" data-remove-checkpoint hidden>Remove checkpoint</button>
       <p class="checkpoint-count" data-checkpoint-count>0 draft checkpoints of 3. Add Commit first; the order is immutable.</p>
     </aside>
@@ -84,7 +118,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 </dialog>
 
 <script>
-  type Block = { type: string; blockId?: string; text?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; figureId?: string; embedId?: string; linkId?: string };
+  type Block = { type: string; blockId?: string; text?: string; html?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; tone?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; diagramId?: string; figureId?: string; mediaId?: string; mediaVersionId?: string; rightsCaseId?: string; embedId?: string; linkId?: string; anchorPassageId?: string; identity?: { provider?: string; resourceType?: string; resourceId?: string }; fallback?: { title?: string; summary?: string } };
   type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: "commit" | "work" | "reconcile"; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
   type Chapter = { title?: string; body?: Block[]; checkpoints?: Checkpoint[] };
   const root = document.querySelector<HTMLElement>("[data-editor-root]")!;
@@ -195,8 +229,28 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const reviewSummary = root.querySelector<HTMLElement>("[data-review-summary]")!;
   const semanticCount = root.querySelector<HTMLElement>("[data-semantic-count]")!;
   const workingVersion = root.querySelector<HTMLElement>("[data-working-version]")!;
+  const chapterHeading = root.querySelector<HTMLElement>("[data-chapter-heading]")!;
+  const authorityBadge = root.querySelector<HTMLElement>("[data-authority-badge]")!;
+  const selectedBlockReceipt = root.querySelector<HTMLElement>("[data-selected-block]")!;
+  const insertBlockForm = root.querySelector<HTMLFormElement>("[data-insert-block-form]")!;
+  const insertBlockType = root.querySelector<HTMLSelectElement>("[data-insert-block-type]")!;
+  const insertPosition = root.querySelector<HTMLSelectElement>("[data-insert-position]")!;
+  const insertCopy = root.querySelector<HTMLTextAreaElement>("[data-insert-copy]")!;
+  const checkpointCards = root.querySelector<HTMLElement>("[data-checkpoint-cards]")!;
+  const checkpointProjection = root.querySelector<HTMLElement>("[data-checkpoint-projection]")!;
+  const checkpointSummary = root.querySelector<HTMLElement>("[data-checkpoint-summary]")!;
+  const mediaPlacements = root.querySelector<HTMLElement>("[data-media-placements]")!;
+  const mediaSummary = root.querySelector<HTMLElement>("[data-media-summary]")!;
+  const embedPlacements = root.querySelector<HTMLElement>("[data-embed-placements]")!;
+  const embedSummary = root.querySelector<HTMLElement>("[data-embed-summary]")!;
+  const revisionEvidence = root.querySelector<HTMLElement>("[data-revision-evidence]")!;
+  const dependencyEvidence = root.querySelector<HTMLElement>("[data-dependency-evidence]")!;
+  const exactDiff = root.querySelector<HTMLElement>("[data-exact-diff]")!;
+  const moveUp = root.querySelector<HTMLButtonElement>('[data-move-block="up"]')!;
+  const moveDown = root.querySelector<HTMLButtonElement>('[data-move-block="down"]')!;
+  const removeMediaPlacement = root.querySelector<HTMLButtonElement>("[data-remove-media]")!;
   const slots = ["commit", "work", "reconcile"] as const;
-  let authenticated = false; let contentOnline = false; let dirty = false; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
+  let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
   const setStatus = (message: string) => { status.textContent = message; };
   const key = () => crypto.randomUUID();
   const post = (path: string, body: unknown) => fetch(`${gatewayOrigin}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken }, body: JSON.stringify(body) });
@@ -230,6 +284,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     submitReview.disabled = true;
     submitReview.querySelector("span")!.textContent = "Submitted";
     root.querySelector<HTMLElement>("[data-release-state]")!.textContent = "Submitted for review";
+    switchWorkspace("Review");
     humanReview.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -345,16 +400,125 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       } else if (block.type === "codeBlock") { element = document.createElement("pre"); const code = document.createElement("code"); code.textContent = block.code ?? block.text ?? ""; if (block.language) code.dataset.language = block.language; element.append(code); }
       else if (block.type === "callout") { element = document.createElement("aside"); element.className = "editor-callout"; }
       else if (["mediaFigure", "externalEmbed", "richLink", "diagram"].includes(block.type)) { element = document.createElement("figure"); element.className = `editor-structured-block editor-${block.type}`; const label = document.createElement("strong"); label.textContent = block.type === "mediaFigure" ? "Media" : block.type === "externalEmbed" ? "Embed" : block.type === "richLink" ? "Link card" : "Diagram"; const copy = document.createElement("figcaption"); copy.textContent = block.caption ?? block.title ?? block.alt ?? block.canonicalUrl ?? block.figureId ?? block.embedId ?? block.linkId ?? "Structured content"; element.append(label, copy); }
-      else { element = document.createElement("p"); if (block.type === "legacyMarkup") { element.className = "editor-locked-block"; element.textContent = "Locked legacy block — convert through a reviewed migration before editing."; } }
+      else { element = document.createElement("p"); if (block.type === "legacyMarkup") { element.className = "editor-locked-block"; const source = new DOMParser().parseFromString(block.html ?? "", "text/html").body.textContent?.trim(); element.textContent = source || "Locked legacy structure — convert through a reviewed migration before editing."; } }
       if (!element.childNodes.length) element.textContent = block.text ?? "";
-      if (block.blockId) element.dataset.blockId = block.blockId;
-      if (block.passageId) { element.dataset.passageId = block.passageId; element.tabIndex = 0; element.addEventListener("click", () => { anchor.value = block.passageId!; selectedBlockId = block.blockId ?? ""; prose.querySelectorAll("[data-block-id]").forEach((item) => item.classList.toggle("selected-passage", item === element)); if (selectedBlockId && ["paragraph", "heading", "blockquote", "callout"].includes(block.type)) { textValue.value = block.text ?? ""; textEditor.hidden = false; } inspector.classList.add("open"); setStatus(`Selected ${block.passageId}; checkpoint and text actions now target this block.`); }); }
+      if (block.blockId) {
+        element.dataset.blockId = block.blockId;
+        element.tabIndex = 0;
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-label", `Select ${block.type} block ${block.blockId}`);
+        const select = () => selectBlock(block, element);
+        element.addEventListener("click", select);
+        element.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
+      }
+      if (block.passageId) element.dataset.passageId = block.passageId;
       nodes.push(element);
     }
-    if (nodes.length) prose.replaceChildren(...nodes);
+    if (nodes.length) prose.replaceChildren(...nodes); else { const empty = document.createElement("p"); empty.className = "empty-state"; empty.textContent = "This chapter has no structured body blocks."; prose.replaceChildren(empty); }
     anchor.replaceChildren(...blocks.filter((block) => block.passageId).map((block) => { const option = document.createElement("option"); option.value = block.passageId!; option.textContent = `${block.passageId} · ${(block.text ?? block.items?.join(" ") ?? "Passage").slice(0, 72)}`; return option; }));
     const selected = chapterPicker.selectedOptions[0];
     if (selected && chapter.title) selected.textContent = `${selected.dataset.order ?? ""}. ${chapter.title} — ${selected.dataset.editable === "true" ? "editable" : "read-only until cutover"}`;
+    chapterHeading.textContent = chapter.title ?? selectedChapterId;
+    authorityBadge.textContent = canWrite ? "Chapter 7 · editable canary" : `${authorityKind.toUpperCase()} authority · read-only`;
+    renderPlacementState();
+    updateSelectionControls();
+  }
+
+  function selectBlock(block: Block, element: HTMLElement) {
+    selectedBlockId = block.blockId ?? "";
+    if (block.passageId && [...anchor.options].some((option) => option.value === block.passageId)) anchor.value = block.passageId;
+    prose.querySelectorAll("[data-block-id]").forEach((item) => item.classList.toggle("selected-passage", item === element));
+    const editableText = canWrite && selectedBlockId && ["paragraph", "heading", "blockquote", "callout"].includes(block.type);
+    if (editableText) { textValue.value = block.text ?? ""; textEditor.hidden = false; } else textEditor.hidden = true;
+    selectedBlockReceipt.textContent = `${block.type} · ${block.blockId ?? "no block ID"}${block.passageId ? ` · ${block.passageId}` : ""}`;
+    updateSelectionControls();
+    setStatus(`Selected ${block.blockId ?? block.type}. Structured actions now use this stable position.`);
+  }
+
+  function updateSelectionControls() {
+    const blocks = chapter.body ?? [];
+    const index = blocks.findIndex((block) => block.blockId === selectedBlockId);
+    moveUp.disabled = !canWrite || index <= 0 || !blocks[index - 1]?.blockId;
+    moveDown.disabled = !canWrite || index < 0 || index >= blocks.length - 1 || !blocks[index + 1]?.blockId;
+    removeMediaPlacement.disabled = !canWrite || index < 0 || blocks[index]?.type !== "mediaFigure" || !blocks[index]?.figureId;
+    insertBlockForm.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input,select,textarea,button").forEach((control) => { control.disabled = !canWrite; });
+  }
+
+  function placementCard(block: Block, index: number) {
+    const card = document.createElement("article"); card.className = "placement-card";
+    const heading = document.createElement("h2");
+    heading.textContent = block.type === "mediaFigure" ? block.caption || block.alt || "Untitled media placement" : block.fallback?.title || block.title || block.caption || `${block.identity?.provider ?? "Link"} placement`;
+    const identity = document.createElement("p"); identity.className = "placement-identity";
+    identity.textContent = block.type === "mediaFigure" ? `${block.figureId ?? block.blockId} · ${block.mediaVersionId ?? "unversioned"}` : `${block.embedId ?? block.linkId ?? block.blockId} · ${block.canonicalUrl ?? "no canonical URL"}`;
+    const position = document.createElement("p"); position.textContent = `Block ${index + 1}${block.anchorPassageId ? ` · anchored to ${block.anchorPassageId}` : ""}`;
+    const choose = document.createElement("button"); choose.type = "button"; choose.textContent = "Select in chapter";
+    choose.addEventListener("click", () => { switchWorkspace("Chapter"); const target = prose.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(block.blockId ?? "")}"]`); target?.focus(); target?.click(); });
+    card.append(heading, identity, position, choose); return card;
+  }
+
+  function renderPlacementState() {
+    const blocks = chapter.body ?? [];
+    const media = blocks.map((block, index) => ({ block, index })).filter(({ block }) => block.type === "mediaFigure");
+    const embeds = blocks.map((block, index) => ({ block, index })).filter(({ block }) => block.type === "externalEmbed" || block.type === "richLink");
+    mediaSummary.textContent = `${media.length} placement${media.length === 1 ? "" : "s"}`;
+    embedSummary.textContent = `${embeds.length} embed${embeds.length === 1 ? "" : "s"}`;
+    const empty = (label: string) => { const message = document.createElement("p"); message.className = "empty-state"; message.textContent = label; return message; };
+    mediaPlacements.replaceChildren(...(media.length ? media.map(({ block, index }) => placementCard(block, index)) : [empty("No native media placements in this chapter.")]));
+    embedPlacements.replaceChildren(...(embeds.length ? embeds.map(({ block, index }) => placementCard(block, index)) : [empty("No embeds or link cards in this chapter.")]));
+  }
+
+  function switchWorkspace(name: string) {
+    root.dataset.workspace = name;
+    root.querySelectorAll<HTMLButtonElement>("[data-workspace]").forEach((button) => {
+      const selected = button.dataset.workspace === name;
+      button.classList.toggle("selected", selected);
+      if (selected) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
+    });
+    root.querySelectorAll<HTMLElement>("[data-workspace-panel]").forEach((panel) => { panel.hidden = panel.dataset.workspacePanel !== name; });
+    inspector.classList.toggle("open", name === "Checkpoints");
+    const navToggle = root.querySelector<HTMLButtonElement>("[data-nav-toggle]"); navToggle?.setAttribute("aria-expanded", "false"); root.querySelector("[data-nav-items]")?.classList.remove("open");
+    if (name === "Review") void refreshReviewEvidence();
+    setStatus(`${name} workspace selected for ${chapter.title ?? selectedChapterId}.`);
+  }
+
+  function evidenceList(values: string[], emptyText: string) {
+    if (!values.length) { const message = document.createElement("p"); message.className = "empty-state"; message.textContent = emptyText; return message; }
+    const list = document.createElement("ul"); values.forEach((value) => { const item = document.createElement("li"); item.textContent = value; list.append(item); }); return list;
+  }
+
+  function renderExactDiff(data: Record<string, any>) {
+    const diff = data.diff ?? {}; const summary = diff.summary ?? {};
+    const fields = [
+      ["Blocks added", summary.blocksAdded ?? 0], ["Blocks modified", summary.blocksModified ?? 0], ["Blocks moved", summary.blocksMoved ?? 0], ["Blocks removed", summary.blocksRemoved ?? 0],
+      ["Checkpoints added", summary.checkpointsAdded ?? 0], ["Checkpoints modified", summary.checkpointsModified ?? 0], ["Anchors changed", summary.checkpointAnchorsChanged ?? 0], ["Derivatives affected", summary.derivativesAffected ? "Yes" : "No"],
+    ];
+    const receipt = document.createElement("dl"); receipt.className = "evidence-receipt";
+    fields.forEach(([label, value]) => { const row = document.createElement("div"); const term = document.createElement("dt"); term.textContent = String(label); const detail = document.createElement("dd"); detail.textContent = String(value); row.append(term, detail); receipt.append(row); });
+    const stableHeading = document.createElement("h3"); stableHeading.textContent = "Stable-ID impact";
+    const stable = diff.impact?.stableIds ?? { added: [], removed: [] };
+    const stableList = evidenceList([...(stable.added ?? []).map((id: string) => `Added ${id}`), ...(stable.removed ?? []).map((id: string) => `Removed ${id}`)], "No stable IDs added or removed.");
+    exactDiff.replaceChildren(receipt, stableHeading, stableList);
+    const total = fields.slice(0, 7).reduce((sum, [, value]) => sum + Number(value || 0), 0);
+    semanticCount.textContent = String(total); root.querySelector<HTMLElement>("[data-change-count]")!.textContent = String(total); workingVersion.textContent = String(data.workingVersion ?? expectedVersion);
+    const cards = fields.slice(0, 7).filter(([, value]) => Number(value) > 0).map(([label, value]) => { const card = document.createElement("article"); card.className = "semantic-change changed"; const h = document.createElement("h3"); h.textContent = `${value} ${String(label).toLowerCase()}`; const p = document.createElement("p"); p.textContent = `Server diff for ${data.documentId ?? selectedChapterId}.`; card.append(h, p); return card; });
+    if (!cards.length) { const clean = document.createElement("p"); clean.className = "accepted-message"; clean.textContent = "Server diff confirms no semantic changes from the base revision."; reviewSummary.replaceChildren(clean); } else reviewSummary.replaceChildren(...cards);
+  }
+
+  async function refreshReviewEvidence() {
+    const revision = document.createElement("dl"); revision.className = "evidence-receipt";
+    [["Chapter", selectedChapterId], ["Revision", baseRevisionId || "unavailable"], ["Content hash", canonicalContentHash || "unavailable"], ["Authority", canWrite ? "Chapter 7 D1 canary write path" : `${authorityKind} read-only`], ["Revision created", revisionCreatedAt ? new Date(revisionCreatedAt).toLocaleString() : "unavailable"]].forEach(([label, value]) => { const row = document.createElement("div"); const dt = document.createElement("dt"); dt.textContent = label; const dd = document.createElement("dd"); dd.textContent = value; row.append(dt, dd); revision.append(row); });
+    revisionEvidence.replaceChildren(revision);
+    if (!gatewayOrigin || !authenticated) { dependencyEvidence.replaceChildren(evidenceList([], "Exact dependency evidence requires an authenticated content API session.")); exactDiff.replaceChildren(evidenceList([], "Exact diff requires an authenticated editable change set.")); return; }
+    try {
+      const dependencyResponse = await fetch(`${gatewayOrigin}/v1/chapters/${encodeURIComponent(selectedChapterId)}/dependencies?limit=100`, { credentials: "include" });
+      const dependencyData = await dependencyResponse.json(); if (!dependencyResponse.ok) throw new Error("dependency evidence unavailable");
+      const summary = document.createElement("p"); summary.className = "evidence-summary"; summary.textContent = `${dependencyData.page?.totalNodes ?? dependencyData.nodes?.length ?? 0} nodes · ${dependencyData.page?.totalEdges ?? dependencyData.edges?.length ?? 0} edges · revision ${dependencyData.revisionId ?? "unknown"}`;
+      const edges = (dependencyData.edges ?? []).slice(0, 12).map((edge: { source: string; target: string; kind: string }) => `${edge.source} —${edge.kind}→ ${edge.target}`);
+      dependencyEvidence.replaceChildren(summary, evidenceList(edges, "No checkpoint, media, or embed dependencies recorded."));
+    } catch { dependencyEvidence.replaceChildren(evidenceList([], "Dependency evidence could not be loaded from the current revision.")); }
+    if (!canWrite || !changeSetId) { exactDiff.replaceChildren(evidenceList([], "This repository-authoritative chapter has no browser change set. Diff is intentionally unavailable in read-only mode.")); semanticCount.textContent = "0"; workingVersion.textContent = "—"; return; }
+    try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:diff`, {}); const data = await response.json(); if (!response.ok) throw new Error("diff unavailable"); renderExactDiff(data); }
+    catch { exactDiff.replaceChildren(evidenceList([], "The exact server diff could not be refreshed.")); }
   }
 
   function renderSemanticReview() {
@@ -401,7 +565,15 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     responseStructure.value = item?.responseStructure ?? "prose"; minWords.value = String(item?.minWords ?? 30); maxWords.value = String(item?.maxWords ?? 120); sidebarPreview.checked = item?.showInSidebar ?? true;
     if (item?.passageId && [...anchor.options].some((option) => option.value === item.passageId)) anchor.value = item.passageId;
     saveCheckpoint.hidden = !(item || creating); removeCheckpoint.hidden = !item; addCheckpoint.hidden = true;
+    saveCheckpoint.disabled = !canWrite; removeCheckpoint.disabled = !canWrite;
     checkpointTabs.querySelectorAll("button").forEach((button) => button.classList.toggle("active", (button as HTMLElement).dataset.slot === slot));
+    checkpointCards.querySelectorAll("button").forEach((button) => button.classList.toggle("active", (button as HTMLElement).dataset.slot === slot));
+    const projectionTitle = document.createElement("h2"); projectionTitle.textContent = item?.title || `${slot[0].toUpperCase() + slot.slice(1)} checkpoint draft`;
+    const identity = document.createElement("p"); identity.className = "placement-identity"; identity.textContent = item ? `${item.checkpointId ?? "server-assigned ID"} · ${item.passageId} · ${item.passageExcerptHash.slice(0, 12)}…` : "Not yet persisted";
+    const inline = document.createElement("blockquote"); inline.textContent = item?.trigger || "Inline trigger preview will appear here.";
+    const side = document.createElement("p"); side.textContent = item?.prompt || "Side-panel prompt preview will appear here.";
+    const response = document.createElement("p"); response.className = "field-help"; response.textContent = `${item?.responseStructure ?? "prose"} · ${item?.minWords ?? 30}–${item?.maxWords ?? 120} words${item?.showInSidebar === false ? " · hidden from sidebar" : " · shown in sidebar"}`;
+    checkpointProjection.replaceChildren(projectionTitle, identity, inline, side, response);
   }
 
   function renderCheckpointState() {
@@ -409,7 +581,15 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     checkpointTabs.replaceChildren(...slots.map((slot) => { const button = document.createElement("button"); const exists = Boolean(checkpointFor(slot)); button.type = "button"; button.dataset.slot = slot; button.textContent = `${exists ? "✓" : "+"} ${slot[0].toUpperCase()}${slot.slice(1)}`; button.disabled = !exists; button.addEventListener("click", () => selectCheckpoint(slot)); return button; }));
     const missing = slots.find((slot) => !checkpointFor(slot));
     checkpointCount.textContent = missing ? `${checkpoints.length} checkpoint${checkpoints.length === 1 ? "" : "s"} of 3. ${missing[0].toUpperCase() + missing.slice(1)} is the next immutable slot.` : "3 checkpoints of 3: Commit, Work, Reconcile. Existing records remain editable.";
-    addCheckpoint.hidden = !missing; addCheckpoint.dataset.slot = missing ?? ""; saveCheckpoint.hidden = true; removeCheckpoint.hidden = true;
+    addCheckpoint.hidden = !missing; addCheckpoint.disabled = !canWrite; addCheckpoint.dataset.slot = missing ?? ""; saveCheckpoint.hidden = true; removeCheckpoint.hidden = true;
+    checkpointSummary.textContent = `${checkpoints.length} of 3 configured${canWrite ? " · editable canary" : " · read-only"}`;
+    checkpointCards.replaceChildren(...slots.map((slot, index) => {
+      const item = checkpointFor(slot); const card = document.createElement("button"); card.type = "button"; card.dataset.slot = slot; card.className = "checkpoint-card"; card.disabled = !item;
+      const number = document.createElement("span"); number.textContent = `Checkpoint ${String(index + 1).padStart(2, "0")}`;
+      const title = document.createElement("strong"); title.textContent = item?.title || `${slot[0].toUpperCase() + slot.slice(1)} not configured`;
+      const meta = document.createElement("small"); meta.textContent = item ? `${item.checkpointId ?? "ID pending"} · ${item.passageId}` : "Next slot remains unavailable until prior order is satisfied";
+      card.append(number, title, meta); card.addEventListener("click", () => selectCheckpoint(slot)); return card;
+    }));
     if (checkpointFor(selectedSlot)) selectCheckpoint(selectedSlot); else if (checkpoints[0]) selectCheckpoint(checkpoints[0].slot); else if (missing) { checkpointType.value = missing[0].toUpperCase() + missing.slice(1); }
   }
 
@@ -441,7 +621,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const idempotencyKey = key();
     const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:apply`, { baseRevisionId, expectedVersion, idempotencyKey, operation });
     if (!response.ok) throw new Error("operation rejected");
-    const data = await response.json(); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version); chapter = data.chapter ?? chapter; renderSemanticReview();
+    const data = await response.json(); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version); chapter = data.chapter ?? chapter; renderChapter(); renderCheckpointState(); renderSemanticReview(); await refreshReviewEvidence();
   }
 
   const stablePosition = () => ({ afterBlockId: selectedBlockId || (chapter.body ?? []).find((block) => block.blockId)?.blockId || "" });
@@ -495,19 +675,31 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     throw new Error("This provider is not available as a typed embed");
   }
 
+  function setAuthoringMode(editable: boolean) {
+    canWrite = editable && selectedChapterId === "chapter_ch07";
+    contentOnline = canWrite;
+    root.toggleAttribute("data-read-only", !canWrite);
+    const mutationSelectors = ["[data-preview]", "[data-validate]", "[data-submit-review]", "[data-save-text]", "[data-media]", "[data-add-checkpoint]", "[data-save-checkpoint]", "[data-remove-checkpoint]"];
+    root.querySelectorAll<HTMLButtonElement>(mutationSelectors.join(",")).forEach((control) => { control.disabled = !canWrite; });
+    inspector.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input,select,textarea").forEach((control) => { control.disabled = !canWrite || control === checkpointType; });
+    mediaDialog.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input,select,textarea,button").forEach((control) => { control.disabled = !canWrite; });
+    updateSelectionControls();
+  }
+
   async function loadSelectedChapter() {
     selectedChapterId = chapterPicker.value;
-    contentOnline = false; dirty = false; changeSetId = ""; selectedBlockId = ""; expectedVersion = 1; submittedSnapshotHash = ""; submittedSnapshotRevision = "";
+    contentOnline = false; canWrite = false; dirty = false; changeSetId = ""; selectedBlockId = ""; expectedVersion = 1; submittedSnapshotHash = ""; submittedSnapshotRevision = "";
     humanReview.hidden = true; snapshotReceipt.hidden = true; textEditor.hidden = true;
     const chapterResponse = await fetch(`${gatewayOrigin}/v1/documents/${encodeURIComponent(selectedChapterId)}`, { credentials: "include" });
     if (!chapterResponse.ok) throw new Error("content unavailable");
-    const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId);
+    const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId); canonicalContentHash = String(documentData.contentHash ?? ""); revisionCreatedAt = String(documentData.revisionCreatedAt ?? ""); authorityKind = String(documentData.authority?.authority ?? "git");
     const selected = chapterPicker.selectedOptions[0];
-    const editable = documentData.authoringState === "editable";
+    const editable = documentData.authoringState === "editable" && selectedChapterId === "chapter_ch07";
     if (selected) selected.dataset.editable = String(editable);
-    if (editable) { contentOnline = true; await createOrResumeChangeSet(); }
-    renderChapter(); renderCheckpointState(); renderSemanticReview(); offline.hidden = editable;
-    if (editable) setStatus(`Authenticated · ${chapter.title ?? selectedChapterId} loaded · change set ${changeSetId.slice(0, 8)} · version ${expectedVersion}.`);
+    setAuthoringMode(editable);
+    if (canWrite) await createOrResumeChangeSet();
+    renderChapter(); renderCheckpointState(); renderSemanticReview(); await refreshReviewEvidence(); offline.hidden = canWrite;
+    if (canWrite) setStatus(`Authenticated · ${chapter.title ?? selectedChapterId} loaded · change set ${changeSetId.slice(0, 8)} · version ${expectedVersion}.`);
     else { offline.hidden = false; offline.textContent = "Read-only: this chapter remains repository-authoritative until its controlled D1 cutover."; setStatus(`${chapter.title ?? selectedChapterId} loaded read-only. Browse and inspect it here; editing remains locked until cutover.`); }
   }
 
@@ -521,20 +713,61 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       const [schemaResponse, chaptersResponse] = await Promise.all([fetch(`${gatewayOrigin}/v1/schema`, { credentials: "include" }), fetch(`${gatewayOrigin}/v1/chapters`, { credentials: "include" })]);
       if (!schemaResponse.ok || !chaptersResponse.ok) throw new Error("content API unavailable");
       const schemaData = await schemaResponse.json();
-      for (const operation of ["text.replace", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
+      for (const operation of ["text.replace", "block.insert", "block.move", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
       const chapterIndex = await chaptersResponse.json();
       for (const item of chapterIndex.chapters ?? []) { const option = [...chapterPicker.options].find((candidate) => candidate.value === item.id); if (option) option.dataset.editable = String(item.authoringState === "editable"); }
       await loadSelectedChapter();
     } catch { offline.hidden = false; setStatus(authenticated ? "Authentication is healthy, but the content API is unavailable. Nothing entered here will be persisted." : "Authentication service unavailable. Nothing entered here will be persisted."); }
   }
 
-  root.querySelectorAll<HTMLButtonElement>("[data-workspace]").forEach((button) => button.addEventListener("click", () => { root.querySelectorAll("[data-workspace]").forEach((item) => item.classList.toggle("selected", item === button)); setStatus(`${button.dataset.workspace} workspace selected.`); }));
-  chapterPicker.addEventListener("change", async () => { try { setStatus("Loading selected chapter…"); await loadSelectedChapter(); } catch { contentOnline = false; offline.hidden = false; setStatus("The selected chapter could not be loaded. No changes were made."); } });
+  root.querySelectorAll<HTMLButtonElement>("[data-workspace]").forEach((button) => button.addEventListener("click", () => switchWorkspace(button.dataset.workspace ?? "Chapter")));
+  chapterPicker.addEventListener("change", async () => {
+    if (dirty && !window.confirm("This checkpoint form has unsaved edits. Leave this chapter and discard those form edits?")) { chapterPicker.value = selectedChapterId; return; }
+    try { setStatus("Loading selected chapter…"); await loadSelectedChapter(); }
+    catch { contentOnline = false; canWrite = false; setAuthoringMode(false); offline.hidden = false; setStatus("The selected chapter could not be loaded. No changes were made."); }
+  });
   root.querySelector<HTMLButtonElement>("[data-nav-toggle]")?.addEventListener("click", (event) => { const button = event.currentTarget as HTMLButtonElement; const expanded = button.getAttribute("aria-expanded") !== "true"; button.setAttribute("aria-expanded", String(expanded)); root.querySelector("[data-nav-items]")?.classList.toggle("open", expanded); });
   root.querySelector<HTMLButtonElement>("[data-collapse-nav]")?.addEventListener("click", () => root.classList.toggle("nav-collapsed"));
   root.querySelector<HTMLButtonElement>("[data-inspector-close]")?.addEventListener("click", () => inspector.classList.remove("open"));
-  root.querySelector<HTMLButtonElement>("[data-media-menu]")?.addEventListener("click", (event) => { const menu = root.querySelector<HTMLElement>("[data-media-options]")!; menu.hidden = !menu.hidden; (event.currentTarget as HTMLButtonElement).setAttribute("aria-expanded", String(!menu.hidden)); });
-  root.querySelectorAll<HTMLElement>(".checkpoint-inspector input,.checkpoint-inspector textarea,.checkpoint-inspector select").forEach((field) => field.addEventListener("input", () => { dirty = true; setStatus("Checkpoint has unsaved edits."); }));
+  root.querySelectorAll<HTMLButtonElement>("[data-media-menu]").forEach((button) => button.addEventListener("click", () => { const kind = button.dataset.mediaMenu; const menu = root.querySelector<HTMLElement>(`[data-media-options="${kind}"]`); if (!menu) return; menu.hidden = !menu.hidden; button.setAttribute("aria-expanded", String(!menu.hidden)); }));
+  root.querySelectorAll<HTMLElement>(".checkpoint-inspector input,.checkpoint-inspector textarea,.checkpoint-inspector select").forEach((field) => field.addEventListener("input", () => { if (!canWrite) return; dirty = true; setStatus("Checkpoint has unsaved edits."); }));
+  insertBlockForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const copy = insertCopy.value.trim(); const anchorBlockId = selectedBlockId || (chapter.body ?? []).find((block) => block.blockId)?.blockId || "";
+    if (!canWrite || !changeSetId || !anchorBlockId) { setStatus("Select a stable block in the editable canary before inserting structured content."); return; }
+    if (!copy) { insertCopy.focus(); setStatus("Structured block content is required."); return; }
+    const type = insertBlockType.value; let block: Record<string, unknown>;
+    if (type === "heading") block = { type, level: 2, text: copy };
+    else if (type === "callout") block = { type, tone: "note", text: copy };
+    else if (type === "list") { const items = copy.split(/\n+/).map((item) => item.trim()).filter(Boolean); if (!items.length) return; block = { type, ordered: false, items }; }
+    else block = { type, text: copy };
+    const position = insertPosition.value === "before" ? { beforeBlockId: anchorBlockId } : { afterBlockId: anchorBlockId };
+    try { await applyOperation({ type: "block.insert", block, position }); insertCopy.value = ""; setStatus(`${type} inserted ${insertPosition.value} ${anchorBlockId} · working version ${expectedVersion}.`); }
+    catch { setStatus("The structured block was not inserted. The stable position or working revision changed."); }
+  });
+  root.querySelectorAll<HTMLButtonElement>("[data-move-block]").forEach((button) => button.addEventListener("click", async () => {
+    const blocks = chapter.body ?? []; const index = blocks.findIndex((block) => block.blockId === selectedBlockId); const direction = button.dataset.moveBlock;
+    if (!canWrite || index < 0) return;
+    const neighbor = direction === "up" ? blocks[index - 1] : blocks[index + 1]; if (!neighbor?.blockId) return;
+    const position = direction === "up" ? { beforeBlockId: neighbor.blockId } : { afterBlockId: neighbor.blockId };
+    try { await applyOperation({ type: "block.move", blockId: selectedBlockId, position }); setStatus(`Moved ${selectedBlockId} ${direction} · working version ${expectedVersion}.`); }
+    catch { setStatus("The selected block was not moved. Refresh the chapter and try again."); }
+  }));
+  removeMediaPlacement.addEventListener("click", async () => {
+    const block = (chapter.body ?? []).find((item) => item.blockId === selectedBlockId);
+    if (!canWrite || block?.type !== "mediaFigure" || !block.figureId) return;
+    if (!window.confirm(`Remove media placement ${block.figureId} from this draft? The immutable media asset will remain in the library.`)) return;
+    try { await applyOperation({ type: "media.remove", figureId: block.figureId }); selectedBlockId = ""; selectedBlockReceipt.textContent = "No block selected"; setStatus(`Removed media placement ${block.figureId} from the draft.`); }
+    catch { setStatus("The media placement was not removed. Refresh the chapter and try again."); }
+  });
+  root.querySelector<HTMLButtonElement>("[data-refresh-evidence]")?.addEventListener("click", () => { void refreshReviewEvidence(); });
+  root.querySelector<HTMLButtonElement>("[data-edit-anchor]")?.addEventListener("click", () => { switchWorkspace("Chapter"); const target = prose.querySelector<HTMLElement>(`[data-passage-id="${CSS.escape(anchor.value)}"]`); target?.focus(); setStatus(target ? `Anchor ${anchor.value} selected in the chapter.` : "The selected anchor is not present in this working chapter."); });
+  root.querySelector<HTMLButtonElement>("[data-a11y]")?.addEventListener("click", () => {
+    const item = readCheckpoint(); const issues = [];
+    if (!item.title.trim()) issues.push("title"); if (!item.trigger.trim()) issues.push("inline trigger"); if (!item.prompt.trim()) issues.push("prompt"); if (!item.guidance.trim()) issues.push("guidance");
+    if (!blockForPassage(item.passageId)) issues.push("valid passage anchor"); if (!Number.isInteger(item.minWords) || !Number.isInteger(item.maxWords) || item.minWords < 1 || item.maxWords > 1000 || item.minWords > item.maxWords) issues.push("word range");
+    const result = root.querySelector<HTMLElement>("[data-a11y-result]")!; result.textContent = issues.length ? `Review ${issues.join(", ")}` : "Required fields and anchor pass"; result.classList.toggle("good", issues.length === 0); setStatus(issues.length ? `Checkpoint checks found: ${issues.join(", ")}.` : "Checkpoint required-field and anchor checks passed. Semantic approval remains human review.");
+  });
   addCheckpoint.addEventListener("click", () => { const slot = addCheckpoint.dataset.slot as typeof slots[number]; if (slot) { selectCheckpoint(slot, true); setStatus(`New ${slot} checkpoint opened. It is not persisted until Save checkpoint succeeds.`); } });
   saveCheckpoint.addEventListener("click", async () => { if (!contentOnline || !changeSetId) { setStatus("Not saved: the content API is unavailable. Copy your text before leaving this page."); return; } try { const checkpoint = readCheckpoint(); if (!checkpoint.passageExcerptHash) checkpoint.passageExcerptHash = await digest(blockForPassage(checkpoint.passageId)?.text ?? ""); await applyOperation({ type: "checkpoint.upsert", checkpoint }); dirty = false; renderCheckpointState(); selectCheckpoint(checkpoint.slot); setStatus(`Saved ${checkpoint.slot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint was not saved. The server rejected the operation or the working version changed."); } });
   removeCheckpoint.addEventListener("click", async () => { const item = checkpointFor(selectedSlot); if (!item || !contentOnline) { setStatus("Checkpoint was not removed."); return; } try { await applyOperation({ type: "checkpoint.remove", slot: selectedSlot, checkpointId: item.checkpointId }); renderCheckpointState(); setStatus(`Removed ${selectedSlot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint removal was rejected by the server."); } });
@@ -584,6 +817,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     "Link card": "The reader uses only the title and summary entered here. It never fetches arbitrary page metadata or active HTML.",
   };
   root.querySelectorAll<HTMLButtonElement>("[data-media]").forEach((button) => button.addEventListener("click", () => {
+    if (!canWrite || !changeSetId) { setStatus("Media and embed insertion is available only in the editable Chapter 7 canary."); return; }
+    if (!selectedBlockId) { switchWorkspace("Chapter"); setStatus("Select a stable chapter block before placing media or an embed."); return; }
     selectedMedia = button.dataset.media ?? ""; mediaTitle.textContent = `Insert ${selectedMedia}`;
     mediaRef.value = ""; mediaName.value = ""; mediaId.value = ""; mediaVersionId.value = ""; rightsCaseId.value = ""; selectedExistingRightsStatus = ""; mediaSearch.value = ""; mediaKind.value = ""; mediaRights.value = "cleared"; mediaResults.replaceChildren(); rightsBasis.value = "owned"; rightsCreator.value = ""; rightsSource.value = ""; rightsLicense.value = ""; rightsAttribution.value = ""; reviewTeachingUse.value = ""; placementIntent.value = ""; decorative.checked = false; reviewAlt.value = ""; reviewAlt.required = true; reviewAltField.hidden = false; motionReview.value = "notApplicable"; captionLanguage.value = "en"; reviewTranscript.value = ""; posterAlt.value = ""; activeReviewPackageId = ""; activeReviewDeclarationHash = ""; activeReviewPackageState = ""; reviewPackageReceipt.hidden = true; reviewDecisionComment.value = ""; reviewPackageStatus.textContent = ""; mediaFile.value = ""; existingAsset.checked = false; reviewAck.checked = false; uploadProgress.textContent = ""; mediaCaption.value = ""; mediaAlt.value = ""; mediaCredit.value = ""; mediaTranscript.value = ""; mediaFallback.value = ""; mediaLinkLabel.value = selectedMedia === "Link card" ? "Open resource" : `Open on ${selectedMedia}`;
     const external = externalSelections.includes(selectedMedia); const linkCard = selectedMedia === "Link card";
@@ -591,7 +826,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (!external) { mediaFile.accept = selectedMedia === "PDF" ? "application/pdf,.pdf" : selectedMedia === "Audio/Video" ? "audio/*,video/*" : "image/png,image/jpeg,image/webp,image/gif,.gif"; configureExistingAsset(false); } else existingFields.hidden = true;
     gifNote.hidden = true; mediaSubmit.textContent = linkCard ? "Add link card" : ["SoundCloud", "Bluesky"].includes(selectedMedia) ? "Add link-first source" : external ? "Insert embed" : "Upload, process, and place";
     mediaHelp.textContent = external ? "Only a typed provider identity and instructor-authored fallback are saved. Raw embed HTML is never accepted." : "The file is hashed locally, uploaded to quarantine, processed, assigned stable IDs, then placed after the selected block.";
-    root.querySelector<HTMLElement>("[data-media-options]")!.hidden = true; root.querySelector<HTMLButtonElement>("[data-media-menu]")!.setAttribute("aria-expanded", "false"); mediaDialog.showModal();
+    const options = button.closest<HTMLElement>("[data-media-options]"); options?.setAttribute("hidden", ""); const menuKind = options?.dataset.mediaOptions; root.querySelector<HTMLButtonElement>(`[data-media-menu="${menuKind}"]`)?.setAttribute("aria-expanded", "false"); mediaDialog.showModal();
   }));
   mediaDialog.querySelector<HTMLButtonElement>("[data-media-close]")?.addEventListener("click", () => mediaDialog.close());
   mediaDialog.querySelector<HTMLFormElement>("[data-media-form]")?.addEventListener("submit", async (event) => {
@@ -632,7 +867,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       setStatus(`Protected preview issued for working version ${data.workingVersion}; it expires at ${new Date(data.expiresAt).toLocaleTimeString()} and can be opened once.`);
     } catch { previewWindow?.close(); setStatus("Protected preview could not be created. The draft was not submitted or published."); }
   });
-  root.querySelector<HTMLButtonElement>("[data-review]")?.addEventListener("click", () => { const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const toggle = root.querySelector<HTMLButtonElement>("[data-agent-toggle]")!; drawer.classList.remove("collapsed"); toggle.setAttribute("aria-expanded", "true"); reviewSummary.focus(); });
+  root.querySelector<HTMLButtonElement>("[data-review]")?.addEventListener("click", () => { switchWorkspace("Review"); const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const toggle = root.querySelector<HTMLButtonElement>("[data-agent-toggle]")!; drawer.classList.remove("collapsed"); toggle.setAttribute("aria-expanded", "true"); exactDiff.focus?.(); });
   root.querySelector<HTMLButtonElement>("[data-validate]")?.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Validation requires an online change set with no unsaved form edits."); return; } try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:validate`, {}); const data = await response.json(); if (!response.ok) throw new Error(); setStatus(`Validation passed · ${data.validationHash ?? data.contentHash}.`); } catch { setStatus("Validation failed. Review the chapter requirements before submission."); } });
   submitReview.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Review submission requires an online, saved change set."); return; } try { const idempotencyKey = key(); const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:submitReview`, { baseRevisionId, expectedVersion, idempotencyKey }); const data = await response.json(); if (!response.ok) throw new Error(); showHumanReview(data); snapshotReceipt.hidden = false; snapshotReceipt.textContent = `Submitted immutable snapshot ${data.snapshotHash} at revision ${data.snapshotRevision}.`; setStatus("Submitted for human review. Approval remains a separate explicit action and does not publish."); } catch { setStatus("Review submission failed validation or the working version changed."); } });
   approveRelease.addEventListener("click", () => { void recordReleaseDecision("approve"); });
@@ -641,5 +876,6 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   login.addEventListener("click", () => { if (gatewayOrigin) window.location.assign(`${gatewayOrigin}/auth/start`); });
   logout.addEventListener("click", async () => { if (gatewayOrigin) await fetch(`${gatewayOrigin}/auth/logout`, { method: "POST", credentials: "include", headers: { "X-Editor-CSRF": csrfToken } }); window.location.reload(); });
   root.querySelector<HTMLButtonElement>("[data-agent-toggle]")?.addEventListener("click", (event) => { const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const collapsed = drawer.classList.toggle("collapsed"); (event.currentTarget as HTMLButtonElement).setAttribute("aria-expanded", String(!collapsed)); });
+  setAuthoringMode(false);
   void start();
 </script>
