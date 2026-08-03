@@ -27,7 +27,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       <p class="editor-status" data-editor-status aria-live="polite">Checking editor session…</p>
 
       <section class="workspace-panel" data-workspace-panel="Chapter" aria-labelledby="chapter-workspace-title">
-        <div class="workspace-heading chapter-authoring-heading"><div><p class="review-eyebrow">Chapter editor</p><h1 id="chapter-workspace-title" data-chapter-heading>Chapter</h1></div><div class="chapter-heading-actions"><strong class="authority-badge" data-authority-badge>Checking authority…</strong><button type="button" data-import-chapter>Paste or import chapter</button><button class="save-document" type="button" data-save-document disabled>Save</button></div></div>
+        <div class="workspace-heading chapter-authoring-heading"><div><p class="review-eyebrow">Chapter editor</p><h1 id="chapter-workspace-title" data-chapter-heading>Chapter</h1></div><div class="chapter-heading-actions"><strong class="authority-badge" data-authority-badge>Checking authority…</strong><button type="button" data-open-version-history>Version history</button><button type="button" data-import-chapter>Paste or import chapter</button><button class="save-document" type="button" data-save-document disabled>Save</button></div></div>
         <p class="workspace-help">Edit the chapter as one continuous document. Paste a whole chapter directly into the page, or use Paste or import chapter for a clean replacement preview.</p>
         <div class="document-modebar"><div class="document-mode-tabs" role="tablist" aria-label="Chapter editing mode"><button type="button" role="tab" aria-selected="true" data-document-mode="visual">Visual</button><button type="button" role="tab" aria-selected="false" data-document-mode="markdown">Markdown</button></div><span data-save-state>All changes saved</span></div>
         <div class="document-toolbar" role="toolbar" aria-label="Chapter formatting">
@@ -131,6 +131,14 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   </form>
 </dialog>
 
+<dialog class="chapter-import-dialog version-history-dialog" data-version-history-dialog aria-labelledby="version-history-title">
+  <div class="version-history-dialog__body"><div class="inspector-heading"><div><p class="review-eyebrow">Every saved revision</p><h2 id="version-history-title">Version history</h2></div><button type="button" data-version-history-close aria-label="Close version history">×</button></div>
+    <p>Every Save creates a permanent revision. Restoring a version opens it as a draft first, so the current chapter stays live until you choose Save.</p>
+    <div data-version-history-list aria-live="polite"><p>Loading version history…</p></div>
+    <button class="load-older-revisions" type="button" data-load-older-revisions hidden>Load older revisions</button>
+  </div>
+</dialog>
+
 <dialog class="media-inspector" data-media-dialog aria-labelledby="media-dialog-title">
   <form method="dialog" data-media-form><div class="inspector-heading"><h2 id="media-dialog-title" data-media-title>Insert media</h2><button type="button" data-media-close aria-label="Close media inspector">×</button></div>
   <label data-media-ref-label>Canonical URL<input type="url" inputmode="url" autocomplete="url" data-media-url required placeholder="https://" /></label><label>Title<input type="text" data-media-title-input required /></label>
@@ -163,6 +171,9 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const saveDocument = root.querySelector<HTMLButtonElement>("[data-save-document]")!;
   const saveState = root.querySelector<HTMLElement>("[data-save-state]")!;
   const importDialog = document.querySelector<HTMLDialogElement>("[data-import-dialog]")!;
+  const versionHistoryDialog = document.querySelector<HTMLDialogElement>("[data-version-history-dialog]")!;
+  const versionHistoryDialogList = versionHistoryDialog.querySelector<HTMLElement>("[data-version-history-list]")!;
+  const loadOlderRevisions = versionHistoryDialog.querySelector<HTMLButtonElement>("[data-load-older-revisions]")!;
   const importForm = importDialog.querySelector<HTMLFormElement>("[data-import-form]")!;
   const importValue = importDialog.querySelector<HTMLTextAreaElement>("[data-import-value]")!;
   const importFormat = importDialog.querySelector<HTMLSelectElement>("[data-import-format]")!;
@@ -281,7 +292,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const moveDown = root.querySelector<HTMLButtonElement>('[data-move-block="down"]')!;
   const removeStructuredBlock = root.querySelector<HTMLButtonElement>("[data-remove-block]")!;
   const removeMediaPlacement = root.querySelector<HTMLButtonElement>("[data-remove-media]")!;
-  let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let documentMode: "visual" | "markdown" = "visual"; let draftBody: Block[] | null = null; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot = ""; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
+  let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let documentMode: "visual" | "markdown" = "visual"; let draftBody: Block[] | null = null; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot = ""; let revisionHistoryItems: Record<string, any>[] = []; let revisionHistoryNextCursor: string | null = null; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
   const setStatus = (message: string) => { status.textContent = message; };
   const key = () => crypto.randomUUID();
   const post = (path: string, body: unknown) => fetch(`${gatewayOrigin}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken }, body: JSON.stringify(body) });
@@ -718,27 +729,48 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     await refreshRevisionHistory();
   }
 
-  async function refreshRevisionHistory() {
-    if (!gatewayOrigin || !authenticated) { revisionHistory.replaceChildren(evidenceList([], "Revision history requires an authenticated content API session.")); return; }
+  const revisionActorLabel = (item: Record<string, any>) => {
+    if (item.actorType === "agent") return `Agent · ${item.clientId || item.createdBy || "unknown client"}`;
+    if (item.actorType === "human") return `Instructor · ${item.createdBy || "authenticated editor"}`;
+    return item.createdBy ? `Imported or system revision · ${item.createdBy}` : "Imported or system revision";
+  };
+
+  function renderRevisionHistoryList(target: HTMLElement) {
+    if (!revisionHistoryItems.length) { target.replaceChildren(evidenceList([], "No immutable revisions are recorded.")); return; }
+    const list = document.createElement("ol"); list.className = "revision-history__list";
+    for (const item of revisionHistoryItems) {
+      const row = document.createElement("li"); const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = item.current ? "Current version" : "Earlier version";
+      const author = document.createElement("span"); author.className = "revision-history__author"; author.textContent = `${revisionActorLabel(item)} · ${new Date(item.createdAt).toLocaleString()}`;
+      const detail = document.createElement("span"); detail.textContent = `${item.revisionId} · ${String(item.contentHash).slice(0, 12)}…`;
+      copy.append(title, author, detail); row.append(copy);
+      if (canWrite && !item.current) { const restore = document.createElement("button"); restore.type = "button"; restore.textContent = "Restore this version"; restore.addEventListener("click", async () => {
+        if (!window.confirm(`Restore revision ${item.revisionId} into the editor? It will open as a draft. The current live chapter will not change until you click Save.`)) return;
+        restore.disabled = true;
+        try { const restored = await post(`/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions/${encodeURIComponent(item.revisionId)}:restoreAsDraft`, { title: `Restore ${item.revisionId}`, description: "Instructor-created restoration draft from immutable version history.", idempotencyKey: key() }); const result = await restored.json(); if (!restored.ok || !result.id) throw new Error(); changeSetId = String(result.id); baseRevisionId = String(result.baseRevisionId); expectedVersion = Number(result.version ?? 1); await hydrateChangeset(); renderChapter(); renderCheckpointState(); versionHistoryDialog.close(); await refreshReviewEvidence(); setStatus(`Revision ${item.revisionId} is open as a draft. Review it, then click Save to make it live as a new version.`); }
+        catch { restore.disabled = false; setStatus("That version could not be restored. The chapter authority or current revision may have changed."); }
+      }); row.append(restore); }
+      list.append(row);
+    }
+    target.replaceChildren(list);
+  }
+
+  function renderRevisionHistory() {
+    renderRevisionHistoryList(revisionHistory);
+    renderRevisionHistoryList(versionHistoryDialogList);
+    loadOlderRevisions.hidden = !revisionHistoryNextCursor;
+  }
+
+  async function refreshRevisionHistory(reset = true) {
+    if (!gatewayOrigin || !authenticated) { revisionHistoryItems = []; revisionHistoryNextCursor = null; renderRevisionHistory(); return; }
     try {
-      const response = await fetch(`${gatewayOrigin}/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions?limit=20`, { credentials: "include" });
+      const cursor = reset ? "0" : revisionHistoryNextCursor;
+      if (!reset && !cursor) return;
+      const response = await fetch(`${gatewayOrigin}/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions?limit=20&cursor=${encodeURIComponent(cursor || "0")}`, { credentials: "include" });
       const data = await response.json(); if (!response.ok || !Array.isArray(data.revisions)) throw new Error("history unavailable");
-      if (!data.revisions.length) { revisionHistory.replaceChildren(evidenceList([], "No immutable revisions are recorded.")); return; }
-      const list = document.createElement("ol"); list.className = "revision-history__list";
-      for (const item of data.revisions) {
-        const row = document.createElement("li"); const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = item.current ? "Current revision" : "Historical revision";
-        const detail = document.createElement("span"); detail.textContent = `${item.revisionId} · ${new Date(item.createdAt).toLocaleString()} · ${String(item.contentHash).slice(0, 12)}…`;
-        copy.append(title, detail); row.append(copy);
-        if (canWrite && !item.current) { const restore = document.createElement("button"); restore.type = "button"; restore.textContent = "Restore as new draft"; restore.addEventListener("click", async () => {
-          if (!window.confirm(`Create a new draft from revision ${item.revisionId}? The current chapter will not be overwritten or published.`)) return;
-          restore.disabled = true;
-          try { const restored = await post(`/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions/${encodeURIComponent(item.revisionId)}:restoreAsDraft`, { title: `Restore ${item.revisionId}`, description: "Instructor-created restoration draft from immutable revision history.", idempotencyKey: key() }); const result = await restored.json(); if (!restored.ok || !result.id) throw new Error(); changeSetId = String(result.id); baseRevisionId = String(result.baseRevisionId); expectedVersion = Number(result.version ?? 1); await hydrateChangeset(); renderChapter(); renderCheckpointState(); await refreshReviewEvidence(); setStatus(`Historical revision ${item.revisionId} restored into new draft ${changeSetId}. Nothing was overwritten or published.`); }
-          catch { restore.disabled = false; setStatus("Historical revision was not restored. The chapter authority or revision may have changed."); }
-        }); row.append(restore); }
-        list.append(row);
-      }
-      revisionHistory.replaceChildren(list);
-    } catch { revisionHistory.replaceChildren(evidenceList([], "Immutable revision history could not be loaded.")); }
+      revisionHistoryItems = reset ? data.revisions : [...revisionHistoryItems, ...data.revisions.filter((item: Record<string, any>) => !revisionHistoryItems.some((existing) => existing.revisionId === item.revisionId))];
+      revisionHistoryNextCursor = data.page?.nextCursor ?? null;
+      renderRevisionHistory();
+    } catch { revisionHistoryItems = []; revisionHistoryNextCursor = null; revisionHistory.replaceChildren(evidenceList([], "Immutable revision history could not be loaded.")); versionHistoryDialogList.replaceChildren(evidenceList([], "Version history could not be loaded.")); loadOlderRevisions.hidden = true; }
   }
 
   function renderSemanticReview() {
@@ -902,7 +934,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   }
 
   function setAuthoringMode(editable: boolean) {
-    canWrite = editable && selectedChapterId === "chapter_ch07";
+    canWrite = editable;
     contentOnline = canWrite;
     root.toggleAttribute("data-read-only", !canWrite);
     const mutationSelectors = ["[data-preview]", "[data-checkpoint-preview]", "[data-validate]", "[data-submit-review]", "[data-import-chapter]", "[data-format-command]", "[data-format-link]", "[data-format-block]", "[data-open-checkpoint]", "[data-open-media]", "[data-open-embed]", "[data-media]", "[data-add-checkpoint]", "[data-save-checkpoint]", "[data-remove-checkpoint]", "[data-remove-block]"];
@@ -921,7 +953,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (!chapterResponse.ok) throw new Error("content unavailable");
     const documentData = await chapterResponse.json(); canonicalChapter = structuredClone(documentData.chapter); chapter = documentData.chapter; baseRevisionId = String(documentData.revisionId); canonicalContentHash = String(documentData.contentHash ?? ""); revisionCreatedAt = String(documentData.revisionCreatedAt ?? ""); authorityKind = String(documentData.authority?.authority ?? "git");
     const selected = chapterPicker.selectedOptions[0];
-    const editable = documentData.authoringState === "editable" && selectedChapterId === "chapter_ch07";
+    const editable = documentData.authoringState === "editable" && authorityKind === "d1";
     if (selected) selected.dataset.editable = String(editable);
     setAuthoringMode(editable);
     if (canWrite) await createOrResumeChangeSet();
@@ -1039,6 +1071,9 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   });
   root.querySelector<HTMLButtonElement>("[data-refresh-evidence]")?.addEventListener("click", () => { void refreshReviewEvidence(); });
   root.querySelector<HTMLButtonElement>("[data-refresh-history]")?.addEventListener("click", () => { void refreshRevisionHistory(); });
+  root.querySelector<HTMLButtonElement>("[data-open-version-history]")?.addEventListener("click", () => { versionHistoryDialog.showModal(); void refreshRevisionHistory(); });
+  versionHistoryDialog.querySelector<HTMLButtonElement>("[data-version-history-close]")?.addEventListener("click", () => versionHistoryDialog.close());
+  loadOlderRevisions.addEventListener("click", () => { void refreshRevisionHistory(false); });
   root.querySelector<HTMLButtonElement>("[data-edit-anchor]")?.addEventListener("click", () => { switchWorkspace("Chapter"); const target = prose.querySelector<HTMLElement>(`[data-passage-id="${CSS.escape(anchor.value)}"]`); target?.focus(); setStatus(target ? `Anchor ${anchor.value} selected in the chapter.` : "The selected anchor is not present in this working chapter."); });
   root.querySelector<HTMLButtonElement>("[data-a11y]")?.addEventListener("click", () => {
     const item = readCheckpoint(); const issues = [];
