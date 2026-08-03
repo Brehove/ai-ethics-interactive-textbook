@@ -40,8 +40,12 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data-document-visual contenteditable="false"/);
   assert.match(shell, /data-document-markdown hidden/);
   assert.match(shell, /serializeVisualDocument/);
+  assert.match(shell, /bodyReplacementPayload[\s\S]*block\.preserve === true[\s\S]*\{ blockId: block\.blockId, preserve: true \}/);
+  assert.match(shell, /const body = bodyReplacementPayload\(documentMode === "markdown"/);
   assert.match(shell, /reconcileImportedBlocks/);
-  assert.match(shell, /stable checkpoint or media anchor/);
+  assert.match(shell, /DEPENDENCIES_REQUIRE_REANCHOR/);
+  assert.match(shell, /Your edits remain in this browser/);
+  assert.match(shell, /data\?\.error\?\.message[\s\S]*data\?\.error\?\.code/);
   assert.match(shell, /data-insert-block-form[\s\S]*data-insert-block-type[\s\S]*data-insert-position/);
   assert.match(shell, /type: "block\.insert"[\s\S]*block,[\s\S]*position/);
   assert.match(shell, /type: "block\.move"[\s\S]*blockId: selectedBlockId[\s\S]*position/);

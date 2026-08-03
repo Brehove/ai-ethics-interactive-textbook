@@ -525,6 +525,9 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     return ["div", "section", "article", "main"].includes(tag) && item.querySelector(":scope > p,:scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6,:scope > ul,:scope > ol,:scope > blockquote,:scope > pre,:scope > table") ? flattenDocumentElements(item) : [item];
   });
   const serializeVisualDocument = () => flattenDocumentElements(prose).map(elementDescriptor).filter((block): block is Block => Boolean(block));
+  const bodyReplacementPayload = (blocks: Block[]) => blocks.map((block) => block.preserve === true && block.blockId
+    ? { blockId: block.blockId, preserve: true }
+    : block);
 
   const parseMarkdownDocument = (source: string) => {
     const lines = source.replace(/\r\n?/g, "\n").split("\n"); const blocks: Block[] = [];
@@ -570,11 +573,19 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 
   async function saveContinuousDocument() {
     if (!contentOnline || !changeSetId) { setStatus("Draft was not saved because this chapter is not in the editable online canary."); return; }
-    const body = documentMode === "markdown" ? reconcileImportedBlocks(parseMarkdownDocument(markdownEditor.value)).map((block) => ["mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"].includes(block.type) && block.blockId ? { blockId: block.blockId, preserve: true } : block) : serializeVisualDocument();
+    const body = bodyReplacementPayload(documentMode === "markdown"
+      ? reconcileImportedBlocks(parseMarkdownDocument(markdownEditor.value)).map((block) => ["mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"].includes(block.type) && block.blockId ? { ...block, preserve: true } : block)
+      : serializeVisualDocument());
     if (!body.length || !body[0].blockId) { setStatus("Draft was not saved: the first stable chapter passage could not be reconciled. Keep the opening block or import beneath it."); return; }
     saveDocument.disabled = true; saveState.textContent = "Saving…";
     try { await applyOperation({ type: "chapter.replaceBody", body }); draftBody = null; dirty = false; saveState.textContent = "All changes saved"; saveState.classList.remove("unsaved"); renderChapter(); setStatus(`Chapter draft saved atomically · working version ${expectedVersion}. Checkpoints and media anchors remain attached.`); }
-    catch { saveDocument.disabled = false; saveState.textContent = "Save needs attention"; setStatus("The chapter was not saved. A stable checkpoint or media anchor may have been removed; restore that passage or reanchor it first."); }
+    catch (error) {
+      saveDocument.disabled = false; saveState.textContent = "Save needs attention";
+      const failure = error as Error & { code?: string };
+      setStatus(failure.code === "DEPENDENCIES_REQUIRE_REANCHOR"
+        ? "The chapter was not saved. A stable checkpoint or media anchor was removed; restore that passage or reanchor it first. Your edits remain in this browser."
+        : `The chapter was not saved${failure.message ? `: ${failure.message}` : "."} Your edits remain in this browser.`);
+    }
   }
 
   function updateSelectionControls() {
@@ -787,8 +798,14 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   async function applyOperation(operation: unknown) {
     const idempotencyKey = key();
     const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:apply`, { baseRevisionId, expectedVersion, idempotencyKey, operation });
-    if (!response.ok) throw new Error("operation rejected");
-    const data = await response.json(); baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version); chapter = data.chapter ?? chapter; renderChapter(); renderCheckpointState(); renderSemanticReview(); await refreshReviewEvidence();
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const failure = new Error(typeof data?.error?.message === "string" ? data.error.message : `The content API rejected this operation (${response.status}).`) as Error & { code?: string; status?: number };
+      if (typeof data?.error?.code === "string") failure.code = data.error.code;
+      failure.status = response.status;
+      throw failure;
+    }
+    baseRevisionId = String(data.baseRevisionId ?? baseRevisionId); expectedVersion = Number(data.version); chapter = data.chapter ?? chapter; renderChapter(); renderCheckpointState(); renderSemanticReview(); await refreshReviewEvidence();
   }
 
   const stablePosition = () => ({ afterBlockId: selectedBlockId || (chapter.body ?? []).find((block) => block.blockId)?.blockId || "" });
