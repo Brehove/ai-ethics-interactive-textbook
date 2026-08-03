@@ -179,13 +179,14 @@ test('multi-document diff returns one content-free result per working copy', asy
   assert.equal(JSON.stringify(body).includes('Changed without leaking'), false);
 });
 
-test('human one-click save atomically advances the Chapter 7 canonical revision', async () => {
+test('human and explicitly scoped agent live saves atomically advance a D1-authoritative canonical revision', async () => {
   const publishable = { ...baseChapter(), chapterId: 'chapter_ch07', checkpoints: ['commit', 'work', 'reconcile'].map((slot) => ({ checkpointId: `checkpoint-${slot}`, ...checkpoint(slot, `p-${slot}`) })) };
   const contentHash = await sha256(publishable);
   const working = { id: 'working-live', document_id: 'chapter_ch07', base_revision_id: 'revision-base', content_hash: contentHash, content_text: JSON.stringify(publishable), version: 2, state: 'open', purpose: 'editorial', current_revision_id: 'revision-base', current_content_hash: 'old-hash' };
   const CONTENT_DB = fakeDb((sql) => {
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    if (sql.includes('SELECT authority FROM authority_registry')) return { authority: 'd1' };
     if (sql.includes('SELECT document_id, content_hash FROM document_revisions')) return null;
     return null;
   });
@@ -198,8 +199,11 @@ test('human one-click save atomically advances the Chapter 7 canonical revision'
   assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes('UPDATE documents SET current_revision_id')));
   assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes("UPDATE changesets SET state = 'applied'")));
 
-  const agentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent' }) }), { CONTENT_DB });
-  assert.equal(agentResponse.status, 403); assert.equal((await agentResponse.json()).error.code, 'HUMAN_ACTOR_REQUIRED');
+  const unscopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-denied' }) }), { CONTENT_DB });
+  assert.equal(unscopedAgentResponse.status, 403); assert.equal((await unscopedAgentResponse.json()).error.code, 'LIVE_SAVE_AUTHORITY_REQUIRED');
+
+  const scopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write content:live-save'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-allowed' }) }), { CONTENT_DB });
+  assert.equal(scopedAgentResponse.status, 201); assert.equal((await scopedAgentResponse.json()).live, true);
 });
 
 test('multi-document submission is all-target CAS and freezes every document atomically', async () => {
@@ -328,14 +332,14 @@ test('chapter revision history is bounded, content-free, and marks the canonical
   const CONTENT_DB = fakeDb((sql, _args, mode) => {
     if (sql.includes('SELECT current_revision_id FROM documents')) return { current_revision_id: 'revision-current' };
     if (sql.includes('FROM document_revisions') && mode === 'all') return { results: [
-      { id: 'revision-current', parent_revision_id: 'revision-old', content_hash: 'a'.repeat(64), created_by: 'actor_editor', created_at: '2026-08-03T01:00:00Z', metadata_json: '{"status":"published","private":"must-not-leak"}' },
+      { id: 'revision-current', parent_revision_id: 'revision-old', content_hash: 'a'.repeat(64), created_by: 'actor_editor', created_at: '2026-08-03T01:00:00Z', created_actor_type: 'agent', created_client_id: 'codex', created_run_id: 'run-123', metadata_json: '{"status":"published","publicationMode":"instructor-live-save","private":"must-not-leak"}' },
       { id: 'revision-old', parent_revision_id: null, content_hash: 'b'.repeat(64), created_by: 'actor_import', created_at: '2026-08-02T01:00:00Z', metadata_json: '{}' }
     ] };
     return null;
   });
   const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/revisions?limit=10', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
   const responseText = await response.text(); assert.equal(response.status, 200, responseText); const body = JSON.parse(responseText);
-  assert.equal(body.revisions[0].current, true); assert.equal(body.revisions[0].status, 'published');
+  assert.equal(body.revisions[0].current, true); assert.equal(body.revisions[0].status, 'published'); assert.equal(body.revisions[0].actorType, 'agent'); assert.equal(body.revisions[0].clientId, 'codex'); assert.equal(body.revisions[0].publicationMode, 'instructor-live-save');
   assert.equal(body.revisions[1].current, false); assert.equal(JSON.stringify(body).includes('must-not-leak'), false);
 });
 
@@ -896,6 +900,7 @@ test('Worker serves the versioned operation envelope to authenticated readers wi
   assert.equal(body.schemaVersion, 1);
   assert.equal(body.changesets.saveLive.route, 'POST /v1/changesets/{changesetId}:saveLive');
   assert.equal(body.changesets.saveLive.result, 'new immutable canonical revision visible on the public reader');
+  assert.equal(body.changesets.saveLive.agentAdditionalScope, 'content:live-save');
   assert.deepEqual(body.mutationEnvelope.required, ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operation']);
   assert.deepEqual(body.operations['embed.upsert'].required, ['type', 'embed']);
   assert.equal(body.media.requestUpload.route, 'POST /v1/media:requestUpload');

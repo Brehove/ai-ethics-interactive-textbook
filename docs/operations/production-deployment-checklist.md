@@ -69,6 +69,7 @@ Generate values locally, pass them directly to the secret commands, and do not p
 4. Deploy the protected preview Worker; verify invalid, expired, and replayed tokens fail and responses are uncached/noindexed.
 5. Set the shared media/release tokens, then deploy the editor/auth gateway.
 6. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected.
+   Register the hosted MCP with `TEXTBOOK_MCP_ACCESS_TOKEN`, install the repository Skills, and verify a Keychain-backed `npm run codex:textbook` session sees `save_live_revision` only when its receipt includes `content:live-save` and `maySaveLive: true`.
 7. Deploy the reader build containing `/admin/`; do not change the Chapter 7 authority record yet.
 8. Run browser login, Chapter 7 read/edit/checkpoint/diff/preview/validate/submit tests.
 9. Upload representative PNG/JPEG, animated GIF, WebP, MP3/WAV/M4A, MP4/WebM, PDF, and UTF-8 text fixtures through quarantine; verify exact private originals, public clean derivatives, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.

@@ -4,39 +4,39 @@
   "files": [
     {
       "path": "author-textbook-chapter/SKILL.md",
-      "sha256": "29e5752d87883cff04353f2eca594cc5b356e9edd71331ede2572fbbf00a1b70"
+      "sha256": "9dfec068e6460632eb752b092fe6215bed36edcd5d5fa736df9f7aebf0d71169"
     },
     {
       "path": "author-textbook-chapter/agents/openai.yaml",
-      "sha256": "7ebf3611a18425e3b9b50d6d8f2ef0e2fcbe4320954b8f249375c8626566387e"
+      "sha256": "2073ec394535280c42ba059fbbee8b9aea6e85064304ad67ce76cfdb9ccfb77b"
     },
     {
       "path": "author-textbook-chapter/references/mcp-workflow.md",
-      "sha256": "379cd56ffe178c7142691f1a9d5f54e5e022796ee5b087571b1049c64baf8075"
+      "sha256": "806fcf68e8a84f74b67fb945b9b93eaba5b6f9763412a074e26d5efba8e5b5ce"
     },
     {
       "path": "manage-prompt-checkpoints/SKILL.md",
-      "sha256": "1f24de6d1015fa5c95246fb27ce67b378e426a7ddec9a36d41bfee750b1fd52f"
+      "sha256": "8aa6d3f92a8fb13867db54343f1afd66e733e21c73d617c00df3e9274c39118c"
     },
     {
       "path": "manage-prompt-checkpoints/agents/openai.yaml",
-      "sha256": "858a066e4b342511a404ea2d2e5cb998514e639cae9f2c057efcda7b65fa5e3c"
+      "sha256": "32b17d6df61ca0a35fbe0a3e406ee6e31eef36cda8981805f9c939754fc5be4c"
     },
     {
       "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
-      "sha256": "2324fe8714ebfe29ff22f62cfbc188592b6ab7db2ab2c4fd98e864ae7b9e930b"
+      "sha256": "af470cac899e20d57199ab895acb6aed86d309d672e47e1bfaa948c6b8d086d0"
     },
     {
       "path": "publish-textbook-media/SKILL.md",
-      "sha256": "2d443ce3c870294d95e2574884103de6940583b50985a5da62608dcd60bb89a2"
+      "sha256": "91acc13e9e7d1327480c584bafdd5e3777b604a7ab775b1cdffee3098bc33454"
     },
     {
       "path": "publish-textbook-media/agents/openai.yaml",
-      "sha256": "a49c302e9dfbecf168528dd1440722a1d71fb1befef5f49329fda24837858735"
+      "sha256": "f82edcb37baf16f8fded609f0df2e0e810a0c4cb6f45c01fcfc19e817eefa317"
     },
     {
       "path": "publish-textbook-media/references/media-workflow.md",
-      "sha256": "37e81b867702fd83dc9a8d3b48e3f54c976967c5b48059550f95946121871edf"
+      "sha256": "15a2cf446aeee14e0d83da99b879fbed7d6aae0f271e2df86dd539b62f622d9d"
     },
     {
       "path": "publish-textbook-media/scripts/upload-media.mjs",

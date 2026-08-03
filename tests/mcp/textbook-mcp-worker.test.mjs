@@ -107,9 +107,28 @@ test('signed per-agent capabilities preserve identity, expire quickly, and hide 
   const server = createMcp(env, identity.runId, identity); const client = new Client({ name: 'scoped-client', version: '1.0.0' });
   await server.connect(serverTransport); await client.connect(clientTransport);
   const tools = (await client.listTools()).tools.map((tool) => tool.name);
-  assert.ok(tools.includes('get_chapter')); assert.ok(tools.includes('list_revisions')); assert.equal(tools.includes('replace_text'), false); assert.equal(tools.includes('submit_changeset'), false); assert.equal(tools.includes('create_media_review_package'), false);
+  assert.ok(tools.includes('get_chapter')); assert.ok(tools.includes('list_revisions')); assert.equal(tools.includes('replace_text'), false); assert.equal(tools.includes('submit_changeset'), false); assert.equal(tools.includes('save_live_revision'), false); assert.equal(tools.includes('create_media_review_package'), false);
   const resources = await client.listResources(); assert.deepEqual(resources.resources.map((item) => item.uri).sort(), ['textbook://capabilities', 'textbook://chapters', 'textbook://schema']);
   const receipt = await client.readResource({ uri: 'textbook://capabilities' }); assert.match(receipt.contents[0].text, /actor_agent_test/); assert.match(receipt.contents[0].text, /cannot/);
+  await client.close(); await server.close();
+});
+
+test('explicit live-save capability exposes the immediate publication tool and forwards exact preconditions', async () => {
+  const calls = [];
+  const routeEnv = { CONTENT_API: { fetch: async (request) => {
+    calls.push({ pathname: new URL(request.url).pathname, method: request.method, body: await request.clone().json() });
+    return new Response(JSON.stringify({ live: true, revisionId: 'revision_live' }), { status: 201, headers: { 'content-type': 'application/json' } });
+  } } };
+  const identity = await verifyAgentCapability(await signAgentCapability(claims(['content:read', 'content:write', 'content:live-save']), capabilitySecret), capabilitySecret);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createMcp(routeEnv, identity.runId, identity); const client = new Client({ name: 'live-save-client', version: '1.0.0' });
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  const tools = (await client.listTools()).tools.map((tool) => tool.name);
+  assert.ok(tools.includes('save_live_revision'));
+  const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
+  await client.callTool({ name: 'save_live_revision', arguments: { changeSetId: 'cs_live', baseRevisionId: 'revision_base', expectedVersion: 3, idempotencyKey: key } });
+  assert.deepEqual(calls[0], { pathname: '/v1/changesets/cs_live:saveLive', method: 'POST', body: { baseRevisionId: 'revision_base', expectedVersion: 3, idempotencyKey: key } });
+  const receipt = await client.readResource({ uri: 'textbook://capabilities' }); assert.match(receipt.contents[0].text, /"maySaveLive":true/);
   await client.close(); await server.close();
 });
 

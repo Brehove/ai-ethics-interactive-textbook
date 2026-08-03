@@ -14,7 +14,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
     readFile(new URL("../../src/components/ReadingRecord.astro", import.meta.url), "utf8"),
   ]);
   assert.match(page, /noindex/);
-  for (const label of ["Preview", "Review changes", "Validate", "Submit review", "Human release review", "Approve release snapshot", "Reject this snapshot", "Paste or import chapter", "Save", "Visual", "Markdown", "Checkpoints", "Add checkpoint", "Save checkpoint", "Remove checkpoint", "Remove structured block", "Image or GIF", "YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Audio/Video", "PDF", "Link card", "Semantic review", "Authored fallback"]) assert.match(shell, new RegExp(label.replace("/", "\\/")));
+  for (const label of ["Preview", "Review changes", "Validate", "Submit review", "Human release review", "Approve release snapshot", "Reject this snapshot", "Paste or import chapter", "Version history", "Save", "Visual", "Markdown", "Checkpoints", "Add checkpoint", "Save checkpoint", "Remove checkpoint", "Remove structured block", "Image or GIF", "YouTube", "Vimeo", "X post", "Spotify", "SoundCloud", "Bluesky", "Audio/Video", "PDF", "Link card", "Semantic review", "Authored fallback"]) assert.match(shell, new RegExp(label.replace("/", "\\/")));
   assert.match(shell, /Browse all 18 chapters here\. Chapter 7 is the writable canary/);
   assert.doesNotMatch(shell, /disabled=\{chapter\.order !== 7\}/);
   assert.match(shell, /chapter\.order === 7 \? "editable canary" : "read-only until cutover"/);
@@ -25,7 +25,8 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /function switchWorkspace\(name: string\)/);
   assert.match(shell, /panel\.hidden = panel\.dataset\.workspacePanel !== name/);
   assert.match(shell, /button\.setAttribute\("aria-current", "page"\)/);
-  assert.match(shell, /editable && selectedChapterId === "chapter_ch07"/);
+  assert.match(shell, /documentData\.authoringState === "editable" && authorityKind === "d1"/);
+  assert.doesNotMatch(shell, /canWrite = editable && selectedChapterId === "chapter_ch07"/);
   assert.match(shell, /aria-controls="editor-navigation-items"/);
   assert.match(shell, /aria-controls="media-insert-choices"/);
   assert.match(shell, /PUBLIC_CONTENT_API_ORIGIN|contentApiOrigin/);
@@ -119,7 +120,9 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data-revision-evidence[\s\S]*data-dependency-evidence[\s\S]*data-exact-diff/);
   assert.match(shell, /Open actual reader preview[\s\S]*data-checkpoint-preview/);
   assert.match(shell, /Revision history and restore[\s\S]*restoreAsDraft/);
-  assert.match(shell, /current chapter will not be overwritten or published/);
+  assert.match(shell, /Every Save creates a permanent revision/);
+  assert.match(shell, /Restore this version[\s\S]*current live chapter will not change until you click Save/);
+  assert.match(shell, /data-load-older-revisions[\s\S]*refreshRevisionHistory\(false\)/);
   assert.match(shell, /No semantic differences from canonical \$\{chapter\.title \?\? selectedChapterId\}/);
   for (const blockType of ["list", "table", "codeBlock", "callout", "mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"]) assert.match(shell, new RegExp(`block\\.type === \\\"${blockType}\\\"|\\[\\\"mediaFigure\\\", \\\"externalEmbed\\\", \\\"richLink\\\", \\\"diagram\\\"\\]`));
   assert.doesNotMatch(shell, /slice\(headingIndex, headingIndex \+ 8\)/);

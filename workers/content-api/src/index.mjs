@@ -21,6 +21,11 @@ const runIdentity = (identity) => {
 const requireHumanIdentity = (identity, action) => {
   if (identity.actorType !== 'human') throw new ApiError(403, 'HUMAN_ACTOR_REQUIRED', `${action} requires an authenticated human actor`);
 };
+const requireLiveSaveIdentity = (identity) => {
+  if (identity.actorType === 'human') return;
+  if (identity.actorType === 'agent' && identity.scopes.has('content:live-save')) return;
+  throw new ApiError(403, 'LIVE_SAVE_AUTHORITY_REQUIRED', 'Live chapter save requires an authenticated human or an agent capability with content:live-save');
+};
 const requireReleaseWorkflowIdentity = (identity) => {
   requireScope(identity, 'content:deployReceipt'); runIdentity(identity);
   if (identity.actorType !== 'service' || identity.actorId !== 'actor_release_workflow' || identity.clientId !== 'github-content-release') {
@@ -144,11 +149,23 @@ async function listChapterRevisions(env, id, url) {
   const { limit, cursor } = pageParams(url, { defaultLimit: 20, maxLimit: 50 });
   const document = await env.CONTENT_DB.prepare("SELECT current_revision_id FROM documents WHERE id = ? AND media_kind = 'text' AND state = 'active'").bind(id).first();
   if (!document) throw new ApiError(404, 'NOT_FOUND', 'Chapter was not found');
-  const rows = await env.CONTENT_DB.prepare(`SELECT id, parent_revision_id, content_hash, created_by, created_at, metadata_json
+  const rows = await env.CONTENT_DB.prepare(`SELECT id, parent_revision_id, content_hash, created_by, created_at, created_actor_type, created_client_id, created_run_id, metadata_json
     FROM document_revisions WHERE document_id = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`).bind(id, limit + 1, cursor).all();
   const page = (rows.results || []).slice(0, limit).map((row) => {
     const metadata = parseStoredJson(row.metadata_json || '{}', 'Revision metadata');
-    return { revisionId: row.id, parentRevisionId: row.parent_revision_id || null, contentHash: row.content_hash, createdBy: row.created_by, createdAt: row.created_at, current: row.id === document.current_revision_id, status: metadata.status || null };
+    return {
+      revisionId: row.id,
+      parentRevisionId: row.parent_revision_id || null,
+      contentHash: row.content_hash,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      actorType: row.created_actor_type || null,
+      clientId: row.created_client_id || null,
+      runId: row.created_run_id || null,
+      current: row.id === document.current_revision_id,
+      status: metadata.status || null,
+      publicationMode: metadata.publicationMode || null
+    };
   });
   return json({ chapterId: id, currentRevisionId: document.current_revision_id, revisions: page, page: { limit, cursor: String(cursor), nextCursor: (rows.results || []).length > limit ? String(cursor + limit) : null } });
 }
@@ -476,7 +493,7 @@ async function validateChangeset(request, env, identity, changesetId) {
 }
 
 async function saveChangesetLive(request, env, identity, changesetId) {
-  requireScope(identity, 'content:write'); runIdentity(identity); requireHumanIdentity(identity, 'Live chapter save');
+  requireScope(identity, 'content:write'); runIdentity(identity); requireLiveSaveIdentity(identity);
   const body = await readJsonBody(request, { allowedFields: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'] });
   validId(body.baseRevisionId, 'baseRevisionId');
   if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
@@ -485,7 +502,7 @@ async function saveChangesetLive(request, env, identity, changesetId) {
   if (idem.replay) return idem.replay;
   const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId));
   if (working.state !== 'open') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open changeset can be saved live');
-  if (working.document_id !== 'chapter_ch07') throw new ApiError(409, 'LIVE_SAVE_NOT_ENABLED', 'One-click live save is currently enabled only for Chapter 7');
+  await requireAuthoringAuthority(env, working.document_id);
   if (working.purpose === 'authority_cutover') throw new ApiError(409, 'CUTOVER_PROPOSAL_READ_ONLY', 'Authority cutover proposals cannot be saved live');
   if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id || body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'The chapter changed after this editor opened', { baseRevisionId: working.base_revision_id, currentRevisionId: working.current_revision_id, currentVersion: working.version });
   const chapter = parseStoredJson(working.content_text, 'Working document');
@@ -1575,7 +1592,7 @@ export default {
       if (request.method === 'GET' && url.pathname === '/v1/schema') return json({
         schemaVersion: 1,
         mutationEnvelope: { required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operation'], optional: ['documentId', 'dryRun'], multiDocumentRule: 'documentId is required when a changeset targets more than one document' },
-        changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, saveLive: { route: 'POST /v1/changesets/{changesetId}:saveLive', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], scope: 'content:write', humanActorRequired: true, result: 'new immutable canonical revision visible on the public reader' }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
+        changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, saveLive: { route: 'POST /v1/changesets/{changesetId}:saveLive', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], requiredScopes: ['content:write'], agentAdditionalScope: 'content:live-save', humanActorAllowed: true, result: 'new immutable canonical revision visible on the public reader' }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
         operations: OPERATION_PAYLOAD_SCHEMAS,
         reads: {
           passages: { route: 'GET /v1/chapters/{chapterId}/passages', query: { limit: '1-100', cursor: '0-10000' } },

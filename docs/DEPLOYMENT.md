@@ -47,6 +47,24 @@ npx wrangler deploy --config workers/editor-auth/wrangler.jsonc
 
 The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `Brehove/ai-ethics-interactive-textbook` and limited to Contents and Pull requests read/write permissions; Metadata read is GitHub's mandatory baseline. Webhooks are disabled. The callback is exactly `https://auth.ethicsandai.your-digital-life.org/auth/callback`.
 
+## Codex MCP and Skills
+
+Register the hosted MCP once:
+
+```bash
+codex mcp add ai-ethics-textbook \
+  --url https://mcp.ethicsandai.your-digital-life.org/mcp \
+  --bearer-token-env-var TEXTBOOK_MCP_ACCESS_TOKEN
+```
+
+Install the four directories under `.agents/skills/` into the user's Codex skills directory. The MCP uses short-lived, per-run capabilities; no shared bearer token belongs in Codex configuration. On macOS, store the Worker-matching signing secret in the login Keychain under service `ai-ethics-textbook-mcp-capability`, then start a Codex CLI session with:
+
+```bash
+npm run codex:textbook
+```
+
+The wrapper reads the signing secret without printing it, mints a 55-minute capability for a unique run, removes the signing secret from the child environment, and passes only the scoped bearer token to Codex. Start a new wrapped session to refresh an expired capability. The `content:live-save` scope exposes `save_live_revision`; the Skills may call it only when the user explicitly asks to save or publish immediately. It cannot approve, reject, change authority, promote a protected whole-site release, or roll back.
+
 ## Publication boundary
 
 A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. Git remains canonical for code and for chapters whose authority registry entry is `git`; routine browser/API editing begins only for a chapter whose exact D1 revision and normalized hash have been explicitly activated. Production promotion uses the protected release workflow and its recorded deployment receipt, never the direct Content API publish endpoint.
