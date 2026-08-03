@@ -8,6 +8,25 @@ export type VisualDocumentBlock = {
   rows?: string[][];
 };
 
+const editableTextBlockTypes = new Set(["paragraph", "heading", "blockquote", "callout"]);
+
+const hasVisibleText = (value = "") => value
+  .replace(/[\u200B-\u200D\uFEFF]/g, "")
+  .trim()
+  .length > 0;
+
+/**
+ * Empty contenteditable text blocks are browser editing artifacts, not valid
+ * chapter blocks. This includes stable blocks whose text was fully deleted.
+ * Omitting a stable empty block correctly expresses deletion to replaceBody;
+ * the API still protects any checkpoint or media dependency on that block.
+ */
+export const discardEmptyEditableVisualBlocks = <T extends VisualDocumentBlock>(blocks: T[]): T[] => blocks.filter((block) => (
+  block.preserve === true
+  || !editableTextBlockTypes.has(block.type)
+  || hasVisibleText(block.text)
+));
+
 const normalizedText = (block: VisualDocumentBlock) => (block.text
   ?? block.code
   ?? block.items?.join(" ")
@@ -61,3 +80,12 @@ export const reconcileDuplicateStableBlockIds = <T extends VisualDocumentBlock>(
     return [newBlock as T];
   });
 };
+
+/**
+ * Reconcile Chromium's cloned stable IDs before removing empty fragments. The
+ * order matters: it keeps the ID on the fragment closest to the original, then
+ * drops any blank fragment whether or not Chromium copied a stable ID onto it.
+ */
+export const normalizeVisualDocumentBlocks = <T extends VisualDocumentBlock>(blocks: T[], originals: VisualDocumentBlock[]): T[] => (
+  discardEmptyEditableVisualBlocks(reconcileDuplicateStableBlockIds(blocks, originals))
+);

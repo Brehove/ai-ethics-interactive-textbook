@@ -140,7 +140,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 </dialog>
 
 <script>
-  import { reconcileDuplicateStableBlockIds } from "../../lib/editor-visual-document";
+  import { normalizeVisualDocumentBlocks } from "../../lib/editor-visual-document";
 
   type Block = { type: string; blockId?: string; preserve?: boolean; text?: string; html?: string; sanitizedHtml?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; tone?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; diagramId?: string; figureId?: string; mediaId?: string; mediaVersionId?: string; rightsCaseId?: string; embedId?: string; linkId?: string; anchorPassageId?: string; identity?: { provider?: string; resourceType?: string; resourceId?: string }; fallback?: { title?: string; summary?: string } };
   type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: string; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
@@ -547,15 +547,10 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const item = element as HTMLElement; const tag = item.tagName.toLowerCase();
     return ["div", "section", "article", "main"].includes(tag) && item.querySelector(":scope > p,:scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6,:scope > ul,:scope > ol,:scope > blockquote,:scope > pre,:scope > table") ? flattenDocumentElements(item) : [item];
   });
-  const isDiscardableEmptyVisualBlock = (block: Block) => !block.blockId
-    && block.preserve !== true
-    && ["paragraph", "heading", "blockquote", "callout"].includes(block.type)
-    && !(block.text ?? "").trim();
-  const serializeVisualDocument = () => reconcileDuplicateStableBlockIds(
+  const serializeVisualDocument = () => normalizeVisualDocumentBlocks(
     flattenDocumentElements(prose)
       .map(elementDescriptor)
-      .filter((block): block is Block => Boolean(block))
-      .filter((block) => !isDiscardableEmptyVisualBlock(block)),
+      .filter((block): block is Block => Boolean(block)),
     chapter.body ?? []
   );
   const bodyReplacementPayload = (blocks: Block[]) => blocks.map((block) => block.preserve === true && block.blockId
