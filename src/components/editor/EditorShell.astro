@@ -11,7 +11,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     <button class="product-mark" type="button" aria-label="AI Ethics Textbook home"><span aria-hidden="true">▯</span> AI Ethics Textbook</button>
     <label class="chapter-picker"><span class="visually-hidden">Current chapter</span><select data-chapter aria-describedby="chapter-canary-note">{chapters.map((chapter) => <option value={`chapter_ch${String(chapter.order).padStart(2, "0")}`} selected={chapter.slug === active.slug} data-order={chapter.order} data-title={chapter.title} data-editable={chapter.order === 7 ? "true" : "false"}>{chapter.order}. {chapter.title} — {chapter.order === 7 ? "editable canary" : "read-only until cutover"}</option>)}</select><small id="chapter-canary-note">Browse all 18 chapters here. Chapter 7 is the writable canary; each later chapter unlocks only after its controlled D1 cutover.</small></label>
     <button class="release-state" type="button" data-release-state><i></i> Draft <span aria-hidden="true">⌄</span></button>
-    <div class="top-actions"><button type="button" data-preview aria-label="Preview chapter">◉ <span>Preview</span></button><button type="button" data-review aria-label="Review changes">▢ <span>Review changes</span><b data-change-count>0</b></button><button type="button" data-validate aria-label="Validate change set">✓ <span>Validate</span></button><button class="publish" type="button" data-submit-review aria-label="Submit change set for review">⇧ <span>Submit review</span></button><button type="button" data-login hidden>Sign in with GitHub</button><button type="button" data-logout hidden>Sign out</button><button class="more" type="button" data-publish aria-label="Publication status">⋮</button></div>
+    <div class="top-actions"><button type="button" data-preview aria-label="Preview chapter">◉ <span>Preview</span></button><button type="button" data-review aria-label="Review changes">▢ <span>Review changes</span><b data-change-count>0</b></button><button type="button" data-validate aria-label="Validate change set" hidden>✓ <span>Validate</span></button><button class="publish" type="button" data-submit-review aria-label="Submit change set for review" hidden>⇧ <span>Submit review</span></button><button type="button" data-login hidden>Sign in with GitHub</button><button type="button" data-logout hidden>Sign out</button><button class="more" type="button" data-publish aria-label="Publication status">⋮</button></div>
   </header>
 
   <div class="editor-workspace">
@@ -27,7 +27,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       <p class="editor-status" data-editor-status aria-live="polite">Checking editor session…</p>
 
       <section class="workspace-panel" data-workspace-panel="Chapter" aria-labelledby="chapter-workspace-title">
-        <div class="workspace-heading chapter-authoring-heading"><div><p class="review-eyebrow">Chapter editor</p><h1 id="chapter-workspace-title" data-chapter-heading>Chapter</h1></div><div class="chapter-heading-actions"><strong class="authority-badge" data-authority-badge>Checking authority…</strong><button type="button" data-import-chapter>Paste or import chapter</button><button class="save-document" type="button" data-save-document disabled>Save draft</button></div></div>
+        <div class="workspace-heading chapter-authoring-heading"><div><p class="review-eyebrow">Chapter editor</p><h1 id="chapter-workspace-title" data-chapter-heading>Chapter</h1></div><div class="chapter-heading-actions"><strong class="authority-badge" data-authority-badge>Checking authority…</strong><button type="button" data-import-chapter>Paste or import chapter</button><button class="save-document" type="button" data-save-document disabled>Save</button></div></div>
         <p class="workspace-help">Edit the chapter as one continuous document. Paste a whole chapter directly into the page, or use Paste or import chapter for a clean replacement preview.</p>
         <div class="document-modebar"><div class="document-mode-tabs" role="tablist" aria-label="Chapter editing mode"><button type="button" role="tab" aria-selected="true" data-document-mode="visual">Visual</button><button type="button" role="tab" aria-selected="false" data-document-mode="markdown">Markdown</button></div><span data-save-state>All changes saved</span></div>
         <div class="document-toolbar" role="toolbar" aria-label="Chapter formatting">
@@ -37,6 +37,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
           <button type="button" data-open-checkpoint aria-label="Edit checkpoint at the current passage">Checkpoint</button><button type="button" data-open-media aria-label="Insert media at the current passage">Media</button><button type="button" data-open-embed aria-label="Insert embed at the current passage">Embed</button>
           <button type="button" data-format-command="undo" aria-label="Undo">↶</button><button type="button" data-format-command="redo" aria-label="Redo">↷</button>
         </div>
+        <p class="toolbar-status" data-toolbar-status aria-live="polite"></p>
         <article class="chapter-prose continuous-document" data-prose data-document-visual contenteditable="false" spellcheck="true" aria-label="Chapter content"><p>Loading the canonical chapter…</p></article>
         <textarea class="chapter-markdown" data-document-markdown hidden spellcheck="true" aria-label="Chapter Markdown source"></textarea>
         <details class="advanced-structure" data-advanced-structure>
@@ -156,6 +157,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const saveCheckpoint = root.querySelector<HTMLButtonElement>("[data-save-checkpoint]")!;
   const removeCheckpoint = root.querySelector<HTMLButtonElement>("[data-remove-checkpoint]")!;
   const markdownEditor = root.querySelector<HTMLTextAreaElement>("[data-document-markdown]")!;
+  const toolbarStatus = root.querySelector<HTMLElement>("[data-toolbar-status]")!;
   const saveDocument = root.querySelector<HTMLButtonElement>("[data-save-document]")!;
   const saveState = root.querySelector<HTMLElement>("[data-save-state]")!;
   const importDialog = document.querySelector<HTMLDialogElement>("[data-import-dialog]")!;
@@ -440,6 +442,23 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     return copy;
   };
 
+  const renderLegacyPreview = (element: HTMLElement, block: Block) => {
+    const envelope = new DOMParser().parseFromString(block.sanitizedHtml ?? block.html ?? "", "text/html");
+    const source = envelope.querySelector('pre[data-content-source="git-markdown-v1"]')?.textContent?.trim();
+    if (!source) { element.textContent = "Locked legacy structure — convert through a reviewed migration before editing."; return; }
+    const preview = new DOMParser().parseFromString(source, "text/html");
+    preview.querySelectorAll("script,style,form,iframe,object,embed,link,meta,base").forEach((node) => node.remove());
+    preview.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      for (const attribute of [...node.attributes]) {
+        const name = attribute.name.toLowerCase(); const value = attribute.value.trim();
+        if (name.startsWith("on") || name === "style" || name === "srcdoc") node.removeAttribute(attribute.name);
+        else if (name === "href" && !value.startsWith("#") && !value.startsWith("https://")) node.removeAttribute(attribute.name);
+        else if (name === "src" && !value.startsWith("/") && !value.startsWith("data:image/")) node.removeAttribute(attribute.name);
+      }
+    });
+    element.replaceChildren(...[...preview.body.childNodes].map((node) => document.importNode(node, true)));
+  };
+
   const blockMarkdown = (block: Block) => {
     if (block.type === "heading") return `${"#".repeat(block.level ?? 2)} ${block.text ?? ""}`;
     if (block.type === "blockquote") return `> ${block.text ?? ""}`;
@@ -467,7 +486,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       } else if (block.type === "codeBlock") { element = document.createElement("pre"); const code = document.createElement("code"); code.textContent = block.code ?? block.text ?? ""; if (block.language) code.dataset.language = block.language; element.append(code); }
       else if (block.type === "callout") { element = document.createElement("aside"); element.className = "editor-callout"; }
       else if (["mediaFigure", "externalEmbed", "richLink", "diagram"].includes(block.type)) { element = document.createElement("figure"); element.className = `editor-structured-block editor-${block.type}`; const label = document.createElement("strong"); label.textContent = block.type === "mediaFigure" ? "Media" : block.type === "externalEmbed" ? "Embed" : block.type === "richLink" ? "Link card" : "Diagram"; const copy = document.createElement("figcaption"); copy.textContent = block.caption ?? block.title ?? block.alt ?? block.canonicalUrl ?? block.figureId ?? block.embedId ?? block.linkId ?? "Structured content"; element.append(label, copy); }
-      else { element = document.createElement("p"); if (block.type === "legacyMarkup") { element.className = "editor-locked-block"; const source = new DOMParser().parseFromString(block.sanitizedHtml ?? block.html ?? "", "text/html").body.textContent?.trim(); element.textContent = source || "Locked legacy structure — convert through a reviewed migration before editing."; } }
+      else if (block.type === "legacyMarkup") { element = document.createElement("div"); element.className = "editor-locked-block editor-visual-preview"; renderLegacyPreview(element, block); }
+      else element = document.createElement("p");
       if (!element.childNodes.length) appendInlineMarkdown(element, block.text ?? "");
       if (block.blockId) {
         element.dataset.blockId = block.blockId;
@@ -571,20 +591,34 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     documentMode = mode; root.querySelectorAll<HTMLButtonElement>("[data-document-mode]").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.documentMode === mode)));
   };
 
-  async function saveContinuousDocument() {
-    if (!contentOnline || !changeSetId) { setStatus("Draft was not saved because this chapter is not in the editable online canary."); return; }
+  async function saveLiveRevision() {
+    const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:saveLive`, { baseRevisionId, expectedVersion, idempotencyKey: key() });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const failure = new Error(typeof data?.error?.message === "string" ? data.error.message : `The live save was rejected (${response.status}).`) as Error & { code?: string; status?: number };
+      if (typeof data?.error?.code === "string") failure.code = data.error.code;
+      failure.status = response.status; throw failure;
+    }
+    chapter = data.chapter ?? chapter; canonicalChapter = structuredClone(chapter); baseRevisionId = String(data.revisionId); draftBody = null;
+    await createOrResumeChangeSet();
+    return data;
+  }
+
+  async function saveContinuousDocument(): Promise<boolean> {
+    if (!contentOnline || !changeSetId) { setStatus("The chapter was not saved because the live content service is unavailable."); toolbarStatus.textContent = "Not saved — the live content service is unavailable."; return false; }
     const body = bodyReplacementPayload(documentMode === "markdown"
       ? reconcileImportedBlocks(parseMarkdownDocument(markdownEditor.value)).map((block) => ["mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"].includes(block.type) && block.blockId ? { ...block, preserve: true } : block)
       : serializeVisualDocument());
-    if (!body.length || !body[0].blockId) { setStatus("Draft was not saved: the first stable chapter passage could not be reconciled. Keep the opening block or import beneath it."); return; }
+    if (!body.length || !body[0].blockId) { setStatus("The chapter was not saved: the first stable chapter passage could not be reconciled. Keep the opening block or import beneath it."); toolbarStatus.textContent = "Not saved — keep the opening passage or import beneath it."; return false; }
     saveDocument.disabled = true; saveState.textContent = "Saving…";
-    try { await applyOperation({ type: "chapter.replaceBody", body }); draftBody = null; dirty = false; saveState.textContent = "All changes saved"; saveState.classList.remove("unsaved"); renderChapter(); setStatus(`Chapter draft saved atomically · working version ${expectedVersion}. Checkpoints and media anchors remain attached.`); }
+    try { await applyOperation({ type: "chapter.replaceBody", body }); const saved = await saveLiveRevision(); dirty = false; saveState.textContent = "Saved and live"; saveState.classList.remove("unsaved"); renderChapter(); toolbarStatus.textContent = "Saved. This revision is now live in the public chapter."; setStatus(`Saved and live · revision ${saved.revisionId}.`); return true; }
     catch (error) {
       saveDocument.disabled = false; saveState.textContent = "Save needs attention";
       const failure = error as Error & { code?: string };
-      setStatus(failure.code === "DEPENDENCIES_REQUIRE_REANCHOR"
+      const message = failure.code === "DEPENDENCIES_REQUIRE_REANCHOR"
         ? "The chapter was not saved. A stable checkpoint or media anchor was removed; restore that passage or reanchor it first. Your edits remain in this browser."
-        : `The chapter was not saved${failure.message ? `: ${failure.message}` : "."} Your edits remain in this browser.`);
+        : `The chapter was not saved${failure.message ? `: ${failure.message}` : "."} Your edits remain in this browser.`;
+      toolbarStatus.textContent = message; setStatus(message); return false;
     }
   }
 
@@ -913,9 +947,30 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   root.querySelectorAll<HTMLButtonElement>("[data-format-command]").forEach((button) => button.addEventListener("click", () => { prose.focus(); document.execCommand(button.dataset.formatCommand ?? "", false); markDocumentDirty(); }));
   root.querySelector<HTMLSelectElement>("[data-format-block]")?.addEventListener("change", (event) => { prose.focus(); document.execCommand("formatBlock", false, (event.currentTarget as HTMLSelectElement).value); markDocumentDirty(); });
   root.querySelector<HTMLButtonElement>("[data-format-link]")?.addEventListener("click", () => { const value = window.prompt("Public HTTPS link:", "https://")?.trim(); if (!value) return; try { const url = safePublicUrl(value); prose.focus(); document.execCommand("createLink", false, url.toString()); markDocumentDirty(); } catch { setStatus("The link was not inserted. Use a complete public HTTPS address."); } });
-  root.querySelector<HTMLButtonElement>("[data-open-checkpoint]")?.addEventListener("click", () => { if (dirty) { setStatus("Save the chapter draft before editing its checkpoint anchors."); return; } switchWorkspace("Checkpoints"); if (anchor.value) { const item = (chapter.checkpoints ?? []).find((checkpoint) => checkpoint.passageId === anchor.value); if (item) selectCheckpoint(item.slot); } });
-  root.querySelector<HTMLButtonElement>("[data-open-media]")?.addEventListener("click", () => { if (dirty) { setStatus("Save the chapter draft before placing media so its passage anchor is stable."); return; } switchWorkspace("Media"); });
-  root.querySelector<HTMLButtonElement>("[data-open-embed]")?.addEventListener("click", () => { if (dirty) { setStatus("Save the chapter draft before placing an embed so its passage anchor is stable."); return; } switchWorkspace("Embeds"); });
+  const openToolbarWorkspace = async (name: "Checkpoints" | "Media" | "Embeds") => {
+    if (!selectedBlockId) {
+      const selectionNode = window.getSelection()?.anchorNode;
+      const selectionElement = selectionNode instanceof Element ? selectionNode : selectionNode?.parentElement;
+      const candidate = selectionElement?.closest<HTMLElement>("[data-block-id]") ?? prose.querySelector<HTMLElement>("[data-block-id]");
+      const candidateBlock = (chapter.body ?? []).find((item) => item.blockId === candidate?.dataset.blockId);
+      if (candidate && candidateBlock) selectBlock(candidateBlock, candidate);
+    }
+    toolbarStatus.textContent = dirty ? `Saving before opening ${name.toLowerCase()}…` : "";
+    if (dirty && !await saveContinuousDocument()) return;
+    switchWorkspace(name);
+    const panel = root.querySelector<HTMLElement>(`[data-workspace-panel="${name}"]`)!;
+    panel.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (name === "Checkpoints") {
+      const item = (chapter.checkpoints ?? []).find((checkpoint) => checkpoint.passageId === anchor.value);
+      if (item) selectCheckpoint(item.slot);
+      (panel.querySelector<HTMLElement>("button, h1") ?? panel).focus?.({ preventScroll: true });
+    } else {
+      panel.querySelector<HTMLButtonElement>("[data-media]")?.focus({ preventScroll: true });
+    }
+  };
+  root.querySelector<HTMLButtonElement>("[data-open-checkpoint]")?.addEventListener("click", () => { void openToolbarWorkspace("Checkpoints"); });
+  root.querySelector<HTMLButtonElement>("[data-open-media]")?.addEventListener("click", () => { void openToolbarWorkspace("Media"); });
+  root.querySelector<HTMLButtonElement>("[data-open-embed]")?.addEventListener("click", () => { void openToolbarWorkspace("Embeds"); });
   root.querySelector<HTMLButtonElement>("[data-import-chapter]")?.addEventListener("click", () => { importValue.value = ""; delete importValue.dataset.richPaste; importDialog.showModal(); window.setTimeout(() => importValue.focus(), 0); });
   importDialog.querySelector<HTMLButtonElement>("[data-import-close]")?.addEventListener("click", () => importDialog.close());
   importDialog.querySelector<HTMLButtonElement>("[data-import-cancel]")?.addEventListener("click", () => importDialog.close());
@@ -983,8 +1038,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const result = root.querySelector<HTMLElement>("[data-a11y-result]")!; result.textContent = issues.length ? `Review ${issues.join(", ")}` : "Required fields and anchor pass"; result.classList.toggle("good", issues.length === 0); setStatus(issues.length ? `Checkpoint checks found: ${issues.join(", ")}.` : "Checkpoint required-field and anchor checks passed. Semantic approval remains human review.");
   });
   addCheckpoint.addEventListener("click", () => { const slot = addCheckpoint.dataset.slot as typeof slots[number]; if (slot) { selectCheckpoint(slot, true); setStatus(`New ${slot} checkpoint opened. It is not persisted until Save checkpoint succeeds.`); } });
-  saveCheckpoint.addEventListener("click", async () => { if (!contentOnline || !changeSetId) { setStatus("Not saved: the content API is unavailable. Copy your text before leaving this page."); return; } try { const checkpoint = readCheckpoint(); if (!checkpoint.passageExcerptHash) checkpoint.passageExcerptHash = await digest(blockForPassage(checkpoint.passageId)?.text ?? ""); await applyOperation({ type: "checkpoint.upsert", checkpoint }); dirty = false; renderCheckpointState(); selectCheckpoint(checkpoint.slot); setStatus(`Saved ${checkpoint.slot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint was not saved. The server rejected the operation or the working version changed."); } });
-  removeCheckpoint.addEventListener("click", async () => { const item = checkpointFor(selectedSlot); if (!item || !contentOnline) { setStatus("Checkpoint was not removed."); return; } try { await applyOperation({ type: "checkpoint.remove", slot: selectedSlot, checkpointId: item.checkpointId }); renderCheckpointState(); setStatus(`Removed ${selectedSlot} checkpoint · working version ${expectedVersion}.`); } catch { setStatus("Checkpoint removal was rejected by the server."); } });
+  saveCheckpoint.addEventListener("click", async () => { if (!contentOnline || !changeSetId) { setStatus("Not saved: the live content service is unavailable. Copy your text before leaving this page."); return; } try { const checkpoint = readCheckpoint(); if (!checkpoint.passageExcerptHash) checkpoint.passageExcerptHash = await digest(blockForPassage(checkpoint.passageId)?.text ?? ""); await applyOperation({ type: "checkpoint.upsert", checkpoint }); const saved = await saveLiveRevision(); dirty = false; renderCheckpointState(); selectCheckpoint(checkpoint.slot); setStatus(`Saved ${checkpoint.slot} checkpoint and published revision ${saved.revisionId}.`); } catch (error) { setStatus(`Checkpoint was not saved${error instanceof Error ? `: ${error.message}` : "."}`); } });
+  removeCheckpoint.addEventListener("click", async () => { const item = checkpointFor(selectedSlot); if (!item || !contentOnline) { setStatus("Checkpoint was not removed."); return; } try { await applyOperation({ type: "checkpoint.remove", slot: selectedSlot, checkpointId: item.checkpointId }); const saved = await saveLiveRevision(); renderCheckpointState(); setStatus(`Removed ${selectedSlot} checkpoint and published revision ${saved.revisionId}.`); } catch (error) { setStatus(`Checkpoint was not removed${error instanceof Error ? `: ${error.message}` : "."}`); } });
   const mediaKindLabel = (mimeType: string) => mimeType === "application/pdf" || mimeType === "text/plain" ? "document" : mimeType.split("/")[0] || "asset";
   async function searchMediaLibrary() {
     mediaSearchSubmit.disabled = true; mediaResults.textContent = "Searching the persisted media library…";
@@ -1063,7 +1118,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
         placedRightsStatus = existingAsset.checked ? selectedExistingRightsStatus || "unknown" : await uploadAndProcessNativeMedia();
         await applyOperation({ type: "media.place", position, placement: { mediaId: mediaId.value, mediaVersionId: mediaVersionId.value, rightsCaseId: rightsCaseId.value, anchorPassageId: anchor.value, decorative: existingAsset.checked ? false : decorative.checked, ...(!(existingAsset.checked ? false : decorative.checked) ? { alt: existingAsset.checked ? mediaAlt.value : reviewAlt.value } : {}), caption: mediaCaption.value, teachingUse: mediaCredit.value, displayPreset: "reading", align: "center", ...(selectedMedia === "Image or GIF" ? { animationPolicy: "clickToPlay" } : {}), printPolicy: "poster", downloadable: false } });
       }
-      mediaDialog.close(); renderChapter(); setStatus(placedRightsStatus && placedRightsStatus !== "cleared" ? `${selectedMedia} inserted · rights status ${placedRightsStatus}. Placement is saved, but release remains blocked until the exact package is cleared and the library state refreshes.` : `${selectedMedia} inserted · working version ${expectedVersion}.`);
+      const saved = await saveLiveRevision(); mediaDialog.close(); renderChapter(); setStatus(placedRightsStatus && placedRightsStatus !== "cleared" ? `${selectedMedia} is saved in the draft, but cannot appear publicly until its exact rights package is cleared.` : `${selectedMedia} inserted and published in revision ${saved.revisionId}.`);
     } catch (error) {
       uploadProgress.textContent = error instanceof Error ? error.message : "Media lifecycle failed";
       setStatus("Media or embed insertion did not complete. No placement was applied unless the final operation succeeded.");
