@@ -41,8 +41,8 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data-document-visual contenteditable="false"/);
   assert.match(shell, /data-document-markdown hidden/);
   assert.match(shell, /serializeVisualDocument/);
-  assert.match(shell, /isDiscardableEmptyVisualBlock[\s\S]*!block\.blockId[\s\S]*block\.preserve !== true[\s\S]*\.filter\(\(block\) => !isDiscardableEmptyVisualBlock\(block\)\)/);
-  assert.match(shell, /reconcileDuplicateStableBlockIds/);
+  assert.match(shell, /normalizeVisualDocumentBlocks/);
+  assert.doesNotMatch(shell, /isDiscardableEmptyVisualBlock[\s\S]*!block\.blockId/);
   assert.match(shell, /bodyReplacementPayload[\s\S]*block\.preserve === true[\s\S]*\{ blockId: block\.blockId, preserve: true \}/);
   assert.match(shell, /const body = bodyReplacementPayload\(documentMode === "markdown"/);
   assert.match(shell, /reconcileImportedBlocks/);
