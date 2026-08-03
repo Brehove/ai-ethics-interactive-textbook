@@ -981,6 +981,27 @@ async function abandonDeployment(request, env, identity, transactionId) {
   return json(response);
 }
 
+async function verifiedLiveSaveLineage(env, documentId, releaseRevisionId, currentRevisionId) {
+  if (!releaseRevisionId || !currentRevisionId || releaseRevisionId === currentRevisionId) return null;
+  const rows = await env.CONTENT_DB.prepare(`WITH RECURSIVE lineage(id, parent_revision_id, content_hash, metadata_json, depth) AS (
+      SELECT id, parent_revision_id, content_hash, metadata_json, 0 FROM document_revisions WHERE id = ? AND document_id = ?
+      UNION ALL
+      SELECT parent.id, parent.parent_revision_id, parent.content_hash, parent.metadata_json, lineage.depth + 1
+      FROM document_revisions parent JOIN lineage ON parent.id = lineage.parent_revision_id
+      WHERE lineage.id <> ? AND parent.document_id = ? AND lineage.depth < 100
+    ) SELECT id, parent_revision_id, content_hash, metadata_json, depth FROM lineage ORDER BY depth`)
+    .bind(currentRevisionId, documentId, releaseRevisionId, documentId).all();
+  const lineage = rows.results || [];
+  const releaseIndex = lineage.findIndex((item) => item.id === releaseRevisionId);
+  if (releaseIndex < 1) return null;
+  for (const revision of lineage.slice(0, releaseIndex)) {
+    let metadata;
+    try { metadata = JSON.parse(revision.metadata_json || '{}'); } catch { return null; }
+    if (metadata.publicationMode !== 'instructor-live-save' || metadata.status !== 'published') return null;
+  }
+  return { revisionCount: releaseIndex, currentRevisionId, currentContentHash: lineage[0].content_hash };
+}
+
 async function auditReleaseState(request, env, identity, releaseId) {
   requireAuthorityWorkflowIdentity(identity);
   await readJsonBody(request, { allowedFields: [] });
@@ -998,6 +1019,7 @@ async function auditReleaseState(request, env, identity, releaseId) {
   const expectedById = new Map(expected.map((item) => [item.document_id, item]));
   const activeById = new Map(active.map((item) => [item.document_id, item]));
   const mismatches = [];
+  const liveAdvances = [];
   const mismatch = (kind, documentId = null, expectedValue = null, actualValue = null) => mismatches.push({ kind, documentId, expected: expectedValue, actual: actualValue });
   if (!release) mismatch('release_missing', null, releaseId, null);
   else {
@@ -1017,8 +1039,15 @@ async function auditReleaseState(request, env, identity, releaseId) {
       for (const field of ['source_path', 'source_revision']) {
         if ((entry[field] ?? null) !== (current[field] ?? null)) mismatch(field, documentId, entry[field] ?? null, current[field] ?? null);
       }
-      if (current.current_revision_id !== entry.source_revision) mismatch('canonical_revision', documentId, entry.source_revision, current.current_revision_id || null);
-      if (current.current_content_hash !== entry.normalized_snapshot_hash) mismatch('canonical_hash', documentId, entry.normalized_snapshot_hash, current.current_content_hash || null);
+      const exactReleaseHead = current.current_revision_id === entry.source_revision && current.current_content_hash === entry.normalized_snapshot_hash;
+      if (!exactReleaseHead) {
+        const liveAdvance = await verifiedLiveSaveLineage(env, documentId, entry.source_revision, current.current_revision_id);
+        if (liveAdvance && liveAdvance.currentContentHash === current.current_content_hash) liveAdvances.push({ documentId, ...liveAdvance });
+        else {
+          if (current.current_revision_id !== entry.source_revision) mismatch('canonical_revision', documentId, entry.source_revision, current.current_revision_id || null);
+          if (current.current_content_hash !== entry.normalized_snapshot_hash) mismatch('canonical_hash', documentId, entry.normalized_snapshot_hash, current.current_content_hash || null);
+        }
+      }
     } else if (entry.authority === 'git') {
       // The release contract addresses a chapter bundle directory while the
       // authoring registry addresses its canonical chapter.md file. Git
@@ -1032,7 +1061,7 @@ async function auditReleaseState(request, env, identity, releaseId) {
     }
   }
   for (const documentId of activeById.keys()) if (!expectedById.has(documentId)) mismatch('unexpected_active_authority', documentId, null, 'active');
-  const details = { releaseId, expectedCloudflareVersionId: release?.cloudflare_version_id || null, documentCount: expectedById.size, checkedAt };
+  const details = { releaseId, expectedCloudflareVersionId: release?.cloudflare_version_id || null, documentCount: expectedById.size, liveAdvances, checkedAt };
   if (mismatches.length) throw new ApiError(409, 'RELEASE_STATE_MISMATCH', 'Active release pointer, authority map, or canonical D1 heads do not match the immutable release', { ...details, mismatchCount: mismatches.length, mismatches });
   return json({ valid: true, ...details });
 }

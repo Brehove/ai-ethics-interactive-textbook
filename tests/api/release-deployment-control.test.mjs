@@ -419,6 +419,35 @@ test('release-state audit accepts canonical Git file and commit provenance when 
   assert.equal(response.status, 200, await response.text());
 });
 
+test('release-state audit accepts only a continuous published instructor-live-save chain beyond the code release', async () => {
+  const expected = completeAuthorityEntries().map((entry) => ({
+    document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,
+    source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash
+  }));
+  const active = expected.map((entry) => ({ ...entry, current_revision_id: entry.source_revision, current_content_hash: entry.normalized_snapshot_hash }));
+  const chapter = active.find((entry) => entry.document_id === 'chapter_ch07');
+  chapter.current_revision_id = 'revision_live_2'; chapter.current_content_hash = 'live-hash-2';
+  const lineage = [
+    { id: 'revision_live_2', parent_revision_id: 'revision_live_1', content_hash: 'live-hash-2', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 0 },
+    { id: 'revision_live_1', parent_revision_id: expected.find((entry) => entry.document_id === 'chapter_ch07').source_revision, content_hash: 'live-hash-1', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 1 },
+    { id: expected.find((entry) => entry.document_id === 'chapter_ch07').source_revision, parent_revision_id: null, content_hash: expected.find((entry) => entry.document_id === 'chapter_ch07').normalized_snapshot_hash, metadata_json: '{}', depth: 2 },
+  ];
+  let trustedLineage = true;
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes('SELECT id, state, cloudflare_version_id FROM releases')) return { id: 'release_17', state: 'published', cloudflare_version_id: 'version_cf_17' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: expected } : null;
+    if (sql.includes('FROM authority_registry a JOIN documents d')) return mode === 'all' ? { results: active } : null;
+    if (sql.includes('WITH RECURSIVE lineage')) return mode === 'all' ? { results: trustedLineage ? lineage : lineage.map((row, index) => index === 0 ? { ...row, metadata_json: JSON.stringify({ status: 'published', publicationMode: 'unknown' }) } : row) } : null;
+    return null;
+  });
+  let response = await worker.fetch(new Request('https://content.example/v1/releases/release_17:auditState', { method: 'POST', headers: workflowHeaders('content:authority'), body: '{}' }), { CONTENT_DB: db });
+  let result = await response.json(); assert.equal(response.status, 200); assert.equal(result.liveAdvances[0].documentId, 'chapter_ch07'); assert.equal(result.liveAdvances[0].revisionCount, 2);
+  trustedLineage = false;
+  response = await worker.fetch(new Request('https://content.example/v1/releases/release_17:auditState', { method: 'POST', headers: workflowHeaders('content:authority'), body: '{}' }), { CONTENT_DB: db });
+  result = await response.json(); assert.equal(response.status, 409); assert.equal(result.error.code, 'RELEASE_STATE_MISMATCH');
+});
+
 test('release-state audit reports pointer, authority, and canonical-head drift without content', async () => {
   const expected = completeAuthorityEntries().map((entry) => ({
     document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,
