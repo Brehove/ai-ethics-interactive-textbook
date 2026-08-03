@@ -41,7 +41,9 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
     next={next}
   >
     <div class="chapter-prose first-read">
-      <Content />
+      <div data-live-chapter-body={meta.id === "ch07" ? "chapter_ch07" : undefined}>
+        <Content />
+      </div>
       <InlineConceptDiagrams diagrams={chapterDiagrams} />
       <InlineArtifacts artifacts={chapterArtifacts} />
       <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
@@ -55,6 +57,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
       chapterVersion={meta.websiteBaseline.canonicalMarkdownSha256.slice(0, 12)}
       prompts={visiblePrompts}
       activityPreview={meta.id === "ch07"}
+      liveEndpoint={meta.id === "ch07" ? "/api/live/chapters/chapter_ch07" : undefined}
     />
   </ReaderShell>
 </SiteLayout>

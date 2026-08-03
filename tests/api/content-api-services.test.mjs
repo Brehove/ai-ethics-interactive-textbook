@@ -179,6 +179,29 @@ test('multi-document diff returns one content-free result per working copy', asy
   assert.equal(JSON.stringify(body).includes('Changed without leaking'), false);
 });
 
+test('human one-click save atomically advances the Chapter 7 canonical revision', async () => {
+  const publishable = { ...baseChapter(), chapterId: 'chapter_ch07', checkpoints: ['commit', 'work', 'reconcile'].map((slot) => ({ checkpointId: `checkpoint-${slot}`, ...checkpoint(slot, `p-${slot}`) })) };
+  const contentHash = await sha256(publishable);
+  const working = { id: 'working-live', document_id: 'chapter_ch07', base_revision_id: 'revision-base', content_hash: contentHash, content_text: JSON.stringify(publishable), version: 2, state: 'open', purpose: 'editorial', current_revision_id: 'revision-base', current_content_hash: 'old-hash' };
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    if (sql.includes('SELECT document_id, content_hash FROM document_revisions')) return null;
+    return null;
+  });
+  const request = new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-1' }) });
+  const response = await worker.fetch(request, { CONTENT_DB });
+  const text = await response.text(); assert.equal(response.status, 201, text); const body = JSON.parse(text);
+  assert.equal(body.live, true); assert.equal(body.state, 'applied'); assert.equal(body.documentId, 'chapter_ch07');
+  assert.match(body.revisionId, /^revision_[a-f0-9]{24}$/);
+  assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes('INSERT INTO document_revisions')));
+  assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes('UPDATE documents SET current_revision_id')));
+  assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes("UPDATE changesets SET state = 'applied'")));
+
+  const agentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent' }) }), { CONTENT_DB });
+  assert.equal(agentResponse.status, 403); assert.equal((await agentResponse.json()).error.code, 'HUMAN_ACTOR_REQUIRED');
+});
+
 test('multi-document submission is all-target CAS and freezes every document atomically', async () => {
   const publishable = (chapterId) => ({ ...baseChapter(), chapterId, checkpoints: ['commit', 'work', 'reconcile'].map((slot) => ({ checkpointId: `${chapterId}-${slot}`, ...checkpoint(slot, `p-${slot}`) })) });
   const chapterA = publishable('chapter_ch07'); const chapterB = publishable('chapter_ch08');
@@ -729,7 +752,7 @@ test('text.replace and block.move preserve every stable identity and legacy mark
 test('chapter.replaceBody atomically saves a continuous document while preserving stable anchors', async () => {
   const source = baseChapter();
   source.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
-  source.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  source.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', anchorPassageId: 'p-legacy-source', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
   const body = [
     { ...source.body[0], text: 'Revised commit passage.' },
     { ...source.body[1], text: 'Revised work passage.' },
@@ -743,6 +766,7 @@ test('chapter.replaceBody atomically saves a continuous document while preservin
   assert.equal(result.chapter.body[2].text, 'A newly pasted paragraph.');
   assert.match(result.chapter.body[2].blockId, /^block_/);
   assert.equal(result.chapter.body.at(-1).sanitizedHtml, '<aside>Legacy</aside>');
+  assert.equal(result.chapter.body.at(-1).anchorPassageId, 'p-legacy-source');
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Revised work passage.'));
 });
 
@@ -843,6 +867,8 @@ test('Worker serves the versioned operation envelope to authenticated readers wi
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.schemaVersion, 1);
+  assert.equal(body.changesets.saveLive.route, 'POST /v1/changesets/{changesetId}:saveLive');
+  assert.equal(body.changesets.saveLive.result, 'new immutable canonical revision visible on the public reader');
   assert.deepEqual(body.mutationEnvelope.required, ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operation']);
   assert.deepEqual(body.operations['embed.upsert'].required, ['type', 'embed']);
   assert.equal(body.media.requestUpload.route, 'POST /v1/media:requestUpload');

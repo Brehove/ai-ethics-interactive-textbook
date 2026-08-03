@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ethicsandai",
+  "main": "workers/site/src/index.mjs",
   "compatibility_date": "2026-08-01",
   "preview_urls": true,
   "routes": [
@@ -10,8 +11,16 @@
     }
   ],
   "assets": {
+    "binding": "ASSETS",
     "directory": "./dist",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "CONTENT_DB",
+      "database_name": "ai-ethics-content",
+      "database_id": "1f82c4fa-228b-4cf7-9b40-ff10eebeadfb"
+    }
+  ]
 }

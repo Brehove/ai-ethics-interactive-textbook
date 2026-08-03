@@ -392,7 +392,11 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
   const missing = [];
   for (const checkpoint of chapter.checkpoints || []) if (!anchors.has(checkpoint.passageId)) missing.push({ kind: 'checkpoint', id: checkpoint.checkpointId, passageId: checkpoint.passageId });
   for (const annotation of chapter.annotations || []) if (!anchors.has(annotation.passageId)) missing.push({ kind: 'annotation', id: annotation.annotationId, passageId: annotation.passageId });
-  for (const block of scratch.body) if (block.anchorPassageId && !anchors.has(block.anchorPassageId)) missing.push({ kind: block.type, id: block.blockId, passageId: block.anchorPassageId });
+  for (const block of scratch.body) {
+    // Imported legacy markup uses anchorPassageId to retain the source passage boundary
+    // represented by the locked block itself. It is not an external dependency.
+    if (block.type !== 'legacyMarkup' && block.anchorPassageId && !anchors.has(block.anchorPassageId)) missing.push({ kind: block.type, id: block.blockId, passageId: block.anchorPassageId });
+  }
   if (missing.length) throw new ApiError(409, 'DEPENDENCIES_REQUIRE_REANCHOR', 'The pasted chapter would orphan anchored content; keep those passages or reanchor them first', { dependents: missing });
   chapter.body = scratch.body;
   chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => {

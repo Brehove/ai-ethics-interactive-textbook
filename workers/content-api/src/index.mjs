@@ -475,6 +475,42 @@ async function validateChangeset(request, env, identity, changesetId) {
   return json({ changesetId, validationHash, ...validation });
 }
 
+async function saveChangesetLive(request, env, identity, changesetId) {
+  requireScope(identity, 'content:write'); runIdentity(identity); requireHumanIdentity(identity, 'Live chapter save');
+  const body = await readJsonBody(request, { allowedFields: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'] });
+  validId(body.baseRevisionId, 'baseRevisionId');
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:saveLive`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId));
+  if (working.state !== 'open') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open changeset can be saved live');
+  if (working.document_id !== 'chapter_ch07') throw new ApiError(409, 'LIVE_SAVE_NOT_ENABLED', 'One-click live save is currently enabled only for Chapter 7');
+  if (working.purpose === 'authority_cutover') throw new ApiError(409, 'CUTOVER_PROPOSAL_READ_ONLY', 'Authority cutover proposals cannot be saved live');
+  if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id || body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'The chapter changed after this editor opened', { baseRevisionId: working.base_revision_id, currentRevisionId: working.current_revision_id, currentVersion: working.version });
+  const chapter = parseStoredJson(working.content_text, 'Working document');
+  const validation = validateChapter(chapter, { publishable: true });
+  if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'The chapter cannot be saved live until its structural errors are resolved', validation);
+  const savedAt = now();
+  const finalized = await finalizeChapterRevision(chapter, { editorialContentHash: working.content_hash, status: 'published', actorId: identity.actorId, actorType: identity.actorType, updatedAt: savedAt });
+  const existing = await env.CONTENT_DB.prepare('SELECT document_id, content_hash FROM document_revisions WHERE id = ?').bind(finalized.revisionId).first();
+  if (existing && (existing.document_id !== working.document_id || existing.content_hash !== finalized.contentHash)) throw new ApiError(409, 'REVISION_CONFLICT', 'The live revision identity already exists with different content');
+  const response = { changesetId, documentId: working.document_id, state: 'applied', live: true, revisionId: finalized.revisionId, contentHash: finalized.contentHash, savedAt, chapter: finalized.content };
+  const statements = [];
+  if (!existing) statements.push(env.CONTENT_DB.prepare(`INSERT INTO document_revisions
+    (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at, created_actor_type, created_client_id, created_run_id)
+    VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)`).bind(finalized.revisionId, working.document_id, working.base_revision_id, finalized.contentHash, stableStringify(finalized.content), stableStringify({ status: 'published', publicationMode: 'instructor-live-save' }), identity.actorId, savedAt, identity.actorType, identity.clientId, identity.runId));
+  statements.push(env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ?
+    WHERE id = ? AND current_revision_id = ?`).bind(finalized.revisionId, finalized.contentHash, savedAt, working.document_id, working.base_revision_id));
+  statements.push(env.CONTENT_DB.prepare("UPDATE changesets SET state = 'applied', applied_at = ?, updated_at = ? WHERE id = ? AND state = 'open'").bind(savedAt, savedAt, changesetId));
+  statements.push(idempotencyStatement(env, idem, body.idempotencyKey, 201, response, savedAt));
+  statements.push(await audit(env, identity, 'changeset.saved_live', 'changeset', changesetId, { documentId: working.document_id, revisionId: finalized.revisionId, publicationMode: 'instructor-live-save' }, { baseRevisionId: working.base_revision_id, resultRevisionId: finalized.revisionId, idempotencyHash: idem.requestHash }));
+  const results = await env.CONTENT_DB.batch(statements);
+  const updateResult = results[existing ? 0 : 1];
+  if (updateResult?.meta?.changes === 0) throw new ApiError(409, 'REVISION_CONFLICT', 'The canonical chapter was concurrently modified');
+  return json(response, 201);
+}
+
 export const releaseMediaKind = (mimeType, technical) => mimeType === 'application/pdf' ? 'pdf' : mimeType === 'text/plain' ? 'document' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('video/') ? 'video' : technical?.animated ? 'gif' : 'image';
 
 async function buildMediaProjection(env, chapter) {
@@ -1495,7 +1531,7 @@ export default {
       if (request.method === 'GET' && url.pathname === '/v1/schema') return json({
         schemaVersion: 1,
         mutationEnvelope: { required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operation'], optional: ['documentId', 'dryRun'], multiDocumentRule: 'documentId is required when a changeset targets more than one document' },
-        changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
+        changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, saveLive: { route: 'POST /v1/changesets/{changesetId}:saveLive', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], scope: 'content:write', humanActorRequired: true, result: 'new immutable canonical revision visible on the public reader' }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
         operations: OPERATION_PAYLOAD_SCHEMAS,
         reads: {
           passages: { route: 'GET /v1/chapters/{chapterId}/passages', query: { limit: '1-100', cursor: '0-10000' } },
@@ -1578,11 +1614,12 @@ export default {
       if (request.method === 'GET' && match) return await getMediaJob(env, validId(decodeURIComponent(match[1]), 'jobId'));
       match = url.pathname.match(/^\/v1\/media\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getMediaAsset(env, validId(decodeURIComponent(match[1]), 'mediaId'));
-      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|submitReview|approve|reject|diff|renderPreview|publish)$/);
+      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|saveLive|submitReview|approve|reject|diff|renderPreview|publish)$/);
       if (request.method === 'POST' && match) {
         const changesetId = validId(decodeURIComponent(match[1]), 'changesetId');
         if (match[2] === 'diff') { requireScope(identity, 'content:read'); return await diffChangeset(request, env, changesetId); }
         if (match[2] === 'apply') return await applyOperation(request, env, identity, changesetId);
+        if (match[2] === 'saveLive') return await saveChangesetLive(request, env, identity, changesetId);
         if (match[2] === 'validate') return await validateChangeset(request, env, identity, changesetId);
         if (match[2] === 'renderPreview') return await renderPreview(request, env, identity, changesetId);
         if (match[2] === 'submitReview') return await submitChangeset(request, env, identity, changesetId);
