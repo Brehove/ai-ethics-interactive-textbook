@@ -41,6 +41,7 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /data-document-visual contenteditable="false"/);
   assert.match(shell, /data-document-markdown hidden/);
   assert.match(shell, /serializeVisualDocument/);
+  assert.match(shell, /isDiscardableEmptyVisualBlock[\s\S]*!block\.blockId[\s\S]*block\.preserve !== true[\s\S]*\.filter\(\(block\) => !isDiscardableEmptyVisualBlock\(block\)\)/);
   assert.match(shell, /reconcileDuplicateStableBlockIds/);
   assert.match(shell, /bodyReplacementPayload[\s\S]*block\.preserve === true[\s\S]*\{ blockId: block\.blockId, preserve: true \}/);
   assert.match(shell, /const body = bodyReplacementPayload\(documentMode === "markdown"/);
@@ -49,6 +50,12 @@ test("editor shell exposes the structured authoring workflow", async () => {
   assert.match(shell, /:saveLive/);
   assert.match(shell, /Saved and live/);
   assert.match(shell, /openToolbarWorkspace/);
+  assert.match(shell, /Add as many or as few checkpoints as this chapter needs/);
+  assert.match(shell, /newCheckpointSlot/);
+  assert.match(shell, /checkpoints\.map/);
+  assert.doesNotMatch(shell, /const slots = \[/);
+  assert.match(readingRecord, /prompts\.length > 0 && count === prompts\.length/);
+  assert.match(readingRecord, /while \(insertionPoint\.nextElementSibling\?\.matches\("\[data-reading-record-trigger\]"\)\)/);
   assert.match(shell, /renderLegacyPreview/);
   assert.match(shell, /Your edits remain in this browser/);
   assert.doesNotMatch(shell, /first stable chapter passage could not be reconciled/);

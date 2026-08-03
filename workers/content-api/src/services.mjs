@@ -65,7 +65,7 @@ export class ApiError extends Error {
   }
 }
 
-export const CHECKPOINT_SLOTS = Object.freeze(['commit', 'work', 'reconcile']);
+export const CHECKPOINT_SLOT_PATTERN = /^[a-z][a-z0-9-]{0,79}$/;
 export const CHECKPOINT_STRATEGIES = Object.freeze([
   'initial-judgment', 'self-explanation', 'argument-reconstruction', 'evidence-warrant',
   'contrast-case', 'counterexample', 'consider-alternative', 'objection-repair',
@@ -100,7 +100,7 @@ export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'block.remove': { required: ['type', 'blockId'], optional: ['replacementPassageId'] },
   'checkpoint.upsert': { required: ['type', 'checkpoint'], optional: [] },
   'checkpoint.replace': { required: ['type', 'checkpoint'], optional: [] },
-  'checkpoint.remove': { required: ['type', 'slot'], optional: ['checkpointId'] },
+  'checkpoint.remove': { required: ['type'], optional: ['slot', 'checkpointId'] },
   'embed.upsert': { required: ['type', 'embed'], optional: ['position'] },
   'media.place': { required: ['type', 'placement'], optional: ['position'] },
   'media.remove': { required: ['type', 'figureId'], optional: [] }
@@ -233,7 +233,7 @@ const passageIds = (chapter) => new Set([
 
 const normalizeCheckpoint = async (chapter, input, existing = null) => {
   rejectUnknown(input, ['checkpointId', 'legacyId', 'passageId', 'passageExcerptHash', 'slot', 'stage', 'strategy', 'title', 'trigger', 'prompt', 'guidance', 'responseStructure', 'minWords', 'maxWords', 'rationale', 'showInSidebar']);
-  if (!CHECKPOINT_SLOTS.includes(input.slot)) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be commit, work, or reconcile');
+  if (typeof input.slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(input.slot)) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be a lowercase stable key of at most 80 characters');
   if (!CHECKPOINT_STRATEGIES.includes(input.strategy)) throw new ApiError(422, 'CHECKPOINT_STRATEGY_INVALID', 'Checkpoint strategy is unsupported');
   const passageId = requireString(input.passageId, 'checkpoint.passageId', 200);
   if (!passageIds(chapter).has(passageId)) throw new ApiError(422, 'CHECKPOINT_ANCHOR_MISSING', 'Checkpoint passage anchor does not exist', { passageId });
@@ -639,17 +639,20 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     chapter.body.splice(chapter.body.findIndex((item) => item.blockId === operation.blockId), 1);
   } else if (operation.type === 'checkpoint.upsert' || operation.type === 'checkpoint.replace') {
     if (!operation.checkpoint || typeof operation.checkpoint !== 'object') throw new ApiError(400, 'INVALID_OPERATION', 'checkpoint payload is required');
-    const index = chapter.checkpoints.findIndex((item) => item.slot === operation.checkpoint.slot);
+    const index = chapter.checkpoints.findIndex((item) => operation.checkpoint.checkpointId
+      ? item.checkpointId === operation.checkpoint.checkpointId
+      : item.slot === operation.checkpoint.slot);
     if (operation.type === 'checkpoint.replace' && index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint slot does not exist');
-    if (index < 0 && chapter.checkpoints.length >= 3) throw new ApiError(422, 'CHECKPOINT_LIMIT', 'A chapter may have at most three checkpoints');
+    if (chapter.checkpoints.some((item, candidateIndex) => candidateIndex !== index && item.slot === operation.checkpoint.slot)) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot already belongs to another checkpoint');
     const normalized = await normalizeCheckpoint(chapter, operation.checkpoint, index >= 0 ? chapter.checkpoints[index] : null);
     if (index >= 0) chapter.checkpoints[index] = normalized; else chapter.checkpoints.push(normalized);
-    chapter.checkpoints.sort((a, b) => CHECKPOINT_SLOTS.indexOf(a.slot) - CHECKPOINT_SLOTS.indexOf(b.slot));
   } else if (operation.type === 'checkpoint.remove') {
-    if (!CHECKPOINT_SLOTS.includes(operation.slot)) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be commit, work, or reconcile');
-    const index = chapter.checkpoints.findIndex((item) => item.slot === operation.slot);
-    if (index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint slot does not exist');
-    if (operation.checkpointId !== undefined && operation.checkpointId !== chapter.checkpoints[index].checkpointId) throw new ApiError(409, 'CHECKPOINT_ID_CONFLICT', 'Checkpoint ID does not match the selected slot');
+    if (operation.slot !== undefined && (typeof operation.slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(operation.slot))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be a lowercase stable key of at most 80 characters');
+    if (operation.checkpointId !== undefined && (typeof operation.checkpointId !== 'string' || !operation.checkpointId.trim())) throw new ApiError(422, 'CHECKPOINT_ID_INVALID', 'checkpointId must be a non-empty stable ID');
+    if (operation.slot === undefined && operation.checkpointId === undefined) throw new ApiError(422, 'CHECKPOINT_TARGET_REQUIRED', 'checkpoint.remove requires slot or checkpointId');
+    const index = chapter.checkpoints.findIndex((item) => operation.checkpointId ? item.checkpointId === operation.checkpointId : item.slot === operation.slot);
+    if (index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
+    if (operation.slot !== undefined && operation.slot !== chapter.checkpoints[index].slot) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot does not match the selected checkpoint ID');
     chapter.checkpoints.splice(index, 1);
   } else if (operation.type === 'embed.upsert') {
     const normalized = await normalizeEmbed(chapter, operation.embed);
@@ -671,10 +674,11 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
-  if (checkpoints.length > 3) errors.push({ code: 'CHECKPOINT_LIMIT', path: 'checkpoints' });
   const slots = checkpoints.map((item) => item.slot);
   if (new Set(slots).size !== slots.length) errors.push({ code: 'CHECKPOINT_SLOT_DUPLICATE', path: 'checkpoints' });
-  if (publishable && stableStringify(slots) !== stableStringify(CHECKPOINT_SLOTS)) errors.push({ code: 'CHECKPOINT_SEQUENCE_REQUIRED', path: 'checkpoints' });
+  if (slots.some((slot) => typeof slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slot))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: 'checkpoints' });
+  const checkpointIds = checkpoints.map((item) => item.checkpointId);
+  if (new Set(checkpointIds).size !== checkpointIds.length) errors.push({ code: 'CHECKPOINT_ID_DUPLICATE', path: 'checkpoints' });
   const anchors = passageIds(chapter);
   checkpoints.forEach((item, index) => {
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });

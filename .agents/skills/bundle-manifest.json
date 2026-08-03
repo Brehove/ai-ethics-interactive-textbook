@@ -16,7 +16,7 @@
     },
     {
       "path": "manage-prompt-checkpoints/SKILL.md",
-      "sha256": "0d322840c6a302d49ce26776c1a28d80dc588024010b4e3c66413308bb63dd04"
+      "sha256": "1f24de6d1015fa5c95246fb27ce67b378e426a7ddec9a36d41bfee750b1fd52f"
     },
     {
       "path": "manage-prompt-checkpoints/agents/openai.yaml",
@@ -24,7 +24,7 @@
     },
     {
       "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
-      "sha256": "ea386a8da3e565bae304a9a4cbc8a47c599f5f8e14a43b49c1ed29fa22df578a"
+      "sha256": "2324fe8714ebfe29ff22f62cfbc188592b6ab7db2ab2c4fd98e864ae7b9e930b"
     },
     {
       "path": "publish-textbook-media/SKILL.md",

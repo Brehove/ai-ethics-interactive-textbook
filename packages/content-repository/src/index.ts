@@ -113,7 +113,7 @@ export class GitContentRepository implements ContentRepository {
     const parsed = parseMarkdown(markdown, report);
     const aliases = [...parsed.aliases, { fromId: entry.id, toId: chapterId(entry.id), reason: "Preserves Git chapter identity", createdAt: "2026-08-02T00:00:00.000Z" }];
     const checkpoints = readingRecord.checkpoints.map((item: Json, index: number) => ({
-      checkpointId: checkpointId(item.id), legacyId: item.id, passageId: passageId(item.passageId), passageExcerptHash: sha256(parsed.passageSource.get(item.passageId) ?? ""), slot: (["commit", "work", "reconcile"] as const)[index], stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure, minWords: 30, maxWords: 250, showInSidebar: true, rationale: item.rationale,
+      checkpointId: checkpointId(item.id), legacyId: item.id, passageId: passageId(item.passageId), passageExcerptHash: sha256(parsed.passageSource.get(item.passageId) ?? ""), slot: (["commit", "work", "reconcile"] as const)[index] ?? `checkpoint-${index + 1}`, stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure, minWords: 30, maxWords: 250, showInSidebar: true, rationale: item.rationale,
     }));
     const sources = [...(sourceLinks.primarySources ?? []), ...(sourceLinks.companionSources ?? [])].map((item: Json) => ({ referenceId: `reference_${safe(item.id)}`, label: item.title, ...(item.url ? { url: item.url } : {}) }));
     const sideMetadata = { annotations, sourceLinks, world, rights };

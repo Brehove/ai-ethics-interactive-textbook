@@ -28,6 +28,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
   chapterNumber={meta.order}
   canonicalPath={meta.path}
   readingRecordPilot={meta.id === "ch07"}
+  readingRecordTotal={visiblePrompts.length}
 >
   <ReaderShell
     slug={meta.slug}

@@ -341,7 +341,7 @@ const chapterReadingRecords = defineCollection({
   schema: chapterScopedMetadata.extend({
     license: z.literal("CC0-1.0"),
     reasoningObjective: z.string().min(1),
-    checkpoints: z.array(readingRecordCheckpointSchema).length(3),
+    checkpoints: z.array(readingRecordCheckpointSchema),
   }),
 });
 

@@ -55,10 +55,10 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       </section>
 
       <section class="workspace-panel" data-workspace-panel="Checkpoints" aria-labelledby="checkpoints-workspace-title" hidden>
-        <div class="workspace-heading"><div><p class="review-eyebrow">Commit · Work · Reconcile</p><h1 id="checkpoints-workspace-title">Prompt checkpoints</h1></div><div class="workspace-heading-actions"><strong data-checkpoint-summary>Loading…</strong><button type="button" data-checkpoint-preview>Open actual reader preview</button></div></div>
-        <p class="workspace-help">Choose a checkpoint card to inspect its stable identity, anchor, prompt, and student-facing projections.</p>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Flexible sequence</p><h1 id="checkpoints-workspace-title">Prompt checkpoints</h1></div><div class="workspace-heading-actions"><strong data-checkpoint-summary>Loading…</strong><button type="button" data-checkpoint-preview>Open actual reader preview</button></div></div>
+        <p class="workspace-help">Add as many or as few checkpoints as this chapter needs. Choose a card to edit its anchor, prompt, and student-facing projections.</p>
         <div class="checkpoint-card-grid" data-checkpoint-cards></div>
-        <section class="checkpoint-projection" data-checkpoint-projection aria-live="polite"><p>Select an existing checkpoint or add the next immutable slot.</p></section>
+        <section class="checkpoint-projection" data-checkpoint-projection aria-live="polite"><p>Select an existing checkpoint or add a new one at the selected passage.</p></section>
       </section>
 
       <section class="workspace-panel" data-workspace-panel="Media" aria-labelledby="media-workspace-title" hidden>
@@ -98,7 +98,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       <div class="inspector-heading"><h2>Prompt checkpoint</h2><button type="button" data-inspector-close aria-label="Close checkpoint inspector">×</button></div>
       <p class="offline-note" data-offline-note hidden>Read-only/offline: changes remain in this browser and cannot be published.</p>
       <div class="checkpoint-tabs" data-checkpoint-tabs aria-label="Chapter checkpoints"></div>
-      <label>Type<select data-checkpoint-type disabled><option selected>Commit</option><option>Work</option><option>Reconcile</option></select></label>
+      <label>Internal key<input data-checkpoint-type disabled /></label>
       <div class="field-pair"><label>Stage<input data-checkpoint-stage /></label><label>Strategy<select data-checkpoint-strategy><option>initial-judgment</option><option>self-explanation</option><option>argument-reconstruction</option><option>evidence-warrant</option><option>contrast-case</option><option>counterexample</option><option>consider-alternative</option><option>objection-repair</option><option>question-generation</option><option>epistemic-calibration</option><option>framework-comparison</option><option>transfer</option><option>metacognitive-trace</option></select></label></div>
       <label>Title<input data-checkpoint-title /></label><label>Trigger<textarea class="short-textarea" data-checkpoint-trigger></textarea></label>
       <label>Prompt<textarea data-prompt>Evaluate the claim that delegating deliberation to AI systems can be consistent with the formation of virtue. Use Aristotle's account of habituation (NE II.1) and discuss at least one concrete example.</textarea></label>
@@ -112,7 +112,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       <button class="inspection-row" type="button" data-a11y>Run checkpoint checks <span data-a11y-result>Not checked</span> ›</button>
       <p class="inspection-row">Editorial status <span>Needs human review</span></p>
       <button class="add-checkpoint" type="button" data-add-checkpoint>+ Add checkpoint</button><button class="save-checkpoint" type="button" data-save-checkpoint hidden>▱ Save checkpoint</button><button class="remove-checkpoint" type="button" data-remove-checkpoint hidden>Remove checkpoint</button>
-      <p class="checkpoint-count" data-checkpoint-count>0 draft checkpoints of 3. Add Commit first; the order is immutable.</p>
+      <p class="checkpoint-count" data-checkpoint-count>No checkpoints configured.</p>
     </aside>
   </div>
 
@@ -143,7 +143,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   import { reconcileDuplicateStableBlockIds } from "../../lib/editor-visual-document";
 
   type Block = { type: string; blockId?: string; preserve?: boolean; text?: string; html?: string; sanitizedHtml?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; tone?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; diagramId?: string; figureId?: string; mediaId?: string; mediaVersionId?: string; rightsCaseId?: string; embedId?: string; linkId?: string; anchorPassageId?: string; identity?: { provider?: string; resourceType?: string; resourceId?: string }; fallback?: { title?: string; summary?: string } };
-  type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: "commit" | "work" | "reconcile"; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
+  type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: string; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
   type Chapter = { title?: string; body?: Block[]; checkpoints?: Checkpoint[] };
   const root = document.querySelector<HTMLElement>("[data-editor-root]")!;
   if (!root) throw new Error("Editor root missing");
@@ -179,7 +179,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const submitReview = root.querySelector<HTMLButtonElement>("[data-submit-review]")!;
   const checkpointTabs = root.querySelector<HTMLElement>("[data-checkpoint-tabs]")!;
   const checkpointCount = root.querySelector<HTMLElement>("[data-checkpoint-count]")!;
-  const checkpointType = root.querySelector<HTMLSelectElement>("[data-checkpoint-type]")!;
+  const checkpointType = root.querySelector<HTMLInputElement>("[data-checkpoint-type]")!;
   const stage = root.querySelector<HTMLInputElement>("[data-checkpoint-stage]")!;
   const strategy = root.querySelector<HTMLSelectElement>("[data-checkpoint-strategy]")!;
   const checkpointTitle = root.querySelector<HTMLInputElement>("[data-checkpoint-title]")!;
@@ -281,12 +281,12 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const moveDown = root.querySelector<HTMLButtonElement>('[data-move-block="down"]')!;
   const removeStructuredBlock = root.querySelector<HTMLButtonElement>("[data-remove-block]")!;
   const removeMediaPlacement = root.querySelector<HTMLButtonElement>("[data-remove-media]")!;
-  const slots = ["commit", "work", "reconcile"] as const;
-  let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let documentMode: "visual" | "markdown" = "visual"; let draftBody: Block[] | null = null; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
+  let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let documentMode: "visual" | "markdown" = "visual"; let draftBody: Block[] | null = null; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot = ""; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
   const setStatus = (message: string) => { status.textContent = message; };
   const key = () => crypto.randomUUID();
   const post = (path: string, body: unknown) => fetch(`${gatewayOrigin}${path}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-Editor-CSRF": csrfToken }, body: JSON.stringify(body) });
   const checkpointFor = (slot: string) => (chapter.checkpoints ?? []).find((item) => item.slot === slot);
+  const newCheckpointSlot = () => `checkpoint-${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
   const blockForPassage = (passageId: string) => (chapter.body ?? []).find((item) => item.passageId === passageId);
   const digest = async (text: string) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const hashFile = async (file: File) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -501,7 +501,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       if (block.passageId) element.dataset.passageId = block.passageId;
       nodes.push(element);
       for (const checkpoint of (chapter.checkpoints ?? []).filter((item) => item.passageId === block.passageId)) {
-        const marker = document.createElement("button"); marker.type = "button"; marker.className = "checkpoint-marker"; marker.contentEditable = "false"; marker.dataset.checkpointSlot = checkpoint.slot; marker.textContent = `${checkpoint.slot[0].toUpperCase()}${checkpoint.slot.slice(1)} checkpoint`;
+        const marker = document.createElement("button"); marker.type = "button"; marker.className = "checkpoint-marker"; marker.contentEditable = "false"; marker.dataset.checkpointSlot = checkpoint.slot;
+        marker.textContent = `Checkpoint: ${checkpoint.title}`;
         marker.addEventListener("click", () => { selectCheckpoint(checkpoint.slot); switchWorkspace("Checkpoints"); }); nodes.push(marker);
       }
     }
@@ -546,8 +547,15 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const item = element as HTMLElement; const tag = item.tagName.toLowerCase();
     return ["div", "section", "article", "main"].includes(tag) && item.querySelector(":scope > p,:scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6,:scope > ul,:scope > ol,:scope > blockquote,:scope > pre,:scope > table") ? flattenDocumentElements(item) : [item];
   });
+  const isDiscardableEmptyVisualBlock = (block: Block) => !block.blockId
+    && block.preserve !== true
+    && ["paragraph", "heading", "blockquote", "callout"].includes(block.type)
+    && !(block.text ?? "").trim();
   const serializeVisualDocument = () => reconcileDuplicateStableBlockIds(
-    flattenDocumentElements(prose).map(elementDescriptor).filter((block): block is Block => Boolean(block)),
+    flattenDocumentElements(prose)
+      .map(elementDescriptor)
+      .filter((block): block is Block => Boolean(block))
+      .filter((block) => !isDiscardableEmptyVisualBlock(block)),
     chapter.body ?? []
   );
   const bodyReplacementPayload = (blocks: Block[]) => blocks.map((block) => block.preserve === true && block.blockId
@@ -741,13 +749,14 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   function renderSemanticReview() {
     type ReviewItem = { label: string; detail: string; tone?: "changed" | "added" | "removed" };
     const items: ReviewItem[] = [];
-    const canonicalCheckpoints = new Map((canonicalChapter.checkpoints ?? []).map((item) => [item.slot, item]));
-    const workingCheckpoints = new Map((chapter.checkpoints ?? []).map((item) => [item.slot, item]));
-    for (const slot of slots) {
-      const before = canonicalCheckpoints.get(slot); const after = workingCheckpoints.get(slot);
-      if (!before && after) items.push({ label: `${slot} checkpoint`, detail: "Added to the working chapter", tone: "added" });
-      else if (before && !after) items.push({ label: `${slot} checkpoint`, detail: "Removed from the working chapter", tone: "removed" });
-      else if (before && after && JSON.stringify(before) !== JSON.stringify(after)) items.push({ label: `${slot} checkpoint`, detail: "Prompt, guidance, response, or anchor revised", tone: "changed" });
+    const checkpointKey = (item: Checkpoint) => item.checkpointId ?? `slot:${item.slot}`;
+    const canonicalCheckpoints = new Map((canonicalChapter.checkpoints ?? []).map((item) => [checkpointKey(item), item]));
+    const workingCheckpoints = new Map((chapter.checkpoints ?? []).map((item) => [checkpointKey(item), item]));
+    for (const key of new Set([...canonicalCheckpoints.keys(), ...workingCheckpoints.keys()])) {
+      const before = canonicalCheckpoints.get(key); const after = workingCheckpoints.get(key); const label = after?.title ?? before?.title ?? "Checkpoint";
+      if (!before && after) items.push({ label, detail: "Checkpoint added to the working chapter", tone: "added" });
+      else if (before && !after) items.push({ label, detail: "Checkpoint removed from the working chapter", tone: "removed" });
+      else if (before && after && JSON.stringify(before) !== JSON.stringify(after)) items.push({ label, detail: "Prompt, guidance, response, or anchor revised", tone: "changed" });
     }
     const canonicalBlocks = new Map((canonicalChapter.body ?? []).filter((block) => block.blockId).map((block) => [block.blockId!, block]));
     const workingBlocks = new Map((chapter.body ?? []).filter((block) => block.blockId).map((block) => [block.blockId!, block]));
@@ -769,23 +778,23 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 
   function readCheckpoint(): Checkpoint {
     const selected = checkpointFor(selectedSlot);
-    return { passageId: anchor.value, passageExcerptHash: selected?.passageId === anchor.value ? selected.passageExcerptHash : "", slot: selectedSlot, stage: stage.value, strategy: strategy.value, title: checkpointTitle.value, trigger: trigger.value, prompt: prompt.value, guidance: guidance.value, responseStructure: responseStructure.value as Checkpoint["responseStructure"], minWords: Number(minWords.value), maxWords: Number(maxWords.value), rationale: rationale.value, showInSidebar: sidebarPreview.checked };
+    return { ...(selected?.checkpointId ? { checkpointId: selected.checkpointId } : {}), passageId: anchor.value, passageExcerptHash: selected?.passageId === anchor.value ? selected.passageExcerptHash : "", slot: selectedSlot, stage: stage.value, strategy: strategy.value, title: checkpointTitle.value, trigger: trigger.value, prompt: prompt.value, guidance: guidance.value, responseStructure: responseStructure.value as Checkpoint["responseStructure"], minWords: Number(minWords.value), maxWords: Number(maxWords.value), rationale: rationale.value, showInSidebar: sidebarPreview.checked };
   }
 
-  function selectCheckpoint(slot: typeof slots[number], creating = false) {
+  function selectCheckpoint(slot: string, creating = false) {
     selectedSlot = slot;
     const item = checkpointFor(slot);
-    checkpointType.value = slot[0].toUpperCase() + slot.slice(1);
-    stage.value = item?.stage ?? slot;
-    strategy.value = item?.strategy ?? (slot === "commit" ? "initial-judgment" : slot === "work" ? "self-explanation" : "metacognitive-trace");
+    checkpointType.value = slot;
+    stage.value = item?.stage ?? `Checkpoint ${(chapter.checkpoints?.length ?? 0) + 1}`;
+    strategy.value = item?.strategy ?? "self-explanation";
     checkpointTitle.value = item?.title ?? ""; trigger.value = item?.trigger ?? ""; prompt.value = item?.prompt ?? ""; guidance.value = item?.guidance ?? ""; rationale.value = item?.rationale ?? "";
     responseStructure.value = item?.responseStructure ?? "prose"; minWords.value = String(item?.minWords ?? 30); maxWords.value = String(item?.maxWords ?? 120); sidebarPreview.checked = item?.showInSidebar ?? true;
     if (item?.passageId && [...anchor.options].some((option) => option.value === item.passageId)) anchor.value = item.passageId;
-    saveCheckpoint.hidden = !(item || creating); removeCheckpoint.hidden = !item; addCheckpoint.hidden = true;
+    saveCheckpoint.hidden = !(item || creating); removeCheckpoint.hidden = !item; addCheckpoint.hidden = false;
     saveCheckpoint.disabled = !canWrite; removeCheckpoint.disabled = !canWrite;
     checkpointTabs.querySelectorAll("button").forEach((button) => button.classList.toggle("active", (button as HTMLElement).dataset.slot === slot));
     checkpointCards.querySelectorAll("button").forEach((button) => button.classList.toggle("active", (button as HTMLElement).dataset.slot === slot));
-    const projectionTitle = document.createElement("h2"); projectionTitle.textContent = item?.title || `${slot[0].toUpperCase() + slot.slice(1)} checkpoint draft`;
+    const projectionTitle = document.createElement("h2"); projectionTitle.textContent = item?.title || "New checkpoint draft";
     const identity = document.createElement("p"); identity.className = "placement-identity"; identity.textContent = item ? `${item.checkpointId ?? "server-assigned ID"} · ${item.passageId} · ${item.passageExcerptHash.slice(0, 12)}…` : "Not yet persisted";
     const inline = document.createElement("blockquote"); inline.textContent = item?.trigger || "Inline trigger preview will appear here.";
     const side = document.createElement("p"); side.textContent = item?.prompt || "Side-panel prompt preview will appear here.";
@@ -795,19 +804,18 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 
   function renderCheckpointState() {
     const checkpoints = chapter.checkpoints ?? [];
-    checkpointTabs.replaceChildren(...slots.map((slot) => { const button = document.createElement("button"); const exists = Boolean(checkpointFor(slot)); button.type = "button"; button.dataset.slot = slot; button.textContent = `${exists ? "✓" : "+"} ${slot[0].toUpperCase()}${slot.slice(1)}`; button.disabled = !exists; button.addEventListener("click", () => selectCheckpoint(slot)); return button; }));
-    const missing = slots.find((slot) => !checkpointFor(slot));
-    checkpointCount.textContent = missing ? `${checkpoints.length} checkpoint${checkpoints.length === 1 ? "" : "s"} of 3. ${missing[0].toUpperCase() + missing.slice(1)} is the next immutable slot.` : "3 checkpoints of 3: Commit, Work, Reconcile. Existing records remain editable.";
-    addCheckpoint.hidden = !missing; addCheckpoint.disabled = !canWrite; addCheckpoint.dataset.slot = missing ?? ""; saveCheckpoint.hidden = true; removeCheckpoint.hidden = true;
-    checkpointSummary.textContent = `${checkpoints.length} of 3 configured${canWrite ? " · editable canary" : " · read-only"}`;
-    checkpointCards.replaceChildren(...slots.map((slot, index) => {
-      const item = checkpointFor(slot); const card = document.createElement("button"); card.type = "button"; card.dataset.slot = slot; card.className = "checkpoint-card"; card.disabled = !item;
+    checkpointTabs.replaceChildren(...checkpoints.map((item, index) => { const button = document.createElement("button"); button.type = "button"; button.dataset.slot = item.slot; button.textContent = `${String(index + 1).padStart(2, "0")} ${item.title}`; button.addEventListener("click", () => selectCheckpoint(item.slot)); return button; }));
+    checkpointCount.textContent = checkpoints.length ? `${checkpoints.length} checkpoint${checkpoints.length === 1 ? "" : "s"} configured. Add, edit, or remove checkpoints as needed.` : "No checkpoints configured. Add one at any stable passage.";
+    addCheckpoint.hidden = false; addCheckpoint.disabled = !canWrite; saveCheckpoint.hidden = true; removeCheckpoint.hidden = true;
+    checkpointSummary.textContent = `${checkpoints.length} configured${canWrite ? " · editable canary" : " · read-only"}`;
+    checkpointCards.replaceChildren(...checkpoints.map((item, index) => {
+      const card = document.createElement("button"); card.type = "button"; card.dataset.slot = item.slot; card.className = "checkpoint-card";
       const number = document.createElement("span"); number.textContent = `Checkpoint ${String(index + 1).padStart(2, "0")}`;
-      const title = document.createElement("strong"); title.textContent = item?.title || `${slot[0].toUpperCase() + slot.slice(1)} not configured`;
-      const meta = document.createElement("small"); meta.textContent = item ? `${item.checkpointId ?? "ID pending"} · ${item.passageId}` : "Next slot remains unavailable until prior order is satisfied";
-      card.append(number, title, meta); card.addEventListener("click", () => selectCheckpoint(slot)); return card;
+      const title = document.createElement("strong"); title.textContent = item.title;
+      const meta = document.createElement("small"); meta.textContent = `${item.checkpointId ?? "ID pending"} · ${item.passageId}`;
+      card.append(number, title, meta); card.addEventListener("click", () => selectCheckpoint(item.slot)); return card;
     }));
-    if (checkpointFor(selectedSlot)) selectCheckpoint(selectedSlot); else if (checkpoints[0]) selectCheckpoint(checkpoints[0].slot); else if (missing) { checkpointType.value = missing[0].toUpperCase() + missing.slice(1); }
+    if (checkpointFor(selectedSlot)) selectCheckpoint(selectedSlot); else if (checkpoints[0]) selectCheckpoint(checkpoints[0].slot); else { selectedSlot = ""; checkpointType.value = ""; const message = document.createElement("p"); message.textContent = "Select a passage in the chapter, then add a checkpoint."; checkpointProjection.replaceChildren(message); }
   }
 
   async function hydrateChangeset() {
@@ -968,6 +976,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (name === "Checkpoints") {
       const item = (chapter.checkpoints ?? []).find((checkpoint) => checkpoint.passageId === anchor.value);
       if (item) selectCheckpoint(item.slot);
+      else { const slot = newCheckpointSlot(); selectCheckpoint(slot, true); setStatus("New checkpoint opened at the selected passage. Complete the prompt fields, then choose Save checkpoint."); }
       (panel.querySelector<HTMLElement>("button, h1") ?? panel).focus?.({ preventScroll: true });
     } else {
       panel.querySelector<HTMLButtonElement>("[data-media]")?.focus({ preventScroll: true });
@@ -1042,7 +1051,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (!blockForPassage(item.passageId)) issues.push("valid passage anchor"); if (!Number.isInteger(item.minWords) || !Number.isInteger(item.maxWords) || item.minWords < 1 || item.maxWords > 1000 || item.minWords > item.maxWords) issues.push("word range");
     const result = root.querySelector<HTMLElement>("[data-a11y-result]")!; result.textContent = issues.length ? `Review ${issues.join(", ")}` : "Required fields and anchor pass"; result.classList.toggle("good", issues.length === 0); setStatus(issues.length ? `Checkpoint checks found: ${issues.join(", ")}.` : "Checkpoint required-field and anchor checks passed. Semantic approval remains human review.");
   });
-  addCheckpoint.addEventListener("click", () => { const slot = addCheckpoint.dataset.slot as typeof slots[number]; if (slot) { selectCheckpoint(slot, true); setStatus(`New ${slot} checkpoint opened. It is not persisted until Save checkpoint succeeds.`); } });
+  addCheckpoint.addEventListener("click", () => { const slot = newCheckpointSlot(); selectCheckpoint(slot, true); setStatus("New checkpoint opened. It is not persisted until Save checkpoint succeeds."); });
   saveCheckpoint.addEventListener("click", async () => { if (!contentOnline || !changeSetId) { setStatus("Not saved: the live content service is unavailable. Copy your text before leaving this page."); return; } try { const checkpoint = readCheckpoint(); if (!checkpoint.passageExcerptHash) checkpoint.passageExcerptHash = await digest(blockForPassage(checkpoint.passageId)?.text ?? ""); await applyOperation({ type: "checkpoint.upsert", checkpoint }); const saved = await saveLiveRevision(); dirty = false; renderCheckpointState(); selectCheckpoint(checkpoint.slot); setStatus(`Saved ${checkpoint.slot} checkpoint and published revision ${saved.revisionId}.`); } catch (error) { setStatus(`Checkpoint was not saved${error instanceof Error ? `: ${error.message}` : "."}`); } });
   removeCheckpoint.addEventListener("click", async () => { const item = checkpointFor(selectedSlot); if (!item || !contentOnline) { setStatus("Checkpoint was not removed."); return; } try { await applyOperation({ type: "checkpoint.remove", slot: selectedSlot, checkpointId: item.checkpointId }); const saved = await saveLiveRevision(); renderCheckpointState(); setStatus(`Removed ${selectedSlot} checkpoint and published revision ${saved.revisionId}.`); } catch (error) { setStatus(`Checkpoint was not removed${error instanceof Error ? `: ${error.message}` : "."}`); } });
   const mediaKindLabel = (mimeType: string) => mimeType === "application/pdf" || mimeType === "text/plain" ? "document" : mimeType.split("/")[0] || "asset";
