@@ -770,6 +770,31 @@ test('chapter.replaceBody atomically saves a continuous document while preservin
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Revised work passage.'));
 });
 
+test('chapter.replaceBody repairs a browser-split editable ID and allows new prose before the first stable block', async () => {
+  const source = baseChapter();
+  const result = await applySemanticOperation(source, { type: 'chapter.replaceBody', body: [
+    { blockId: 'b-commit', type: 'paragraph', text: 'Test' },
+    { blockId: 'b-commit', type: 'paragraph', text: 'Commit passage.' },
+    ...source.body.slice(1)
+  ] });
+  assert.equal(result.chapter.body[0].text, 'Test');
+  assert.match(result.chapter.body[0].blockId, /^block_/);
+  assert.notEqual(result.chapter.body[0].blockId, 'b-commit');
+  assert.equal(result.chapter.body[1].blockId, 'b-commit');
+  assert.equal(result.chapter.body[1].passageId, 'p-commit');
+  assert.equal(result.chapter.body[1].text, 'Commit passage.');
+});
+
+test('chapter.replaceBody still rejects duplicate managed block identities', async () => {
+  const source = baseChapter();
+  source.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  await assert.rejects(applySemanticOperation(source, { type: 'chapter.replaceBody', body: [
+    ...source.body.slice(0, -1),
+    { blockId: 'b-legacy', preserve: true },
+    { blockId: 'b-legacy', preserve: true }
+  ] }), (error) => error instanceof ApiError && error.code === 'BLOCK_ID_DUPLICATE');
+});
+
 test('chapter.replaceBody applies visual paragraph, heading, quote, callout, and list style changes', async () => {
   const source = baseChapter();
   const styled = await applySemanticOperation(source, { type: 'chapter.replaceBody', body: [

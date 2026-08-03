@@ -140,6 +140,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
 </dialog>
 
 <script>
+  import { reconcileDuplicateStableBlockIds } from "../../lib/editor-visual-document";
+
   type Block = { type: string; blockId?: string; preserve?: boolean; text?: string; html?: string; sanitizedHtml?: string; code?: string; level?: number; passageId?: string; items?: string[]; ordered?: boolean; rows?: string[][]; language?: string; tone?: string; title?: string; caption?: string; alt?: string; canonicalUrl?: string; diagramId?: string; figureId?: string; mediaId?: string; mediaVersionId?: string; rightsCaseId?: string; embedId?: string; linkId?: string; anchorPassageId?: string; identity?: { provider?: string; resourceType?: string; resourceId?: string }; fallback?: { title?: string; summary?: string } };
   type Checkpoint = { checkpointId?: string; passageId: string; passageExcerptHash: string; slot: "commit" | "work" | "reconcile"; stage: string; strategy: string; title: string; trigger: string; prompt: string; guidance: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; rationale: string; showInSidebar: boolean };
   type Chapter = { title?: string; body?: Block[]; checkpoints?: Checkpoint[] };
@@ -544,7 +546,10 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const item = element as HTMLElement; const tag = item.tagName.toLowerCase();
     return ["div", "section", "article", "main"].includes(tag) && item.querySelector(":scope > p,:scope > h1,:scope > h2,:scope > h3,:scope > h4,:scope > h5,:scope > h6,:scope > ul,:scope > ol,:scope > blockquote,:scope > pre,:scope > table") ? flattenDocumentElements(item) : [item];
   });
-  const serializeVisualDocument = () => flattenDocumentElements(prose).map(elementDescriptor).filter((block): block is Block => Boolean(block));
+  const serializeVisualDocument = () => reconcileDuplicateStableBlockIds(
+    flattenDocumentElements(prose).map(elementDescriptor).filter((block): block is Block => Boolean(block)),
+    chapter.body ?? []
+  );
   const bodyReplacementPayload = (blocks: Block[]) => blocks.map((block) => block.preserve === true && block.blockId
     ? { blockId: block.blockId, preserve: true }
     : block);
@@ -609,7 +614,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const body = bodyReplacementPayload(documentMode === "markdown"
       ? reconcileImportedBlocks(parseMarkdownDocument(markdownEditor.value)).map((block) => ["mediaFigure", "externalEmbed", "richLink", "diagram", "legacyMarkup"].includes(block.type) && block.blockId ? { ...block, preserve: true } : block)
       : serializeVisualDocument());
-    if (!body.length || !body[0].blockId) { setStatus("The chapter was not saved: the first stable chapter passage could not be reconciled. Keep the opening block or import beneath it."); toolbarStatus.textContent = "Not saved — keep the opening passage or import beneath it."; return false; }
+    if (!body.length) { setStatus("The chapter was not saved because the document is empty."); toolbarStatus.textContent = "Not saved — the chapter is empty."; return false; }
     saveDocument.disabled = true; saveState.textContent = "Saving…";
     try { await applyOperation({ type: "chapter.replaceBody", body }); const saved = await saveLiveRevision(); dirty = false; saveState.textContent = "Saved and live"; saveState.classList.remove("unsaved"); renderChapter(); toolbarStatus.textContent = "Saved. This revision is now live in the public chapter."; setStatus(`Saved and live · revision ${saved.revisionId}.`); return true; }
     catch (error) {
