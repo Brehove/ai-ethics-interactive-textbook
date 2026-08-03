@@ -768,6 +768,7 @@ test('chapter.replaceBody refuses client IDs, altered locked content, and orphan
   await assert.rejects(applySemanticOperation(source, { type: 'chapter.replaceBody', body: source.body.filter((item) => item.blockId !== 'b-work').map((item) => ({ blockId: item.blockId, preserve: true })) }), (error) => error instanceof ApiError && error.code === 'DEPENDENCIES_REQUIRE_REANCHOR');
   const locked = baseChapter();
   locked.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  await assert.rejects(applySemanticOperation(locked, { type: 'chapter.replaceBody', body: [...locked.body.slice(0, -1), { blockId: 'b-legacy', preserve: true, type: 'legacyMarkup' }] }), (error) => error instanceof ApiError && error.code === 'UNKNOWN_FIELD' && error.details.fields.includes('type'));
   await assert.rejects(applySemanticOperation(locked, { type: 'chapter.replaceBody', body: [...locked.body.slice(0, -1), { blockId: 'b-legacy', type: 'paragraph', text: 'Changed.' }] }), (error) => error instanceof ApiError && error.code === 'STRUCTURED_BLOCK_REQUIRES_PRESERVE');
 });
 
