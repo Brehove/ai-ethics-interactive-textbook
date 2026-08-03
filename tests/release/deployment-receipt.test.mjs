@@ -52,3 +52,10 @@ test('release CLI hashes the shared canonical receipt payload', async () => {
   assert.match(cli, /receiptHash: sha256\(deploymentReceiptPayload\(payload\)\)/);
   assert.doesNotMatch(cli, /receiptHash: sha256\(payload\)/);
 });
+
+test('retry migration retains candidate history without blocking a new Worker version', async () => {
+  const schema = await readFile(new URL('../../workers/content-api/migrations/0014_retryable_release_candidates.sql', import.meta.url), 'utf8');
+  assert.match(schema, /DROP INDEX releases_candidate_id/);
+  assert.match(schema, /CREATE INDEX releases_candidate_id/);
+  assert.doesNotMatch(schema, /CREATE UNIQUE INDEX releases_candidate_id/);
+});
