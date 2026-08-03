@@ -4,6 +4,8 @@ import { optionValue } from "./argv.mjs";
 import { extractMetaCsp } from "./csp.mjs";
 const args = process.argv.slice(2); const value = (name) => optionValue(args, name);
 const base = value("--base-url")?.replace(/\/$/, ""); const digestFile = value("--asset-digests");
+const ASSET_PROPAGATION_ATTEMPTS = 10;
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 if (!base) throw new Error("usage: smoke.mjs --base-url <preview> [--asset-digests <file>]");
 const requiredRoutes = ["/", "/chapter/aristotle-character-and-ai-assisted-life/"]; const routeResults = [];
 for (const route of requiredRoutes) {
@@ -19,8 +21,16 @@ for (const route of requiredRoutes) {
 }
 const digestBytes = digestFile ? await readFile(digestFile) : Buffer.from(""); let assetCount = 0;
 for (const line of digestBytes.toString("utf8").trim().split("\n").filter(Boolean)) {
-  const [expected, asset] = line.trim().split(/\s+/, 2); const response = await fetch(`${base}/${asset.replace(/^\//, "")}`); const body = Buffer.from(await response.arrayBuffer());
-  if (!response.ok || createHash("sha256").update(body).digest("hex") !== expected) throw new Error(`Asset digest gate failed: ${asset}`);
+  const [expected, asset] = line.trim().split(/\s+/, 2); let verified = false;
+  for (let attempt = 1; attempt <= ASSET_PROPAGATION_ATTEMPTS; attempt += 1) {
+    const assetUrl = new URL(`${base}/${asset.replace(/^\//, "")}`);
+    assetUrl.searchParams.set("release_smoke", `${Date.now()}-${attempt}`);
+    const response = await fetch(assetUrl, { cache: "no-store", headers: { "cache-control": "no-cache", pragma: "no-cache" } });
+    const body = Buffer.from(await response.arrayBuffer());
+    if (response.ok && createHash("sha256").update(body).digest("hex") === expected) { verified = true; break; }
+    if (attempt < ASSET_PROPAGATION_ATTEMPTS) await wait(1_000);
+  }
+  if (!verified) throw new Error(`Asset digest gate failed after propagation retries: ${asset}`);
   assetCount += 1;
 }
 const report = { schemaVersion: 1, baseUrl: base, checkedAt: new Date().toISOString(), routes: routeResults, assetCount, assetManifestSha256: digestFile ? createHash("sha256").update(digestBytes).digest("hex") : null, rollbackRouteSmokeOnly: !digestFile };
