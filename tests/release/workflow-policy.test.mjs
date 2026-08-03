@@ -6,6 +6,7 @@ const workflowPath = new URL("../../.github/workflows/content-release.yml", impo
 const rollbackWorkflowPath = new URL("../../.github/workflows/content-rollback.yml", import.meta.url);
 const reconcileWorkflowPath = new URL("../../.github/workflows/content-release-reconcile.yml", import.meta.url);
 const ciWorkflowPath = new URL("../../.github/workflows/ci.yml", import.meta.url);
+const releaseCliPath = new URL("../../scripts/release/release-cli.mjs", import.meta.url);
 
 test("release workflow derives an immutable snapshot route from the hash", async () => {
   const workflow = await readFile(workflowPath, "utf8");
@@ -38,6 +39,7 @@ test("rollback workflow restores Cloudflare and the full database release state 
 
 test("release workflow requires signed candidates and human-gated promotion", async () => {
   const workflow = await readFile(workflowPath, "utf8");
+  const releaseCli = await readFile(releaseCliPath, "utf8");
   assert.match(workflow, /RELEASE_SIGNING_KEY: \$\{\{ secrets\.RELEASE_SIGNING_KEY \}\}/);
   assert.match(workflow, /environment: content-production/);
   assert.match(workflow, /if: \$\{\{ inputs\.promote \}\}/);
@@ -54,6 +56,10 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /control-plane\.mjs emergency-rollback/);
   assert.match(workflow, /steps\.stage\.outcome == 'success'/);
   assert.match(workflow, /--base-url https:\/\/ethicsandai\.your-digital-life\.org/);
+  assert.doesNotMatch(workflow, /--preview-url|CLOUDFLARE_RELEASE_PREVIEW_URL/);
+  assert.match(releaseCli, /const preview = stdout\.match/);
+  assert.match(releaseCli, /workers\\\.dev/);
+  assert.match(releaseCli, /Wrangler did not return the exact immutable version preview URL/);
   assert.doesNotMatch(workflow, /actions\/(?:upload|download)-artifact@v4(?:\s|$)/);
   const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n\s+with:\n([\s\S]*?)(?=\n\s+- (?:uses|name|run):)/g)];
   assert.equal(checkouts.length, 3);

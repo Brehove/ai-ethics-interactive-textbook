@@ -12,5 +12,10 @@ test('backup workflow keeps a tested Cloudflare copy and encrypted off-provider 
   assert.match(workflow, /age -r "\$BACKUP_AGE_RECIPIENT"/);
   assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(workflow, /retention-days: 30/);
+  assert.match(workflow, /BACKUP_SOURCE_R2_ACCESS_KEY_ID/);
+  assert.match(workflow, /BACKUP_SOURCE_R2_SECRET_ACCESS_KEY/);
+  assert.match(workflow, /BACKUP_DEST_R2_ACCESS_KEY_ID/);
+  assert.match(workflow, /BACKUP_DEST_R2_SECRET_ACCESS_KEY/);
+  assert.doesNotMatch(workflow, /secrets\.BACKUP_R2_(?:ACCESS_KEY_ID|SECRET_ACCESS_KEY)/);
   assert.doesNotMatch(workflow, /AGE_SECRET|AGE_IDENTITY|age-secret-key/);
 });

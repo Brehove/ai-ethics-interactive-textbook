@@ -46,7 +46,9 @@ GitHub Actions secrets:
 - `CLOUDFLARE_RELEASE_TOKEN` — least-privilege version upload/deploy token;
 - `RELEASE_DEPLOY_RECEIPT_TOKEN` — exact same value as the editor/auth gateway secret, used only by the protected release job to stage and record deployment receipts;
 - `MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY`, `MEDIA_CALLBACK_TOKEN`.
-- `CLOUDFLARE_BACKUP_TOKEN`, `BACKUP_R2_ACCESS_KEY_ID`, `BACKUP_R2_SECRET_ACCESS_KEY` for the private scheduled export only. The R2 token may read the three durable source buckets and write only `ai-ethics-backups`; it must not mutate source objects.
+- `CLOUDFLARE_BACKUP_TOKEN` for read-only D1 export.
+- `BACKUP_SOURCE_R2_ACCESS_KEY_ID`, `BACKUP_SOURCE_R2_SECRET_ACCESS_KEY` for read-only access to the three durable source buckets.
+- `BACKUP_DEST_R2_ACCESS_KEY_ID`, `BACKUP_DEST_R2_SECRET_ACCESS_KEY` for read/write access only to `ai-ethics-backups`. The workflow deliberately uses separate S3 credentials because an R2 S3 token cannot express per-bucket read-only and write-only permissions in one credential.
 
 GitHub Actions variables:
 
@@ -54,7 +56,6 @@ GitHub Actions variables:
 - `MEDIA_R2_JOBS_BUCKET=ai-ethics-media-job-envelopes`
 - `MEDIA_R2_QUARANTINE_BUCKET=ai-ethics-upload-quarantine`
 - `MEDIA_R2_MEDIA_BUCKET=ai-ethics-content-media`
-- `CLOUDFLARE_RELEASE_PREVIEW_URL`
 - `BACKUP_R2_ENDPOINT_URL`, `BACKUP_R2_BUCKET=ai-ethics-backups`
 - `BACKUP_AGE_RECIPIENT` — the public `age1…` recipient for an offline-held recovery key. Never store the corresponding secret key in GitHub or Cloudflare.
 

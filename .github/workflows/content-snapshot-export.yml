@@ -45,8 +45,8 @@ jobs:
           rm backup/restore.sql backup/restore.db
       - name: Upload immutable private backup and digest
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_DEST_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_DEST_R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           AWS_EC2_METADATA_DISABLED: "true"
           R2_ENDPOINT_URL: ${{ vars.BACKUP_R2_ENDPOINT_URL }}
@@ -61,8 +61,8 @@ jobs:
           test "$remote_size" = "$(wc -c < backup/ai-ethics-content.sql.gz | tr -d ' ')"
       - name: Mirror durable R2 objects for disaster recovery
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_SOURCE_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_SOURCE_R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           AWS_EC2_METADATA_DISABLED: "true"
           R2_ENDPOINT_URL: ${{ vars.BACKUP_R2_ENDPOINT_URL }}

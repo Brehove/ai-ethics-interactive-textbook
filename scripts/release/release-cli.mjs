@@ -37,7 +37,7 @@ const adapter = {
   promoteVersion: async (id) => { if (!dryRun()) await exec("npx", ["wrangler", "versions", "deploy", `${id}@100`, "--name", "ethicsandai", "--yes"], { cwd: root }); },
   retireVersion: async () => {},
   smokeTest: async ({ previewBaseUrl }) => {
-    if (!dryRun() && !previewBaseUrl) throw new Error("Wrangler did not return a version preview URL and no --preview-url override was supplied");
+    if (!dryRun() && !previewBaseUrl) throw new Error("Wrangler did not return the exact immutable version preview URL");
     if (previewBaseUrl) await exec("node", ["scripts/release/smoke.mjs", "--base-url", previewBaseUrl, "--asset-digests", required("--asset-digests")], { cwd: root });
   },
 };
@@ -68,7 +68,6 @@ if (command === "candidate") {
   const candidate = await readJson(required("--candidate"));
   await verifyForRelease(candidate);
   const previewBaseUrl = value("--preview-url");
-  if (!dryRun() && !previewBaseUrl) throw new Error("--preview-url is required for a real deployment; do not skip smoke gates");
   const next = await deployCandidate({ candidate, adapter, state: await readJson(stateFile()).catch(() => ({})), previewBaseUrl });
   await writeJsonImmutable(`${stateFile()}.${candidate.candidateId}.json`, next);
   console.log(JSON.stringify(next));

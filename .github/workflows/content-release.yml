@@ -130,7 +130,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
           RELEASE_EXECUTE: "1"
-        run: node scripts/release/release-cli.mjs deploy --candidate release-artifacts/candidate.json --built-assets release-artifacts/dist --asset-digests release-artifacts/assets.sha256 --preview-url '${{ vars.CLOUDFLARE_RELEASE_PREVIEW_URL }}' --state release-artifacts/state.json
+        run: node scripts/release/release-cli.mjs deploy --candidate release-artifacts/candidate.json --built-assets release-artifacts/dist --asset-digests release-artifacts/assets.sha256 --state release-artifacts/state.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-deployment-${{ inputs.snapshot_hash }}
