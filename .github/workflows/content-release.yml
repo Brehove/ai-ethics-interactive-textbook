@@ -158,6 +158,14 @@ jobs:
         with:
           name: release-deployment-${{ inputs.snapshot_hash }}
           path: release-artifacts
+      - name: Verify production is entirely on the declared recovery version
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+        run: |
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/pre-promotion-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/pre-promotion-cloudflare-status.json --out release-artifacts/pre-promotion-version.json
+          observed="$(node -e "console.log(require('./release-artifacts/pre-promotion-version.json').cloudflareVersionId)")"
+          test "$observed" = '${{ inputs.rollback_version_id }}'
       - name: Stage the exact deployment against the active release
         id: stage
         env:
@@ -177,9 +185,14 @@ jobs:
           node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --asset-digests release-artifacts/assets.sha256 --out release-artifacts/production-verification.json
           node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
       - name: Activate only the exact D1 revisions now present in the active release
+        id: authority
         env:
           RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
         run: node scripts/release/control-plane.mjs activate-authority --candidate release-artifacts/candidate.json --transaction release-artifacts/deployment-transaction.json --receipt release-artifacts/deployment-receipt.json --out release-artifacts/authority-activation.json
+      - name: Audit the complete active release state
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+        run: node scripts/release/control-plane.mjs audit-state --release "$(node -e \"console.log(require('./release-artifacts/deployment-receipt.json').releaseId)\")" --out release-artifacts/release-state-audit.json
       - name: Restore prior Cloudflare version if verification or receipt recording fails
         if: ${{ failure() && steps.stage.outcome == 'success' && steps.receipt.outcome != 'success' }}
         env:
@@ -194,4 +207,7 @@ jobs:
             release-artifacts/production-verification.json
             release-artifacts/deployment-receipt.json
             release-artifacts/authority-activation.json
+            release-artifacts/release-state-audit.json
+            release-artifacts/pre-promotion-cloudflare-status.json
+            release-artifacts/pre-promotion-version.json
           retention-days: 90

@@ -63,6 +63,7 @@ if (command === "prepare-cutover") {
     candidateManifestHash: candidate.manifestSha256,
     buildAttestationHash: sha256(buildAttestation),
     expectedActiveReleaseId,
+    previousCloudflareVersionId: fallbackRollbackVersion,
     cloudflareVersionId: record.versionId,
     authorityEntries,
     idempotencyKey: deterministicUuid("stage"),
@@ -71,8 +72,22 @@ if (command === "prepare-cutover") {
   const output = { ...staged, emergencyRollbackVersionId: staged.previousCloudflareVersionId || fallbackRollbackVersion };
   await writeFile(required("--out"), `${JSON.stringify(output, null, 2)}\n`, { flag: "wx", mode: 0o444 });
   console.log(JSON.stringify(output));
-} else if (command === "receipt") {
-  const transaction = await readJson(required("--transaction"));
+} else if (command === "stage-rollback") {
+  const targetReleaseId = required("--target-release");
+  const expectedActiveReleaseId = required("--expected-active");
+  const staged = await post(`/v1/releases/${encodeURIComponent(targetReleaseId)}:stageRollback`, { expectedActiveReleaseId, idempotencyKey: deterministicUuid("stage-rollback") });
+  if (!staged.previousCloudflareVersionId || staged.previousCloudflareVersionId === staged.cloudflareVersionId) throw new Error("Rollback stage did not return distinct target and recovery Cloudflare versions");
+  const output = { ...staged, emergencyRollbackVersionId: staged.previousCloudflareVersionId };
+  await writeFile(required("--out"), `${JSON.stringify(output, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(output));
+} else if (command === "pending") {
+  const result = await post("/v1/release-deployments:pending", {});
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
+} else if (command === "receipt" || command === "reconcile-receipt") {
+  const transactionState = await readJson(required("--transaction"));
+  const transaction = transactionState.pending || transactionState;
+  if (!transaction?.transactionId) throw new Error("A staged deployment transaction is required");
   const verification = await readFile(required("--verification"));
   const cloudflareDeploymentId = `cfdeploy_${runId}_${runAttempt}`;
   const verificationHash = sha256(verification);
@@ -83,14 +98,14 @@ if (command === "prepare-cutover") {
     candidateManifestHash: transaction.candidateManifestHash, buildAttestationHash: transaction.buildAttestationHash,
     cloudflareDeploymentId, cloudflareVersionId: transaction.cloudflareVersionId, verificationHash,
   };
-  const receipt = await post(`/v1/release-deployments/${encodeURIComponent(transaction.transactionId)}:recordReceipt`, {
+  const receipt = await post(`/v1/release-deployments/${encodeURIComponent(transaction.transactionId)}:${command === "receipt" ? "recordReceipt" : "reconcileReceipt"}`, {
     candidateManifestHash: transaction.candidateManifestHash,
     buildAttestationHash: transaction.buildAttestationHash,
     cloudflareDeploymentId,
     cloudflareVersionId: transaction.cloudflareVersionId,
     verificationHash,
     receiptHash: sha256(payload),
-    idempotencyKey: deterministicUuid("receipt"),
+    idempotencyKey: deterministicUuid(command),
   });
   await writeFile(required("--out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx", mode: 0o444 });
   console.log(JSON.stringify(receipt));
@@ -107,6 +122,34 @@ if (command === "prepare-cutover") {
   const activated = await post("/v1/authority:activateD1", { releaseId: receipt.releaseId, documents, idempotencyKey: deterministicUuid("activate-authority") });
   await writeFile(required("--out"), `${JSON.stringify(activated, null, 2)}\n`, { flag: "wx", mode: 0o444 });
   console.log(JSON.stringify(activated));
+} else if (command === "activate-authority-map") {
+  const state = await readJson(required("--state"));
+  const releaseId = required("--release");
+  const source = state.pending?.releaseId === releaseId ? state.pending : state.activeRelease?.releaseId === releaseId ? state.activeRelease : null;
+  if (!source || source.authorityDocumentCount !== 18 || !Array.isArray(source.d1Documents)) throw new Error("Recovery state does not contain the exact complete release authority map");
+  const documents = source.d1Documents;
+  if (documents.some((item) => !item.documentId || !item.sourceRevision || !/^[a-f0-9]{64}$/.test(item.normalizedSnapshotHash || ""))) throw new Error("Recovery authority map contains an invalid D1 binding");
+  const activated = documents.length ? await post("/v1/authority:activateD1", { releaseId, documents, idempotencyKey: deterministicUuid("activate-authority-map") }) : { releaseId, authority: "git", activated: [], noOp: true };
+  await writeFile(required("--out"), `${JSON.stringify(activated, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(activated));
+} else if (command === "abandon") {
+  const state = await readJson(required("--state"));
+  const observed = await readJson(required("--observed"));
+  const verification = await readFile(required("--verification"));
+  if (!state.pending?.transactionId || !observed.cloudflareVersionId) throw new Error("Pending transaction and observed active Cloudflare version are required");
+  const result = await post(`/v1/release-deployments/${encodeURIComponent(state.pending.transactionId)}:abandon`, {
+    observedCloudflareVersionId: observed.cloudflareVersionId,
+    verificationHash: sha256(verification),
+    idempotencyKey: deterministicUuid("abandon")
+  });
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
+} else if (command === "audit-state") {
+  const releaseId = required("--release");
+  const result = await post(`/v1/releases/${encodeURIComponent(releaseId)}:auditState`, {});
+  if (result.valid !== true || result.releaseId !== releaseId || result.documentCount !== 18 || !result.expectedCloudflareVersionId) throw new Error("Release-state audit returned an incomplete success result");
+  await writeFile(required("--out"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx", mode: 0o444 });
+  console.log(JSON.stringify(result));
 } else if (command === "emergency-rollback") {
   const transaction = await readJson(required("--transaction"));
   const versionId = transaction.emergencyRollbackVersionId;
@@ -114,5 +157,5 @@ if (command === "prepare-cutover") {
   await exec("npx", ["wrangler", "versions", "deploy", `${versionId}@100`, "--name", "ethicsandai", "--yes"]);
   console.log(JSON.stringify({ rolledBackTo: versionId, transactionId: transaction.transactionId }));
 } else {
-  throw new Error("usage: prepare-cutover|stage|receipt|activate-authority|emergency-rollback");
+  throw new Error("usage: prepare-cutover|stage|stage-rollback|pending|receipt|reconcile-receipt|activate-authority|activate-authority-map|abandon|audit-state|emergency-rollback");
 }

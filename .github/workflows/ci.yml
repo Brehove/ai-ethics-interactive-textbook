@@ -151,12 +151,20 @@ jobs:
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
 
+      - name: Apply the complete D1 migration chain to a fresh local database
+        run: |
+          migration_state="$(mktemp -d)"
+          npx wrangler d1 migrations apply ai-ethics-content --local --config workers/content-api/wrangler.jsonc --persist-to "$migration_state"
+
       - name: Build the static reader
         run: npm run build
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
 
-      - name: Bundle both Cloudflare targets without deploying
+      - name: Bundle every Cloudflare target without deploying
         run: |
           npx wrangler deploy --dry-run
           npx wrangler deploy --dry-run --config workers/editor-auth/wrangler.jsonc
+          npx wrangler deploy --dry-run --config workers/content-api/wrangler.jsonc
+          npx wrangler deploy --dry-run --config workers/textbook-preview/wrangler.jsonc
+          npx wrangler deploy --dry-run --config workers/textbook-mcp/wrangler.jsonc

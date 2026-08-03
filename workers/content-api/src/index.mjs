@@ -720,9 +720,10 @@ async function allocateReleaseSequence(env, changedAt) {
 
 async function stageReleaseDeployment(request, env, identity) {
   requireReleaseWorkflowIdentity(identity);
-  const body = await readJsonBody(request, { allowedFields: ['candidateId', 'snapshotHash', 'snapshotRevision', 'candidateManifestHash', 'buildAttestationHash', 'expectedActiveReleaseId', 'cloudflareVersionId', 'authorityEntries', 'idempotencyKey'] });
+  const body = await readJsonBody(request, { allowedFields: ['candidateId', 'snapshotHash', 'snapshotRevision', 'candidateManifestHash', 'buildAttestationHash', 'expectedActiveReleaseId', 'previousCloudflareVersionId', 'cloudflareVersionId', 'authorityEntries', 'idempotencyKey'] });
   validId(body.candidateId, 'candidateId'); exactHash(body.snapshotHash, 'snapshotHash'); validId(body.snapshotRevision, 'snapshotRevision');
-  exactHash(body.candidateManifestHash, 'candidateManifestHash'); exactHash(body.buildAttestationHash, 'buildAttestationHash'); validId(body.cloudflareVersionId, 'cloudflareVersionId');
+  exactHash(body.candidateManifestHash, 'candidateManifestHash'); exactHash(body.buildAttestationHash, 'buildAttestationHash'); validId(body.previousCloudflareVersionId, 'previousCloudflareVersionId'); validId(body.cloudflareVersionId, 'cloudflareVersionId');
+  if (body.previousCloudflareVersionId === body.cloudflareVersionId) throw new ApiError(422, 'DEPLOYMENT_BINDING_MISMATCH', 'Candidate and recovery Cloudflare versions must be distinct');
   if (!Array.isArray(body.authorityEntries) || body.authorityEntries.length !== 18) throw new ApiError(422, 'RELEASE_AUTHORITY_INVALID', 'authorityEntries must contain the complete 18-chapter release authority map');
   const authorityIds = new Set();
   const authorityEntries = body.authorityEntries.map((item) => {
@@ -750,14 +751,14 @@ async function stageReleaseDeployment(request, env, identity) {
   assertExpectedActive(expectedActiveReleaseId, await activeReleaseId(env));
   const previousRelease = expectedActiveReleaseId ? await env.CONTENT_DB.prepare('SELECT cloudflare_version_id FROM releases WHERE id = ?').bind(expectedActiveReleaseId).first() : null;
   if (expectedActiveReleaseId && !previousRelease?.cloudflare_version_id) throw new ApiError(409, 'ROLLBACK_VERSION_UNAVAILABLE', 'The active release lacks an immutable Cloudflare version for emergency rollback');
+  if (previousRelease?.cloudflare_version_id && previousRelease.cloudflare_version_id !== body.previousCloudflareVersionId) throw new ApiError(409, 'ROLLBACK_VERSION_MISMATCH', 'Provided recovery version does not match the active release receipt');
   const stagedAt = now();
   const sequence = await allocateReleaseSequence(env, stagedAt);
   const releaseId = await deterministicId('release', { candidateId: body.candidateId, candidateManifestHash: body.candidateManifestHash });
   const transactionId = await deterministicId('deployment', { action: 'promote', releaseId, expectedActiveReleaseId, idempotencyKey: body.idempotencyKey });
   const expiresAt = new Date(Date.parse(stagedAt) + 10 * 60 * 1000).toISOString();
-  const response = { transactionId, action: 'promote', state: 'staged', releaseId, sequence, candidateId: body.candidateId, snapshotHash: body.snapshotHash, snapshotRevision: body.snapshotRevision, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, previousCloudflareVersionId: previousRelease?.cloudflare_version_id || null, cloudflareVersionId: body.cloudflareVersionId, authorityDocumentCount: authorityEntries.length, expiresAt };
+  const response = { transactionId, action: 'promote', state: 'staged', releaseId, sequence, candidateId: body.candidateId, snapshotHash: body.snapshotHash, snapshotRevision: body.snapshotRevision, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, previousCloudflareVersionId: body.previousCloudflareVersionId, cloudflareVersionId: body.cloudflareVersionId, authorityDocumentCount: authorityEntries.length, expiresAt };
   const statements = [
-    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'abandoned' WHERE state = 'staged' AND expires_at <= ?").bind(stagedAt),
     env.CONTENT_DB.prepare(`INSERT INTO releases
       (id, sequence, changeset_id, state, manifest_hash, created_by, created_at, candidate_id, snapshot_hash, snapshot_revision, build_attestation_hash, cloudflare_version_id)
       VALUES (?, ?, ?, 'building', ?, ?, ?, ?, ?, ?, ?, ?)`).bind(releaseId, sequence, snapshot.changeset_id, body.candidateManifestHash, identity.actorId, stagedAt, body.candidateId, body.snapshotHash, body.snapshotRevision, body.buildAttestationHash, body.cloudflareVersionId),
@@ -767,8 +768,8 @@ async function stageReleaseDeployment(request, env, identity) {
     VALUES (?, ?, ?, ?, ?, ?)`).bind(releaseId, entry.documentId, entry.authority, entry.sourcePath, entry.sourceRevision, entry.normalizedSnapshotHash));
   statements.push(env.CONTENT_DB.prepare(`INSERT INTO release_deployment_transactions
       (id, action, state, release_id, candidate_id, submitted_snapshot_id, snapshot_hash, snapshot_revision, candidate_manifest_hash, build_attestation_hash,
-       expected_active_release_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
-      VALUES (?, 'promote', 'staged', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, body.candidateId, snapshot.id, body.snapshotHash, body.snapshotRevision, body.candidateManifestHash, body.buildAttestationHash, expectedActiveReleaseId, body.cloudflareVersionId, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
+       expected_active_release_id, previous_cloudflare_version_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
+      VALUES (?, 'promote', 'staged', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, body.candidateId, snapshot.id, body.snapshotHash, body.snapshotRevision, body.candidateManifestHash, body.buildAttestationHash, expectedActiveReleaseId, body.previousCloudflareVersionId, body.cloudflareVersionId, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
     idempotencyStatement(env, idem, body.idempotencyKey, 201, response, stagedAt),
     await audit(env, identity, 'release.deployment.staged', 'release', releaseId, { transactionId, candidateId: body.candidateId, snapshotHash: body.snapshotHash, candidateManifestHash: body.candidateManifestHash, buildAttestationHash: body.buildAttestationHash, expectedActiveReleaseId, cloudflareVersionId: body.cloudflareVersionId, approvalId: approval.id, authorityDocumentCount: authorityEntries.length }, { idempotencyHash: idem.requestHash }));
   await env.CONTENT_DB.batch(statements);
@@ -790,23 +791,51 @@ async function stageReleaseRollback(request, env, identity, releaseId) {
   assertExpectedActive(expectedActiveReleaseId, current);
   if (releaseId === current) throw new ApiError(409, 'ROLLBACK_TARGET_ACTIVE', 'Rollback target is already active');
   if (!target.cloudflare_version_id || !target.manifest_hash || !target.build_attestation_hash) throw new ApiError(409, 'ROLLBACK_TARGET_INCOMPLETE', 'Rollback target lacks immutable deployment bindings');
+  const previousRelease = expectedActiveReleaseId ? await env.CONTENT_DB.prepare('SELECT cloudflare_version_id FROM releases WHERE id = ?').bind(expectedActiveReleaseId).first() : null;
+  if (!previousRelease?.cloudflare_version_id) throw new ApiError(409, 'ROLLBACK_VERSION_UNAVAILABLE', 'The current active release lacks an immutable Cloudflare version for rollback recovery');
   const stagedAt = now();
   const transactionId = await deterministicId('deployment', { action: 'rollback', releaseId, expectedActiveReleaseId, idempotencyKey: body.idempotencyKey });
   const expiresAt = new Date(Date.parse(stagedAt) + 10 * 60 * 1000).toISOString();
-  const response = { transactionId, action: 'rollback', state: 'staged', releaseId, expectedActiveReleaseId, candidateManifestHash: target.manifest_hash, buildAttestationHash: target.build_attestation_hash, cloudflareVersionId: target.cloudflare_version_id, expiresAt };
+  const response = { transactionId, action: 'rollback', state: 'staged', releaseId, expectedActiveReleaseId, candidateManifestHash: target.manifest_hash, buildAttestationHash: target.build_attestation_hash, previousCloudflareVersionId: previousRelease.cloudflare_version_id, cloudflareVersionId: target.cloudflare_version_id, expiresAt };
   await env.CONTENT_DB.batch([
-    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'abandoned' WHERE state = 'staged' AND expires_at <= ?").bind(stagedAt),
     env.CONTENT_DB.prepare(`INSERT INTO release_deployment_transactions
       (id, action, state, release_id, candidate_id, submitted_snapshot_id, snapshot_hash, snapshot_revision, candidate_manifest_hash, build_attestation_hash,
-       expected_active_release_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
-      VALUES (?, 'rollback', 'staged', ?, NULL, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, target.manifest_hash, target.build_attestation_hash, expectedActiveReleaseId, target.cloudflare_version_id, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
+       expected_active_release_id, previous_cloudflare_version_id, cloudflare_version_id, staged_by, staged_client_id, staged_run_id, created_at, expires_at)
+      VALUES (?, 'rollback', 'staged', ?, NULL, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(transactionId, releaseId, target.manifest_hash, target.build_attestation_hash, expectedActiveReleaseId, previousRelease.cloudflare_version_id, target.cloudflare_version_id, identity.actorId, identity.clientId, identity.runId, stagedAt, expiresAt),
     idempotencyStatement(env, idem, body.idempotencyKey, 201, response, stagedAt),
     await audit(env, identity, 'release.rollback.staged', 'release', releaseId, { transactionId, expectedActiveReleaseId, cloudflareVersionId: target.cloudflare_version_id }, { idempotencyHash: idem.requestHash })
   ]);
   return json(response, 201);
 }
 
-async function recordDeploymentReceipt(request, env, identity, transactionId) {
+async function prepareRollbackAuthority(env, releaseId, changedAt) {
+  const rows = await env.CONTENT_DB.prepare(`SELECT document_id, authority, source_path, source_revision, normalized_snapshot_hash
+    FROM release_authority_entries WHERE release_id = ? ORDER BY document_id`).bind(releaseId).all();
+  const entries = rows.results || [];
+  if (entries.length !== 18 || new Set(entries.map((item) => item.document_id)).size !== 18) throw new ApiError(409, 'ROLLBACK_AUTHORITY_INCOMPLETE', 'Rollback target lacks a complete 18-chapter authority map');
+  const statements = [];
+  for (const entry of entries) {
+    validId(entry.document_id, 'documentId'); validId(entry.source_revision, 'sourceRevision'); exactHash(entry.normalized_snapshot_hash, 'normalizedSnapshotHash');
+    if (!['git', 'd1'].includes(entry.authority)) throw new ApiError(409, 'ROLLBACK_AUTHORITY_INVALID', 'Rollback target contains an invalid authority entry', { documentId: entry.document_id });
+    if (entry.authority === 'git' && (typeof entry.source_path !== 'string' || !/^content\/chapters\/[A-Za-z0-9._/-]+\/$/.test(entry.source_path) || entry.source_path.includes('..'))) throw new ApiError(409, 'ROLLBACK_AUTHORITY_INVALID', 'Rollback target contains an invalid Git source path', { documentId: entry.document_id });
+    if (entry.authority === 'd1') {
+      const revision = await env.CONTENT_DB.prepare('SELECT document_id, content_hash FROM document_revisions WHERE id = ?').bind(entry.source_revision).first();
+      if (revision?.document_id !== entry.document_id || revision.content_hash !== entry.normalized_snapshot_hash) throw new ApiError(409, 'ROLLBACK_REVISION_UNAVAILABLE', 'Rollback target D1 revision is missing or failed its immutable hash binding', { documentId: entry.document_id, sourceRevision: entry.source_revision });
+      statements.push(env.CONTENT_DB.prepare('UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ? WHERE id = ?').bind(entry.source_revision, entry.normalized_snapshot_hash, changedAt, entry.document_id));
+    }
+    statements.push(env.CONTENT_DB.prepare('UPDATE authority_registry SET active = 0, valid_until = ? WHERE document_id = ? AND active = 1').bind(changedAt, entry.document_id));
+    const authorityId = await deterministicId('authority', { documentId: entry.document_id, sourceRevision: entry.source_revision, normalizedSnapshotHash: entry.normalized_snapshot_hash, authority: entry.authority });
+    statements.push(env.CONTENT_DB.prepare(`INSERT INTO authority_registry
+      (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
+      ON CONFLICT(document_id, source_revision) DO UPDATE SET authority = excluded.authority,
+        source_path = excluded.source_path, normalized_snapshot_hash = excluded.normalized_snapshot_hash,
+        active = 1, valid_from = excluded.valid_from, valid_until = NULL`).bind(authorityId, entry.document_id, entry.authority, entry.authority === 'git' ? entry.source_path : null, entry.source_revision, entry.normalized_snapshot_hash, changedAt, changedAt));
+  }
+  return { entries, statements };
+}
+
+async function recordDeploymentReceipt(request, env, identity, transactionId, { allowExpired = false, reconciled = false } = {}) {
   requireReleaseWorkflowIdentity(identity);
   const body = await readJsonBody(request, { allowedFields: ['candidateManifestHash', 'buildAttestationHash', 'cloudflareDeploymentId', 'cloudflareVersionId', 'verificationHash', 'receiptHash', 'idempotencyKey'] });
   exactHash(body.candidateManifestHash, 'candidateManifestHash'); exactHash(body.buildAttestationHash, 'buildAttestationHash'); exactHash(body.verificationHash, 'verificationHash'); exactHash(body.receiptHash, 'receiptHash');
@@ -817,7 +846,7 @@ async function recordDeploymentReceipt(request, env, identity, transactionId) {
   const transaction = await env.CONTENT_DB.prepare('SELECT * FROM release_deployment_transactions WHERE id = ?').bind(transactionId).first();
   if (!transaction) throw new ApiError(404, 'DEPLOYMENT_TRANSACTION_NOT_FOUND', 'Staged deployment transaction was not found');
   if (transaction.state !== 'staged') throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_CLOSED', 'Only a staged deployment can accept a receipt');
-  if (Date.parse(transaction.expires_at) <= Date.now()) throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_EXPIRED', 'Staged deployment expired; verify live traffic and stage a reconciled operation');
+  if (!allowExpired && Date.parse(transaction.expires_at) <= Date.now()) throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_EXPIRED', 'Staged deployment expired; verify live traffic through the protected reconciler');
   if (body.candidateManifestHash !== transaction.candidate_manifest_hash || body.buildAttestationHash !== transaction.build_attestation_hash || body.cloudflareVersionId !== transaction.cloudflare_version_id) {
     throw new ApiError(409, 'DEPLOYMENT_BINDING_MISMATCH', 'Deployment receipt does not match the exact staged candidate, attestation, and Cloudflare version');
   }
@@ -832,21 +861,127 @@ async function recordDeploymentReceipt(request, env, identity, transactionId) {
   if (body.receiptHash !== expectedReceiptHash) throw new ApiError(409, 'RECEIPT_HASH_MISMATCH', 'Deployment receipt hash does not bind the exact staged transaction and deployed version', { expectedReceiptHash });
   const recordedAt = now();
   const receiptId = await deterministicId('receipt', { transactionId, receiptHash: body.receiptHash });
-  const response = { receiptId, receiptHash: body.receiptHash, transactionId, action: transaction.action, releaseId: transaction.release_id, previousActiveReleaseId: transaction.expected_active_release_id || null, activeReleaseId: transaction.release_id, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, recordedAt };
-  await env.CONTENT_DB.batch([
+  const response = { receiptId, receiptHash: body.receiptHash, transactionId, action: transaction.action, releaseId: transaction.release_id, previousActiveReleaseId: transaction.expected_active_release_id || null, activeReleaseId: transaction.release_id, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, reconciled, recordedAt };
+  const rollbackAuthority = transaction.action === 'rollback' ? await prepareRollbackAuthority(env, transaction.release_id, recordedAt) : { entries: [], statements: [] };
+  const statements = [
     env.CONTENT_DB.prepare(`INSERT INTO deployment_receipts
       (id, transaction_id, action, release_id, previous_active_release_id, candidate_id, candidate_manifest_hash, build_attestation_hash, snapshot_hash, snapshot_revision,
        cloudflare_deployment_id, cloudflare_version_id, verification_hash, receipt_hash, recorded_by, recorded_client_id, recorded_run_id, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(receiptId, transactionId, transaction.action, transaction.release_id, transaction.expected_active_release_id || null, transaction.candidate_id || null, transaction.candidate_manifest_hash, transaction.build_attestation_hash, transaction.snapshot_hash || null, transaction.snapshot_revision || null, body.cloudflareDeploymentId, body.cloudflareVersionId, body.verificationHash, body.receiptHash, identity.actorId, identity.clientId, identity.runId, recordedAt),
+    env.CONTENT_DB.prepare("UPDATE releases SET state = 'published', published_at = COALESCE(published_at, ?) WHERE id = ?").bind(recordedAt, transaction.release_id),
     env.CONTENT_DB.prepare(`INSERT INTO release_pointer_commands
       (id, receipt_id, action, expected_active_release_id, release_id, changed_by, changed_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(await deterministicId('pointercmd', { receiptId }), receiptId, transaction.action, transaction.expected_active_release_id || null, transaction.release_id, identity.actorId, recordedAt),
+    ...rollbackAuthority.statements,
     env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'completed', completed_at = ? WHERE id = ? AND state = 'staged'").bind(recordedAt, transactionId),
-    env.CONTENT_DB.prepare("UPDATE releases SET state = 'published', published_at = COALESCE(published_at, ?) WHERE id = ?").bind(recordedAt, transaction.release_id),
     env.CONTENT_DB.prepare("UPDATE releases SET state = 'superseded' WHERE id = ? AND id <> ? AND state = 'published'").bind(transaction.expected_active_release_id || '', transaction.release_id),
     idempotencyStatement(env, idem, body.idempotencyKey, 201, response, recordedAt),
-    await audit(env, identity, transaction.action === 'rollback' ? 'release.rollback.receipt_recorded' : 'release.deployment.receipt_recorded', 'release', transaction.release_id, { receiptId, receiptHash: body.receiptHash, transactionId, previousActiveReleaseId: transaction.expected_active_release_id || null, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, verificationHash: body.verificationHash }, { idempotencyHash: idem.requestHash })
-  ]);
+    await audit(env, identity, reconciled ? 'release.deployment.receipt_reconciled' : transaction.action === 'rollback' ? 'release.rollback.receipt_recorded' : 'release.deployment.receipt_recorded', 'release', transaction.release_id, { receiptId, receiptHash: body.receiptHash, transactionId, previousActiveReleaseId: transaction.expected_active_release_id || null, cloudflareDeploymentId: body.cloudflareDeploymentId, cloudflareVersionId: body.cloudflareVersionId, verificationHash: body.verificationHash, restoredAuthorityDocumentCount: rollbackAuthority.entries.length }, { idempotencyHash: idem.requestHash })
+  ];
+  await env.CONTENT_DB.batch(statements);
   return json(response, 201);
+}
+
+async function pendingDeploymentState(request, env, identity) {
+  requireReleaseWorkflowIdentity(identity);
+  await readJsonBody(request, { allowedFields: [] });
+  const activeReleaseIdValue = await activeReleaseId(env);
+  const transaction = await env.CONTENT_DB.prepare(`SELECT * FROM release_deployment_transactions
+    WHERE state = 'staged' ORDER BY created_at ASC LIMIT 1`).first();
+  const authorityReleaseId = transaction?.release_id || activeReleaseIdValue;
+  const authorityRows = authorityReleaseId ? await env.CONTENT_DB.prepare(`SELECT document_id, authority, source_revision, normalized_snapshot_hash
+    FROM release_authority_entries WHERE release_id = ? ORDER BY document_id`).bind(authorityReleaseId).all() : { results: [] };
+  const authorityEntries = authorityRows.results || [];
+  const d1Documents = authorityEntries.filter((item) => item.authority === 'd1').map((item) => ({ documentId: item.document_id, sourceRevision: item.source_revision, normalizedSnapshotHash: item.normalized_snapshot_hash }));
+  const activeRelease = activeReleaseIdValue ? {
+    releaseId: activeReleaseIdValue,
+    ...(authorityReleaseId === activeReleaseIdValue ? { authorityDocumentCount: authorityEntries.length, d1Documents } : {})
+  } : null;
+  if (!transaction) return json({ pending: null, activeRelease, checkedAt: now() });
+  if (authorityEntries.length !== 18) throw new ApiError(409, 'RELEASE_AUTHORITY_INCOMPLETE', 'Staged transaction release lacks its complete 18-document authority map', { releaseId: transaction.release_id, documentCount: authorityEntries.length });
+  if (!transaction.previous_cloudflare_version_id || transaction.previous_cloudflare_version_id === transaction.cloudflare_version_id) throw new ApiError(409, 'DEPLOYMENT_RECOVERY_BINDING_MISSING', 'Staged transaction lacks distinct target and recovery Cloudflare versions');
+  return json({
+    pending: {
+      transactionId: transaction.id, action: transaction.action, state: transaction.state, releaseId: transaction.release_id,
+      candidateId: transaction.candidate_id || null, snapshotHash: transaction.snapshot_hash || null, snapshotRevision: transaction.snapshot_revision || null,
+      candidateManifestHash: transaction.candidate_manifest_hash, buildAttestationHash: transaction.build_attestation_hash,
+      expectedActiveReleaseId: transaction.expected_active_release_id || null, previousCloudflareVersionId: transaction.previous_cloudflare_version_id,
+      cloudflareVersionId: transaction.cloudflare_version_id, authorityDocumentCount: authorityEntries.length, d1Documents,
+      expiresAt: transaction.expires_at, expired: Date.parse(transaction.expires_at) <= Date.now()
+    },
+    activeRelease,
+    checkedAt: now()
+  });
+}
+
+async function abandonDeployment(request, env, identity, transactionId) {
+  requireReleaseWorkflowIdentity(identity);
+  const body = await readJsonBody(request, { allowedFields: ['observedCloudflareVersionId', 'verificationHash', 'idempotencyKey'] });
+  validId(body.observedCloudflareVersionId, 'observedCloudflareVersionId'); exactHash(body.verificationHash, 'verificationHash');
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `release-deployment:${transactionId}:abandon`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const transaction = await env.CONTENT_DB.prepare('SELECT * FROM release_deployment_transactions WHERE id = ?').bind(transactionId).first();
+  if (!transaction) throw new ApiError(404, 'DEPLOYMENT_TRANSACTION_NOT_FOUND', 'Staged deployment transaction was not found');
+  if (transaction.state !== 'staged') throw new ApiError(409, 'DEPLOYMENT_TRANSACTION_CLOSED', 'Only a staged deployment can be abandoned');
+  assertExpectedActive(transaction.expected_active_release_id || null, await activeReleaseId(env));
+  if (!transaction.previous_cloudflare_version_id || body.observedCloudflareVersionId !== transaction.previous_cloudflare_version_id || body.observedCloudflareVersionId === transaction.cloudflare_version_id) {
+    throw new ApiError(409, 'DEPLOYMENT_LIVE_VERSION_AMBIGUOUS', 'Staged deployment can be abandoned only when traffic is still entirely on its exact recorded recovery version');
+  }
+  const abandonedAt = now();
+  const response = { transactionId, action: transaction.action, state: 'abandoned', releaseId: transaction.release_id, observedCloudflareVersionId: body.observedCloudflareVersionId, verificationHash: body.verificationHash, abandonedAt };
+  await env.CONTENT_DB.batch([
+    env.CONTENT_DB.prepare("UPDATE release_deployment_transactions SET state = 'abandoned', completed_at = ? WHERE id = ? AND state = 'staged'").bind(abandonedAt, transactionId),
+    env.CONTENT_DB.prepare("UPDATE releases SET state = 'failed' WHERE id = ? AND state = 'building'").bind(transaction.release_id),
+    idempotencyStatement(env, idem, body.idempotencyKey, 200, response, abandonedAt),
+    await audit(env, identity, 'release.deployment.abandoned_verified', 'release', transaction.release_id, { transactionId, action: transaction.action, observedCloudflareVersionId: body.observedCloudflareVersionId, verificationHash: body.verificationHash }, { idempotencyHash: idem.requestHash })
+  ]);
+  return json(response);
+}
+
+async function auditReleaseState(request, env, identity, releaseId) {
+  requireAuthorityWorkflowIdentity(identity);
+  await readJsonBody(request, { allowedFields: [] });
+  const checkedAt = now();
+  const release = await env.CONTENT_DB.prepare('SELECT id, state, cloudflare_version_id FROM releases WHERE id = ?').bind(releaseId).first();
+  const pointer = await env.CONTENT_DB.prepare("SELECT release_id FROM release_pointers WHERE name = 'active'").first();
+  const expectedRows = await env.CONTENT_DB.prepare(`SELECT document_id, authority, source_path, source_revision, normalized_snapshot_hash
+    FROM release_authority_entries WHERE release_id = ? ORDER BY document_id`).bind(releaseId).all();
+  const activeRows = await env.CONTENT_DB.prepare(`SELECT a.document_id, a.authority, a.source_path, a.source_revision, a.normalized_snapshot_hash,
+      d.current_revision_id, d.current_content_hash
+    FROM authority_registry a JOIN documents d ON d.id = a.document_id
+    WHERE a.active = 1 ORDER BY a.document_id`).all();
+  const expected = expectedRows.results || [];
+  const active = activeRows.results || [];
+  const expectedById = new Map(expected.map((item) => [item.document_id, item]));
+  const activeById = new Map(active.map((item) => [item.document_id, item]));
+  const mismatches = [];
+  const mismatch = (kind, documentId = null, expectedValue = null, actualValue = null) => mismatches.push({ kind, documentId, expected: expectedValue, actual: actualValue });
+  if (!release) mismatch('release_missing', null, releaseId, null);
+  else {
+    if (release.state !== 'published') mismatch('release_state', null, 'published', release.state);
+    if (!release.cloudflare_version_id) mismatch('cloudflare_version_missing', null, 'immutable-version-id', null);
+  }
+  if (pointer?.release_id !== releaseId) mismatch('active_pointer', null, releaseId, pointer?.release_id || null);
+  if (expected.length !== 18 || expectedById.size !== 18) mismatch('release_authority_count', null, 18, expected.length);
+  if (active.length !== 18 || activeById.size !== 18) mismatch('active_authority_count', null, 18, active.length);
+  for (const [documentId, entry] of expectedById) {
+    const current = activeById.get(documentId);
+    if (!current) { mismatch('authority_missing', documentId, 'active', null); continue; }
+    for (const [field, expectedField, actualField] of [
+      ['authority', 'authority', 'authority'],
+      ['source_path', 'source_path', 'source_path'],
+      ['source_revision', 'source_revision', 'source_revision'],
+      ['normalized_snapshot_hash', 'normalized_snapshot_hash', 'normalized_snapshot_hash']
+    ]) if ((entry[expectedField] ?? null) !== (current[actualField] ?? null)) mismatch(field, documentId, entry[expectedField] ?? null, current[actualField] ?? null);
+    if (entry.authority === 'd1') {
+      if (current.current_revision_id !== entry.source_revision) mismatch('canonical_revision', documentId, entry.source_revision, current.current_revision_id || null);
+      if (current.current_content_hash !== entry.normalized_snapshot_hash) mismatch('canonical_hash', documentId, entry.normalized_snapshot_hash, current.current_content_hash || null);
+    }
+  }
+  for (const documentId of activeById.keys()) if (!expectedById.has(documentId)) mismatch('unexpected_active_authority', documentId, null, 'active');
+  const details = { releaseId, expectedCloudflareVersionId: release?.cloudflare_version_id || null, documentCount: expectedById.size, checkedAt };
+  if (mismatches.length) throw new ApiError(409, 'RELEASE_STATE_MISMATCH', 'Active release pointer, authority map, or canonical D1 heads do not match the immutable release', { ...details, mismatchCount: mismatches.length, mismatches });
+  return json({ valid: true, ...details });
 }
 
 async function createMediaReviewPackage(request, env, identity) {
@@ -1361,8 +1496,12 @@ export default {
           metadata: { route: 'GET /v1/releases/{releaseId}', scope: 'content:read', includes: ['snapshot', 'authority', 'approvals', 'activePointer', 'deploymentReceipts', 'pointerHistory', 'deploymentTransactions'] },
           publish: { route: 'POST /v1/changesets/{changesetId}:publish', scope: 'content:publish', humanActorRequired: true, enabled: false, requires: 'deployment attestation + receipt + expected-active CAS' },
           stageDeployment: { route: 'POST /v1/release-deployments:stage', scope: 'content:deployReceipt', serviceOnly: true, clientId: 'github-content-release' },
+          pendingDeployment: { route: 'POST /v1/release-deployments:pending', scope: 'content:deployReceipt', serviceOnly: true, contentFree: true },
           recordReceipt: { route: 'POST /v1/release-deployments/{transactionId}:recordReceipt', scope: 'content:deployReceipt', serviceOnly: true, exactHashBinding: true, expectedActiveCas: true },
+          reconcileReceipt: { route: 'POST /v1/release-deployments/{transactionId}:reconcileReceipt', scope: 'content:deployReceipt', serviceOnly: true, allowsExpiredStagedTransaction: true, exactHashBinding: true, expectedActiveCas: true },
+          abandonDeployment: { route: 'POST /v1/release-deployments/{transactionId}:abandon', scope: 'content:deployReceipt', serviceOnly: true, requiresExactRecoveryVersion: true },
           stageRollback: { route: 'POST /v1/releases/{releaseId}:stageRollback', scope: 'content:deployReceipt', serviceOnly: true, selectsPreviouslyPromotedVersion: true },
+          auditState: { route: 'POST /v1/releases/{releaseId}:auditState', scope: 'content:authority', serviceOnly: true, completeAuthorityMap: true, canonicalHeadBinding: true },
           snapshot: { route: 'GET /v1/release-snapshots/{snapshotHash}', scope: 'content:releaseSnapshot', integrity: 'exact SHA-256 bytes', requiresExactReleaseApproval: true },
           asset: { route: 'GET /v1/release-assets/{sha256}', scope: 'content:releaseSnapshot', integrity: 'DB-referenced exact SHA-256 bytes', requiresExactReleaseApproval: true }
         },
@@ -1380,10 +1519,17 @@ export default {
       let releaseMatch = url.pathname.match(/^\/v1\/releases\/([^/:]+)$/);
       if (request.method === 'GET' && releaseMatch) return await getRelease(env, validId(decodeURIComponent(releaseMatch[1]), 'releaseId'));
       if (request.method === 'POST' && url.pathname === '/v1/release-deployments:stage') return await stageReleaseDeployment(request, env, identity);
+      if (request.method === 'POST' && url.pathname === '/v1/release-deployments:pending') return await pendingDeploymentState(request, env, identity);
       let deploymentReceiptMatch = url.pathname.match(/^\/v1\/release-deployments\/([^/:]+):recordReceipt$/);
       if (request.method === 'POST' && deploymentReceiptMatch) return await recordDeploymentReceipt(request, env, identity, validId(decodeURIComponent(deploymentReceiptMatch[1]), 'transactionId'));
+      let deploymentReconcileMatch = url.pathname.match(/^\/v1\/release-deployments\/([^/:]+):reconcileReceipt$/);
+      if (request.method === 'POST' && deploymentReconcileMatch) return await recordDeploymentReceipt(request, env, identity, validId(decodeURIComponent(deploymentReconcileMatch[1]), 'transactionId'), { allowExpired: true, reconciled: true });
+      let deploymentAbandonMatch = url.pathname.match(/^\/v1\/release-deployments\/([^/:]+):abandon$/);
+      if (request.method === 'POST' && deploymentAbandonMatch) return await abandonDeployment(request, env, identity, validId(decodeURIComponent(deploymentAbandonMatch[1]), 'transactionId'));
       let rollbackMatch = url.pathname.match(/^\/v1\/releases\/([^/:]+):stageRollback$/);
       if (request.method === 'POST' && rollbackMatch) return await stageReleaseRollback(request, env, identity, validId(decodeURIComponent(rollbackMatch[1]), 'releaseId'));
+      let releaseAuditMatch = url.pathname.match(/^\/v1\/releases\/([^/:]+):auditState$/);
+      if (request.method === 'POST' && releaseAuditMatch) return await auditReleaseState(request, env, identity, validId(decodeURIComponent(releaseAuditMatch[1]), 'releaseId'));
       if (request.method === 'POST' && url.pathname === '/v1/media:requestUpload') return await requestMediaUpload(request, env, identity);
       if (request.method === 'POST' && url.pathname === '/v1/media-review-packages') return await createMediaReviewPackage(request, env, identity);
       if (request.method === 'POST' && url.pathname === '/v1/authority:prepareCutover') return await createMultiDocumentChangeset(request, env, identity, { authorityCutover: true });

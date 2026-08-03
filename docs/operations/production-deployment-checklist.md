@@ -63,7 +63,7 @@ Generate values locally, pass them directly to the secret commands, and do not p
 ## Deployment order
 
 1. Create/verify R2 buckets and lifecycle rules.
-2. Apply all D1 migrations remotely and run the drift audit.
+2. Apply all D1 migrations remotely and run the drift audit. Confirm `0013_deployment_recovery_version.sql` is applied before deploying the Content API code that stages releases.
 3. Deploy the private Content API Worker and verify `/health` through a service binding.
 4. Deploy the protected preview Worker; verify invalid, expired, and replayed tokens fail and responses are uncached/noindexed.
 5. Set the shared media/release tokens, then deploy the editor/auth gateway.
@@ -73,11 +73,12 @@ Generate values locally, pass them directly to the secret commands, and do not p
 9. Upload representative PNG/JPEG, animated GIF, WebP, MP3/WAV/M4A, MP4/WebM, PDF, and UTF-8 text fixtures through quarantine; verify exact private originals, public clean derivatives, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
 10. Insert and activate one YouTube, Vimeo, and X fixture; verify no provider request occurs before explicit activation. Verify Spotify consent and SoundCloud/Bluesky/link-card fallbacks.
 11. Run **Immutable content release** with `promote=false`; inspect the signed candidate, built asset digests, and canary preview.
-12. Re-run the exact snapshot/revision/commit with `promote=true`, the exact `expected_active_release_id`, and the exact known-good `rollback_version_id`; then approve the `content-production` environment.
-13. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar.
-14. Only then switch `chapter_ch07` to its exact D1 revision/hash authority.
-15. Verify the D1 release record exposes the completed deployment transaction, receipt hash, active-pointer history, and exact Cloudflare version. Run and record a rollback drill before expanding beyond Chapter 7.
-16. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest plus the encrypted 30-day GitHub artifact before relying on the schedule. Download one artifact, decrypt it with the offline age key, verify `r2-SHA256SUMS`, and restore its SQL into clean SQLite; record only the run URL and verification result.
+12. Re-run the exact snapshot/revision/commit with `promote=true`, the exact `expected_active_release_id`, and the exact known-good `rollback_version_id`; then approve the `content-production` environment. The protected workflow records the receipt, activates the candidate's exact D1 entries, and runs the complete 18-document state audit.
+13. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar. Confirm `release-state-audit.json` reports `valid: true`, the expected Worker version, and `documentCount: 18`.
+14. Configure `content-production-recovery` with only `CLOUDFLARE_RELEASE_TOKEN` and `RELEASE_DEPLOY_RECEIPT_TOKEN`, branch-restricted to `main`, and enable **Reconcile interrupted content release**. It may finish only an already staged, human-approved release or abandon one whose traffic never moved.
+15. Run **Complete content release rollback** against the prior immutable release. Confirm its receipt atomically restores the pointer, all 18 authority entries, and every D1 canonical head, then confirm `rollback-state-audit.json` is valid before expanding beyond Chapter 7.
+16. Verify the D1 release record exposes the completed deployment transaction, receipt hash, active-pointer history, exact Cloudflare version, and recovery-version binding.
+17. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest plus the encrypted 30-day GitHub artifact before relying on the schedule. Download one artifact, decrypt it with the offline age key, verify `r2-SHA256SUMS`, and restore its SQL into clean SQLite; record only the run URL and verification result.
 
 ## Verification commands
 

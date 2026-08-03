@@ -14,6 +14,8 @@
 
 The reader and auth hostnames are custom domains in the existing `your-digital-life.org` Cloudflare zone. They are deliberately same-site so the editor can use its host-only, Secure, HttpOnly, `SameSite=Strict` session cookie. The preview origin is separate and receives only a one-time snapshot token; it has no authoring cookie, Content API mutation scope, or public indexability.
 
+The forward release, explicit rollback, and scheduled recovery workflows share the non-canceling `content-production-release` concurrency key. Every staged transaction stores both the target Worker version and the exact pre-promotion recovery version. The protected reconciler has only three permitted outcomes: finish the receipt when the target is 100% live, abandon the transaction when the recovery version is still 100% live, or fail closed on split/unknown traffic. A successful promotion or rollback is not complete until the service audit matches the active pointer, published release, all 18 frozen/live authority records, and each D1 canonical head.
+
 ## Reader deployment
 
 Use Node 22, validate, and build before deploying:

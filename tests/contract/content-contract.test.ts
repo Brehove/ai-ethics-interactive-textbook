@@ -52,7 +52,12 @@ test("frozen OpenAPI is valid JSON and exposes the complete agent and human boun
   assert.ok(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.documentId);
   assert.equal(spec.paths["/v1/release-deployments:stage"].post["x-service-only"], true);
   assert.equal(spec.paths["/v1/release-deployments/{transactionId}:recordReceipt"].post["x-active-pointer-cas"], true);
+  assert.equal(spec.paths["/v1/release-deployments:pending"].post["x-content-free"], true);
+  assert.equal(spec.paths["/v1/release-deployments/{transactionId}:reconcileReceipt"].post["x-allows-expired-staged-transaction"], true);
+  assert.equal(spec.paths["/v1/release-deployments/{transactionId}:abandon"].post["x-requires-exact-recovery-version"], true);
   assert.equal(spec.paths["/v1/releases/{releaseId}:stageRollback"].post["x-agent-safe"], undefined);
+  assert.equal(spec.paths["/v1/releases/{releaseId}:auditState"].post["x-complete-authority-map"], true);
+  assert.equal(spec.paths["/v1/releases/{releaseId}:auditState"].post["x-canonical-head-binding"], true);
   assert.deepEqual(spec.paths["/v1/release-deployments:stage"].post["x-required-identity"], { actorType: "service", actorId: "actor_release_workflow", clientId: "github-content-release" });
   assert.deepEqual(spec.paths["/v1/changesets/{changesetId}:renderPreview"].post["x-preview-properties"], { immutableSnapshot: true, oneTime: true, ttlSeconds: 300, authoringCredentials: false });
   assert.deepEqual(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.operation.properties.type.enum, ["text.replace", "block.insert", "block.move", "block.remove", "checkpoint.upsert", "checkpoint.replace", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]);

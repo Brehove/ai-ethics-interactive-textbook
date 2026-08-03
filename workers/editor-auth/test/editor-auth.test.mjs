@@ -564,6 +564,16 @@ test("release control proxy uses a separate bearer and fixed deploy-receipt serv
   assert.equal(response.status, 201);
   assert.equal(new URL(forwarded.url).pathname, "/v1/authority:prepareCutover");
   assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
+  for (const path of ["/v1/release-deployments:pending", "/v1/release-deployments/deployment_123:reconcileReceipt", "/v1/release-deployments/deployment_123:abandon"]) {
+    response = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+    assert.equal(response.status, 201);
+    assert.equal(new URL(forwarded.url).pathname, path);
+    assert.equal(forwarded.headers.get("x-content-scopes"), "content:deployReceipt");
+  }
+  response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/releases/release_123:auditState`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);
+  assert.equal(response.status, 201);
+  assert.equal(new URL(forwarded.url).pathname, "/v1/releases/release_123:auditState");
+  assert.equal(forwarded.headers.get("x-content-scopes"), "content:authority");
   response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: `Bearer ${deployToken}`, "Content-Type": "application/json" }, body }), env);
   assert.equal(response.status, 401);
   response = await app.fetch(new Request(`${AUTH_ORIGIN}/v1/release-deployments:stage`, { method: "POST", headers: { Authorization: "Bearer wrong", "Content-Type": "application/json", "X-GitHub-Run-Id": "123456" }, body }), env);

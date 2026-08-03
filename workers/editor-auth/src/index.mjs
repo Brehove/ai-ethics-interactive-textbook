@@ -257,7 +257,7 @@ async function forwardReleaseControl(request, env) {
   const body = await request.arrayBuffer();
   if (body.byteLength > 65536) return new Response("Too large", { status: 413, headers: baseSecurityHeaders });
   const url = new URL(request.url);
-  const scope = url.pathname.startsWith('/v1/authority') ? 'content:authority' : 'content:deployReceipt';
+  const scope = url.pathname.startsWith('/v1/authority') || url.pathname.endsWith(':auditState') ? 'content:authority' : 'content:deployReceipt';
   const headers = new Headers({
     "content-type": "application/json",
     "x-content-gateway-verified": "v1",
@@ -301,8 +301,10 @@ export function createEditorAuthApp(dependencies = {}) {
         }
 
         if (url.pathname === "/v1/release-deployments:stage"
-          || /^\/v1\/release-deployments\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:recordReceipt$/.test(url.pathname)
+          || url.pathname === "/v1/release-deployments:pending"
+          || /^\/v1\/release-deployments\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:(?:recordReceipt|reconcileReceipt|abandon)$/.test(url.pathname)
           || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:stageRollback$/.test(url.pathname)
+          || /^\/v1\/releases\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:auditState$/.test(url.pathname)
           || url.pathname === "/v1/authority:prepareCutover"
           || url.pathname === "/v1/authority:activateD1"
           || url.pathname === "/v1/authority/chapter_ch07:activateD1") {

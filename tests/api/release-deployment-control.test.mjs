@@ -60,6 +60,7 @@ const stageBody = (overrides = {}) => ({
   candidateManifestHash: 'b'.repeat(64),
   buildAttestationHash: 'c'.repeat(64),
   expectedActiveReleaseId: null,
+  previousCloudflareVersionId: 'version_cf_legacy',
   cloudflareVersionId: 'version_cf_17',
   authorityEntries: completeAuthorityEntries(),
   idempotencyKey: 'stage-release-17',
@@ -125,6 +126,7 @@ const transaction = (overrides = {}) => ({
   id: 'deployment_17', action: 'promote', state: 'staged', release_id: 'release_17', candidate_id: 'candidate_ch07_17',
   snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev_ch07_17', candidate_manifest_hash: 'b'.repeat(64),
   build_attestation_hash: 'c'.repeat(64), expected_active_release_id: null, cloudflare_version_id: 'version_cf_17', expires_at: '2099-01-01T00:00:00.000Z',
+  previous_cloudflare_version_id: 'version_cf_legacy',
   ...overrides
 });
 
@@ -203,6 +205,7 @@ test('rollback staging selects only a previously promoted immutable version and 
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('FROM releases r')) return target;
     if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('SELECT cloudflare_version_id FROM releases')) return { cloudflare_version_id: 'version_cf_17' };
     return null;
   });
   const response = await worker.fetch(new Request('https://content.example/v1/releases/release_12:stageRollback', { method: 'POST', headers: workflowHeaders(), body: JSON.stringify({ expectedActiveReleaseId: 'release_17', idempotencyKey: 'rollback-stage-12' }) }), { CONTENT_DB: db });
@@ -210,6 +213,7 @@ test('rollback staging selects only a previously promoted immutable version and 
   const result = await response.json();
   assert.equal(result.action, 'rollback');
   assert.equal(result.cloudflareVersionId, 'version_cf_12');
+  assert.equal(result.previousCloudflareVersionId, 'version_cf_17');
   assert.equal(db.batches.at(-1).some((item) => item.sql.includes('release_pointers')), false);
 
   const deniedDb = makeDb((sql) => {
@@ -220,6 +224,45 @@ test('rollback staging selects only a previously promoted immutable version and 
   const denied = await worker.fetch(new Request('https://content.example/v1/releases/release_unknown:stageRollback', { method: 'POST', headers: workflowHeaders(), body: JSON.stringify({ expectedActiveReleaseId: 'release_17', idempotencyKey: 'rollback-stage-x' }) }), { CONTENT_DB: deniedDb });
   assert.equal(denied.status, 409);
   assert.equal((await denied.json()).error.code, 'ROLLBACK_TARGET_INVALID');
+});
+
+test('rollback receipt atomically restores the complete authority map and every D1 canonical head', async () => {
+  const tx = transaction({ id: 'deployment_rollback_12', action: 'rollback', release_id: 'release_12', candidate_id: null, snapshot_hash: null, snapshot_revision: null, expected_active_release_id: 'release_17', cloudflare_version_id: 'version_cf_12' });
+  const entries = completeAuthorityEntries().map((entry) => entry.documentId === 'chapter_ch07'
+    ? { document_id: entry.documentId, authority: 'd1', source_path: null, source_revision: 'revision_ch07_release_12', normalized_snapshot_hash: '7'.repeat(64) }
+    : { document_id: entry.documentId, authority: 'git', source_path: entry.sourcePath, source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash });
+  const db = makeDb((sql, args, mode) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_deployment_transactions')) return tx;
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('FROM release_authority_entries')) return mode === 'all' ? { results: entries } : null;
+    if (sql.includes('FROM document_revisions WHERE id')) return { document_id: 'chapter_ch07', content_hash: '7'.repeat(64) };
+    return null;
+  });
+  const body = await receiptBody(tx);
+  const response = await worker.fetch(new Request(`https://content.example/v1/release-deployments/${tx.id}:recordReceipt`, { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+  const text = await response.text(); assert.equal(response.status, 201, text);
+  const finalBatch = db.batches.at(-1);
+  assert.equal(finalBatch.filter((item) => item.sql.includes('INSERT INTO authority_registry')).length, 18);
+  assert.equal(finalBatch.filter((item) => item.sql.includes('UPDATE documents SET current_revision_id')).length, 1);
+  const publishedIndex = finalBatch.findIndex((item) => item.sql.includes("UPDATE releases SET state = 'published'"));
+  const pointerIndex = finalBatch.findIndex((item) => item.sql.includes('INSERT INTO release_pointer_commands'));
+  const authorityIndex = finalBatch.findIndex((item) => item.sql.includes('INSERT INTO authority_registry'));
+  assert.ok(publishedIndex >= 0 && publishedIndex < pointerIndex && pointerIndex < authorityIndex, 'target release and pointer must become active before the D1 authority trigger runs in the same batch');
+});
+
+test('rollback receipt fails closed before pointer mutation when target authority history is incomplete', async () => {
+  const tx = transaction({ id: 'deployment_rollback_bad', action: 'rollback', release_id: 'release_bad', candidate_id: null, snapshot_hash: null, snapshot_revision: null, expected_active_release_id: 'release_17' });
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_deployment_transactions')) return tx;
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('FROM release_authority_entries')) return mode === 'all' ? { results: completeAuthorityEntries().slice(0, 17) } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request(`https://content.example/v1/release-deployments/${tx.id}:recordReceipt`, { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(await receiptBody(tx)) }), { CONTENT_DB: db });
+  assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'ROLLBACK_AUTHORITY_INCOMPLETE');
+  assert.equal(db.batches.some((batch) => batch.some((item) => item.sql.includes('INSERT INTO release_pointer_commands'))), false);
 });
 
 test('missing and expired staged deployments fail closed without receipt writes', async () => {
@@ -234,4 +277,124 @@ test('missing and expired staged deployments fail closed without receipt writes'
     assert.equal(response.status, tx ? 409 : 404);
     assert.equal(db.batches.some((batch) => batch.some((item) => item.sql.includes('INSERT INTO deployment_receipts'))), false);
   }
+});
+
+test('pending recovery reports an expired staged transaction without abandoning it', async () => {
+  const tx = transaction({ expires_at: '2000-01-01T00:00:00.000Z' });
+  const entries = completeAuthorityEntries().map((entry) => ({ document_id: entry.documentId, authority: entry.authority, source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash }));
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return null;
+    if (sql.includes("FROM release_deployment_transactions\n    WHERE state = 'staged'")) return tx;
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: entries } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/release-deployments:pending', { method: 'POST', headers: workflowHeaders(), body: '{}' }), { CONTENT_DB: db });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.pending.transactionId, tx.id);
+  assert.equal(result.pending.expired, true);
+  assert.equal(result.pending.authorityDocumentCount, 18);
+  assert.equal(result.pending.d1Documents.length, 1);
+  assert.equal(db.batches.length, 0, 'recovery discovery is read-only and must preserve the staged transaction');
+});
+
+test('recovery discovery returns the exact active authority map when no transaction is staged', async () => {
+  const entries = completeAuthorityEntries().map((entry) => ({ document_id: entry.documentId, authority: entry.authority, source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash }));
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes("FROM release_deployment_transactions\n    WHERE state = 'staged'")) return null;
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: entries } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/release-deployments:pending', { method: 'POST', headers: workflowHeaders(), body: '{}' }), { CONTENT_DB: db });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.pending, null);
+  assert.equal(result.activeRelease.releaseId, 'release_17');
+  assert.equal(result.activeRelease.authorityDocumentCount, 18);
+  assert.equal(result.activeRelease.d1Documents[0].documentId, 'chapter_ch07');
+});
+
+test('reconcile receipt completes an expired staged transaction after exact live-version verification', async () => {
+  const tx = transaction({ expires_at: '2000-01-01T00:00:00.000Z' });
+  const db = makeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_deployment_transactions')) return tx;
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return null;
+    return null;
+  });
+  const body = await receiptBody(tx, { idempotencyKey: 'reconcile-expired-17' });
+  const response = await worker.fetch(new Request(`https://content.example/v1/release-deployments/${tx.id}:reconcileReceipt`, { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+  const result = await response.json();
+  assert.equal(response.status, 201);
+  assert.equal(result.reconciled, true);
+  assert.ok(db.batches.at(-1).some((item) => item.sql.includes('INSERT INTO deployment_receipts')));
+});
+
+test('abandon closes a staged transaction only when traffic remains on the exact recovery version', async () => {
+  const tx = transaction({ expected_active_release_id: 'release_16', previous_cloudflare_version_id: 'version_cf_16' });
+  const db = makeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM release_deployment_transactions')) return tx;
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_16' };
+    return null;
+  });
+  const body = { observedCloudflareVersionId: 'version_cf_16', verificationHash: '9'.repeat(64), idempotencyKey: 'abandon-release-17' };
+  const response = await worker.fetch(new Request(`https://content.example/v1/release-deployments/${tx.id}:abandon`, { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).state, 'abandoned');
+  const finalBatch = db.batches.at(-1);
+  assert.ok(finalBatch.some((item) => item.sql.includes("SET state = 'abandoned'")));
+  assert.equal(finalBatch.some((item) => item.sql.includes('release_pointer_commands')), false);
+
+  const denied = await worker.fetch(new Request(`https://content.example/v1/release-deployments/${tx.id}:abandon`, { method: 'POST', headers: workflowHeaders(), body: JSON.stringify({ ...body, observedCloudflareVersionId: tx.cloudflare_version_id, idempotencyKey: 'abandon-target-17' }) }), { CONTENT_DB: db });
+  assert.equal(denied.status, 409);
+  assert.equal((await denied.json()).error.code, 'DEPLOYMENT_LIVE_VERSION_AMBIGUOUS');
+});
+
+test('release-state audit verifies the full active authority map and D1 canonical heads', async () => {
+  const expected = completeAuthorityEntries().map((entry) => ({
+    document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,
+    source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash
+  }));
+  const active = expected.map((entry) => ({ ...entry,
+    current_revision_id: entry.authority === 'd1' ? entry.source_revision : `head_${entry.document_id}`,
+    current_content_hash: entry.authority === 'd1' ? entry.normalized_snapshot_hash : null
+  }));
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes('SELECT id, state, cloudflare_version_id FROM releases')) return { id: 'release_17', state: 'published', cloudflare_version_id: 'version_cf_17' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: expected } : null;
+    if (sql.includes('FROM authority_registry a JOIN documents d')) return mode === 'all' ? { results: active } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/releases/release_17:auditState', { method: 'POST', headers: workflowHeaders('content:authority'), body: '{}' }), { CONTENT_DB: db });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.valid, true);
+  assert.equal(result.documentCount, 18);
+  assert.equal(result.expectedCloudflareVersionId, 'version_cf_17');
+});
+
+test('release-state audit reports pointer, authority, and canonical-head drift without content', async () => {
+  const expected = completeAuthorityEntries().map((entry) => ({
+    document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,
+    source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash
+  }));
+  const active = expected.map((entry) => ({ ...entry, current_revision_id: entry.source_revision, current_content_hash: entry.normalized_snapshot_hash }));
+  active.find((entry) => entry.document_id === 'chapter_ch07').current_revision_id = 'revision_drifted';
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes('SELECT id, state, cloudflare_version_id FROM releases')) return { id: 'release_17', state: 'published', cloudflare_version_id: 'version_cf_17' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_16' };
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: expected } : null;
+    if (sql.includes('FROM authority_registry a JOIN documents d')) return mode === 'all' ? { results: active } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/releases/release_17:auditState', { method: 'POST', headers: workflowHeaders('content:authority'), body: '{}' }), { CONTENT_DB: db });
+  const result = await response.json();
+  assert.equal(response.status, 409);
+  assert.equal(result.error.code, 'RELEASE_STATE_MISMATCH');
+  assert.ok(result.error.details.mismatches.some((item) => item.kind === 'active_pointer'));
+  assert.ok(result.error.details.mismatches.some((item) => item.kind === 'canonical_revision' && item.documentId === 'chapter_ch07'));
+  assert.equal(JSON.stringify(result).includes('content_text'), false);
 });

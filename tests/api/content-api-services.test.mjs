@@ -606,6 +606,8 @@ test('authority cutover migration rejects D1 authority ahead of an exact active 
   const cutover = await readFile(new URL('../../workers/content-api/migrations/0012_cutover_proposals.sql', import.meta.url), 'utf8');
   assert.match(cutover, /purpose TEXT NOT NULL DEFAULT 'authoring'/);
   assert.match(cutover, /'authority_cutover'/);
+  const recovery = await readFile(new URL('../../workers/content-api/migrations/0013_deployment_recovery_version.sql', import.meta.url), 'utf8');
+  assert.match(recovery, /ALTER TABLE release_deployment_transactions ADD COLUMN previous_cloudflare_version_id TEXT/);
 });
 
 const baseChapter = () => ({
