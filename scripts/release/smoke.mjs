@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { extractMetaCsp } from "./csp.mjs";
 const args = process.argv.slice(2); const value = (name) => args[args.indexOf(name) + 1];
 const base = value("--base-url")?.replace(/\/$/, ""); const digestFile = value("--asset-digests");
 if (!base) throw new Error("usage: smoke.mjs --base-url <preview> [--asset-digests <file>]");
@@ -10,7 +11,7 @@ for (const route of requiredRoutes) {
   const html = await response.text();
   if (!/<main[\s>]/i.test(html) || !/<h1[\s>]/i.test(html)) throw new Error(`No-JS reader gate failed: ${route} lacks server-rendered main content`);
   const responseCsp = response.headers.get("content-security-policy") ?? "";
-  const metaCsp = html.match(/<meta\s+http-equiv=["']content-security-policy["']\s+content=["']([^"']+)["']/i)?.[1] ?? "";
+  const metaCsp = extractMetaCsp(html);
   const csp = `${responseCsp};${metaCsp}`;
   if (!/default-src\s+'self'/.test(csp) || !/object-src\s+'none'/.test(csp)) throw new Error(`Smoke CSP gate failed: ${route}`);
   routeResults.push({ route, status: response.status, main: true, heading: true, csp: true });

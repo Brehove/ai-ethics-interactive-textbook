@@ -20,6 +20,7 @@ test("release workflow derives an immutable snapshot route from the hash", async
   assert.match(workflow, /RELEASE_ASSET_TOKEN: \$\{\{ secrets\.SUBMITTED_SNAPSHOT_READ_TOKEN \}\}/);
   assert.match(workflow, /d1_document_ids:/);
   assert.match(workflow, /--d1-documents '\$\{\{ inputs\.d1_document_ids \}\}'/);
+  assert.match(workflow, /! -path '\.\/_headers' ! -path '\.\/_redirects'/);
 });
 
 test("rollback workflow restores Cloudflare and the full database release state through one protected path", async () => {

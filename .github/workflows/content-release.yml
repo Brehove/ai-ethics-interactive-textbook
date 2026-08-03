@@ -98,7 +98,7 @@ jobs:
           RELEASE_ASSET_TOKEN: ${{ secrets.SUBMITTED_SNAPSHOT_READ_TOKEN }}
         run: node scripts/release/release-cli.mjs gates --candidate release-artifacts/candidate.json --out release-artifacts/build.json
       - name: Capture immutable built-asset digests
-        run: (cd release-artifacts/dist && find . -type f -print0 | sort -z | xargs -0 sha256sum | sed 's#  \./#  #') > release-artifacts/assets.sha256
+        run: (cd release-artifacts/dist && find . -type f ! -path './_headers' ! -path './_redirects' -print0 | sort -z | xargs -0 sha256sum | sed 's#  \./#  #') > release-artifacts/assets.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-candidate-${{ inputs.snapshot_hash }}
