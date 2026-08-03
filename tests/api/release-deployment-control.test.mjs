@@ -122,6 +122,26 @@ test('staging persists one exact approved candidate and replays idempotently', a
   assert.deepEqual(await replayResponse.json(), { replayed: true });
 });
 
+test('a retried candidate receives a distinct release identity for each immutable Worker version', async () => {
+  const responses = [];
+  for (const cloudflareVersionId of ['version_cf_retry_1', 'version_cf_retry_2']) {
+    const body = stageBody({ cloudflareVersionId, idempotencyKey: `stage-${cloudflareVersionId}` });
+    const db = makeDb((sql) => {
+      if (sql.includes('FROM idempotency_records')) return null;
+      if (sql.includes('FROM submitted_snapshots s JOIN changesets')) return { id: 'snapshot-1', changeset_id: 'cs-1', snapshot_hash: body.snapshotHash, snapshot_revision: body.snapshotRevision, state: 'approved' };
+      if (sql.includes('FROM approvals')) return { id: 'approval-human-1' };
+      if (sql.includes("FROM release_pointers WHERE name = 'active'")) return null;
+      if (sql.includes('UPDATE release_sequences SET')) return { sequence: responses.length + 20 };
+      return null;
+    });
+    const response = await worker.fetch(new Request('https://content.example/v1/release-deployments:stage', { method: 'POST', headers: workflowHeaders(), body: JSON.stringify(body) }), { CONTENT_DB: db });
+    assert.equal(response.status, 201);
+    responses.push(await response.json());
+  }
+  assert.notEqual(responses[0].releaseId, responses[1].releaseId);
+  assert.notEqual(responses[0].transactionId, responses[1].transactionId);
+});
+
 const transaction = (overrides = {}) => ({
   id: 'deployment_17', action: 'promote', state: 'staged', release_id: 'release_17', candidate_id: 'candidate_ch07_17',
   snapshot_hash: 'a'.repeat(64), snapshot_revision: 'snapshotrev_ch07_17', candidate_manifest_hash: 'b'.repeat(64),
