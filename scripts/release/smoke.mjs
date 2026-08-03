@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { optionValue } from "./argv.mjs";
 import { extractMetaCsp } from "./csp.mjs";
-const args = process.argv.slice(2); const value = (name) => args[args.indexOf(name) + 1];
+const args = process.argv.slice(2); const value = (name) => optionValue(args, name);
 const base = value("--base-url")?.replace(/\/$/, ""); const digestFile = value("--asset-digests");
 if (!base) throw new Error("usage: smoke.mjs --base-url <preview> [--asset-digests <file>]");
 const requiredRoutes = ["/", "/chapter/aristotle-character-and-ai-assisted-life/"]; const routeResults = [];
