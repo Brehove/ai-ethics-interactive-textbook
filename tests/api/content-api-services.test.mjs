@@ -698,27 +698,29 @@ test('semantic diff is deterministic and reports structure, anchors, embeds, and
   });
 });
 
-test('checkpoint operations preserve immutable Commit-Work-Reconcile order and stable IDs', async () => {
+test('checkpoint operations preserve insertion order, arbitrary count, and stable IDs', async () => {
   let result = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('reconcile', 'p-reconcile') });
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('work', 'p-work') });
-  assert.deepEqual(result.chapter.checkpoints.map((item) => item.slot), ['commit', 'work', 'reconcile']);
-  const stableId = result.chapter.checkpoints[1].checkpointId;
+  result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('follow-up', 'p-reconcile') });
+  assert.deepEqual(result.chapter.checkpoints.map((item) => item.slot), ['reconcile', 'commit', 'work', 'follow-up']);
+  const stableId = result.chapter.checkpoints[2].checkpointId;
   const replacement = checkpoint('work', 'p-reconcile');
+  replacement.checkpointId = stableId;
   replacement.prompt = 'Revised work prompt';
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.replace', checkpoint: replacement });
-  assert.equal(result.chapter.checkpoints[1].checkpointId, stableId);
-  assert.equal(result.chapter.checkpoints[1].passageId, 'p-reconcile');
+  assert.equal(result.chapter.checkpoints[2].checkpointId, stableId);
+  assert.equal(result.chapter.checkpoints[2].passageId, 'p-reconcile');
   assert.deepEqual(validateChapter(result.chapter, { publishable: true }), { valid: true, errors: [] });
 });
 
-test('checkpoint validation rejects unstable anchors and incomplete publish sets while sidebar visibility remains editable', async () => {
+test('checkpoint validation rejects unstable anchors and caller-selected IDs while any count remains publishable', async () => {
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'missing') }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ANCHOR_MISSING');
   const noSidebar = checkpoint('commit', 'p-commit');
   noSidebar.showInSidebar = false;
   const hidden = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: noSidebar });
   assert.equal(hidden.chapter.checkpoints[0].showInSidebar, false);
-  assert.equal(validateChapter(baseChapter(), { publishable: true }).errors[0].code, 'CHECKPOINT_SEQUENCE_REQUIRED');
+  assert.deepEqual(validateChapter(baseChapter(), { publishable: true }), { valid: true, errors: [] });
   const clientId = checkpoint('commit', 'p-commit');
   clientId.checkpointId = 'client-selected';
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: clientId }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_SERVER_ASSIGNED');
@@ -845,11 +847,11 @@ test('block.remove fails closed on anchored dependents and atomically reanchors 
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
 });
 
-test('checkpoint.remove targets the immutable slot and optional stable ID', async () => {
+test('checkpoint.remove targets either the internal key or stable ID', async () => {
   const added = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   const id = added.chapter.checkpoints[0].checkpointId;
-  await assert.rejects(applySemanticOperation(added.chapter, { type: 'checkpoint.remove', slot: 'commit', checkpointId: 'wrong' }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_CONFLICT');
-  const removed = await applySemanticOperation(added.chapter, { type: 'checkpoint.remove', slot: 'commit', checkpointId: id });
+  await assert.rejects(applySemanticOperation(added.chapter, { type: 'checkpoint.remove', checkpointId: 'wrong' }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_NOT_FOUND');
+  const removed = await applySemanticOperation(added.chapter, { type: 'checkpoint.remove', checkpointId: id });
   assert.equal(removed.chapter.checkpoints.length, 0);
 });
 
@@ -882,7 +884,7 @@ test('operation schemas expose exact required and optional top-level payload fie
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['text.replace'], { required: ['type', 'blockId', 'text'], optional: [] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['chapter.replaceBody'], { required: ['type', 'body'], optional: [] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['block.remove'], { required: ['type', 'blockId'], optional: ['replacementPassageId'] });
-  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type', 'slot'], optional: ['checkpointId'] });
+  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type'], optional: ['slot', 'checkpointId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['media.place'], { required: ['type', 'placement'], optional: ['position'] });
 });
 

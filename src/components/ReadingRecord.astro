@@ -69,7 +69,7 @@ const strategyPreview: Record<string, string> = {
 
   {activityPreview && (
     <section class="record-map" aria-labelledby="record-map-title" data-record-map>
-      <h2 id="record-map-title">Three moments to stop and think</h2>
+      <h2 id="record-map-title">{prompts.length === 0 ? "No checkpoints in this chapter" : prompts.length === 3 ? "Three moments to stop and think" : `${prompts.length} moments to stop and think`}</h2>
       <p>This map shows the kind of thinking the chapter will ask for without giving away every question before you reach it.</p>
       <ol>
         {prompts.map((item, index) => (
@@ -180,7 +180,7 @@ const strategyPreview: Record<string, string> = {
         <button type="button" class="copy-button" data-copy-record>Copy reading record</button>
       </div>
     )}
-    <p data-export-note>{activityPreview ? "The submission-ready record unlocks after all three responses are preserved. You can download a draft at any time." : "Your download will be marked incomplete until all three responses are preserved."}</p>
+    <p data-export-note>{prompts.length === 0 ? "This chapter has no checkpoint responses to preserve." : activityPreview ? `The submission-ready record unlocks after all ${prompts.length} responses are preserved. You can download a draft at any time.` : `Your download will be marked incomplete until all ${prompts.length} responses are preserved.`}</p>
   </footer>
 
   <dialog class="preserve-dialog" data-preserve-dialog aria-labelledby="preserve-dialog-title">
@@ -201,7 +201,7 @@ const strategyPreview: Record<string, string> = {
 <noscript>
   <aside class="reading-record-noscript" role="note">
     <h2>Optional reading record</h2>
-    <p>The three reflection checkpoints and downloadable record require JavaScript. The complete chapter remains available above.</p>
+    <p>The reflection checkpoints and downloadable record require JavaScript. The complete chapter remains available above.</p>
   </aside>
 </noscript>
 
@@ -372,7 +372,7 @@ const strategyPreview: Record<string, string> = {
           </details>
         </li>`).join("");
       const mapTitle = recordMap.querySelector<HTMLElement>("h2");
-      if (mapTitle) mapTitle.textContent = prompts.length === 3 ? "Three moments to stop and think" : `${prompts.length} moments to stop and think`;
+      if (mapTitle) mapTitle.textContent = prompts.length === 0 ? "No checkpoints in this chapter" : prompts.length === 3 ? "Three moments to stop and think" : `${prompts.length} moments to stop and think`;
     }
 
     const updateCharacterCount = () => {
@@ -504,7 +504,9 @@ const strategyPreview: Record<string, string> = {
         </button>
         <span class="reading-record-trigger__connector" aria-hidden="true"></span>
       `;
-      passage.insertAdjacentElement("afterend", trigger);
+      let insertionPoint: Element = passage;
+      while (insertionPoint.nextElementSibling?.matches("[data-reading-record-trigger]")) insertionPoint = insertionPoint.nextElementSibling;
+      insertionPoint.insertAdjacentElement("afterend", trigger);
       const button = trigger.querySelector<HTMLButtonElement>("button");
       button?.addEventListener("click", () => openRecord(item, button));
 
@@ -556,11 +558,13 @@ const strategyPreview: Record<string, string> = {
         }
       });
       exportPanel?.toggleAttribute("hidden", !activityPreview && count === 0 && notes.length === 0);
-      const complete = count === prompts.length;
+      const complete = prompts.length > 0 && count === prompts.length;
       if (downloadButton) downloadButton.textContent = complete ? "Download complete reading record" : "Download draft reading record";
       if (finalButton) finalButton.disabled = !complete;
-      if (exportNote) exportNote.textContent = complete
-        ? "All three responses are preserved. This download is ready to submit to Canvas."
+      if (exportNote) exportNote.textContent = prompts.length === 0
+        ? "This chapter has no checkpoint responses to preserve."
+        : complete
+        ? `All ${prompts.length} responses are preserved. This download is ready to submit to Canvas.`
         : activityPreview
           ? `Submission-ready export is locked: ${count} of ${prompts.length} responses preserved. Draft download remains available.`
           : `Your download will be marked incomplete: ${count} of ${prompts.length} responses preserved.`;

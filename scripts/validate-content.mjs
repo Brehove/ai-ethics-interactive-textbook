@@ -99,7 +99,11 @@ export async function validateContent({ projectRoot = root } = {}) {
       if (reading.sourceSha256 !== sha256(normalizeNewlines(markdown))) failures.push(`${expected.id}: reading source hash mismatch`);
       const segmentIds = new Set(reading.segments.map((segment) => segment.id));
       if (readingRecord.license !== "CC0-1.0") failures.push(`${expected.id}: reading record metadata must be CC0-1.0`);
-      if (!Array.isArray(readingRecord.checkpoints) || readingRecord.checkpoints.length !== 3) failures.push(`${expected.id}: reading record must contain exactly three checkpoints`);
+      if (!Array.isArray(readingRecord.checkpoints)) failures.push(`${expected.id}: reading record checkpoints must be an array`);
+      else {
+        const checkpointIds = readingRecord.checkpoints.map((checkpoint) => checkpoint.id);
+        if (new Set(checkpointIds).size !== checkpointIds.length) failures.push(`${expected.id}: reading record checkpoint IDs must be unique`);
+      }
       const checkpointIds = new Set();
       for (const checkpoint of readingRecord.checkpoints ?? []) {
         if (checkpointIds.has(checkpoint.id)) failures.push(`${expected.id}: duplicate reading record checkpoint ${checkpoint.id}`);

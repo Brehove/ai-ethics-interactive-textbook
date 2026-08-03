@@ -49,6 +49,23 @@ test('MCP exposes document-targeted multi-chapter creation, mutation, diff, prev
   await client.close(); await server.close();
 });
 
+test('MCP accepts custom checkpoint keys and removal by stable checkpoint ID', async () => {
+  const calls = [];
+  const routeEnv = { CONTENT_API: { fetch: async (request) => {
+    calls.push({ pathname: new URL(request.url).pathname, body: await request.clone().json() });
+    return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
+  } } };
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createMcp(routeEnv, 'run_checkpoint'); const client = new Client({ name: 'checkpoint-client', version: '1.0.0' });
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  const write = { changeSetId: 'cs_checkpoint', baseRevisionId: 'revision_1', expectedVersion: 1, idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886' };
+  await client.callTool({ name: 'upsert_checkpoint', arguments: { ...write, operation: { type: 'checkpoint.upsert', checkpoint: { passageId: 'passage_1', passageExcerptHash: 'a'.repeat(64), slot: 'checkpoint-fourth', stage: 'Extend', strategy: 'self-explanation', title: 'A fourth checkpoint', trigger: 'Pause again.', prompt: 'Explain the distinction.', guidance: 'Use the chapter language.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'Extend the reasoning sequence.', showInSidebar: true } } } });
+  await client.callTool({ name: 'remove_checkpoint', arguments: { ...write, expectedVersion: 2, operation: { type: 'checkpoint.remove', checkpointId: 'checkpoint_123' } } });
+  assert.equal(calls[0].body.operation.checkpoint.slot, 'checkpoint-fourth');
+  assert.deepEqual(calls[1].body.operation, { type: 'checkpoint.remove', checkpointId: 'checkpoint_123' });
+  await client.close(); await server.close();
+});
+
 test('raw authenticated media lane keeps binary data and upload tokens outside MCP tool context', async () => {
   const calls = [];
   const uploadEnv = { MCP_CAPABILITY_SECRET: capabilitySecret, CONTENT_API: { fetch: async (request) => {

@@ -3,9 +3,10 @@ interface Props {
   chapterNumber?: number;
   chapterTotal?: number;
   readingRecordPilot?: boolean;
+  readingRecordTotal?: number;
 }
 
-const { chapterNumber, chapterTotal = 18, readingRecordPilot = false } = Astro.props;
+const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRecordTotal = 0 } = Astro.props;
 ---
 
 <header class="site-header">
@@ -17,8 +18,8 @@ const { chapterNumber, chapterTotal = 18, readingRecordPilot = false } = Astro.p
     {!chapterNumber && <a href="/about/">About</a>}
     {chapterNumber && readingRecordPilot && (
       <button type="button" class="record-header-button" data-open-reading-record aria-controls="context-panel" aria-expanded="false">
-        <span class="record-label-wide">Reading record · <b data-header-record-progress>0/3</b></span>
-        <span class="record-label-short">Record · <b data-header-record-progress>0/3</b></span>
+        <span class="record-label-wide">Reading record · <b data-header-record-progress>0/{readingRecordTotal}</b></span>
+        <span class="record-label-short">Record · <b data-header-record-progress>0/{readingRecordTotal}</b></span>
       </button>
     )}
     {chapterNumber && !readingRecordPilot && <button type="button" data-open-notes>Notes</button>}
