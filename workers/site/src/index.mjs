@@ -16,7 +16,7 @@ const safeHttps = (value) => {
 
 const inline = (value = '') => {
   let rendered = escapeHtml(value);
-  rendered = rendered.replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, (_match, label, href) => `<a href="${escapeHtml(href)}">${label}</a>`);
+  rendered = rendered.replace(/\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/))[^\s)]+)\)/g, (_match, label, href) => `<a href="${escapeHtml(href)}">${label}</a>`);
   rendered = rendered.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   rendered = rendered.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   return rendered;

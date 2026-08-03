@@ -249,6 +249,37 @@ const strategyPreview: Record<string, string> = {
     "metacognitive-trace": "Trace whether the reading changed, qualified, strengthened, or left your judgment unchanged.",
   };
 
+  const restoreStaticPlacements = (body: HTMLElement, placements: HTMLElement[]): void => {
+    placements.forEach((placement) => {
+      const personPath = placement.dataset.personPath;
+      const personIntroduction = personPath
+        ? [...body.querySelectorAll<HTMLAnchorElement>("a[href]")]
+          .find((link) => link.getAttribute("href") === personPath)?.closest<HTMLElement>("p")
+        : null;
+      const passageIds = (placement.dataset.passageIds ?? placement.dataset.passageId ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+      const passage = passageIds
+        .map((id) => body.querySelector<HTMLElement>(`#${CSS.escape(id)}`))
+        .find(Boolean);
+      const target = personIntroduction ?? passage;
+
+      if (!target) {
+        // Missing anchors must degrade to visible media, never silent deletion.
+        body.append(placement);
+        return;
+      }
+
+      let insertionPoint: Element = target;
+      while (insertionPoint.nextElementSibling?.matches("[data-inline-placed]")) {
+        insertionPoint = insertionPoint.nextElementSibling;
+      }
+      placement.dataset.inlinePlaced = "true";
+      insertionPoint.insertAdjacentElement("afterend", placement);
+    });
+  };
+
   document.querySelectorAll<HTMLElement>("[data-reading-record]").forEach(async (record) => {
     if (record.dataset.enhanced) return;
     record.dataset.enhanced = "pending";
@@ -260,7 +291,12 @@ const strategyPreview: Record<string, string> = {
         if (!response.ok) throw new Error(`Live chapter returned ${response.status}`);
         const live = await response.json() as { revisionId?: string; html?: string; prompts?: PromptRecord[] };
         const body = document.querySelector<HTMLElement>('[data-live-chapter-body="chapter_ch07"]');
-        if (body && typeof live.html === "string") body.innerHTML = live.html;
+        if (body && typeof live.html === "string") {
+          const staticPlacements = [...body.querySelectorAll<HTMLElement>("[data-inline-placed]")];
+          staticPlacements.forEach((placement) => placement.remove());
+          body.innerHTML = live.html;
+          restoreStaticPlacements(body, staticPlacements);
+        }
         if (Array.isArray(live.prompts)) record.dataset.prompts = JSON.stringify(live.prompts);
         if (live.revisionId) record.dataset.chapterVersion = live.revisionId;
       } catch (error) {
