@@ -102,6 +102,22 @@ function safeErrorResponse(error, origin, callback = false) {
   return response;
 }
 
+async function callbackStage(stage, operation) {
+  try {
+    return await operation();
+  } catch (error) {
+    const diagnostic = {
+      event: "editor_auth_callback_failure",
+      stage,
+      kind: error instanceof GitHubUpstreamError ? "github_upstream" : error instanceof HttpError ? "policy" : "internal",
+      name: typeof error?.name === "string" ? error.name : "UnknownError",
+      ...(error instanceof GitHubUpstreamError ? { upstreamStatus: error.status, upstreamOperation: error.operation } : {}),
+    };
+    console.error(JSON.stringify(diagnostic));
+    throw error;
+  }
+}
+
 function safeAllowedOrigin(request, env) {
   try {
     const config = getRuntimeConfig(env);
@@ -360,15 +376,15 @@ export function createEditorAuthApp(dependencies = {}) {
           }
 
           const code = validateOAuthCode(url.searchParams.get("code"));
-          const userToken = await exchangeOAuthCode(env, code, `${config.authBaseUrl}/auth/callback`, fetchImpl);
-          const user = await getAuthenticatedUser(userToken, fetchImpl);
+          const userToken = await callbackStage("oauth_exchange", () => exchangeOAuthCode(env, code, `${config.authBaseUrl}/auth/callback`, fetchImpl));
+          const user = await callbackStage("user_lookup", () => getAuthenticatedUser(userToken, fetchImpl));
           if (!config.allowedUserIds.has(String(user.id))) {
             throw new HttpError(403, "user_not_allowed", "This GitHub account is not an editor");
           }
-          await verifyUserRepositoryAccess(env, userToken, fetchImpl);
+          await callbackStage("repository_access", () => verifyUserRepositoryAccess(env, userToken, fetchImpl));
 
           const csrf = randomBase64Url(24, randomBytes);
-          const session = await signToken({
+          const session = await callbackStage("session_sign", () => signToken({
             v: 1,
             kind: "session",
             sub: String(user.id),
@@ -376,7 +392,7 @@ export function createEditorAuthApp(dependencies = {}) {
             csrf,
             iat: now,
             exp: now + config.sessionTtl,
-          }, config.sessionSecret);
+          }, config.sessionSecret));
           const destination = new URL(config.adminUrl);
           destination.searchParams.set("editor_auth", "ok");
           return redirect(destination.href, {
