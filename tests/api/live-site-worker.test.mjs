@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import worker, { projectChapter } from '../../workers/site/src/index.mjs';
 
 const chapter = {
@@ -33,4 +34,10 @@ test('site worker serves only the fixed live chapter endpoint and delegates asse
   assert.equal((await response.json()).revisionId, 'revision_live');
   const asset = await worker.fetch(new Request('https://example.test/chapter/anything/'), env);
   assert.equal(await asset.text(), 'static asset');
+});
+
+test('production routes every request through the site Worker before exact asset delivery', async () => {
+  const config = JSON.parse(await readFile(new URL('../../wrangler.jsonc', import.meta.url), 'utf8'));
+  assert.equal(config.assets.binding, 'ASSETS');
+  assert.equal(config.assets.run_worker_first, true);
 });
