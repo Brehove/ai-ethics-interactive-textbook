@@ -396,6 +396,29 @@ test('release-state audit verifies the full active authority map and D1 canonica
   assert.equal(result.expectedCloudflareVersionId, 'version_cf_17');
 });
 
+test('release-state audit accepts canonical Git file and commit provenance when the normalized hash matches', async () => {
+  const expected = completeAuthorityEntries().map((entry) => ({
+    document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,
+    source_revision: entry.sourceRevision, normalized_snapshot_hash: entry.normalizedSnapshotHash
+  }));
+  const active = expected.map((entry) => ({
+    ...entry,
+    source_path: entry.authority === 'git' ? `${entry.source_path}chapter.md` : entry.source_path,
+    source_revision: entry.authority === 'git' ? '0a2716182953f492a654aa8b704d420216f39450' : entry.source_revision,
+    current_revision_id: entry.source_revision,
+    current_content_hash: entry.normalized_snapshot_hash
+  }));
+  const db = makeDb((sql, _args, mode) => {
+    if (sql.includes('SELECT id, state, cloudflare_version_id FROM releases')) return { id: 'release_17', state: 'published', cloudflare_version_id: 'version_cf_17' };
+    if (sql.includes("FROM release_pointers WHERE name = 'active'")) return { release_id: 'release_17' };
+    if (sql.includes('FROM release_authority_entries WHERE release_id')) return mode === 'all' ? { results: expected } : null;
+    if (sql.includes('FROM authority_registry a JOIN documents d')) return mode === 'all' ? { results: active } : null;
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/releases/release_17:auditState', { method: 'POST', headers: workflowHeaders('content:authority'), body: '{}' }), { CONTENT_DB: db });
+  assert.equal(response.status, 200, await response.text());
+});
+
 test('release-state audit reports pointer, authority, and canonical-head drift without content', async () => {
   const expected = completeAuthorityEntries().map((entry) => ({
     document_id: entry.documentId, authority: entry.authority, source_path: entry.sourcePath,

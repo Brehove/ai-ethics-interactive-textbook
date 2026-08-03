@@ -974,15 +974,25 @@ async function auditReleaseState(request, env, identity, releaseId) {
   for (const [documentId, entry] of expectedById) {
     const current = activeById.get(documentId);
     if (!current) { mismatch('authority_missing', documentId, 'active', null); continue; }
-    for (const [field, expectedField, actualField] of [
-      ['authority', 'authority', 'authority'],
-      ['source_path', 'source_path', 'source_path'],
-      ['source_revision', 'source_revision', 'source_revision'],
-      ['normalized_snapshot_hash', 'normalized_snapshot_hash', 'normalized_snapshot_hash']
-    ]) if ((entry[expectedField] ?? null) !== (current[actualField] ?? null)) mismatch(field, documentId, entry[expectedField] ?? null, current[actualField] ?? null);
+    for (const field of ['authority', 'normalized_snapshot_hash']) {
+      if ((entry[field] ?? null) !== (current[field] ?? null)) mismatch(field, documentId, entry[field] ?? null, current[field] ?? null);
+    }
     if (entry.authority === 'd1') {
+      for (const field of ['source_path', 'source_revision']) {
+        if ((entry[field] ?? null) !== (current[field] ?? null)) mismatch(field, documentId, entry[field] ?? null, current[field] ?? null);
+      }
       if (current.current_revision_id !== entry.source_revision) mismatch('canonical_revision', documentId, entry.source_revision, current.current_revision_id || null);
       if (current.current_content_hash !== entry.normalized_snapshot_hash) mismatch('canonical_hash', documentId, entry.normalized_snapshot_hash, current.current_content_hash || null);
+    } else if (entry.authority === 'git') {
+      // The release contract addresses a chapter bundle directory while the
+      // authoring registry addresses its canonical chapter.md file. Git
+      // provenance may likewise be a commit ID rather than the normalized
+      // chapter digest. The authority and normalized content hash above are
+      // the cross-representation integrity boundary.
+      const expectedPath = entry.source_path;
+      const actualPath = current.source_path;
+      if (typeof expectedPath !== 'string' || (actualPath !== expectedPath && actualPath !== `${expectedPath}chapter.md`)) mismatch('source_path', documentId, `${expectedPath}[chapter.md]`, actualPath ?? null);
+      if (typeof current.source_revision !== 'string' || !current.source_revision) mismatch('source_revision_missing', documentId, 'git-provenance-id', current.source_revision ?? null);
     }
   }
   for (const documentId of activeById.keys()) if (!expectedById.has(documentId)) mismatch('unexpected_active_authority', documentId, null, 'active');

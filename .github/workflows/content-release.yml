@@ -193,7 +193,9 @@ jobs:
       - name: Audit the complete active release state
         env:
           RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
-        run: node scripts/release/control-plane.mjs audit-state --release "$(node -e \"console.log(require('./release-artifacts/deployment-receipt.json').releaseId)\")" --out release-artifacts/release-state-audit.json
+        run: |
+          release_id="$(node -e "console.log(require('./release-artifacts/deployment-receipt.json').releaseId)")"
+          node scripts/release/control-plane.mjs audit-state --release "$release_id" --out release-artifacts/release-state-audit.json
       - name: Restore prior Cloudflare version if verification or receipt recording fails
         if: ${{ failure() && steps.stage.outcome == 'success' && steps.receipt.outcome != 'success' }}
         env:

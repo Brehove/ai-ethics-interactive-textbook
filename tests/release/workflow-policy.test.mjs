@@ -69,6 +69,12 @@ test("release workflow requires signed candidates and human-gated promotion", as
   for (const checkout of checkouts) assert.match(checkout[1], /ref: \$\{\{ inputs\.commit_sha \}\}/);
 });
 
+test("release audit resolves its receipt ID without literal shell escapes", async () => {
+  const workflow = await readFile(workflowPath, "utf8");
+  assert.match(workflow, /release_id="\$\(node -e "console\.log\(require\('\.\/release-artifacts\/deployment-receipt\.json'\)\.releaseId\)"\)"/);
+  assert.doesNotMatch(workflow, /node -e \\"/);
+});
+
 test("recovery workflow reconciles only exact target or recovery Worker versions", async () => {
   const workflow = await readFile(reconcileWorkflowPath, "utf8");
   assert.match(workflow, /schedule:/);
