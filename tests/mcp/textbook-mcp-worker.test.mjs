@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import worker, { createMcp } from '../../workers/textbook-mcp/src/index.mjs';
+import worker, { createMcp, signAgentCapability, verifyAgentCapability } from '../../workers/textbook-mcp/src/index.mjs';
 
-const env = { MCP_ACCESS_TOKEN: 'test-token', CONTENT_API: { fetch: async () => new Response(JSON.stringify({ chapters: [] }), { headers: { 'content-type': 'application/json' } }) } };
+const capabilitySecret = 'test-capability-secret-at-least-32-bytes-long';
+const claims = (scopes = ['content:read', 'content:write', 'content:submit', 'media:read', 'media:upload']) => { const now = Math.floor(Date.now() / 1000); return { iss: 'ai-ethics-editor', aud: 'ai-ethics-textbook-mcp', sub: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', scopes, iat: now - 1, exp: now + 600, jti: 'test-jti' }; };
+const env = { MCP_CAPABILITY_SECRET: capabilitySecret, CONTENT_API: { fetch: async () => new Response(JSON.stringify({ chapters: [] }), { headers: { 'content-type': 'application/json' } }) } };
 
 test('protocol initializes, lists tools, and calls a read tool', async () => {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -13,17 +16,60 @@ test('protocol initializes, lists tools, and calls a read tool', async () => {
   await server.connect(serverTransport); await client.connect(clientTransport);
   const tools = await client.listTools();
   assert.equal(tools.tools.some(tool => tool.name === 'approve_changeset' || tool.name === 'publish_changeset'), false);
+  assert.equal(tools.tools.some(tool => tool.name === 'upload_media_base64' || tool.name === 'request_media_upload'), false);
   assert.ok(tools.tools.some(tool => tool.name === 'replace_text'));
+  assert.equal(tools.tools.every(tool => typeof tool.annotations?.idempotentHint === 'boolean'), true);
   const response = await client.callTool({ name: 'list_chapters', arguments: {} });
   assert.equal(response.isError, undefined);
   assert.match(response.content[0].text, /chapters/);
   await client.close(); await server.close();
 });
 
+test('raw authenticated media lane keeps binary data and upload tokens outside MCP tool context', async () => {
+  const calls = [];
+  const uploadEnv = { MCP_CAPABILITY_SECRET: capabilitySecret, CONTENT_API: { fetch: async (request) => {
+    const body = request.method === 'PUT' ? new Uint8Array(await request.arrayBuffer()) : await request.json();
+    calls.push({ pathname: new URL(request.url).pathname, method: request.method, headers: request.headers, body });
+    return new Response(JSON.stringify(request.method === 'PUT'
+      ? { ticketId: 'upload_12345678', jobId: 'mediajob_12345678', state: 'queued', sha256: 'a'.repeat(64) }
+      : { ticketId: 'upload_12345678', jobId: 'mediajob_12345678', upload: { token: 'one-time-token-123456', requiredHeaders: {} } }), { status: request.method === 'PUT' ? 202 : 201, headers: { 'content-type': 'application/json' } });
+  } } };
+  const authorization = `Bearer ${await signAgentCapability(claims(), capabilitySecret)}`;
+  const metadata = { reviewPackageId: 'reviewpkg_12345678', filename: 'clip.webm', mimeType: 'video/webm', bytes: 4, sha256: 'a'.repeat(64), idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886', transcriptEquivalent: { provided: true, language: 'en', text: 'Equivalent.' }, poster: { provided: true, alt: 'Poster.' } };
+  let response = await worker.fetch(new Request('https://mcp.example/media-upload/request', { method: 'POST', headers: { authorization, 'content-type': 'application/json' }, body: JSON.stringify(metadata) }), uploadEnv);
+  assert.equal(response.status, 201);
+  response = await worker.fetch(new Request('https://mcp.example/media-upload/upload_12345678', { method: 'PUT', headers: { authorization, 'content-type': 'video/webm', 'content-length': '4', 'x-content-sha256': 'a'.repeat(64), 'x-upload-token': 'one-time-token-123456' }, body: new Uint8Array([1, 2, 3, 4]) }), uploadEnv);
+  assert.equal(response.status, 202);
+  assert.equal(calls[0].pathname, '/v1/media:requestUpload');
+  assert.equal(calls[1].pathname, '/v1/media/uploads/upload_12345678');
+  assert.deepEqual([...calls[1].body], [1, 2, 3, 4]);
+  assert.equal(calls[1].headers.get('x-content-actor-type'), 'agent');
+  const helper = await readFile(new URL('../../.agents/skills/publish-textbook-media/scripts/upload-media.mjs', import.meta.url), 'utf8');
+  assert.match(helper, /readFile\(filePath\)/);
+  assert.doesNotMatch(helper, /contentBase64|base64/i);
+});
+
 test('worker rejects callers without the MCP bearer secret', async () => {
   const response = await worker.fetch(new Request('https://mcp.example/mcp'), env);
   assert.equal(response.status, 401);
-  assert.equal(response.headers.get('www-authenticate'), 'Bearer');
+  assert.match(response.headers.get('www-authenticate'), /invalid_token/);
+});
+
+test('signed per-agent capabilities preserve identity, expire quickly, and hide out-of-scope tools', async () => {
+  const readClaims = claims(['content:read']); const token = await signAgentCapability(readClaims, capabilitySecret);
+  assert.deepEqual((await verifyAgentCapability(token, capabilitySecret)).scopes, ['content:read']);
+  await assert.rejects(() => verifyAgentCapability(token, 'wrong-secret-but-still-at-least-32-characters'));
+  const overlongToken = await signAgentCapability({ ...readClaims, exp: readClaims.iat + 7200 }, capabilitySecret);
+  await assert.rejects(() => verifyAgentCapability(overlongToken, capabilitySecret));
+  const identity = await verifyAgentCapability(token, capabilitySecret);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createMcp(env, identity.runId, identity); const client = new Client({ name: 'scoped-client', version: '1.0.0' });
+  await server.connect(serverTransport); await client.connect(clientTransport);
+  const tools = (await client.listTools()).tools.map((tool) => tool.name);
+  assert.ok(tools.includes('get_chapter')); assert.ok(tools.includes('list_revisions')); assert.equal(tools.includes('replace_text'), false); assert.equal(tools.includes('submit_changeset'), false); assert.equal(tools.includes('create_media_review_package'), false);
+  const resources = await client.listResources(); assert.deepEqual(resources.resources.map((item) => item.uri).sort(), ['textbook://capabilities', 'textbook://chapters', 'textbook://schema']);
+  const receipt = await client.readResource({ uri: 'textbook://capabilities' }); assert.match(receipt.contents[0].text, /actor_agent_test/); assert.match(receipt.contents[0].text, /cannot/);
+  await client.close(); await server.close();
 });
 
 test('media, provider, diff, paginated passage, and evidence tools call the frozen Content API routes with current payloads', async () => {

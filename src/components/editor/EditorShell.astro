@@ -31,7 +31,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
         <p class="workspace-help">Select a block to edit or position a structured operation. Stable IDs remain visible in the selection receipt and review evidence.</p>
         <article class="chapter-prose" data-prose><p>Loading the canonical chapter…</p></article>
         <section class="structure-toolbar" aria-labelledby="structure-tools-title">
-          <div class="structure-toolbar__heading"><div><p class="review-eyebrow">Selected structure</p><h2 id="structure-tools-title" data-selected-block>No block selected</h2></div><div class="structure-actions"><button type="button" data-move-block="up" disabled>Move up</button><button type="button" data-move-block="down" disabled>Move down</button><button class="danger-control" type="button" data-remove-media disabled>Remove media placement</button></div></div>
+          <div class="structure-toolbar__heading"><div><p class="review-eyebrow">Selected structure</p><h2 id="structure-tools-title" data-selected-block>No block selected</h2></div><div class="structure-actions"><button type="button" data-move-block="up" disabled>Move up</button><button type="button" data-move-block="down" disabled>Move down</button><button class="danger-control" type="button" data-remove-block disabled>Remove structured block</button><button class="danger-control" type="button" data-remove-media disabled>Remove media placement</button></div></div>
           <form class="insert-block-form" data-insert-block-form>
             <label>Insert block<select data-insert-block-type><option value="paragraph">Paragraph</option><option value="heading">Heading</option><option value="blockquote">Block quote</option><option value="callout">Callout</option><option value="list">List</option></select></label>
             <label>Relative position<select data-insert-position><option value="after">After selected block</option><option value="before">Before selected block</option></select></label>
@@ -43,7 +43,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       </section>
 
       <section class="workspace-panel" data-workspace-panel="Checkpoints" aria-labelledby="checkpoints-workspace-title" hidden>
-        <div class="workspace-heading"><div><p class="review-eyebrow">Commit · Work · Reconcile</p><h1 id="checkpoints-workspace-title">Prompt checkpoints</h1></div><strong data-checkpoint-summary>Loading…</strong></div>
+        <div class="workspace-heading"><div><p class="review-eyebrow">Commit · Work · Reconcile</p><h1 id="checkpoints-workspace-title">Prompt checkpoints</h1></div><div class="workspace-heading-actions"><strong data-checkpoint-summary>Loading…</strong><button type="button" data-checkpoint-preview>Open actual reader preview</button></div></div>
         <p class="workspace-help">Choose a checkpoint card to inspect its stable identity, anchor, prompt, and student-facing projections.</p>
         <div class="checkpoint-card-grid" data-checkpoint-cards></div>
         <section class="checkpoint-projection" data-checkpoint-projection aria-live="polite"><p>Select an existing checkpoint or add the next immutable slot.</p></section>
@@ -68,6 +68,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
         <p class="workspace-help">These receipts come from the current content API. Review identity and impact before validation or submission.</p>
         <div class="evidence-grid"><section aria-labelledby="revision-evidence-title"><h2 id="revision-evidence-title">Revision identity</h2><div data-revision-evidence><p>Loading revision evidence…</p></div></section><section aria-labelledby="dependency-evidence-title"><h2 id="dependency-evidence-title">Dependency graph</h2><div data-dependency-evidence><p>Loading dependency evidence…</p></div></section></div>
         <section class="exact-diff" aria-labelledby="exact-diff-title"><h2 id="exact-diff-title">Exact semantic diff</h2><div data-exact-diff><p>No editable change set is selected.</p></div></section>
+        <section class="revision-history" aria-labelledby="revision-history-title"><div class="revision-history__heading"><div><p class="review-eyebrow">Immutable history</p><h2 id="revision-history-title">Revision history and restore</h2></div><button type="button" data-refresh-history>Refresh history</button></div><p class="workspace-help">Restore never overwrites the current chapter. It copies a historical revision into a new reviewable draft based on the current canonical head.</p><div data-revision-history><p>Loading revision history…</p></div></section>
         <p class="snapshot-receipt" data-snapshot-receipt hidden></p>
         <section class="human-release-review" data-human-review hidden aria-labelledby="human-review-title">
           <div class="human-review-heading"><div><p class="review-eyebrow">Submitted snapshot</p><h2 id="human-review-title">Human release review</h2></div><strong data-review-state>Awaiting decision</strong></div>
@@ -246,8 +247,10 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
   const revisionEvidence = root.querySelector<HTMLElement>("[data-revision-evidence]")!;
   const dependencyEvidence = root.querySelector<HTMLElement>("[data-dependency-evidence]")!;
   const exactDiff = root.querySelector<HTMLElement>("[data-exact-diff]")!;
+  const revisionHistory = root.querySelector<HTMLElement>("[data-revision-history]")!;
   const moveUp = root.querySelector<HTMLButtonElement>('[data-move-block="up"]')!;
   const moveDown = root.querySelector<HTMLButtonElement>('[data-move-block="down"]')!;
+  const removeStructuredBlock = root.querySelector<HTMLButtonElement>("[data-remove-block]")!;
   const removeMediaPlacement = root.querySelector<HTMLButtonElement>("[data-remove-media]")!;
   const slots = ["commit", "work", "reconcile"] as const;
   let authenticated = false; let contentOnline = false; let canWrite = false; let dirty = false; let csrfToken = ""; let selectedChapterId = chapterPicker.value || "chapter_ch07"; let changeSetId = ""; let baseRevisionId = ""; let canonicalContentHash = ""; let revisionCreatedAt = ""; let authorityKind = "git"; let expectedVersion = 1; let submittedSnapshotHash = ""; let submittedSnapshotRevision = ""; let activeReviewPackageId = ""; let activeReviewDeclarationHash = ""; let activeReviewPackageState = ""; let selectedExistingRightsStatus = ""; let selectedMedia = ""; let selectedBlockId = ""; let selectedSlot: typeof slots[number] = "commit"; let chapter: Chapter = { body: [], checkpoints: [] }; let canonicalChapter: Chapter = { body: [], checkpoints: [] };
@@ -440,6 +443,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     const index = blocks.findIndex((block) => block.blockId === selectedBlockId);
     moveUp.disabled = !canWrite || index <= 0 || !blocks[index - 1]?.blockId;
     moveDown.disabled = !canWrite || index < 0 || index >= blocks.length - 1 || !blocks[index + 1]?.blockId;
+    removeStructuredBlock.disabled = !canWrite || index < 0 || ["legacyMarkup", "mediaFigure"].includes(blocks[index]?.type);
     removeMediaPlacement.disabled = !canWrite || index < 0 || blocks[index]?.type !== "mediaFigure" || !blocks[index]?.figureId;
     insertBlockForm.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input,select,textarea,button").forEach((control) => { control.disabled = !canWrite; });
   }
@@ -519,6 +523,30 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     if (!canWrite || !changeSetId) { exactDiff.replaceChildren(evidenceList([], "This repository-authoritative chapter has no browser change set. Diff is intentionally unavailable in read-only mode.")); semanticCount.textContent = "0"; workingVersion.textContent = "—"; return; }
     try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:diff`, {}); const data = await response.json(); if (!response.ok) throw new Error("diff unavailable"); renderExactDiff(data); }
     catch { exactDiff.replaceChildren(evidenceList([], "The exact server diff could not be refreshed.")); }
+    await refreshRevisionHistory();
+  }
+
+  async function refreshRevisionHistory() {
+    if (!gatewayOrigin || !authenticated) { revisionHistory.replaceChildren(evidenceList([], "Revision history requires an authenticated content API session.")); return; }
+    try {
+      const response = await fetch(`${gatewayOrigin}/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions?limit=20`, { credentials: "include" });
+      const data = await response.json(); if (!response.ok || !Array.isArray(data.revisions)) throw new Error("history unavailable");
+      if (!data.revisions.length) { revisionHistory.replaceChildren(evidenceList([], "No immutable revisions are recorded.")); return; }
+      const list = document.createElement("ol"); list.className = "revision-history__list";
+      for (const item of data.revisions) {
+        const row = document.createElement("li"); const copy = document.createElement("div"); const title = document.createElement("strong"); title.textContent = item.current ? "Current revision" : "Historical revision";
+        const detail = document.createElement("span"); detail.textContent = `${item.revisionId} · ${new Date(item.createdAt).toLocaleString()} · ${String(item.contentHash).slice(0, 12)}…`;
+        copy.append(title, detail); row.append(copy);
+        if (canWrite && !item.current) { const restore = document.createElement("button"); restore.type = "button"; restore.textContent = "Restore as new draft"; restore.addEventListener("click", async () => {
+          if (!window.confirm(`Create a new draft from revision ${item.revisionId}? The current chapter will not be overwritten or published.`)) return;
+          restore.disabled = true;
+          try { const restored = await post(`/v1/chapters/${encodeURIComponent(selectedChapterId)}/revisions/${encodeURIComponent(item.revisionId)}:restoreAsDraft`, { title: `Restore ${item.revisionId}`, description: "Instructor-created restoration draft from immutable revision history.", idempotencyKey: key() }); const result = await restored.json(); if (!restored.ok || !result.id) throw new Error(); changeSetId = String(result.id); baseRevisionId = String(result.baseRevisionId); expectedVersion = Number(result.version ?? 1); await hydrateChangeset(); renderChapter(); renderCheckpointState(); await refreshReviewEvidence(); setStatus(`Historical revision ${item.revisionId} restored into new draft ${changeSetId}. Nothing was overwritten or published.`); }
+          catch { restore.disabled = false; setStatus("Historical revision was not restored. The chapter authority or revision may have changed."); }
+        }); row.append(restore); }
+        list.append(row);
+      }
+      revisionHistory.replaceChildren(list);
+    } catch { revisionHistory.replaceChildren(evidenceList([], "Immutable revision history could not be loaded.")); }
   }
 
   function renderSemanticReview() {
@@ -679,7 +707,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     canWrite = editable && selectedChapterId === "chapter_ch07";
     contentOnline = canWrite;
     root.toggleAttribute("data-read-only", !canWrite);
-    const mutationSelectors = ["[data-preview]", "[data-validate]", "[data-submit-review]", "[data-save-text]", "[data-media]", "[data-add-checkpoint]", "[data-save-checkpoint]", "[data-remove-checkpoint]"];
+    const mutationSelectors = ["[data-preview]", "[data-checkpoint-preview]", "[data-validate]", "[data-submit-review]", "[data-save-text]", "[data-media]", "[data-add-checkpoint]", "[data-save-checkpoint]", "[data-remove-checkpoint]", "[data-remove-block]"];
     root.querySelectorAll<HTMLButtonElement>(mutationSelectors.join(",")).forEach((control) => { control.disabled = !canWrite; });
     inspector.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input,select,textarea").forEach((control) => { control.disabled = !canWrite || control === checkpointType; });
     mediaDialog.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input,select,textarea,button").forEach((control) => { control.disabled = !canWrite; });
@@ -713,7 +741,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       const [schemaResponse, chaptersResponse] = await Promise.all([fetch(`${gatewayOrigin}/v1/schema`, { credentials: "include" }), fetch(`${gatewayOrigin}/v1/chapters`, { credentials: "include" })]);
       if (!schemaResponse.ok || !chaptersResponse.ok) throw new Error("content API unavailable");
       const schemaData = await schemaResponse.json();
-      for (const operation of ["text.replace", "block.insert", "block.move", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
+      for (const operation of ["text.replace", "block.insert", "block.move", "block.remove", "checkpoint.upsert", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]) if (!schemaData.operations?.[operation]) throw new Error("operation schema unavailable");
       const chapterIndex = await chaptersResponse.json();
       for (const item of chapterIndex.chapters ?? []) { const option = [...chapterPicker.options].find((candidate) => candidate.value === item.id); if (option) option.dataset.editable = String(item.authoringState === "editable"); }
       await loadSelectedChapter();
@@ -753,6 +781,18 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     try { await applyOperation({ type: "block.move", blockId: selectedBlockId, position }); setStatus(`Moved ${selectedBlockId} ${direction} · working version ${expectedVersion}.`); }
     catch { setStatus("The selected block was not moved. Refresh the chapter and try again."); }
   }));
+  removeStructuredBlock.addEventListener("click", async () => {
+    const block = (chapter.body ?? []).find((item) => item.blockId === selectedBlockId);
+    if (!canWrite || !block?.blockId || ["legacyMarkup", "mediaFigure"].includes(block.type)) return;
+    const dependents = block.passageId ? [...(chapter.checkpoints ?? []).filter((item) => item.passageId === block.passageId), ...(chapter.body ?? []).filter((item) => item.blockId !== block.blockId && item.anchorPassageId === block.passageId)] : [];
+    let replacementPassageId = "";
+    if (dependents.length) {
+      replacementPassageId = window.prompt(`This passage has ${dependents.length} anchored dependent${dependents.length === 1 ? "" : "s"}. Enter the exact replacement passage ID before removal:`, "")?.trim() ?? "";
+      if (!replacementPassageId) { setStatus("Block removal cancelled because anchored dependents require an explicit replacement passage."); return; }
+    } else if (!window.confirm(`Remove structured block ${block.blockId} from this draft? Its stable ID will disappear from the working revision.`)) return;
+    try { await applyOperation({ type: "block.remove", blockId: block.blockId, ...(replacementPassageId ? { replacementPassageId } : {}) }); selectedBlockId = ""; selectedBlockReceipt.textContent = "No block selected"; textEditor.hidden = true; setStatus(`Removed ${block.blockId}${replacementPassageId ? ` and reanchored dependents to ${replacementPassageId}` : ""}.`); }
+    catch { setStatus("The block was not removed. Check its dependencies, replacement passage, and current working version."); }
+  });
   removeMediaPlacement.addEventListener("click", async () => {
     const block = (chapter.body ?? []).find((item) => item.blockId === selectedBlockId);
     if (!canWrite || block?.type !== "mediaFigure" || !block.figureId) return;
@@ -761,6 +801,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
     catch { setStatus("The media placement was not removed. Refresh the chapter and try again."); }
   });
   root.querySelector<HTMLButtonElement>("[data-refresh-evidence]")?.addEventListener("click", () => { void refreshReviewEvidence(); });
+  root.querySelector<HTMLButtonElement>("[data-refresh-history]")?.addEventListener("click", () => { void refreshRevisionHistory(); });
   root.querySelector<HTMLButtonElement>("[data-edit-anchor]")?.addEventListener("click", () => { switchWorkspace("Chapter"); const target = prose.querySelector<HTMLElement>(`[data-passage-id="${CSS.escape(anchor.value)}"]`); target?.focus(); setStatus(target ? `Anchor ${anchor.value} selected in the chapter.` : "The selected anchor is not present in this working chapter."); });
   root.querySelector<HTMLButtonElement>("[data-a11y]")?.addEventListener("click", () => {
     const item = readCheckpoint(); const issues = [];
@@ -856,7 +897,7 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       setStatus("Media or embed insertion did not complete. No placement was applied unless the final operation succeeded.");
     }
   });
-  root.querySelector<HTMLButtonElement>("[data-preview]")?.addEventListener("click", async () => {
+  async function openProtectedPreview() {
     if (!contentOnline || !changeSetId || dirty) { setStatus("Protected preview requires an editable online change set with no unsaved form edits."); return; }
     const previewWindow = window.open("about:blank", "_blank", "noopener,noreferrer");
     try {
@@ -866,7 +907,8 @@ const active = chapters.find((chapter) => chapter.order === 7) ?? chapters[0];
       if (previewWindow) previewWindow.location.replace(data.previewUrl); else window.open(data.previewUrl, "_blank", "noopener,noreferrer");
       setStatus(`Protected preview issued for working version ${data.workingVersion}; it expires at ${new Date(data.expiresAt).toLocaleTimeString()} and can be opened once.`);
     } catch { previewWindow?.close(); setStatus("Protected preview could not be created. The draft was not submitted or published."); }
-  });
+  }
+  root.querySelectorAll<HTMLButtonElement>("[data-preview],[data-checkpoint-preview]").forEach((button) => button.addEventListener("click", () => { void openProtectedPreview(); }));
   root.querySelector<HTMLButtonElement>("[data-review]")?.addEventListener("click", () => { switchWorkspace("Review"); const drawer = root.querySelector<HTMLElement>("[data-agent-drawer]")!; const toggle = root.querySelector<HTMLButtonElement>("[data-agent-toggle]")!; drawer.classList.remove("collapsed"); toggle.setAttribute("aria-expanded", "true"); exactDiff.focus?.(); });
   root.querySelector<HTMLButtonElement>("[data-validate]")?.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Validation requires an online change set with no unsaved form edits."); return; } try { const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:validate`, {}); const data = await response.json(); if (!response.ok) throw new Error(); setStatus(`Validation passed · ${data.validationHash ?? data.contentHash}.`); } catch { setStatus("Validation failed. Review the chapter requirements before submission."); } });
   submitReview.addEventListener("click", async () => { if (!contentOnline || dirty) { setStatus("Review submission requires an online, saved change set."); return; } try { const idempotencyKey = key(); const response = await post(`/v1/changesets/${encodeURIComponent(changeSetId)}:submitReview`, { baseRevisionId, expectedVersion, idempotencyKey }); const data = await response.json(); if (!response.ok) throw new Error(); showHumanReview(data); snapshotReceipt.hidden = false; snapshotReceipt.textContent = `Submitted immutable snapshot ${data.snapshotHash} at revision ${data.snapshotRevision}.`; setStatus("Submitted for human review. Approval remains a separate explicit action and does not publish."); } catch { setStatus("Review submission failed validation or the working version changed."); } });

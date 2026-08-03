@@ -5,9 +5,10 @@ Use a semantic media record, not an iframe or raw markup. Supply useful alt text
 For native media:
 
 1. Run `search_media` before uploading to avoid duplicate assets.
+   Confirm `textbook://capabilities` identifies the expected agent/run and includes `media:upload`. Tool absence is an authorization boundary, not a discovery failure.
 2. Call `create_media_review_package` with `rights`, `editorial`, `accessibility`, and a UUID `idempotencyKey`. Preserve the returned `reviewPackageId` and declaration hash. The state is pending, never implicitly cleared.
-3. Call `request_media_upload` with that server-issued ID and exact byte metadata. Audio and video also carry `{provided:true, language, text}` as a transcript equivalent; the language and text must exactly match the review package. Video also carries `{provided:true, alt}` for its poster.
-4. Use the one-time upload token only for `upload_media_base64`, then poll `get_media_job`. Use `get_media_asset` after processing and inspect the rights status rather than assuming clearance.
+3. Run `scripts/upload-media.mjs --file <local-file> --review-package-id <id> --mime-type <type> --idempotency-key <uuid>`. For audio/video, add `--transcript-file <text-file> --language <tag>` whose text exactly matches the review package. For video, also add `--poster-alt <text>`.
+4. The helper calculates bytes and SHA-256 locally, requests the ticket, and streams raw bytes without putting the file or one-time token into MCP/model context. Poll `get_media_job`. Use `get_media_asset` after processing and inspect the rights status rather than assuming clearance.
 5. Use `place_media` with the immutable `mediaId`, `mediaVersionId`, and `rightsCaseId`, plus placement-specific accessibility, caption, credit, display, animation, download, and print semantics.
 
 For provider media, call `resolve_provider_url`. Use the server-returned provider identity and adapter version, then author the required fallback before `upsert_embed`. YouTube, Vimeo, and X are click-to-load; Spotify requires explicit consent; SoundCloud and Bluesky remain link-first. Unsupported URLs become authored rich links. Never submit third-party embed HTML.

@@ -28,7 +28,7 @@
     },
     {
       "path": "publish-textbook-media/SKILL.md",
-      "sha256": "b948f392cb94b1e45cef8ee631995bedd522543970f59005b81a450f1805f9c7"
+      "sha256": "2d443ce3c870294d95e2574884103de6940583b50985a5da62608dcd60bb89a2"
     },
     {
       "path": "publish-textbook-media/agents/openai.yaml",
@@ -36,7 +36,11 @@
     },
     {
       "path": "publish-textbook-media/references/media-workflow.md",
-      "sha256": "459fee1474854ec8a95bde873f951097a29d3b6760f444231e5ee3973cdf9d50"
+      "sha256": "37e81b867702fd83dc9a8d3b48e3f54c976967c5b48059550f95946121871edf"
+    },
+    {
+      "path": "publish-textbook-media/scripts/upload-media.mjs",
+      "sha256": "6acab78ff5d5be429041697035877c9de25d93faead86bafe14e22fa82126aa5"
     },
     {
       "path": "release-steward/SKILL.md",

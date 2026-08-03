@@ -35,7 +35,7 @@ export default defineConfig({
         "font-src 'self'",
         "form-action 'self'",
         "img-src 'self' data:",
-        "media-src 'self'",
+        "media-src 'self' data:",
         "object-src 'none'",
         "worker-src 'self'",
         "upgrade-insecure-requests",

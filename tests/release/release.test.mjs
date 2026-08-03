@@ -27,3 +27,12 @@ test("media assets use only the fixed hash route and fail closed on status, size
   const wrong = "0".repeat(64); const wrongAsset = { ...asset, sha256: wrong, downloadPath: `/v1/release-assets/${wrong}` };
   await assert.rejects(() => materializeReleaseAssets({ projection: { ...projection, assets: [wrongAsset] }, publicDir: hashDir, token: "t", fetcher: good }), { code: "E_RELEASE_ASSET_HASH" });
 });
+test("release materialization preserves WAV, WebM, and plain-text extensions", async () => {
+  for (const [mimeType, extension] of [["audio/wav", "wav"], ["video/webm", "webm"], ["text/plain", "txt"]]) {
+    const bytes = Buffer.from(`asset-${extension}`); const digest = sha256(bytes);
+    const projection = { assets: [{ sha256: digest, bytes: bytes.length, mimeType, mediaVersionId: `mediaVersion_${extension}`, role: "derivative", downloadPath: `/v1/release-assets/${digest}` }], versions: [{ mediaVersionId: `mediaVersion_${extension}` }] };
+    const directory = await mkdtemp(path.join(tmpdir(), "release-native-types-"));
+    const result = await materializeReleaseAssets({ projection, publicDir: directory, token: "secret", fetcher: async () => new Response(bytes, { headers: { "content-type": mimeType } }) });
+    assert.equal(result[0].publicPath, `/release-assets/${digest}.${extension}`);
+  }
+});

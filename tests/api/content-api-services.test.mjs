@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
-import worker from '../../workers/content-api/src/index.mjs';
+import worker, { releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
   const response = await worker.fetch(new Request('https://content.example/health'), {});
@@ -189,6 +189,21 @@ test('restore-as-draft seeds historical content but bases the new changeset on c
   const workingInsert = CONTENT_DB.batchItems[1];
   assert.equal(workingInsert.args[3], 'revision-current');
   assert.equal(workingInsert.args[4], 'historical-hash');
+});
+
+test('chapter revision history is bounded, content-free, and marks the canonical head', async () => {
+  const CONTENT_DB = fakeDb((sql, _args, mode) => {
+    if (sql.includes('SELECT current_revision_id FROM documents')) return { current_revision_id: 'revision-current' };
+    if (sql.includes('FROM document_revisions') && mode === 'all') return { results: [
+      { id: 'revision-current', parent_revision_id: 'revision-old', content_hash: 'a'.repeat(64), created_by: 'actor_editor', created_at: '2026-08-03T01:00:00Z', metadata_json: '{"status":"published","private":"must-not-leak"}' },
+      { id: 'revision-old', parent_revision_id: null, content_hash: 'b'.repeat(64), created_by: 'actor_import', created_at: '2026-08-02T01:00:00Z', metadata_json: '{}' }
+    ] };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/revisions?limit=10', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  const responseText = await response.text(); assert.equal(response.status, 200, responseText); const body = JSON.parse(responseText);
+  assert.equal(body.revisions[0].current, true); assert.equal(body.revisions[0].status, 'published');
+  assert.equal(body.revisions[1].current, false); assert.equal(JSON.stringify(body).includes('must-not-leak'), false);
 });
 
 test('chapter index exposes per-chapter authoring state and repository-authoritative chapters reject browser drafts', async () => {
@@ -457,6 +472,14 @@ test('rate-limit and media-review migrations persist bounded counters and releas
   assert.match(mediaSchema, /object_sha256 TEXT NOT NULL/);
 });
 
+test('responsive-media migration preserves immutable references and allowlists only fixed widths', async () => {
+  const schema = await readFile(new URL('../../workers/content-api/migrations/0009_responsive_media_objects.sql', import.meta.url), 'utf8');
+  for (const role of ['responsive-640', 'responsive-1280', 'responsive-1920']) assert.match(schema, new RegExp(role));
+  assert.match(schema, /INSERT INTO media_version_objects SELECT \* FROM media_version_objects_v1/);
+  assert.match(schema, /INSERT INTO submitted_snapshot_media_assets SELECT \* FROM submitted_snapshot_media_assets_v1/);
+  assert.doesNotMatch(schema, /responsive-(?:320|768|1024|2560)/);
+});
+
 const baseChapter = () => ({
   chapterId: 'chapter-07',
   body: [
@@ -583,6 +606,20 @@ test('block.insert creates deterministic unique IDs from a stable anchor and rej
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'paragraph', text: '<style>body{display:none}</style>' }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'RAW_MARKUP_FORBIDDEN');
 });
 
+test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-embed', embedId: 'embed-1', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
+  await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work' }), (error) => error instanceof ApiError && error.code === 'DEPENDENCIES_REQUIRE_REANCHOR');
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work', replacementPassageId: 'p-commit' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-work'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-commit');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Commit passage.'));
+  assert.equal(result.chapter.body.find((item) => item.blockId === 'b-embed').anchorPassageId, 'p-commit');
+  await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
+});
+
 test('checkpoint.remove targets the immutable slot and optional stable ID', async () => {
   const added = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   const id = added.chapter.checkpoints[0].checkpointId;
@@ -618,6 +655,7 @@ test('richLink uses an authored public-HTTPS fallback and rejects local targets'
 
 test('operation schemas expose exact required and optional top-level payload fields', () => {
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['text.replace'], { required: ['type', 'blockId', 'text'], optional: [] });
+  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['block.remove'], { required: ['type', 'blockId'], optional: ['replacementPassageId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type', 'slot'], optional: ['checkpointId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['media.place'], { required: ['type', 'placement'], optional: ['position'] });
 });
@@ -660,6 +698,12 @@ test('media upload policy accepts supported bounded files and fails closed on MI
   assert.throws(() => validateUploadRequest({ ...valid, filename: 'clip.mp4', mimeType: 'video/mp4' }), (error) => error instanceof ApiError && error.code === 'TRANSCRIPT_EQUIVALENT_REQUIRED');
   assert.throws(() => assertMediaBudget({ storedBytes: MEDIA_UPLOAD_POLICY.totalStorageLimitBytes - 1024, reservedStorageBytes: 0, monthlyIngestedBytes: 0, monthlyReservedBytes: 0 }, upload), (error) => error instanceof ApiError && error.code === 'STORAGE_BUDGET_EXCEEDED');
   assert.throws(() => assertMediaBudget({ storedBytes: 0, reservedStorageBytes: 0, monthlyIngestedBytes: MEDIA_UPLOAD_POLICY.monthlyIngestLimitBytes, monthlyReservedBytes: 0 }, upload), (error) => error instanceof ApiError && error.code === 'MONTHLY_INGEST_BUDGET_EXCEEDED');
+});
+
+test('release projection classifies plain text as a document and preserves WebM and WAV kinds', () => {
+  assert.equal(releaseMediaKind('text/plain', {}), 'document');
+  assert.equal(releaseMediaKind('video/webm', {}), 'video');
+  assert.equal(releaseMediaKind('audio/wav', {}), 'audio');
 });
 
 test('private originals bind exact uploaded hash and bytes without becoming release objects', async () => {

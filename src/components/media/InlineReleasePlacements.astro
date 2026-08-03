@@ -59,7 +59,7 @@ const linkFirstCard = (item: any) => {
         : item.type === "richLink"
           ? <RichLinkCard card={{ href: item.canonicalUrl, title: item.title, summary: item.summary, sourceLabel: sourceLabel(item.canonicalUrl), linkLabel: item.linkLabel, teachingUse: item.teachingUse, provider: "generic" }} />
           : item.src && item.kind
-            ? <NativeMedia media={{ kind: item.kind, src: item.src, poster: item.poster, alt: item.alt, title: item.title, caption: item.caption ?? item.teachingUse, credit: item.credit ?? "Source and rights recorded in the textbook release.", transcript: item.transcript, mimeType: item.mimeType, downloadName: item.downloadName }} />
+            ? <NativeMedia media={{ kind: item.kind, src: item.src, srcset: item.srcset, poster: item.poster, alt: item.alt, title: item.title, caption: item.caption ?? item.teachingUse, credit: item.credit ?? "Source and rights recorded in the textbook release.", transcript: item.transcript, mimeType: item.mimeType, bytes: item.bytes, canonicalSource: item.canonicalSource, downloadName: item.downloadName }} />
             : null}
   </div>)}
 </section>}

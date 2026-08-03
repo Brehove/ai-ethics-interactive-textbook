@@ -134,6 +134,19 @@ async function getChapter(env, id) {
   return json({ id: row.id, canonicalPath: row.canonical_path, title: row.title, state: row.state, revisionId: row.current_revision_id, contentHash: row.current_content_hash, revisionCreatedAt: row.revision_created_at, authoringState: id === 'chapter_ch07' || authority?.authority === 'd1' ? 'editable' : 'readOnly', authority: authority || null, chapter, metadata: parseStoredJson(row.metadata_json || '{}', 'Chapter metadata') });
 }
 
+async function listChapterRevisions(env, id, url) {
+  const { limit, cursor } = pageParams(url, { defaultLimit: 20, maxLimit: 50 });
+  const document = await env.CONTENT_DB.prepare("SELECT current_revision_id FROM documents WHERE id = ? AND media_kind = 'text' AND state = 'active'").bind(id).first();
+  if (!document) throw new ApiError(404, 'NOT_FOUND', 'Chapter was not found');
+  const rows = await env.CONTENT_DB.prepare(`SELECT id, parent_revision_id, content_hash, created_by, created_at, metadata_json
+    FROM document_revisions WHERE document_id = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`).bind(id, limit + 1, cursor).all();
+  const page = (rows.results || []).slice(0, limit).map((row) => {
+    const metadata = parseStoredJson(row.metadata_json || '{}', 'Revision metadata');
+    return { revisionId: row.id, parentRevisionId: row.parent_revision_id || null, contentHash: row.content_hash, createdBy: row.created_by, createdAt: row.created_at, current: row.id === document.current_revision_id, status: metadata.status || null };
+  });
+  return json({ chapterId: id, currentRevisionId: document.current_revision_id, revisions: page, page: { limit, cursor: String(cursor), nextCursor: (rows.results || []).length > limit ? String(cursor + limit) : null } });
+}
+
 async function requireAuthoringAuthority(env, chapterId) {
   const authority = await env.CONTENT_DB.prepare('SELECT authority FROM authority_registry WHERE document_id = ? AND active = 1').bind(chapterId).first();
   if (chapterId !== 'chapter_ch07' && authority?.authority !== 'd1') throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'This chapter remains repository-authoritative and is read-only in the browser until its controlled D1 cutover');
@@ -386,7 +399,7 @@ async function validateChangeset(request, env, identity, changesetId) {
   return json({ changesetId, contentHash: working.content_hash, validationHash, ...validation });
 }
 
-const releaseMediaKind = (mimeType, technical) => mimeType === 'application/pdf' ? 'pdf' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('video/') ? 'video' : technical?.animated ? 'gif' : 'image';
+export const releaseMediaKind = (mimeType, technical) => mimeType === 'application/pdf' ? 'pdf' : mimeType === 'text/plain' ? 'document' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('video/') ? 'video' : technical?.animated ? 'gif' : 'image';
 
 async function buildMediaProjection(env, chapter) {
   const placements = chapter.body.filter((block) => block?.type === 'mediaFigure');
@@ -416,7 +429,7 @@ async function buildMediaProjection(env, chapter) {
       if (posterRequired && !(objects.results || []).some((item) => item.role === 'poster')) throw new ApiError(422, 'MEDIA_POSTER_MISSING', 'Pinned media version lacks its required immutable poster', { mediaVersionId: pinned.media_version_id });
       const assetSha256s = [];
       for (const object of objects.results || []) {
-        if (!/^[a-f0-9]{64}$/.test(object.object_sha256 || '') || !Number.isInteger(object.object_bytes) || object.object_bytes < 1 || !['derivative', 'poster'].includes(object.role) || !object.object_key?.startsWith('media/') || object.object_key.includes('..')) throw new ApiError(500, 'MEDIA_OBJECT_METADATA_INVALID', 'Pinned media object metadata is invalid');
+        if (!/^[a-f0-9]{64}$/.test(object.object_sha256 || '') || !Number.isInteger(object.object_bytes) || object.object_bytes < 1 || !['derivative', 'poster', 'responsive-640', 'responsive-1280', 'responsive-1920'].includes(object.role) || !object.object_key?.startsWith('media/') || object.object_key.includes('..')) throw new ApiError(500, 'MEDIA_OBJECT_METADATA_INVALID', 'Pinned media object metadata is invalid');
         const projected = { sha256: object.object_sha256, bytes: object.object_bytes, mimeType: object.content_type, mediaId: pinned.media_id, mediaVersionId: pinned.media_version_id, rightsCaseId: pinned.rights_case_id, role: object.role, objectKey: object.object_key, downloadPath: `/v1/release-assets/${object.object_sha256}` };
         const prior = assetMap.get(object.object_sha256);
         if (prior && (prior.objectKey !== projected.objectKey || prior.bytes !== projected.bytes || prior.mimeType !== projected.mimeType)) throw new ApiError(500, 'MEDIA_HASH_COLLISION', 'One media hash maps to conflicting immutable metadata');
@@ -1036,6 +1049,11 @@ async function processorCallback(request, env) {
   if (originalObject.sha256 !== job.content_hash || originalObject.bytes !== job.uploaded_bytes || originalObject.mimeType !== job.content_type) throw new ApiError(422, 'ORIGINAL_OBJECT_MISMATCH', 'Private original bytes do not match the reviewed upload');
   const inspectedObjects = [await inspectImmutableMediaObject(env, derivativeKey, 'derivative', derivativeName)];
   if (posterName && posterName !== derivativeName) inspectedObjects.push(await inspectImmutableMediaObject(env, `${body.outputPrefix}/sha256/${job.content_hash}/${posterName}`, 'poster', posterName));
+  const responsiveCandidates = Array.isArray(manifest.technical.responsive) ? manifest.technical.responsive : [];
+  for (const candidate of responsiveCandidates) {
+    if (!candidate || ![640, 1280, 1920].includes(candidate.width) || typeof candidate.file !== 'string' || candidate.file !== `display-${candidate.width}.webp`) throw new ApiError(422, 'RESPONSIVE_DERIVATIVE_INVALID', 'Responsive image derivative metadata is invalid');
+    inspectedObjects.push(await inspectImmutableMediaObject(env, `${body.outputPrefix}/sha256/${job.content_hash}/${candidate.file}`, `responsive-${candidate.width}`, candidate.file));
+  }
   const completedAt = now();
   const mediaId = await deterministicId('media', { sourceSha256: job.content_hash });
   const mediaVersionId = await deterministicId('mediaversion', { mediaId, sourceSha256: job.content_hash, manifestKey: body.manifestKey });
@@ -1174,6 +1192,8 @@ export default {
       if (request.method === 'GET' && match) return await listChapterPassages(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/dependencies$/);
       if (request.method === 'GET' && match) return await getChapterDependencies(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
+      match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/revisions$/);
+      if (request.method === 'GET' && match) return await listChapterRevisions(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
       match = url.pathname.match(/^\/v1\/(?:chapters|documents)\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getChapter(env, validId(decodeURIComponent(match[1]), 'chapterId'));
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/changesets$/);

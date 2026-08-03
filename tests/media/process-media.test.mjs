@@ -22,6 +22,12 @@ test("accepts a still image and emits a SHA-addressed immutable manifest", async
   assert.deepEqual(manifest.technical.original, { file: "original.png", private: true, sha256: manifest.source.sha256, bytes: png.length });
   assert.equal(JSON.parse(await readFile(path.join(f.output, "sha256", manifest.source.sha256, "manifest.json"))).publication.rightsReview, "required");
 });
+test("emits bounded responsive WebP derivatives without enlarging the source", async () => {
+  const large = await sharp({ create: { width: 1600, height: 900, channels: 3, background: { r: 40, g: 80, b: 120 } } }).png().toBuffer();
+  const f = await fixture(large, "wide.png"); const manifest = await processMediaJob({ job: { basename: f.name }, inboxDir: f.inbox, outputDir: f.output });
+  assert.deepEqual(manifest.technical.responsive, [{ file: "display-640.webp", width: 640, height: 360 }, { file: "display-1280.webp", width: 1280, height: 720 }]);
+  for (const item of manifest.technical.responsive) assert.equal((await sharp(path.join(f.output, "sha256", manifest.source.sha256, item.file)).metadata()).width, item.width);
+});
 test("rejects path traversal, SVG, executables, and a PDF polyglot", async () => {
   const f = await fixture(png);
   await rejects(processMediaJob({ job: { basename: "../safe.png" }, inboxDir: f.inbox, outputDir: f.output }), "E_NAME_INVALID");

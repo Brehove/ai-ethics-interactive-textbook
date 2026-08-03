@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DraftChapterBundleSchema, PublishableChapterBundleSchema, ExternalEmbedSchema, OperationEnvelopeSchema, ContentSourceDescriptorSchema, jsonSchemas } from "../../packages/content-contract/src/index.ts";
+import { DraftChapterBundleSchema, PublishableChapterBundleSchema, ExternalEmbedSchema, OperationEnvelopeSchema, ContentSourceDescriptorSchema, ReleaseMediaProjectionSchema, jsonSchemas } from "../../packages/content-contract/src/index.ts";
 
 const hash = "a".repeat(64); const actor = { actorId: "actor_joel", actorType: "human" as const };
 const base = { schemaVersion: 2 as const, chapterId: "chapter_01", contentKey: "ch01", slug: "a-chapter", title: "A Chapter", description: "A description", part: { partId: "part_01", title: "Part I", order: 1 }, order: 1, chapterVersion: "1.0", revisionId: "revision_01", body: [{ type: "heading" as const, blockId: "block_heading", sectionId: "section_01", level: 2, text: "Start" }, { type: "paragraph" as const, blockId: "block_paragraph", passageId: "passage_01", text: "Argument." }], reasoningObjective: "Evaluate an argument.", readingRecordLicense: "CC0-1.0" as const, sidePanelModules: [{ moduleId: "module_reading", type: "readingRecord" as const, order: 0 }], annotations: [], sources: [], people: [], concepts: [], traditions: [], worldLayer: { worldLayerId: "world_01", version: "1" }, diagrams: [], mediaPlacementIds: [], rightsCaseIds: [], licenses: { chapter: "CC-BY-4.0", assets: [] }, exports: { web: true, print: true, offline: true, voice: true }, aliases: [], tombstones: [], updatedBy: actor, updatedAt: "2026-08-02T12:00:00.000Z" };
@@ -16,6 +16,17 @@ test("extended providers remain typed and fallback-first", () => {
   assert.equal(ExternalEmbedSchema.safeParse({ ...common, identity: { provider: "spotify", resourceType: "track", resourceId: "4uLU6hMCjMI75M1A2tKUQC" }, canonicalUrl: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC", options: { provider: "spotify", explicitConsent: true } }).success, true);
   assert.equal(ExternalEmbedSchema.safeParse({ ...common, identity: { provider: "soundcloud", resourceType: "track", resourceId: "artist:track" }, canonicalUrl: "https://soundcloud.com/artist/track", options: { provider: "soundcloud", linkFirst: true } }).success, true);
   assert.equal(ExternalEmbedSchema.safeParse({ ...common, identity: { provider: "bluesky", resourceType: "post", resourceId: "abc123" }, canonicalUrl: "https://bsky.app/profile/example.bsky.social/post/abc123", options: { provider: "bluesky", linkFirst: true } }).success, true);
+});
+test("release media contract covers the complete bounded native upload set", () => {
+  const make = (mimeType: "audio/wav" | "video/webm" | "text/plain", kind: "audio" | "video" | "document") => ({
+    schemaVersion: 1 as const,
+    assets: [{ sha256: hash, bytes: 12, mimeType, mediaId: "media_01", mediaVersionId: "mediaVersion_01", rightsCaseId: "rights_01", role: "derivative" as const, objectKey: `media/version/${kind}`, downloadPath: `/v1/release-assets/${hash}` }],
+    versions: [{ mediaId: "media_01", mediaVersionId: "mediaVersion_01", title: "Accessible media", kind, source: { sha256: hash, bytes: 12, mimeType, immutableAddress: `sha256:${hash}` }, rights: { rightsCaseId: "rights_01", status: "cleared" as const, reviewId: "review_01", reviewPackageId: "reviewpkg_01", declarationHash: hash, credit: "Instructor" }, technical: {}, transcriptEquivalent: kind === "document" ? null : { language: "en", text: "Equivalent text." }, assetSha256s: [hash] }],
+    placements: [{ figureId: "figure_01", mediaId: "media_01", mediaVersionId: "mediaVersion_01", rightsCaseId: "rights_01", kind, derivativeSha256: hash, posterSha256: null, credit: "Instructor", transcriptEquivalent: kind === "document" ? null : { language: "en", text: "Equivalent text." }, downloadable: true }]
+  });
+  assert.equal(ReleaseMediaProjectionSchema.safeParse(make("audio/wav", "audio")).success, true);
+  assert.equal(ReleaseMediaProjectionSchema.safeParse(make("video/webm", "video")).success, true);
+  assert.equal(ReleaseMediaProjectionSchema.safeParse(make("text/plain", "document")).success, true);
 });
 test("semantic envelopes bind operation ID, CAS revision, and idempotency", () => { const e = { operationId: "op_01", idempotencyKey: "a0d4b181-854e-4754-9ec3-5f9bc1da0933", changeSetId: "changeset_01", expectedBaseRevisionId: "revision_01", actor, submittedAt: "2026-08-02T12:00:00.000Z", operation: { kind: "replaceText" as const, operationId: "op_01", blockId: "block_paragraph", text: "Revised." } }; assert.equal(OperationEnvelopeSchema.safeParse(e).success, true); assert.equal(OperationEnvelopeSchema.safeParse({ ...e, operation: { ...e.operation, operationId: "op_no" } }).success, false); });
 test("JSON schema is derived from release and command contracts", () => { assert.ok("definitions" in jsonSchemas.bookReleaseSnapshot); assert.ok("definitions" in jsonSchemas.operationEnvelope); });
@@ -37,7 +48,7 @@ test("frozen OpenAPI is valid JSON and exposes the complete agent and human boun
   assert.equal(spec.paths["/v1/releases/{releaseId}:stageRollback"].post["x-agent-safe"], undefined);
   assert.deepEqual(spec.paths["/v1/release-deployments:stage"].post["x-required-identity"], { actorType: "service", actorId: "actor_release_workflow", clientId: "github-content-release" });
   assert.deepEqual(spec.paths["/v1/changesets/{changesetId}:renderPreview"].post["x-preview-properties"], { immutableSnapshot: true, oneTime: true, ttlSeconds: 300, authoringCredentials: false });
-  assert.deepEqual(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.operation.properties.type.enum, ["text.replace", "block.insert", "block.move", "checkpoint.upsert", "checkpoint.replace", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]);
+  assert.deepEqual(spec.components.requestBodies.mutationEnvelope.content["application/json"].schema.properties.operation.properties.type.enum, ["text.replace", "block.insert", "block.move", "block.remove", "checkpoint.upsert", "checkpoint.replace", "checkpoint.remove", "embed.upsert", "media.place", "media.remove"]);
   assert.equal(spec.paths["/v1/release-assets/{sha256}"].get["x-exact-sha256-bytes"], true);
   assert.deepEqual(spec["x-rate-limits"], { persistence: "D1 fail-closed fixed window", key: "trusted actor plus client", windowSeconds: 60, mutation: 120, upload: 20 });
 });

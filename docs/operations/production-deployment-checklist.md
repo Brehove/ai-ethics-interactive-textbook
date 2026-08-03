@@ -36,7 +36,7 @@ Keep public development URLs disabled. Set a 24-hour lifecycle deletion rule on 
 Cloudflare Worker secrets:
 
 - editor/auth gateway: existing GitHub OAuth/App/session values, `RELEASE_SNAPSHOT_READ_TOKEN`, and `RELEASE_DEPLOY_RECEIPT_TOKEN`;
-- textbook MCP: `MCP_ACCESS_TOKEN`;
+- textbook MCP: `MCP_CAPABILITY_SECRET` (at least 32 random bytes); keep `MCP_ALLOW_LEGACY_TOKEN=0`. Mint short-lived, per-agent capabilities with `node scripts/mcp/mint-agent-capability.mjs`; do not deploy a shared long-lived bearer token;
 - Content API: `MEDIA_CALLBACK_SECRET` and `PREVIEW_TOKEN_SECRET`. `MEDIA_CALLBACK_SECRET` must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs. `PREVIEW_TOKEN_SECRET` is also set independently on the preview Worker and never sent to a browser. The release receipt credential terminates at the editor/auth gateway; the gateway derives the fixed service identity and never forwards the bearer token.
 
 GitHub Actions secrets:

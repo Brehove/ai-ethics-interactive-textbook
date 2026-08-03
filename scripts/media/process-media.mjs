@@ -105,7 +105,16 @@ async function inspectImage(bytes, mime, destination) {
     await sharp(bytes, { animated: true, limitInputPixels: 100_000_000 }).webp({ quality: 82 }).toFile(path.join(destination, "animation.webp"));
     await sharp(bytes, { animated: true, pages: 1, limitInputPixels: 100_000_000 }).webp({ quality: 82 }).toFile(path.join(destination, "poster.webp"));
   } else await sharp(bytes, { limitInputPixels: 100_000_000 }).webp({ quality: 84 }).toFile(path.join(destination, "display.webp"));
-  return { width: meta.width, height: meta.height, animated, frames: meta.pages ?? 1, derivative: animated ? "animation.webp" : "display.webp", poster: animated ? "poster.webp" : null, mime };
+  const responsive = [];
+  if (!animated) {
+    for (const width of [640, 1280, 1920]) {
+      if (width >= meta.width) continue;
+      const file = `display-${width}.webp`;
+      await sharp(bytes, { limitInputPixels: 100_000_000 }).resize({ width, withoutEnlargement: true }).webp({ quality: 82 }).toFile(path.join(destination, file));
+      responsive.push({ file, width, height: Math.round(meta.height * width / meta.width) });
+    }
+  }
+  return { width: meta.width, height: meta.height, animated, frames: meta.pages ?? 1, derivative: animated ? "animation.webp" : "display.webp", poster: animated ? "poster.webp" : null, responsive, mime };
 }
 function probeMedia(source, mime, job, maxDurationSeconds, destination) {
   if (!job.captions) fail("E_CAPTIONS_REQUIRED", "audio and video require a reviewed captions/transcript declaration");
