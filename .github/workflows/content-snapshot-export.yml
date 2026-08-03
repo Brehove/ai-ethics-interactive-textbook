@@ -15,7 +15,7 @@ concurrency:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: content-backup
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -59,3 +59,38 @@ jobs:
           aws s3 cp backup/ai-ethics-content.sql.gz.sha256 "s3://${R2_BACKUP_BUCKET}/${backup_key}.sql.gz.sha256" --endpoint-url "$R2_ENDPOINT_URL" --only-show-errors
           remote_size="$(aws s3api head-object --bucket "$R2_BACKUP_BUCKET" --key "${backup_key}.sql.gz" --endpoint-url "$R2_ENDPOINT_URL" --query ContentLength --output text)"
           test "$remote_size" = "$(wc -c < backup/ai-ethics-content.sql.gz | tr -d ' ')"
+      - name: Mirror durable R2 objects for disaster recovery
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: "true"
+          R2_ENDPOINT_URL: ${{ vars.BACKUP_R2_ENDPOINT_URL }}
+        run: |
+          mkdir -p backup/r2
+          for bucket in ai-ethics-content-media ai-ethics-snapshots ai-ethics-release-artifacts; do
+            mkdir -p "backup/r2/${bucket}"
+            aws s3 sync "s3://${bucket}" "backup/r2/${bucket}" --endpoint-url "$R2_ENDPOINT_URL" --only-show-errors
+          done
+          find backup/r2 -type f -print0 | sort -z | xargs -0 -r sha256sum > backup/r2-SHA256SUMS
+          total_bytes="$(du -sb backup | cut -f1)"
+          test "$total_bytes" -le 471859200
+      - name: Create encrypted off-provider disaster copy
+        env:
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          test -n "$BACKUP_AGE_RECIPIENT"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+          tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -czf content-disaster-backup.tgz backup
+          tar -tzf content-disaster-backup.tgz > /dev/null
+          age -r "$BACKUP_AGE_RECIPIENT" -o content-disaster-backup.tgz.age content-disaster-backup.tgz
+          test -s content-disaster-backup.tgz.age
+      - name: Retain encrypted off-provider backup for 30 days
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ai-ethics-disaster-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: content-disaster-backup.tgz.age
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

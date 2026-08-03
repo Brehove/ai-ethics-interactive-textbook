@@ -11,7 +11,7 @@ This is the operator checklist for the Chapter 7 canary. It records names and ve
   - `content-release-candidate`: `main` and `agent/agent-native-authoring` only;
   - `media-quarantine`: `main` only, no reviewer pause for signed queue jobs;
   - `content-production`: `main` only, required reviewer `Brehove`.
-  - `content-backup`: `main` only, scheduled private D1 export and clean-SQLite restore check.
+  - `content-backup`: `main` only, scheduled private D1 export, durable R2 mirror, clean-SQLite restore check, and age-encrypted GitHub artifact.
 - Repository signing secret: `RELEASE_SIGNING_KEY`.
 
 ## Account-owner confirmation gate
@@ -46,7 +46,7 @@ GitHub Actions secrets:
 - `CLOUDFLARE_RELEASE_TOKEN` — least-privilege version upload/deploy token;
 - `RELEASE_DEPLOY_RECEIPT_TOKEN` — exact same value as the editor/auth gateway secret, used only by the protected release job to stage and record deployment receipts;
 - `MEDIA_R2_ACCESS_KEY_ID`, `MEDIA_R2_SECRET_ACCESS_KEY`, `MEDIA_CALLBACK_TOKEN`.
-- `CLOUDFLARE_BACKUP_TOKEN`, `BACKUP_R2_ACCESS_KEY_ID`, `BACKUP_R2_SECRET_ACCESS_KEY` for the private scheduled export only.
+- `CLOUDFLARE_BACKUP_TOKEN`, `BACKUP_R2_ACCESS_KEY_ID`, `BACKUP_R2_SECRET_ACCESS_KEY` for the private scheduled export only. The R2 token may read the three durable source buckets and write only `ai-ethics-backups`; it must not mutate source objects.
 
 GitHub Actions variables:
 
@@ -56,6 +56,7 @@ GitHub Actions variables:
 - `MEDIA_R2_MEDIA_BUCKET=ai-ethics-content-media`
 - `CLOUDFLARE_RELEASE_PREVIEW_URL`
 - `BACKUP_R2_ENDPOINT_URL`, `BACKUP_R2_BUCKET=ai-ethics-backups`
+- `BACKUP_AGE_RECIPIENT` — the public `age1…` recipient for an offline-held recovery key. Never store the corresponding secret key in GitHub or Cloudflare.
 
 Generate values locally, pass them directly to the secret commands, and do not place them in a repository file, shell history, issue, pull request, workflow input, or chat.
 
@@ -76,7 +77,7 @@ Generate values locally, pass them directly to the secret commands, and do not p
 13. Verify the live reader, no-JS, mobile, offline, print, CSP, cache headers, and checkpoint sidebar.
 14. Only then switch `chapter_ch07` to its exact D1 revision/hash authority.
 15. Verify the D1 release record exposes the completed deployment transaction, receipt hash, active-pointer history, and exact Cloudflare version. Run and record a rollback drill before expanding beyond Chapter 7.
-16. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest before relying on the schedule.
+16. Enable **Private content backup and restore check** on `main`, run it manually once, and verify the private R2 object/digest plus the encrypted 30-day GitHub artifact before relying on the schedule. Download one artifact, decrypt it with the offline age key, verify `r2-SHA256SUMS`, and restore its SQL into clean SQLite; record only the run URL and verification result.
 
 ## Verification commands
 
