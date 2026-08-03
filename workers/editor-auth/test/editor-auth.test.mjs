@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { generateKeyPairSync, verify as verifySignature } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -23,6 +24,12 @@ const SESSION_SECRET = "test-only-session-secret-which-is-longer-than-thirty-two
 const TEST_CLIENT_SECRET = ["test", "only", "client", "secret"].join("-");
 const READER_ORIGIN = "https://reader.example.test";
 const AUTH_ORIGIN = "https://auth.example.test";
+
+test("runtime fetch adapters do not bind the Cloudflare global fetch function", async () => {
+  const source = await readFile(new URL("../src/index.mjs", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /globalThis\.fetch\.bind/);
+  assert.match(source, /\(input, init\) => globalThis\.fetch\(input, init\)/);
+});
 
 function runtimeEnv(overrides = {}) {
   return {
@@ -184,6 +191,7 @@ test("callback keeps GitHub tokens server-side and creates a hardened session", 
   assert.match(cookies, /SameSite=Strict/);
   assert.doesNotMatch(cookies, /server-only-user-token/);
   assert.equal(seen.length, 3);
+  assert.ok(seen.every(({ init }) => init.redirect === "manual"));
 });
 
 test("file read returns the two optimistic-concurrency SHAs", async () => {
