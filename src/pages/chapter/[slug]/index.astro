@@ -42,7 +42,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
     next={next}
   >
     <div class="chapter-prose first-read">
-      <div data-live-chapter-body={meta.id === "ch07" ? "chapter_ch07" : undefined}>
+      <div class="chapter-body" data-live-chapter-body={meta.id === "ch07" ? "chapter_ch07" : undefined}>
         <Content />
       </div>
       <InlineConceptDiagrams diagrams={chapterDiagrams} />

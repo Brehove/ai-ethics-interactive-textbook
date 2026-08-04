@@ -113,7 +113,8 @@ img, svg { max-width: 100%; }
   hyphens: auto;
 }
 
-.chapter-prose > h1:first-child { display: none; }
+.chapter-prose > h1:first-child,
+.chapter-prose > .chapter-body > h1:first-child { display: none; }
 
 .chapter-prose h2 {
   margin: 2.8rem 0 0.9rem;
