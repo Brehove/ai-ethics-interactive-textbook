@@ -355,7 +355,7 @@ test('even an approved snapshot cannot use the permanently disabled direct publi
 });
 
 test('restore-as-draft seeds historical content but bases the new changeset on current canonical revision', async () => {
-  const CONTENT_DB = fakeDb((sql) => {
+  const restoreResolver = (sql) => {
     if (sql.includes('SELECT authority FROM authority_registry')) return { authority: 'd1' };
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('JOIN document_revisions target')) return {
@@ -363,7 +363,8 @@ test('restore-as-draft seeds historical content but bases the new changeset on c
       target_content_text: JSON.stringify(baseChapter()), target_r2_object_key: null, target_metadata_json: '{"era":"historical"}'
     };
     return null;
-  });
+  };
+  const CONTENT_DB = fakeDb(restoreResolver);
   const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/revisions/revision-old:restoreAsDraft', {
     method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ title: 'Restore prior chapter', idempotencyKey: 'restore-key-123' })
   }), { CONTENT_DB });
@@ -378,6 +379,12 @@ test('restore-as-draft seeds historical content but bases the new changeset on c
   const workingInsert = CONTENT_DB.batchItems[1];
   assert.equal(workingInsert.args[3], 'revision-current');
   assert.equal(workingInsert.args[4], 'historical-hash');
+
+  const agentDb = fakeDb(restoreResolver);
+  const agentResponse = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/revisions/revision-old:restoreAsDraft', {
+    method: 'POST', headers: agentHeaders(), body: JSON.stringify({ title: 'Agent restore prior chapter', idempotencyKey: 'restore-key-agent-123' })
+  }), withAgentCapability({ CONTENT_DB: agentDb }, { scopes: ['content:write'], allowedDocumentIds: ['chapter-07'], allowedOperations: ['restore_revision_as_draft'] }));
+  assert.equal(agentResponse.status, 201, await agentResponse.text());
 });
 
 test('chapter revision history is bounded, content-free, and marks the canonical head', async () => {
@@ -389,7 +396,7 @@ test('chapter revision history is bounded, content-free, and marks the canonical
     ] };
     return null;
   });
-  const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/revisions?limit=10', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/revisions?limit=10', { headers: agentHeaders() }), withAgentCapability({ CONTENT_DB }, { scopes: ['content:read'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: ['get_version_history'] }));
   const responseText = await response.text(); assert.equal(response.status, 200, responseText); const body = JSON.parse(responseText);
   assert.equal(body.revisions[0].current, true); assert.equal(body.revisions[0].status, 'published'); assert.equal(body.revisions[0].actorType, 'agent'); assert.equal(body.revisions[0].clientId, 'codex'); assert.equal(body.revisions[0].publicationMode, 'instructor-live-save');
   assert.equal(body.revisions[1].current, false); assert.equal(JSON.stringify(body).includes('must-not-leak'), false);

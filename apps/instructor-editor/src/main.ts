@@ -23,6 +23,7 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Instructor editor mount is missing.");
 
 const params = new URLSearchParams(window.location.search);
+const agentAccessRequestId = window.location.pathname === "/agent-access" ? params.get("request") : null;
 const reviewChangeSetId = params.get("review");
 const requestedSlug = window.location.pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1] ?? params.get("chapter") ?? DEMO_CHAPTER.slug;
 const requestedRoute = CHAPTER_ROUTE_BY_SLUG.get(requestedSlug);
@@ -59,6 +60,63 @@ const MEDIA_EXTENSIONS = new Map<string, string>([["image/png", "png"], ["image/
 const dataSource = apiOrigin
   ? createAuthoringClient({ baseUrl: apiOrigin, getCsrf: () => csrfToken })
   : null;
+
+function startAgentApprovalSignIn(requestId: string) {
+  const start = new URL("/auth/start", authOrigin);
+  start.searchParams.set("mode", "agent-access");
+  start.searchParams.set("request", requestId);
+  window.location.assign(start.toString());
+}
+
+async function loadAgentAccess(requestId: string) {
+  if (!/^capreq_[A-Za-z0-9_-]{8,}$/.test(requestId) || !dataSource) {
+    app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>This authorization link is invalid</h1><p>Return to the agent and start a new authorization request.</p></main>`;
+    return;
+  }
+  if (params.get("authenticated") !== "1") {
+    app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>Sign in to review this request</h1><p>GitHub verifies that only the textbook owner can grant chapter access or Live Save.</p><button type="button" data-agent-sign-in>Sign in with GitHub</button></main>`;
+    app.querySelector<HTMLButtonElement>("[data-agent-sign-in]")?.addEventListener("click", () => startAgentApprovalSignIn(requestId));
+    return;
+  }
+  app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>Loading the exact request…</h1></main>`;
+  try {
+    const session = await dataSource.getSession();
+    csrfToken = session.csrf_token;
+    const request = await dataSource.getAgentCapabilityRequest(requestId);
+    const scopes = Array.isArray(request.scopes) ? request.scopes.map(String) : [];
+    const documents = Array.isArray(request.allowedDocumentIds) ? request.allowedDocumentIds.map(String) : [];
+    const operations = Array.isArray(request.allowedOperations) ? request.allowedOperations.map(String) : [];
+    const liveSave = request.liveSave === true;
+    const pending = request.state === "pending";
+    app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>${liveSave ? "Review agent editing and Live Save" : "Review agent editing access"}</h1><p>An agent named <strong>${escapeText(String(request.clientId ?? "unknown"))}</strong> is requesting short-lived access for run <code>${escapeText(String(request.runId ?? "unknown"))}</code>.</p><dl class="agent-access__summary"><div><dt>Chapter</dt><dd>${documents.map((value) => `<code>${escapeText(value)}</code>`).join(", ") || "None"}</dd></div><div><dt>Expires</dt><dd>${escapeText(String(request.expiresAt ?? "Unknown"))}</dd></div><div><dt>Scopes</dt><dd>${scopes.map(escapeText).join(", ")}</dd></div></dl><details><summary>Exact API operations (${operations.length})</summary><ul>${operations.map((value) => `<li><code>${escapeText(value)}</code></li>`).join("")}</ul></details>${pending ? `<form data-agent-approval><label>Verification code<input name="userCode" inputmode="text" autocomplete="one-time-code" maxlength="8" required autofocus></label>${liveSave ? `<label class="agent-access__confirm"><input name="confirmLiveSave" type="checkbox" required> I authorize this agent to click Save and publish changes to the live chapter for this short-lived run.</label>` : ""}<p data-agent-status role="status" aria-live="polite"></p><button class="primary" type="submit">${liveSave ? "Approve editing and Live Save" : "Approve editing"}</button></form>` : `<p class="agent-access__result" role="status">This request is ${escapeText(String(request.state ?? "no longer pending"))}. Start a new request from the agent if needed.</p>`}</main>`;
+    const form = app.querySelector<HTMLFormElement>("[data-agent-approval]");
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = app.querySelector<HTMLElement>("[data-agent-status]");
+      const button = form.querySelector<HTMLButtonElement>("button[type=submit]");
+      const values = new FormData(form);
+      if (button) button.disabled = true;
+      if (status) status.textContent = "Recording your approval…";
+      try {
+        await dataSource.approveAgentCapabilityRequest(requestId, {
+          approve: true,
+          userCode: String(values.get("userCode") ?? "").trim().toUpperCase(),
+          ...(liveSave ? { confirmLiveSave: values.get("confirmLiveSave") === "on" } : {}),
+        });
+        app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>Approved</h1><p class="agent-access__result" role="status">The short-lived capability is ready. Return to Codex; it will continue automatically. You can close this tab.</p></main>`;
+      } catch (error) {
+        if (button) button.disabled = false;
+        if (status) status.textContent = error instanceof Error ? error.message : "Approval failed.";
+      }
+    });
+  } catch (error) {
+    if (error instanceof AuthoringApiError && error.status === 401) {
+      startAgentApprovalSignIn(requestId);
+      return;
+    }
+    app.innerHTML = `<main class="agent-access"><p class="eyebrow">Agent authorization</p><h1>The request could not be loaded</h1><p role="alert">${escapeText(error instanceof Error ? error.message : "Unknown error")}</p><p>Return to the agent and start a new authorization request.</p></main>`;
+  }
+}
 
 function cutoverDocumentRows(documents: Array<Record<string, unknown>>) {
   return documents.map((document) => {
@@ -179,7 +237,7 @@ function stateLabel() {
     dirty: "Unsaved changes",
     saving: "Saving…",
     pending: "Saved; confirming…",
-    saved: "Saved and live",
+    saved: "Saved",
     attention: "Save needs attention",
   }[saveState];
 }
@@ -310,7 +368,7 @@ function render() {
   // imported server chapter.
   tiptapEditor?.destroy();
   tiptapEditor = null;
-  app.innerHTML = `<header class="author-bar"><a class="author-bar__mark" href="${publicOrigin}/">AI Ethics Textbook</a><div class="author-bar__chapter"><span>Editing</span><strong>${escapeText(chapter.title)}</strong></div><div class="author-bar__actions"><button data-done>Done</button><span class="save-state save-state--${saveState}" aria-live="polite">${stateLabel()}</span><button class="primary" data-save ${saveState === "saving" ? "disabled" : ""}>Save</button><button data-history aria-expanded="${historyOpen}">History</button><button data-more aria-expanded="${moreOpen}">More</button></div>${moreOpen ? `<menu class="more-menu"><button data-replace>Replace chapter</button><button data-source>Structured source</button></menu>` : ""}</header><main class="editor-layout"><section class="editor-canvas"><div class="format-toolbar" role="toolbar" aria-label="Chapter formatting"><select data-format aria-label="Paragraph style"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select><button data-command="bold" aria-label="Bold"><strong>B</strong></button><button data-command="italic" aria-label="Italic"><em>I</em></button><button data-command="underline" aria-label="Underline"><u>U</u></button><button data-command="toggleBulletList">Bulleted list</button><button data-command="toggleOrderedList">Numbered list</button><button data-link>Link</button><span class="toolbar-divider"></span><button data-dialog="checkpoint">Checkpoint</button><button data-dialog="media">Media</button><button data-dialog="embed">Embed</button><button data-dialog="person">Person / Scholar</button><span class="toolbar-divider"></span><button data-command="undo" aria-label="Undo">Undo</button><button data-command="redo" aria-label="Redo">Redo</button></div><div id="editor-document" data-document></div></section><aside class="inspector" aria-label="Contextual inspector">${inspectorHtml()}</aside></main>${historyOpen ? `<aside class="history-drawer" aria-label="Revision history"><header><h2>Revision history</h2><button data-history>Close</button></header><p>${dataSource ? "Immutable revisions from the authoring API. Restore creates a new draft and never rewrites history." : "Local scaffold history; configure the content API to load immutable revisions."}</p><ol><li><strong>${chapter.revisionId}</strong><span>Current base revision</span></li>${historyItems.map((item) => `<li><strong>${escapeText(String(item.revisionId ?? item.id ?? "Revision"))}</strong><span>${escapeText(String(item.createdAt ?? item.created_at ?? "Immutable revision"))}</span>${item.current ? "" : `<button type="button" data-restore-revision="${escapeAttribute(String(item.revisionId ?? item.id ?? ""))}">Restore as draft</button>`}</li>`).join("")}${lastSavedAt ? `<li><strong>Saved and live</strong><span>${lastSavedAt}</span></li>` : ""}</ol></aside>` : ""}${dialogHtml()}`;
+  app.innerHTML = `<header class="author-bar"><a class="author-bar__mark" href="${publicOrigin}/">AI Ethics Textbook</a><div class="author-bar__chapter"><span>Editing</span><strong>${escapeText(chapter.title)}</strong></div><div class="author-bar__actions"><button data-done>Done</button><span class="save-state save-state--${saveState}" aria-live="polite">${stateLabel()}</span><button class="primary" data-save ${saveState === "saving" ? "disabled" : ""}>Save</button><button data-history aria-expanded="${historyOpen}">History</button><button data-more aria-expanded="${moreOpen}">More</button></div>${moreOpen ? `<menu class="more-menu"><button data-replace>Replace chapter</button><button data-source>Structured source</button></menu>` : ""}</header><main class="editor-layout"><section class="editor-canvas"><div class="format-toolbar" role="toolbar" aria-label="Chapter formatting"><select data-format aria-label="Paragraph style"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select><button data-command="bold" aria-label="Bold"><strong>B</strong></button><button data-command="italic" aria-label="Italic"><em>I</em></button><button data-command="underline" aria-label="Underline"><u>U</u></button><button data-command="toggleBulletList">Bulleted list</button><button data-command="toggleOrderedList">Numbered list</button><button data-link>Link</button><span class="toolbar-divider"></span><button data-dialog="checkpoint">Checkpoint</button><button data-dialog="media">Media</button><button data-dialog="embed">Embed</button><button data-dialog="person">Person / Scholar</button><span class="toolbar-divider"></span><button data-command="undo" aria-label="Undo">Undo</button><button data-command="redo" aria-label="Redo">Redo</button></div><div id="editor-document" data-document></div></section><aside class="inspector" aria-label="Contextual inspector">${inspectorHtml()}</aside></main>${historyOpen ? `<aside class="history-drawer" aria-label="Revision history"><header><h2>Revision history</h2><button data-history>Close</button></header><p>${dataSource ? "Immutable revisions from the authoring API. Restore creates a new draft and never rewrites history." : "Local scaffold history; configure the content API to load immutable revisions."}</p><ol><li><strong>${chapter.revisionId}</strong><span>Current base revision</span></li>${historyItems.map((item) => `<li><strong>${escapeText(String(item.revisionId ?? item.id ?? "Revision"))}</strong><span>${escapeText(String(item.createdAt ?? item.created_at ?? "Immutable revision"))}</span>${item.current ? "" : `<button type="button" data-restore-revision="${escapeAttribute(String(item.revisionId ?? item.id ?? ""))}">Restore as draft</button>`}</li>`).join("")}${lastSavedAt ? `<li><strong>Saved</strong><span>${lastSavedAt}</span></li>` : ""}</ol></aside>` : ""}${dialogHtml()}`;
   bindEvents();
 }
 
@@ -579,8 +637,7 @@ async function applyDraftOperations(operations: Array<Record<string, unknown>>) 
 
 async function waitForDelivery(result: CommitLiveResult) {
   if (result.live || result.deliveryStatus === "verified") return true;
-  setState("pending");
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
     if (!dataSource) return true;
     const status = await dataSource.getLiveCommitStatus(result.commitReceiptId) as Partial<CommitLiveResult>;
@@ -606,9 +663,13 @@ async function save(): Promise<boolean> {
       result = { commitReceiptId: `commit_local_${Date.now()}`, changeSetId: chapter.changeSetId, documentId: chapter.documentId, revisionId: `revision_local_${Date.now()}`, contentHash: "local", projectionId: "projection_local", projectionHash: "local", publicUrl: `${publicOrigin}/chapter/${chapter.slug}/`, deliveryStatus: "verified", statusUrl: "", statusExpiresAt: "", committed: true, live: true, noOp: false };
     }
     chapter.revisionId = result.revisionId; chapter.baseRevisionId = result.revisionId; chapter.expectedVersion += 1;
-    const verified = await waitForDelivery(result);
-    if (!verified) { setState("pending"); return false; }
-    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date()); sessionStorage.removeItem(recoveryKey()); sessionStorage.removeItem(`ai-ethics-instructor-changeset-key/${chapter.documentId}`); pendingCommitKey = null; chapter.changeSetId = ""; chapter.expectedVersion = 1; setState("saved"); return true;
+    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date()); sessionStorage.removeItem(recoveryKey()); sessionStorage.removeItem(`ai-ethics-instructor-changeset-key/${chapter.documentId}`); pendingCommitKey = null; chapter.changeSetId = ""; chapter.expectedVersion = 1; setState("saved");
+    // Public delivery verification is an integrity check, not another author
+    // workflow step. Save is complete once the atomic live commit succeeds.
+    void waitForDelivery(result).then((verified) => {
+      if (!verified) console.warn("The chapter was saved, but public delivery confirmation did not arrive before the status window ended.");
+    });
+    return true;
   } catch (error) {
     console.error(error);
     if (error instanceof AuthoringApiError && error.status === 401) {
@@ -626,6 +687,9 @@ function done() {
 function escapeText(value: string) { return value.replace(/[&<>]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[character] ?? character); }
 function escapeAttribute(value: string) { return escapeText(value).replaceAll('"', "&quot;"); }
 
-render();
-if (reviewChangeSetId) void loadCutoverReview(reviewChangeSetId);
-else void loadChapter();
+if (agentAccessRequestId) void loadAgentAccess(agentAccessRequestId);
+else {
+  render();
+  if (reviewChangeSetId) void loadCutoverReview(reviewChangeSetId);
+  else void loadChapter();
+}

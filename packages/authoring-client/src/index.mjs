@@ -16,7 +16,9 @@ const parseResponse = async (response) => {
   const body = contentType.includes("application/json") ? await response.json() : { error: { message: await response.text() } };
   if (!response.ok) {
     const error = body?.error || {};
-    throw new AuthoringApiError(response.status, error.code || "REQUEST_FAILED", error.message || `Request failed (${response.status})`, error.details);
+    const code = typeof error === "string" ? error : error.code;
+    const message = typeof body?.message === "string" ? body.message : error.message;
+    throw new AuthoringApiError(response.status, code || "REQUEST_FAILED", message || `Request failed (${response.status})`, error.details);
   }
   return body;
 };
@@ -37,6 +39,8 @@ export function createAuthoringClient(options) {
 
   return Object.freeze({
     getSession: (signal) => request(`/api/session`, { method: "GET" }, signal),
+    getAgentCapabilityRequest: (requestId, signal) => request(`/auth/agent-capability-requests/${boundedSegment(requestId, "requestId")}`, { method: "GET" }, signal),
+    approveAgentCapabilityRequest: (requestId, body, signal) => request(`/auth/agent-capability-requests/${boundedSegment(requestId, "requestId")}`, { method: "POST", body: JSON.stringify(body) }, signal),
     getAuthoringView: (documentId, signal) => request(`/v1/chapters/${boundedSegment(documentId, "documentId")}/authoring-view`, { method: "GET" }, signal),
     createOrResumeChangeset: (documentId, body, signal) => request(`/v1/chapters/${boundedSegment(documentId, "documentId")}/changesets`, { method: "POST", body: JSON.stringify(body) }, signal),
     getChangeset: (changeSetId, signal) => request(`/v1/changesets/${boundedSegment(changeSetId, "changeSetId")}`, { method: "GET" }, signal),

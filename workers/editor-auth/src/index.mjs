@@ -32,6 +32,7 @@ import {
   approveAgentCapabilityRequest,
   createAgentCapabilityRequest,
   exchangeAgentCapabilityRequest,
+  getAgentCapabilityRequest,
   revokeAgentCapability,
   verifyIssuedAgentCapability,
 } from "./capabilities.mjs";
@@ -397,7 +398,9 @@ export function createEditorAuthApp(dependencies = {}) {
           }
           const target = validateOAuthTarget(url, CHAPTER_ROUTE_BY_SLUG);
           const existingSession = await optionalSession(request, config, now);
-          if (existingSession) return redirect(editorTargetUrl(config.editorOrigin, target));
+          // Agent Live Save approval is a deliberate step-up action. Always go
+          // through GitHub again so the resulting session has a fresh stepUpAt.
+          if (existingSession && target.mode !== "agent-access") return redirect(editorTargetUrl(config.editorOrigin, target));
           const clientId = env.GITHUB_APP_CLIENT_ID;
           if (typeof clientId !== "string" || !clientId.trim()) throw new Error("GITHUB_APP_CLIENT_ID is not configured");
           const oauth = await createOAuthState(target, env, now, config.stateTtl, randomBytes);
@@ -479,9 +482,10 @@ export function createEditorAuthApp(dependencies = {}) {
 
         const approvalMatch = url.pathname.match(CAPABILITY_REQUEST_PATH);
         if (approvalMatch) {
-          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
           origin = requireAllowedOrigin(request, config);
           const session = await requireSession(request, config, now);
+          if (request.method === "GET") return json(await getAgentCapabilityRequest(approvalMatch[1], env, now), 200, { origin });
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use GET or POST for this endpoint");
           requireCsrf(request, session);
           const result = await approveAgentCapabilityRequest(approvalMatch[1], await readJsonBody(request), session, env, now);
           return json(result, 200, { origin });

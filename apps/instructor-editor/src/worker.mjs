@@ -20,7 +20,7 @@ export default {
     if (request.method !== "GET" && request.method !== "HEAD") return secured(new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } }));
     const url = new URL(request.url);
     let response = await env.ASSETS.fetch(request);
-    if (response.status === 404 && /^\/chapter\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(url.pathname)) {
+    if (response.status === 404 && (/^\/chapter\/[a-z0-9]+(?:-[a-z0-9]+)*\/?$/.test(url.pathname) || url.pathname === "/agent-access")) {
       response = await env.ASSETS.fetch(new Request(new URL("/index.html", url), request));
     }
     return secured(response);
