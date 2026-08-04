@@ -1,6 +1,6 @@
 import test from "node:test"; import assert from "node:assert/strict"; import { generateKeyPairSync } from "node:crypto";
 import { mkdtemp } from "node:fs/promises"; import { tmpdir } from "node:os"; import path from "node:path";
-import { makeCandidate, verifyCandidate, deployCandidate, promoteCandidate, rollback, sha256, assembleReleaseSnapshot, materializeReleaseAssets } from "../../scripts/release/release.mjs";
+import { makeCandidate, verifyCandidate, deployCandidate, promoteCandidate, rollback, sha256, assembleReleaseSnapshot, materializeReleaseAssets, markdownBlocksForChapterBody } from "../../scripts/release/release.mjs";
 const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 const snapshot = () => ({ schemaVersion: 2, authorityRegistry: { chapter_ch07: { authority: "d1" } }, chapters: [] });
 const candidate = () => { const s = snapshot(); return makeCandidate({ snapshot: s, snapshotHash: sha256(s), snapshotRevision: "revision_submitted_7", commitSha: "a".repeat(40), signingKey: privateKey, createdAt: "2026-08-03T00:00:00.000Z" }); };
@@ -8,6 +8,32 @@ test("rejects stale submitted snapshot and hash mismatch", () => { const c = can
 test("assembly changes only Chapter 7 and preserves the exact submitted document", () => { const content = { chapterId: "chapter_ch07", revisionId: "revision_final", chapterVersion: "revision_final", status: "published" }; const submittedContentHash = sha256(content); const submitted = { documents: [{ documentId: "chapter_ch07", submittedContentHash, revisionId: "revision_final", content }] }; const otherChapters = Array.from({ length: 17 }, (_, index) => ({ chapterId: `chapter_ch${String(index + 1 + (index >= 6 ? 1 : 0)).padStart(2, "0")}` })); const baseline = { chapters: [...otherChapters, { chapterId: "chapter_ch07", revisionId: "revision_old" }], authorityRegistry: { chapter_ch07: { authority: "git", sourcePath: "content/chapters/07-aristotle/" } }, contentObjects: {} }; const release = assembleReleaseSnapshot({ submittedSnapshot: submitted, baselineSnapshot: baseline }); assert.strictEqual(release.chapters.find((item) => item.chapterId === "chapter_ch07"), content); assert.equal(release.authorityRegistry.chapter_ch07.authority, "d1"); assert.equal(release.authorityRegistry.chapter_ch07.normalizedSnapshotHash, submittedContentHash); assert.equal(Object.hasOwn(release.authorityRegistry.chapter_ch07, "sourcePath"), false); });
 test("assembly rejects any submitted-content mutation or revision mismatch", () => { const content = { chapterId: "chapter_ch07", revisionId: "revision_final", chapterVersion: "revision_final", status: "published" }; const baseline = { chapters: Array.from({ length: 18 }, (_, index) => ({ chapterId: `chapter_ch${String(index + 1).padStart(2, "0")}` })), authorityRegistry: { chapter_ch07: { authority: "git", sourcePath: "content/chapters/07-aristotle/" } }, contentObjects: {} }; assert.throws(() => assembleReleaseSnapshot({ submittedSnapshot: { documents: [{ documentId: "chapter_ch07", submittedContentHash: "0".repeat(64), revisionId: "revision_final", content }] }, baselineSnapshot: baseline }), { code: "E_SUBMITTED_CONTENT_HASH" }); assert.throws(() => assembleReleaseSnapshot({ submittedSnapshot: { documents: [{ documentId: "chapter_ch07", submittedContentHash: sha256(content), revisionId: "revision_other", content }] }, baselineSnapshot: baseline }), { code: "E_SUBMITTED_FINALIZATION" }); });
 test("assembly requires and carries forward the complete explicit D1 authority set", () => { const baseline = { chapters: Array.from({ length: 18 }, (_, index) => ({ chapterId: `chapter_ch${String(index + 1).padStart(2, "0")}` })), authorityRegistry: { chapter_ch07: { authority: "git", sourcePath: "content/chapters/07-a/" }, chapter_ch08: { authority: "git", sourcePath: "content/chapters/08-b/" } }, contentObjects: {} }; const documents = ["chapter_ch07", "chapter_ch08"].map((documentId) => { const content = { chapterId: documentId, revisionId: `revision_${documentId}`, chapterVersion: `revision_${documentId}`, status: "published" }; return { documentId, revisionId: content.revisionId, submittedContentHash: sha256(content), content }; }); const release = assembleReleaseSnapshot({ submittedSnapshot: { documents }, baselineSnapshot: baseline, allowedD1DocumentIds: ["chapter_ch08", "chapter_ch07"] }); assert.deepEqual(Object.entries(release.authorityRegistry).filter(([, source]) => source.authority === "d1").map(([id]) => id).sort(), ["chapter_ch07", "chapter_ch08"]); assert.throws(() => assembleReleaseSnapshot({ submittedSnapshot: { documents: documents.slice(1) }, baselineSnapshot: baseline, allowedD1DocumentIds: ["chapter_ch07", "chapter_ch08"] }), { code: "E_SUBMITTED_SCOPE" }); });
+test("release Markdown collapses deterministic descendant blocks to their source passage marker", () => {
+  const markdown = markdownBlocksForChapterBody({ chapterId: "chapter_ch02", body: [
+    { type: "blockquote", blockId: "block_quote_1", passageId: "passage_ch02-p0063", text: "First conclusion." },
+    { type: "blockquote", blockId: "block_quote_2", passageId: "passage_ch02-p0063__2", text: "Revised conclusion." },
+    { type: "paragraph", blockId: "block_next", passageId: "passage_ch02-p0064", text: "Next passage." },
+  ] }).join("\n\n");
+  assert.equal((markdown.match(/phil-passage-id: ch02-p0063/g) || []).length, 1);
+  assert.doesNotMatch(markdown, /ch02-p0063__2/);
+  assert.match(markdown, /phil-passage-id: ch02-p0064/);
+  assert.match(markdown, /> First conclusion\.\n\n> Revised conclusion\./);
+});
+test("release Markdown aliases browser-created passage identities into the chapter namespace", () => {
+  const markdown = markdownBlocksForChapterBody({ chapterId: "chapter_ch07", body: [
+    { type: "paragraph", blockId: "block_existing", passageId: "passage_ch07-p0001", text: "Existing passage." },
+    { type: "paragraph", blockId: "block_browser", passageId: "passage_ffee8d6221b54709e91f2ef0", text: "Browser-authored passage." },
+  ] }).join("\n\n");
+  assert.match(markdown, /phil-passage-id: ch07-p0002/);
+  assert.doesNotMatch(markdown, /ffee8d6221b54709e91f2ef0/);
+});
+test("release Markdown restores stable anchors before locked legacy cards", () => {
+  const encoded = '&lt;aside&gt;&lt;p&gt;Readable legacy note.&lt;/p&gt;&lt;/aside&gt;';
+  const markdown = markdownBlocksForChapterBody({ chapterId: "chapter_ch02", body: [
+    { type: "legacyMarkup", blockId: "block_legacy_ch02-p0042", anchorPassageId: "passage_ch02-p0042", sanitizedHtml: `<pre data-content-source="git-markdown-v1">${encoded}</pre>` },
+  ] }).join("\n\n");
+  assert.match(markdown, /^<!-- phil-passage-id: ch02-p0042 -->\n<aside>/);
+});
 test("failed smoke test leaves active release untouched", async () => { const c = candidate(); const state = { active: { versionId: "v-old" } }; await assert.rejects(() => deployCandidate({ candidate: c, state, adapter: { uploadVersion: async () => "v-new", smokeTest: async () => { throw new Error("CSP failed"); }, retireVersion: async () => {} } })); assert.deepEqual(state.active, { versionId: "v-old" }); });
 test("promotion and rollback select exact prior version", async () => { const c = candidate(); const promoted = await promoteCandidate({ candidate: c, state: { candidates: { [c.candidateId]: { versionId: "v-17", manifestSha256: c.manifestSha256, status: "verified" } }, history: [{ candidateId: "old", versionId: "v-16", manifestSha256: "a".repeat(64) }] }, adapter: { promoteVersion: async () => {} } }); const calls = []; const rolled = await rollback({ versionId: "v-16", state: promoted, adapter: { promoteVersion: async (v) => calls.push(v) } }); assert.equal(rolled.active.versionId, "v-16"); assert.deepEqual(calls, ["v-16"]); });
 test("media assets use only the fixed hash route and fail closed on status, size, or hash", async () => {
