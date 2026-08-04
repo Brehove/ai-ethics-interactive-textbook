@@ -113,8 +113,20 @@ test("editor renders checkpoints after table and standalone locked anchor owners
   ];
   const content = editorDocumentContent(chapter);
   assert.deepEqual(content.map((node) => String((node.attrs as Record<string, unknown>).placementId)), [
-    "table_owner", "checkpoint_table", "legacy_owner", "checkpoint_legacy",
+    "table_owner", "checkpoint_table", "legacy_owner", "checkpoint_legacy", "placement_aristotle",
   ]);
+});
+
+test("editor retains checkpoints anchored only in the legacy passages collection", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const template = chapter.checkpoints[0];
+  chapter.body = [{ type: "paragraph", blockId: "body_only", passageId: "passage_body", text: "Visible body passage." }];
+  chapter.passages = [{ type: "paragraph", blockId: "legacy_only", passageId: "passage_legacy_only", text: "Legacy passage excerpt." }];
+  chapter.checkpoints = [{ ...structuredClone(template), checkpointId: "checkpoint_legacy_only", passageId: "passage_legacy_only", displayOrder: 0 }];
+  assert.equal(checkpointAnchorBlock(chapter, "passage_legacy_only")?.blockId, "legacy_only");
+  assert.equal(nearestPassage(chapter, "passage_legacy_only"), "passage_legacy_only");
+  const content = editorDocumentContent(chapter);
+  assert.equal(content.some((node) => (node.attrs as Record<string, unknown> | undefined)?.placementId === "checkpoint_legacy_only"), true);
 });
 
 test("person features remain independent managed placements, never editable prose", () => {

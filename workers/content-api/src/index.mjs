@@ -1,5 +1,5 @@
 import {
-  ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, deterministicId, readJsonBody,
+  ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, bindCheckpointExcerptHashes, deterministicId, readJsonBody,
   deploymentReceiptHash, finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
   validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature
 } from './services.mjs';
@@ -764,7 +764,7 @@ async function applyCommitOperations(env, chapter, operations) {
       next = stripTransientMediaPreviewFields(structuredClone(operation.document));
     } else next = (await applyTrustedSemanticOperation(env, next, operation)).chapter;
   }
-  return stripTransientMediaPreviewFields(next);
+  return rebindProjectedMediaCheckpointHashes(env, next);
 }
 
 async function commitChangesetLive(request, env, identity, changesetId) {
@@ -970,6 +970,25 @@ function stripTransientMediaPreviewFields(chapter) {
     return canonical;
   });
   return changed ? { ...chapter, body } : chapter;
+}
+
+// Canonical chapters intentionally omit delivery-only media fields, including
+// the default rights-record credit. A checkpoint anchored directly to a media
+// figure must nevertheless bind to the complete reader-visible excerpt. Hydrate
+// that exact pinned projection only while recomputing hashes, then strip it
+// again before persistence.
+export async function rebindProjectedMediaCheckpointHashes(env, chapter) {
+  const canonical = stripTransientMediaPreviewFields(chapter);
+  const mediaAnchorNeedsProjection = (canonical.checkpoints || []).some((checkpoint) => {
+    const block = (canonical.body || []).find((item) => item?.passageId === checkpoint.passageId)
+      || (canonical.body || []).find((item) => item?.anchorPassageId === checkpoint.passageId);
+    return block?.type === 'mediaFigure' && !block.creditOverride;
+  });
+  if (!mediaAnchorNeedsProjection) return canonical;
+  const mediaProjection = await buildMediaProjection(env, canonical);
+  const projected = withProjectedMedia(canonical, mediaProjection.projection);
+  await bindCheckpointExcerptHashes(projected);
+  return stripTransientMediaPreviewFields(projected);
 }
 
 function mergeMediaProjections(items) {
@@ -1760,7 +1779,7 @@ async function getPerson(env, personId) {
 async function applyTrustedSemanticOperation(env, sourceChapter, operation) {
   if (operation?.type !== 'personFeature.upsert') {
     const result = await applySemanticOperation(stripTransientMediaPreviewFields(sourceChapter), operation);
-    const chapter = stripTransientMediaPreviewFields(result.chapter);
+    const chapter = await rebindProjectedMediaCheckpointHashes(env, result.chapter);
     return { chapter, contentHash: await sha256(chapter) };
   }
   const feature = operation.feature;
@@ -1781,7 +1800,7 @@ async function applyTrustedSemanticOperation(env, sourceChapter, operation) {
     if (!hasRevision) chapter.entityRevisions.push(structuredClone(curated.entityRevision));
   }
   const result = await applySemanticOperation(stripTransientMediaPreviewFields(chapter), operation);
-  const canonical = stripTransientMediaPreviewFields(result.chapter);
+  const canonical = await rebindProjectedMediaCheckpointHashes(env, result.chapter);
   return { chapter: canonical, contentHash: await sha256(canonical) };
 }
 

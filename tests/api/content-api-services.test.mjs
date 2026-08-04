@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
-import worker, { releaseMediaKind } from '../../workers/content-api/src/index.mjs';
+import worker, { rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
   const response = await worker.fetch(new Request('https://content.example/health'), {});
@@ -1023,6 +1023,23 @@ test('API-created diagrams bind checkpoint hashes to their reader-visible descri
   assert.equal(withCheckpoint.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible judgment map'));
 });
 
+test('media checkpoint hashes include the exact pinned default credit without persisting delivery fields', async () => {
+  const chapter = baseChapter();
+  chapter.body = [{ type: 'mediaFigure', blockId: 'b-media', figureId: 'figure-media', mediaId: 'media-1', mediaVersionId: 'version-1', rightsCaseId: 'rights-1', anchorPassageId: 'p-media', decorative: false, alt: 'Accessible portrait', caption: 'Portrait caption', teachingUse: 'Inspect the portrait.', displayPreset: 'reading', align: 'center', printPolicy: 'poster', downloadable: false }];
+  chapter.checkpoints = [{ ...checkpoint('media', 'p-media'), checkpointId: 'checkpoint-media' }];
+  const CONTENT_DB = fakeDb((sql, _args, mode) => {
+    if (sql.includes('FROM media_assets a JOIN media_asset_versions v') && sql.includes('LEFT JOIN media_review_packages')) return {
+      media_id: 'media-1', title: 'Portrait', media_state: 'ready', media_version_id: 'version-1', source_sha256: 'a'.repeat(64), source_bytes: 120, detected_mime: 'image/jpeg', immutable_address: 'r2://media/original.jpg', technical_json: '{}', rights_case_id: 'rights-1', review_id: 'review-1', rights_status: 'cleared', review_package_id: 'package-1', rights_json: JSON.stringify({ attribution: 'Frozen Wikimedia credit' }), editorial_json: '{}', accessibility_json: '{}', declaration_hash: 'b'.repeat(64), review_package_state: 'cleared'
+    };
+    if (sql.includes('FROM media_version_objects') && mode === 'all') return { results: [{ id: 'object-1', role: 'derivative', object_key: 'media/version-1/derivative.webp', object_sha256: 'c'.repeat(64), object_bytes: 100, content_type: 'image/webp' }] };
+    return null;
+  });
+  const rebound = await rebindProjectedMediaCheckpointHashes({ CONTENT_DB }, chapter);
+  assert.equal(rebound.checkpoints[0].passageExcerptHash, await sha256('Accessible portrait\nPortrait caption\nFrozen Wikimedia credit'));
+  assert.equal('credit' in rebound.body[0], false);
+  assert.equal('src' in rebound.body[0], false);
+});
+
 test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {
   const chapter = baseChapter();
   chapter.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
@@ -1054,6 +1071,17 @@ test('block.remove preserves a checkpoint anchor backed by another referenced bl
   const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-code-embed' });
   assert.equal(result.chapter.body.some((item) => item.blockId === 'b-code-owner'), true);
   assert.equal(result.chapter.checkpoints[0].passageId, 'p-code-shared');
+});
+
+test('block.remove preserves an anchor owned by the legacy passages collection', async () => {
+  const chapter = baseChapter();
+  chapter.passages = [{ type: 'paragraph', blockId: 'legacy-passage-owner', passageId: 'p-legacy-shared', text: 'Legacy canonical passage.' }];
+  chapter.body.push({ type: 'codeBlock', blockId: 'b-legacy-reference', anchorPassageId: 'p-legacy-shared', code: 'const legacy = true;' });
+  chapter.checkpoints = [{ ...checkpoint('legacy', 'p-legacy-shared'), checkpointId: 'checkpoint-legacy-owner' }];
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy-reference' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-legacy-reference'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-legacy-shared');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Legacy canonical passage.'));
 });
 
 test('checkpoint.remove targets either the internal key or stable ID', async () => {

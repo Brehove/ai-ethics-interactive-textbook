@@ -305,7 +305,8 @@ function safeTitle(value: unknown) {
 
 function checkpointAnchorOptions(selected: string) {
   const seen = new Set<string>();
-  return chapter.body.flatMap((block) => {
+  const legacyPassages = Array.isArray(chapter.passages) ? chapter.passages as typeof chapter.body : [];
+  return [...chapter.body, ...legacyPassages].flatMap((block) => {
     const passageId = blockPassage(block);
     if (!passageId || seen.has(passageId)) return [];
     seen.add(passageId);

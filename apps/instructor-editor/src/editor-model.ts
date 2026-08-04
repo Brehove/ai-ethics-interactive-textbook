@@ -57,10 +57,12 @@ export const checkpointExcerpt = (block?: ChapterBlock) => {
     .filter((value): value is string => typeof value === "string")
     .join("\n");
 };
+const legacyPassages = (chapter: ChapterDocument) => Array.isArray(chapter.passages) ? chapter.passages as ChapterBlock[] : [];
 export const checkpointAnchorBlock = (chapter: ChapterDocument, passageId: string) => chapter.body.find((block) => block.passageId === passageId)
-  ?? chapter.body.find((block) => blockPassage(block) === passageId);
+  ?? chapter.body.find((block) => blockPassage(block) === passageId)
+  ?? legacyPassages(chapter).find((block) => block.passageId === passageId);
 export function nearestPassage(chapter: ChapterDocument, passageId?: string) {
-  const available = chapter.body.map(blockPassage).filter(Boolean);
+  const available = [...chapter.body, ...legacyPassages(chapter)].map(blockPassage).filter(Boolean);
   if (passageId) {
     const exact = available.find((value) => value === passageId || value.replace(/^passage_/, "") === passageId || passageId.replace(/^passage_/, "") === value);
     if (exact) return exact;
