@@ -1,11 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import worker, { getReaderDeliveryIdentity, injectPublicProjection } from "../../workers/site/src/index.mjs";
+import worker, { getReaderDeliveryIdentity, injectPublicProjection, interactiveProjectionPrompts } from "../../workers/site/src/index.mjs";
 
 const route = { documentId: "chapter_ch07" };
 const projection = { documentId: "chapter_ch07", revisionId: "revision_live", projectionId: "projection_live", projectionHash: "a".repeat(64), html: '<p id="ch07-p0001">Live prose.</p>', prompts: [{ checkpointId: "checkpoint_live" }] };
 const staticHtml = '<main><div class="chapter-body" data-public-projection="chapter_ch07"><p>Static fallback.</p><section data-inline-scholar-gallery><aside><div>Duplicate fallback thinker.</div></aside></section></div><template data-public-projection-end="chapter_ch07"></template><aside data-reading-record data-document-id="chapter_ch07"></aside></main>';
+
+test("contract-v2 checkpoint identifiers are adapted to the reader interaction contract", () => {
+  assert.deepEqual(interactiveProjectionPrompts([{
+    checkpointId: "checkpoint_live",
+    legacyId: "ch07-commit",
+    passageId: "passage_ch07_p0004",
+  }]), [{
+    checkpointId: "checkpoint_live",
+    legacyId: "ch07-commit",
+    id: "ch07-commit",
+    passageId: "ch07_p0004",
+  }]);
+});
 
 test("HTML fallback helper injects exact server-side projection and prompts", () => {
   const html = injectPublicProjection(staticHtml, route, projection);

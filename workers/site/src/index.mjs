@@ -54,6 +54,16 @@ const projectionHeaders = (headers, projection) => {
   return next;
 };
 
+// Public projections use contract-v2 identifiers (`checkpoint_*`,
+// `passage_*`). The reader's page-memory interaction predates that contract
+// and uses the stable legacy checkpoint key plus the rendered DOM passage ID.
+// Keep the canonical fields and add the aliases the browser needs.
+export const interactiveProjectionPrompts = (prompts = []) => prompts.map((prompt) => ({
+  ...prompt,
+  id: prompt.legacyId || prompt.id || prompt.checkpointId,
+  passageId: String(prompt.passageId || "").replace(/^passage_/, ""),
+}));
+
 const publicMedia = async (request, env, hash) => {
   if (!env.PUBLIC_PROJECTION?.fetch) return null;
   try {
@@ -69,7 +79,8 @@ export const injectPublicProjection = (html, route, projection) => {
   const bodyPattern = new RegExp(`(<[^>]+data-public-projection=["']${route.documentId}["'][^>]*>)[\\s\\S]*?(<\\/div>\\s*<template[^>]+data-public-projection-end=["']${route.documentId}["'][^>]*><\\/template>)`);
   const body = html.replace(bodyPattern, `$1${projection.html}$2`);
   if (body === html) throw new Error("Public projection boundary is missing or malformed");
-  return body.replace(new RegExp(`(<[^>]+data-reading-record[^>]+data-document-id=["']${route.documentId}["'][^>]*)(>)`), (_match, start, end) => `${start} data-prompts="${String(JSON.stringify(projection.prompts)).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;")}" data-chapter-version="${projection.revisionId}"${end}`);
+  const prompts = interactiveProjectionPrompts(projection.prompts);
+  return body.replace(new RegExp(`(<[^>]+data-reading-record[^>]+data-document-id=["']${route.documentId}["'][^>]*)(>)`), (_match, start, end) => `${start} data-prompts="${String(JSON.stringify(prompts)).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;")}" data-chapter-version="${projection.revisionId}"${end}`);
 };
 
 const transformWithHtmlRewriter = (response, route, projection) => new HTMLRewriter()
@@ -82,7 +93,7 @@ const transformWithHtmlRewriter = (response, route, projection) => new HTMLRewri
   })
   .on(`[data-reading-record][data-document-id="${route.documentId}"]`, {
     element(element) {
-      element.setAttribute("data-prompts", JSON.stringify(projection.prompts));
+      element.setAttribute("data-prompts", JSON.stringify(interactiveProjectionPrompts(projection.prompts)));
       element.setAttribute("data-chapter-version", projection.revisionId);
     },
   })
