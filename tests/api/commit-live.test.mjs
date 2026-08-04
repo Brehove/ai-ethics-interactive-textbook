@@ -110,3 +110,25 @@ test('authoring view is revision-bound and status polling promotes only a pendin
   assert.equal(bindingCalled, true);
   assert.ok(db.statements.some((statement) => statement.sql.includes('UPDATE live_commit_delivery_status')));
 });
+
+test('delivery verification falls back to the actual public route when the internal reader returns only the static shell', async () => {
+  const command = { id: 'commit_public_probe', changeset_id: 'cs_probe', document_id: 'chapter_ch07', result_revision_id: 'revision_public', result_content_hash: 'b'.repeat(64), projection_id: 'projection_public', projection_hash: 'c'.repeat(64), public_url: 'https://reader.example/chapter/aristotle-character-and-ai-assisted-life/', state: 'committed', delivery_state: 'confirmation_pending', actor_id: 'actor_editor_1', client_id: 'editor', created_at: '2026-08-03T00:00:00Z', committed_at: '2026-08-03T00:00:00Z', status_expires_at: '2099-08-04T00:00:00Z' };
+  const db = fakeDb((sql) => sql.includes('FROM live_commit_commands') ? command : null);
+  const originalFetch = globalThis.fetch;
+  let publicCalls = 0;
+  globalThis.fetch = async (request) => {
+    publicCalls += 1;
+    assert.equal(request.url, command.public_url);
+    return new Response('', { headers: { 'x-content-revision': command.result_revision_id, 'x-content-projection-hash': command.projection_hash } });
+  };
+  try {
+    const response = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_public_probe', { headers: gatewayHeaders() }), {
+      CONTENT_DB: db,
+      PUBLIC_READER: { fetch: async () => new Response('<main>Static shell</main>', { headers: { 'content-type': 'text/html' } }) },
+    });
+    const responseText = await response.text();
+    assert.equal(response.status, 200, responseText);
+    assert.equal(JSON.parse(responseText).deliveryStatus, 'verified');
+    assert.equal(publicCalls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
