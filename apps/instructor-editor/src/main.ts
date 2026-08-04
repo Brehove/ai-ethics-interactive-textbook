@@ -23,7 +23,7 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Instructor editor mount is missing.");
 
 const params = new URLSearchParams(window.location.search);
-const agentAccessRequestId = window.location.pathname === "/agent-access" ? params.get("request") : null;
+const agentAccessRequestId = /^\/agent-access\/?$/.test(window.location.pathname) ? params.get("request") : null;
 const reviewChangeSetId = params.get("review");
 const requestedSlug = window.location.pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1] ?? params.get("chapter") ?? DEMO_CHAPTER.slug;
 const requestedRoute = CHAPTER_ROUTE_BY_SLUG.get(requestedSlug);
