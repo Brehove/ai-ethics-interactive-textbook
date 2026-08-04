@@ -69,3 +69,9 @@ test("locked legacy markup strips active content", () => {
   assert.match(projection.html, />Safe</);
   assert.doesNotMatch(projection.html, /onclick|script/i);
 });
+
+test("renders the editor's safe underline syntax without exposing raw markup", () => {
+  const projection = renderChapterProjection({ title: "Inline", body: [{ type: "paragraph", blockId: "block_inline", passageId: "passage_inline", text: "A ++visible underline++ beside *emphasis*." }], checkpoints: [] });
+  assert.match(projection.html, /<u>visible underline<\/u>/);
+  assert.match(projection.html, /<em>emphasis<\/em>/);
+});

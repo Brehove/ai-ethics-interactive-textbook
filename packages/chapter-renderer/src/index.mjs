@@ -30,7 +30,7 @@ const inline = (value = "") => {
   rendered = rendered.replace(/\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/)|#)[^\s)]+)\)/g, (_match, label, href) => {
     const safe = safeHref(href); return safe ? `<a href="${escapeHtml(safe)}">${label}</a>` : label;
   });
-  return rendered.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  return rendered.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/\*([^*]+)\*/g, "<em>$1</em>").replace(/\+\+([^+]+)\+\+/g, "<u>$1</u>");
 };
 
 const publicAssetUrl = (value, origin) => {
