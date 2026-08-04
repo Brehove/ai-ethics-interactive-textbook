@@ -140,19 +140,36 @@ function managedNodes(chapter: ChapterDocument, passageId: string, position: "be
   });
 }
 
-export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void, legacyArtifacts: readonly LegacyCuratedArtifact[] = []) {
+export function editorDocumentContent(chapter: ChapterDocument, legacyArtifacts: readonly LegacyCuratedArtifact[] = [], publicOrigin = "https://ethicsandai.your-digital-life.org") {
   const content: Record<string, unknown>[] = [];
+  const ownedPassages = new Set(chapter.body.map((block) => block.passageId).filter(Boolean));
+  const emittedBefore = new Set<string>();
+  const emittedAfter = new Set<string>();
   for (const block of chapter.body) {
-    if (!isProse(block)) {
-      content.push({ type: "managedNode", attrs: { placementId: block.blockId, sourceBlockId: block.blockId, kind: block.type === "mediaFigure" ? "Media" : block.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: block }, { context: "editor", publicOrigin: location.origin }) } });
-      continue;
-    }
     const passage = blockPassage(block);
-    content.push(...managedNodes(chapter, passage, "before")); content.push(proseNode(block)); content.push(...managedNodes(chapter, passage, "after"));
-    for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
-      content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
+    const ownsAnchor = Boolean(block.passageId) || Boolean(passage && !ownedPassages.has(passage));
+    if (ownsAnchor && !emittedBefore.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "before"));
+      emittedBefore.add(passage);
+    }
+    if (!isProse(block)) {
+      content.push({ type: "managedNode", attrs: { placementId: block.blockId, sourceBlockId: block.blockId, kind: block.type === "mediaFigure" ? "Media" : block.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: block }, { context: "editor", publicOrigin }) } });
+    } else {
+      content.push(proseNode(block));
+    }
+    if (ownsAnchor && !emittedAfter.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "after"));
+      for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
+        content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
+      }
+      emittedAfter.add(passage);
     }
   }
+  return content;
+}
+
+export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void, legacyArtifacts: readonly LegacyCuratedArtifact[] = []) {
+  const content = editorDocumentContent(chapter, legacyArtifacts, location.origin);
   const reportPassage = (active: Editor) => {
     const { $from } = active.state.selection;
     for (let depth = $from.depth; depth >= 0; depth -= 1) {

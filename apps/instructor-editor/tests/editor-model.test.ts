@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
 import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
-import { managedNodeSequence, serializeBody } from "../src/tiptap-editor";
+import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
@@ -80,6 +80,23 @@ test("checkpoint excerpts cover code and table anchors and prefer passage owners
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_table")), "Claim\nReason\nA\nB");
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_code")), "const judgment = true;");
   assert.equal(checkpointExcerpt({ type: "list", blockId: "list", passageId: "passage_list", text: "stale", items: ["Visible A", "Visible B"] }), "Visible A\nVisible B");
+});
+
+test("editor renders checkpoints after table and standalone locked anchor owners", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const template = chapter.checkpoints[0];
+  chapter.body = [
+    { type: "table", blockId: "table_owner", passageId: "passage_table", columns: ["Claim"], rows: [["Reason"]] },
+    { type: "legacyMarkup", blockId: "legacy_owner", anchorPassageId: "passage_legacy", locked: true, sanitizedHtml: "<aside>Worked example</aside>", importedFrom: "chapter.md" },
+  ] as never;
+  chapter.checkpoints = [
+    { ...structuredClone(template), checkpointId: "checkpoint_table", passageId: "passage_table", displayOrder: 0 },
+    { ...structuredClone(template), checkpointId: "checkpoint_legacy", passageId: "passage_legacy", displayOrder: 0 },
+  ];
+  const content = editorDocumentContent(chapter);
+  assert.deepEqual(content.map((node) => String((node.attrs as Record<string, unknown>).placementId)), [
+    "table_owner", "checkpoint_table", "legacy_owner", "checkpoint_legacy",
+  ]);
 });
 
 test("person features remain independent managed placements, never editable prose", () => {
