@@ -105,14 +105,19 @@ export function projectOrderedChapter(chapter, options = {}) {
     after.set(anchor, nodes.filter((node) => node.position !== "before"));
   }
   const ordered = [];
+  const emittedBefore = new Set();
+  const emittedAfter = new Set();
   for (const block of blocks) {
-    const anchoredBefore = before.get(passageId(block)) || [];
+    const anchor = passageId(block);
+    const anchoredBefore = anchor && !emittedBefore.has(anchor) ? before.get(anchor) || [] : [];
     anchoredBefore.sort((left, right) => left.order - right.order || left.index - right.index);
     ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    if (anchor) emittedBefore.add(anchor);
     ordered.push({ kind: "block", value: block });
-    const anchored = after.get(passageId(block)) || [];
+    const anchored = anchor && !emittedAfter.has(anchor) ? after.get(anchor) || [] : [];
     anchored.sort((left, right) => left.order - right.order || left.index - right.index);
     ordered.push(...anchored.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    if (anchor) emittedAfter.add(anchor);
   }
   return ordered;
 }

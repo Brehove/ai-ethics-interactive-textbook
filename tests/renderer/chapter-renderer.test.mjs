@@ -42,6 +42,22 @@ test("reader and editor projection share identical canonical markup", () => {
   assert.match(reader.html, /Nicomachean Ethics/);
 });
 
+test("shared passage anchors emit each checkpoint and managed placement once", () => {
+  const repeatedAnchorChapter = {
+    ...chapter,
+    body: [
+      chapter.body[0],
+      { type: "codeBlock", blockId: "block_code_a", anchorPassageId: "passage_a", code: "same anchor" },
+      chapter.body[1],
+    ],
+  };
+  const projection = renderChapterProjection(repeatedAnchorChapter);
+  assert.equal(projection.orderedNodes.filter((node) => node.kind === "checkpoint").length, 2);
+  assert.equal(projection.orderedNodes.filter((node) => node.kind === "personFeature").length, 1);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
+  assert.equal((projection.html.match(/data-checkpoint-id=/g) || []).length, 2);
+});
+
 test("semantic person relations do not implicitly create scholar cards", () => {
   const projection = renderChapterProjection({ ...chapter, managedPlacements: [], personFeatures: [], people: [{ personId: "aristotle", role: "mentioned", passageIds: ["passage_a"] }] });
   assert.doesNotMatch(projection.html, /chapter-person/);
