@@ -22,9 +22,9 @@ test("editor host serves the agent approval deep link through the same secured S
     const path = new URL(request.url).pathname; calls.push(path);
     return path === "/index.html" ? new Response("<main>Agent approval</main>", { headers: { "content-type": "text/html" } }) : new Response("missing", { status: 404 });
   } } };
-  const response = await worker.fetch(new Request("https://editor.example/agent-access?request=capreq_12345678"), env);
+  const response = await worker.fetch(new Request("https://editor.example/agent-access/?request=capreq_12345678"), env);
   assert.equal(response.status, 200);
-  assert.deepEqual(calls, ["/agent-access", "/index.html"]);
+  assert.deepEqual(calls, ["/agent-access/", "/index.html"]);
   assert.match(response.headers.get("content-security-policy"), /frame-ancestors 'none'/);
   assert.equal(response.headers.get("cache-control"), "no-store");
 });
