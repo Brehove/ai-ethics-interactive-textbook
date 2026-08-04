@@ -181,9 +181,15 @@ jobs:
       - name: Verify active production and record its immutable receipt
         id: receipt
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
           RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
         run: |
-          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --asset-digests release-artifacts/assets.sha256 --out release-artifacts/production-verification.json
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/post-promotion-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/post-promotion-cloudflare-status.json --out release-artifacts/post-promotion-version.json
+          observed="$(node -e "console.log(require('./release-artifacts/post-promotion-version.json').cloudflareVersionId)")"
+          expected="$(node -e "const c=require('./release-artifacts/candidate.json');const s=require('./release-artifacts/state.json.'+c.candidateId+'.json');console.log(s.candidates[c.candidateId].versionId)")"
+          test "$observed" = "$expected"
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out release-artifacts/production-verification.json
           node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
       - name: Activate only the exact D1 revisions now present in the active release
         id: authority
@@ -213,4 +219,6 @@ jobs:
             release-artifacts/release-state-audit.json
             release-artifacts/pre-promotion-cloudflare-status.json
             release-artifacts/pre-promotion-version.json
+            release-artifacts/post-promotion-cloudflare-status.json
+            release-artifacts/post-promotion-version.json
           retention-days: 90
