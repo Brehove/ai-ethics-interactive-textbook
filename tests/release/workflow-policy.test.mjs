@@ -54,6 +54,12 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /control-plane\.mjs audit-state/);
   assert.match(workflow, /pre-promotion-cloudflare-status\.json/);
   assert.match(workflow, /test "\$observed" = '\$\{\{ inputs\.rollback_version_id \}\}'/);
+  assert.match(workflow, /post-promotion-cloudflare-status\.json/);
+  assert.match(workflow, /post-promotion-version\.json/);
+  assert.match(workflow, /state\.json\.'\+c\.candidateId\+'\.json'/);
+  assert.match(workflow, /test "\$observed" = "\$expected"/);
+  assert.match(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --out release-artifacts\/production-verification\.json/);
+  assert.doesNotMatch(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --asset-digests/);
   assert.match(workflow, /--receipt release-artifacts\/deployment-receipt\.json/);
   assert.match(workflow, /RELEASE_DEPLOY_RECEIPT_TOKEN: \$\{\{ secrets\.RELEASE_DEPLOY_RECEIPT_TOKEN \}\}/);
   assert.match(workflow, /control-plane\.mjs emergency-rollback/);
