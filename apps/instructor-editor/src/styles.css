@@ -108,6 +108,23 @@ dialog footer { justify-content: flex-end; margin-top: 1.5rem; }
 .media-picker-preview img { display: block; max-width: 100%; max-height: 16rem; margin: 0 auto; object-fit: contain; }
 .media-picker-preview figcaption { color: var(--editor-muted); font: .78rem/1.35 var(--sans); }
 
+.cutover-review { max-width: 76rem; margin: 0 auto; padding: clamp(2rem, 5vw, 5rem); color: var(--editor-ink); }
+.cutover-review h1 { max-width: 18ch; font: 700 clamp(2rem, 5vw, 4.5rem)/0.98 var(--serif); }
+.review-summary, .snapshot-binding dl { display: grid; gap: .75rem; margin: 2rem 0; }
+.review-summary div, .snapshot-binding dl div { display: grid; grid-template-columns: 10rem 1fr; gap: 1rem; }
+.review-summary dt, .snapshot-binding dt { font-weight: 700; }
+.review-summary dd, .snapshot-binding dd { margin: 0; overflow-wrap: anywhere; }
+.review-table-wrap { overflow-x: auto; margin: 2rem 0; border: 1px solid var(--editor-line); }
+.cutover-review table { width: 100%; border-collapse: collapse; background: #fff; }
+.cutover-review th, .cutover-review td { padding: .75rem; border-bottom: 1px solid var(--editor-line); text-align: left; }
+.cutover-review button { min-height: 3rem; padding: .75rem 1rem; border: 0; border-radius: .35rem; background: var(--editor-accent); color: #fff; font-weight: 700; cursor: pointer; }
+.cutover-review button:disabled { opacity: .55; cursor: wait; }
+.snapshot-binding { margin: 2rem 0; padding: 1.5rem; border: 2px solid var(--editor-accent); background: var(--editor-chrome); }
+.review-confirm { display: flex; gap: .75rem; align-items: flex-start; margin: 1.5rem 0; font-weight: 700; }
+.review-confirm input { inline-size: 1.25rem; block-size: 1.25rem; }
+.review-success { padding: 1rem; background: #e7f5ea; color: #164c24; font-weight: 700; }
+.review-status { min-height: 1.5rem; font-weight: 700; }
+
 @media (max-width: 1100px) {
   .editor-layout { grid-template-columns: minmax(0, 1fr); }
   .inspector { position: static; width: auto; border-top: 1px solid var(--editor-line); border-left: 0; box-shadow: none; }

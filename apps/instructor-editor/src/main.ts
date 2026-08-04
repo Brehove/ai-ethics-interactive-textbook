@@ -22,6 +22,7 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Instructor editor mount is missing.");
 
 const params = new URLSearchParams(window.location.search);
+const reviewChangeSetId = params.get("review");
 const requestedSlug = window.location.pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1] ?? params.get("chapter") ?? DEMO_CHAPTER.slug;
 const requestedRoute = CHAPTER_ROUTE_BY_SLUG.get(requestedSlug);
 const requestedDocument = requestedRoute?.documentId ?? params.get("document") ?? DEMO_CHAPTER.documentId;
@@ -49,6 +50,78 @@ let personItems: Array<Record<string, unknown>> = [];
 const dataSource = apiOrigin
   ? createAuthoringClient({ baseUrl: apiOrigin, getCsrf: () => csrfToken })
   : null;
+
+function cutoverDocumentRows(documents: Array<Record<string, unknown>>) {
+  return documents.map((document) => {
+    const documentId = String(document.document_id ?? document.documentId ?? "");
+    const revisionId = String(document.base_revision_id ?? document.baseRevisionId ?? "");
+    const contentHash = String(document.content_hash ?? document.contentHash ?? "");
+    return `<tr><th scope="row">${escapeText(documentId)}</th><td><code>${escapeText(revisionId)}</code></td><td><code>${escapeText(contentHash.slice(0, 16))}…</code></td></tr>`;
+  }).join("");
+}
+
+async function loadCutoverReview(changeSetId: string) {
+  if (!dataSource) return;
+  try {
+    const session = await dataSource.getSession();
+    csrfToken = session.csrf_token;
+    const changeSet = await dataSource.getChangeset(changeSetId);
+    const documents = Array.isArray(changeSet.documents) ? changeSet.documents as Array<Record<string, unknown>> : [];
+    const snapshot = changeSet.submittedSnapshot as Record<string, unknown> | null;
+    const decision = changeSet.releaseDecision as Record<string, unknown> | null;
+    const state = String(changeSet.state ?? "unknown");
+    app.innerHTML = `<main class="cutover-review"><p class="eyebrow">Authority cutover review</p><h1>${escapeText(String(changeSet.title ?? "Multi-chapter authority cutover"))}</h1><p>This is a read-only migration proposal. Review the exact chapters and immutable source hashes before submitting or approving it.</p><dl class="review-summary"><div><dt>Changeset</dt><dd><code>${escapeText(changeSetId)}</code></dd></div><div><dt>State</dt><dd data-review-state>${escapeText(state)}</dd></div><div><dt>Documents</dt><dd>${documents.length}</dd></div></dl><div class="review-table-wrap"><table><thead><tr><th>Chapter</th><th>Base revision</th><th>Content hash</th></tr></thead><tbody>${cutoverDocumentRows(documents)}</tbody></table></div>${snapshot ? `<section class="snapshot-binding"><h2>Submitted snapshot</h2><p>Approval will bind this exact immutable snapshot.</p><dl><div><dt>Snapshot hash</dt><dd><code data-snapshot-hash>${escapeText(String(snapshot.snapshotHash ?? ""))}</code></dd></div><div><dt>Snapshot revision</dt><dd><code data-snapshot-revision>${escapeText(String(snapshot.snapshotRevision ?? ""))}</code></dd></div></dl>${decision ? `<p class="review-success" role="status">Approved by ${escapeText(String(decision.decidedBy ?? "the instructor"))}. This snapshot is ready for the protected release workflow.</p>` : `<label class="review-confirm"><input type="checkbox" data-confirm-snapshot> I reviewed all ${documents.length} chapter identities and approve this exact snapshot for release.</label><button type="button" data-approve-cutover>Approve exact snapshot</button>`}</section>` : `<button type="button" data-submit-cutover>Submit exact ${documents.length}-chapter snapshot for approval</button>`}<p class="review-status" role="status" data-review-status></p><p><a href="${escapeAttribute(returnUrl)}">Return to the textbook</a></p></main>`;
+    const status = app.querySelector<HTMLElement>("[data-review-status]");
+    const submit = app.querySelector<HTMLButtonElement>("[data-submit-cutover]");
+    submit?.addEventListener("click", async () => {
+      submit.disabled = true;
+      if (status) status.textContent = "Submitting immutable snapshot…";
+      try {
+        await dataSource.submitChangeset(changeSetId, {
+          documents: documents.map((document) => ({ documentId: document.document_id, baseRevisionId: document.base_revision_id, expectedVersion: document.version })),
+          idempotencyKey: crypto.randomUUID(),
+        });
+        await loadCutoverReview(changeSetId);
+      } catch (error) {
+        submit.disabled = false;
+        if (status) status.textContent = error instanceof Error ? error.message : "Submission failed.";
+      }
+    });
+    const approve = app.querySelector<HTMLButtonElement>("[data-approve-cutover]");
+    approve?.addEventListener("click", async () => {
+      const confirmed = app.querySelector<HTMLInputElement>("[data-confirm-snapshot]");
+      if (!confirmed?.checked) {
+        if (status) status.textContent = "Check the confirmation after reviewing the exact snapshot.";
+        return;
+      }
+      approve.disabled = true;
+      if (status) status.textContent = "Recording human approval…";
+      try {
+        await dataSource.approveChangeset(changeSetId, {
+          snapshotHash: snapshot?.snapshotHash,
+          snapshotRevision: snapshot?.snapshotRevision,
+          decisionKind: "release",
+          comment: `Reviewed ${documents.length} seeded chapter identities and immutable content hashes for the unified authoring cutover.`,
+          idempotencyKey: crypto.randomUUID(),
+        });
+        await loadCutoverReview(changeSetId);
+      } catch (error) {
+        approve.disabled = false;
+        if (status) status.textContent = error instanceof Error ? error.message : "Approval failed.";
+      }
+    });
+  } catch (error) {
+    if (error instanceof AuthoringApiError && error.status === 401) {
+      const start = new URL("/auth/start", authOrigin);
+      start.searchParams.set("chapter", requestedSlug);
+      start.searchParams.set("mode", "edit");
+      start.searchParams.set("review", changeSetId);
+      window.location.assign(start.toString());
+      return;
+    }
+    app.innerHTML = `<main class="cutover-review"><h1>Cutover review could not be loaded</h1><p role="alert">${escapeText(error instanceof Error ? error.message : "Unknown error")}</p></main>`;
+  }
+}
 
 function hydrateManagedMediaPreviews(source: ChapterDocument): ChapterDocument {
   if (!dataSource) return source;
@@ -419,4 +492,5 @@ function escapeText(value: string) { return value.replace(/[&<>]/g, (character) 
 function escapeAttribute(value: string) { return escapeText(value).replaceAll('"', "&quot;"); }
 
 render();
-void loadChapter();
+if (reviewChangeSetId) void loadCutoverReview(reviewChangeSetId);
+else void loadChapter();
