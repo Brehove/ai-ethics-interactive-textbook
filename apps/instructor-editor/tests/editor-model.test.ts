@@ -78,6 +78,7 @@ test("checkpoint excerpts cover code and table anchors and prefer passage owners
   assert.equal(checkpointAnchorBlock(chapter, "passage_table")?.blockId, "table_owner");
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_table")), "Claim\nReason\nA\nB");
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_code")), "const judgment = true;");
+  assert.equal(checkpointExcerpt({ type: "list", blockId: "list", passageId: "passage_list", text: "stale", items: ["Visible A", "Visible B"] }), "Visible A\nVisible B");
 });
 
 test("person features remain independent managed placements, never editable prose", () => {

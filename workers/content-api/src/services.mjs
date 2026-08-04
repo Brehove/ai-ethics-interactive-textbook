@@ -238,8 +238,8 @@ const passageIds = (chapter) => new Set([
 
 export const checkpointExcerpt = (block) => {
   if (!block) return '';
+  if (block.type === 'list' && Array.isArray(block.items)) return block.items.map(String).join('\n');
   if (typeof block.text === 'string') return block.text;
-  if (Array.isArray(block.items)) return block.items.map(String).join('\n');
   if (typeof block.code === 'string') return block.code;
   const tableCells = [
     ...(Array.isArray(block.columns) ? block.columns : []),
@@ -809,6 +809,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
 
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
+  if (!Array.isArray(chapter.checkpoints)) errors.push({ code: 'CHECKPOINT_COLLECTION_INVALID', path: 'checkpoints' });
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
   const checkpointIds = checkpoints.map((item) => item.checkpointId);
   if (new Set(checkpointIds).size !== checkpointIds.length) errors.push({ code: 'CHECKPOINT_ID_DUPLICATE', path: 'checkpoints' });

@@ -852,6 +852,7 @@ test('checkpoint hashes are server-derived for every selectable anchor type', as
   result = await applySemanticOperation(result.chapter, { type: 'chapter.replaceDocument', document: replacement });
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(code)));
   assert.notEqual(result.chapter.checkpoints[0].passageExcerptHash, await sha256(''));
+  assert.equal(checkpointExcerpt({ type: 'list', text: 'stale', items: ['Visible A', 'Visible B'] }), 'Visible A\nVisible B');
 });
 
 test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {
@@ -860,6 +861,11 @@ test('malformed replacement bodies fail as structured validation errors before h
   await assert.rejects(
     applySemanticOperation(chapter, { type: 'chapter.replaceDocument', document: { ...chapter, body: { invalid: true } } }),
     (error) => error instanceof ApiError && error.status === 422 && error.code === 'CHAPTER_BODY_INVALID'
+  );
+  await assert.rejects(
+    applySemanticOperation(chapter, { type: 'chapter.replaceDocument', document: { ...chapter, checkpoints: { invalid: true } } }),
+    (error) => error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_FAILED'
+      && error.details?.errors?.some((item) => item.code === 'CHECKPOINT_COLLECTION_INVALID')
   );
 });
 

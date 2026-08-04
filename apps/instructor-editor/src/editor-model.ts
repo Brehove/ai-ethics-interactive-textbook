@@ -11,8 +11,8 @@ export const cloneChapter = (chapter: ChapterDocument): ChapterDocument => struc
 export const blockPassage = (block: ChapterBlock) => String(block.passageId ?? block.anchorPassageId ?? "");
 export const checkpointExcerpt = (block?: ChapterBlock) => {
   if (!block) return "";
+  if (block.type === "list" && Array.isArray(block.items)) return block.items.map(String).join("\n");
   if (typeof block.text === "string") return block.text;
-  if (Array.isArray(block.items)) return block.items.map(String).join("\n");
   if (typeof block.code === "string") return block.code;
   const tableCells = [
     ...(Array.isArray(block.columns) ? block.columns : []),
