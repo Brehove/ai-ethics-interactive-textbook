@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { GitContentRepository } from "../../../packages/content-repository/src/index";
 import { inlineContent, inlineMarkdown, serializeBody } from "../src/tiptap-editor";
 
 test("safe inline Markdown becomes visual Tiptap marks and round-trips", () => {
@@ -34,4 +37,20 @@ test("callout identity and tone survive visual text editing", () => {
   assert.equal(saved?.type, "callout");
   assert.equal(saved?.text, "**New**");
   assert.equal(saved?.tone, "note");
+});
+
+test("every editable inline string in the 18-chapter migration snapshot round-trips exactly", async () => {
+  const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../content");
+  const { snapshot } = await new GitContentRepository(repositoryRoot).exportSnapshot();
+  let checked = 0;
+  for (const chapter of snapshot.chapters) {
+    for (const block of chapter.body) {
+      const values = block.type === "list" ? block.items : "text" in block && typeof block.text === "string" ? [block.text] : [];
+      for (const value of values) {
+        checked += 1;
+        assert.equal(inlineMarkdown(inlineContent(value)), value, `${chapter.slug}/${block.blockId}`);
+      }
+    }
+  }
+  assert.ok(checked > 2_000);
 });

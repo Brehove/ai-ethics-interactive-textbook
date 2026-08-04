@@ -69,19 +69,36 @@ const inlineChildren = (node: Record<string, unknown>) => Array.isArray(node.con
 
 /** Serialize visual Tiptap marks back to the same safe contract syntax. */
 export function inlineMarkdown(content: Record<string, unknown>[] = []): string {
-  return content.map((node) => {
-    if (node.type === "hardBreak") return "\n";
-    if (node.type !== "text") return inlineMarkdown(inlineChildren(node));
-    let value = String(node.text ?? "");
-    const marks = Array.isArray(node.marks) ? node.marks as Array<Record<string, unknown>> : [];
-    for (const type of ["underline", "bold", "italic"] as const) {
-      if (marks.some((mark) => mark.type === type)) value = type === "underline" ? `++${value}++` : type === "bold" ? `**${value}**` : `*${value}*`;
+  const marksOf = (node: Record<string, unknown>) => Array.isArray(node.marks) ? node.marks as Array<Record<string, unknown>> : [];
+  const sameMark = (left: Record<string, unknown> | undefined, right: Record<string, unknown> | undefined) => JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+  const wrap = (mark: Record<string, unknown>, value: string) => {
+    if (mark.type === "underline") return `++${value}++`;
+    if (mark.type === "bold") return `**${value}**`;
+    if (mark.type === "italic") return `*${value}*`;
+    if (mark.type === "link") {
+      const href = String((mark.attrs as Record<string, unknown> | undefined)?.href ?? "");
+      return /^https:\/\//.test(href) || /^\/(?!\/)/.test(href) || /^#[A-Za-z][A-Za-z0-9:_-]*$/.test(href) ? `[${value}](${href})` : value;
     }
-    const link = marks.find((mark) => mark.type === "link");
-    const href = String((link?.attrs as Record<string, unknown> | undefined)?.href ?? "");
-    if (link && (/^https:\/\//.test(href) || /^\/(?!\/)/.test(href) || /^#[A-Za-z][A-Za-z0-9:_-]*$/.test(href))) value = `[${value}](${href})`;
     return value;
-  }).join("");
+  };
+  const serializeRange = (nodes: Record<string, unknown>[], depth: number): string => {
+    let rendered = "";
+    for (let index = 0; index < nodes.length;) {
+      const node = nodes[index];
+      const mark = marksOf(node)[depth];
+      if (!mark) {
+        rendered += node.type === "hardBreak" ? "\n" : node.type === "text" ? String(node.text ?? "") : inlineMarkdown(inlineChildren(node));
+        index += 1;
+        continue;
+      }
+      let end = index + 1;
+      while (end < nodes.length && sameMark(marksOf(nodes[end])[depth], mark)) end += 1;
+      rendered += wrap(mark, serializeRange(nodes.slice(index, end), depth + 1));
+      index = end;
+    }
+    return rendered;
+  };
+  return serializeRange(content, 0);
 }
 
 const isProse = (block: ChapterBlock): block is ProseBlock => ["paragraph", "heading", "blockquote", "list", "callout"].includes(block.type);
