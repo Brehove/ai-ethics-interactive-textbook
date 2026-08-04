@@ -72,7 +72,7 @@ The target system is:
 - a **custom textbook Content API** as the only agent write path and the enforcement boundary for validation, authorization, concurrency, audit history, media ingestion, embed resolution, review, and publication;
 - a **custom textbook MCP server and reusable Skills** over that API, with narrow semantic tools rather than generic document patches;
 - a standalone **Textbook Editor** as the browser-based instructor editor, including chapter editing, prompt-checkpoint management, media upload and placement, embed insertion, preview, history, and review;
-- the existing **Astro reader and Cloudflare deployment** as an immutable static publication artifact that never reads from D1/R2 or another mutable content API at page-view time;
+- the existing **Astro reader shell and Cloudflare deployment** as the immutable fallback artifact, with the Site Worker fetching an immutable sanitized public projection through a service binding on eligible chapter requests; the Site Worker has no direct D1 binding and never exposes drafts or editorial tables;
 - **GitHub as the authority for code**, schemas, renderers, design tokens, validators, migrations, tests, MCP implementation, Skills, and infrastructure—not the routine content-editing interface;
 - no content commit, branch, pull request, or merge for an ordinary prose, checkpoint, caption, image, or embed update.
 
@@ -158,11 +158,11 @@ The system must therefore preserve the current public reader while replacing the
 
 ### 3.3 Publication
 
-- The public reader is a static, immutable artifact.
+- The public reader is an immutable Astro shell plus a revision-bound sanitized chapter projection selected by the guarded public head.
 - A release pins exact content revisions, prompt records, media assets, embed definitions, rights records, renderer version, and derivative versions in one manifest.
-- Publication is atomic. A failed build leaves the currently active release untouched.
+- Code/schema/authority publication is atomic. Routine one-chapter Save atomically advances one immutable canonical revision and its matching public projection. A failed operation leaves the active release or chapter head untouched.
 - A complete prior release can be restored in one operation.
-- Public chapter views make no live request to D1/R2.
+- Public chapter views call the Site Worker, which obtains only the allowlisted immutable projection through an internal Worker service binding. The Site Worker has no direct D1/R2 binding, and the static shell remains visible if projection delivery fails.
 - Required reading remains complete when JavaScript is disabled, the reader is offline, a provider blocks the embed, or a post/video has disappeared.
 
 ### 3.4 Privacy
@@ -435,7 +435,7 @@ type PromptCheckpoint = {
 };
 ```
 
-Draft and publication validation permit any checkpoint count, including zero. IDs must be unique; every checkpoint must have nonempty content, a valid stable passage anchor, a unique display order, valid word bounds, and supported response structure. The inline checkpoint trigger and side-panel checkpoint render from this single record, and `showInSidebar` controls whether it appears in the panel. No duplicated sidebar copy is allowed. The renderer preserves page-memory-only student responses without enforcing the retired three-checkpoint progression.
+Draft and publication validation permit any checkpoint count, including zero. IDs must be unique; every checkpoint must have nonempty content, a valid stable passage anchor, a nonnegative integer display order, valid word bounds, and supported response structure. Display order is evaluated within the rendered anchor context, so the same integer may legitimately appear at different passages. The inline checkpoint trigger and side-panel checkpoint render from this single record, and `showInSidebar` controls whether it appears in the panel. No duplicated sidebar copy is allowed. The renderer preserves page-memory-only student responses without enforcing the retired three-checkpoint progression.
 
 A checkpoint’s semantic approval binds to the checkpoint content hash, anchor passage ID, and anchor excerpt hash. Editing the prompt, guidance, rationale, strategy, response structure, anchor, or anchored prose invalidates that approval. Automated validation can enforce structure and completeness; an instructor performs the pedagogical review.
 
@@ -1001,7 +1001,7 @@ Actions:
 
 The release gate checks:
 
-- checkpoint IDs and display orders are unique;
+- checkpoint IDs are unique and every display order is a nonnegative integer; repeated order values at different passage anchors are valid;
 - labels and stages are optional and may repeat;
 - all anchor passage IDs exist;
 - all anchor excerpt hashes are current or explicitly reapproved;
@@ -1935,7 +1935,7 @@ Exit criteria:
 
 - **Estimate:** 1–2 weeks
 - **Depends on:** Phases 2, 5, and 6
-- **Purpose:** Replace Git content commits with safe database-to-static publication.
+- **Purpose:** Replace Git content commits with guarded database-to-immutable-public-projection publication inside the static Astro shell.
 
 Tasks:
 
@@ -2302,9 +2302,9 @@ The platform is complete when all statements below are true:
 3. Joel can upload a still image, GIF/WebP, short audio/video, PDF, or plain-text document; add high-quality alt/caption/transcript/teaching use/rights; place it precisely; and obtain polished web/mobile/print/offline output.
 4. Joel can paste a YouTube, Vimeo, or X URL and receive a structured, editable, click-to-load embed with an authored fallback, or create an instructor-authored rich link card for another URL.
 5. A scoped agent can perform every P0 draft operation through MCP/API and produce a reviewable semantic diff.
-6. A normal agent cannot approve rights, bypass validation, publish, restore, change permissions, or insert arbitrary active content.
+6. A normal `content:write` agent may restore an immutable revision only as a new isolated draft; it cannot approve rights, bypass validation, publish without explicit `content:live-save`, overwrite the canonical head through restore, change permissions, or insert arbitrary active content.
 7. Routine content changes produce no Git content commit.
-8. The public reader remains static, preserves current student-response privacy, and makes no provider request before explicit activation.
+8. The public reader preserves the static Astro fallback, injects only immutable sanitized public projections through a service-bound Worker with no direct D1 access, preserves current student-response privacy, and makes no provider request before explicit activation.
 9. All 18 chapters and the complete book/part/annotation/world/entity/diagram/source/checkpoint/media/rights/derivative graph pass the final migration manifest with all recorded IDs.
 10. A failed, stale, concurrent, or interrupted release cannot advance out of order; the previous complete release restores within five minutes.
 11. A clean off-provider export restores into a local build without D1/R2 or external media providers.
@@ -2377,7 +2377,7 @@ The platform is complete when all statements below are true:
 
 Phase 0 architecture decision (approved):
 
-> After shadow migration and canary, D1/R2 becomes the sole routine content authority; Git remains the code authority; the public reader remains a static immutable release; arbitrary embed HTML remains prohibited; X renders its authored rich fallback by default and may load the single reviewed official widget only after explicit student activation/consent.
+> After shadow migration and canary, D1/R2 becomes the sole routine content authority; Git remains the code authority; the public reader retains an immutable static shell and serves only revision-bound sanitized projections through an internal service binding; arbitrary embed HTML remains prohibited; X renders its authored rich fallback by default and may load the single reviewed official widget only after explicit student activation/consent.
 
 Implementation proceeded from clean, reviewable branches and is now complete on `origin/main`. Future work under this section is operational maintenance rather than a remaining rollout gate:
 
