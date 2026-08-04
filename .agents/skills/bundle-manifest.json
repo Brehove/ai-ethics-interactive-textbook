@@ -28,7 +28,7 @@
     },
     {
       "path": "publish-textbook-media/SKILL.md",
-      "sha256": "73503900d22c245cba1eccf1ec9ad974038565c2ba765239d190e37e42f4d96d"
+      "sha256": "b813baaafc5b00b9df8d85d6e506ecdfe868d407c3e2d930b86e1578c9af4f84"
     },
     {
       "path": "publish-textbook-media/agents/openai.yaml",
@@ -36,7 +36,7 @@
     },
     {
       "path": "publish-textbook-media/references/media-workflow.md",
-      "sha256": "3c72b428269432f67a4f68b0c1eb9040d5701a71f4304a352a2f454b5a561094"
+      "sha256": "945f0ac309dd86cf4ec051eb953840709c9b3f5ee9ab017d03cddc782a823dca"
     },
     {
       "path": "publish-textbook-media/scripts/upload-media.mjs",
