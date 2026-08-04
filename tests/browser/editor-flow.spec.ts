@@ -42,4 +42,9 @@ test("media library presents a Pressbooks-style upload entry without exposing a 
   await expect(page.getByRole("heading", { name: "Insert media" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Upload new media" })).toBeVisible();
   await expect(page.getByText(/safe derivatives|authenticated derivative/)).toBeVisible();
+  await page.getByRole("button", { name: "Upload new media" }).evaluate((button) => button.removeAttribute("disabled"));
+  await page.getByRole("button", { name: "Upload new media" }).click();
+  await expect(page.getByRole("heading", { name: "Upload new media" })).toBeVisible();
+  await expect(page.getByLabel("Rights basis")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review and upload" })).toBeVisible();
 });
