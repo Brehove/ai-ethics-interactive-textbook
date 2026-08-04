@@ -238,6 +238,10 @@ const passageIds = (chapter) => new Set([
 
 export const checkpointExcerpt = (block) => {
   if (!block) return '';
+  if (block.type === 'externalEmbed' || block.type === 'richLink') {
+    const fallback = block.fallback && typeof block.fallback === 'object' ? block.fallback : {};
+    return [block.title || fallback.title || block.caption || 'External resource', block.summary || fallback.summary || block.teachingUse, block.linkLabel || fallback.linkLabel || 'Open canonical source'].filter((value) => typeof value === 'string' && value).join('\n');
+  }
   if (block.type === 'list' && Array.isArray(block.items)) return block.items.map(String).join('\n');
   if (typeof block.text === 'string') return block.text;
   if (typeof block.code === 'string') return block.code;

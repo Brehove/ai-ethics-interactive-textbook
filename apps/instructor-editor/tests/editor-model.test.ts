@@ -96,6 +96,7 @@ test("checkpoint excerpts cover code and table anchors and prefer passage owners
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_table")), "Claim\nReason\nA\nB");
   assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_code")), "const judgment = true;");
   assert.equal(checkpointExcerpt({ type: "list", blockId: "list", passageId: "passage_list", text: "stale", items: ["Visible A", "Visible B"] }), "Visible A\nVisible B");
+  assert.equal(checkpointExcerpt({ type: "externalEmbed", blockId: "embed", anchorPassageId: "passage_embed", caption: "Outer caption", teachingUse: "Outer use", fallback: { title: "Fallback title", summary: "Fallback summary", linkLabel: "Open source" } }), "Fallback title\nFallback summary\nOpen source");
 });
 
 test("editor renders checkpoints after table and standalone locked anchor owners", () => {

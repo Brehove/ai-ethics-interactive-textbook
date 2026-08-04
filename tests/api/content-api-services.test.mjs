@@ -860,6 +860,10 @@ test('checkpoint hashes are server-derived for every selectable anchor type', as
   replacedBody[0].items = ['Visible A', 'Visible B'];
   const bodyResult = await applySemanticOperation(listChapter, { type: 'chapter.replaceBody', body: replacedBody });
   assert.equal(bodyResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible A\nVisible B'));
+  const embedChapter = baseChapter();
+  embedChapter.body.push({ type: 'externalEmbed', blockId: 'b-standalone-embed', embedId: 'embed-standalone', anchorPassageId: 'p-standalone-embed', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Outer caption', teachingUse: 'Outer use', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Fallback title', summary: 'Fallback summary', linkLabel: 'Open source', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const embedResult = await applySemanticOperation(embedChapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('standalone-embed', 'p-standalone-embed') });
+  assert.equal(embedResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Fallback title\nFallback summary\nOpen source'));
 });
 
 test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {
