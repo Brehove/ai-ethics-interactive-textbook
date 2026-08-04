@@ -7,6 +7,7 @@ const token = process.env.TEXTBOOK_MCP_ACCESS_TOKEN;
 if (!token) throw new Error("TEXTBOOK_MCP_ACCESS_TOKEN is required");
 const chapterId = process.env.TEXTBOOK_CHAPTER_ID || "chapter_ch07";
 const restoreRevisionId = process.env.TEXTBOOK_RESTORE_REVISION_ID || "";
+const existingCommitReceiptId = process.env.TEXTBOOK_EXISTING_COMMIT_RECEIPT_ID || "";
 const transport = new StreamableHTTPClientTransport(new URL(process.env.TEXTBOOK_MCP_ORIGIN || "https://mcp.ethicsandai.your-digital-life.org/mcp"), {
   requestInit: { headers: { authorization: `Bearer ${token}` } },
 });
@@ -36,6 +37,14 @@ try {
     mediaMatches: media.media?.length ?? media.items?.length ?? 0,
     resolvedProvider: provider.proposal?.identity?.provider ?? provider.identity?.provider ?? null,
   };
+  if (existingCommitReceiptId) {
+    if (!tools.includes("get_live_commit_status")) throw new Error("Missing production delivery-status tool");
+    const delivery = decode(await client.callTool({ name: "get_live_commit_status", arguments: { chapterId, commitReceiptId: existingCommitReceiptId } }));
+    if (delivery.deliveryStatus !== "verified" && !delivery.live) throw new Error(`Existing live commit was not publicly verified: ${delivery.deliveryStatus || "unknown"}`);
+    summary.commitReceiptId = existingCommitReceiptId;
+    summary.restoredAsRevisionId = delivery.revisionId;
+    summary.deliveryStatus = delivery.deliveryStatus || "verified";
+  }
   if (restoreRevisionId) {
     for (const name of ["restore_revision_as_draft", "commit_live", "get_live_commit_status"]) if (!tools.includes(name)) throw new Error(`Missing production restore tool: ${name}`);
     const restored = decode(await client.callTool({ name: "restore_revision_as_draft", arguments: { chapterId, revisionId: restoreRevisionId, title: `Restore ${restoreRevisionId} after production verification`, idempotencyKey: randomUUID() } }));

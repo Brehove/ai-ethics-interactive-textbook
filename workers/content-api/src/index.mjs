@@ -697,19 +697,10 @@ async function observePublicDelivery(env, command) {
   const checkedAt = now();
   let observedRevisionId = null; let observedProjectionHash = null;
   try {
-    const request = new Request(command.public_url, { method: 'GET', headers: { accept: 'text/html' }, redirect: 'error' });
-    let response = env.PUBLIC_READER?.fetch ? await env.PUBLIC_READER.fetch(request) : await fetch(request);
+    const request = new Request(command.public_url, { method: 'GET', headers: { accept: 'text/html', ...(env.PUBLIC_READER?.fetch ? { 'x-textbook-delivery-probe': 'v1' } : {}) }, redirect: 'error' });
+    const response = env.PUBLIC_READER?.fetch ? await env.PUBLIC_READER.fetch(request) : await fetch(request);
     observedRevisionId = response.headers.get('x-textbook-revision') || response.headers.get('x-content-revision');
     observedProjectionHash = response.headers.get('x-textbook-projection-hash') || response.headers.get('x-content-projection-hash');
-    // A Worker service binding can render the static asset shell without the
-    // custom-domain route context needed for public projection injection. The
-    // delivery receipt is about the actual public URL, so probe that surface
-    // when the internal response carries no immutable delivery identity.
-    if (env.PUBLIC_READER?.fetch && (!observedRevisionId || !observedProjectionHash)) {
-      response = await fetch(request);
-      observedRevisionId = response.headers.get('x-textbook-revision') || response.headers.get('x-content-revision');
-      observedProjectionHash = response.headers.get('x-textbook-projection-hash') || response.headers.get('x-content-projection-hash');
-    }
   } catch {
     // Delivery verification is intentionally recoverable after the atomic D1 commit.
   }
