@@ -5,14 +5,19 @@ import worker, { injectPublicProjection } from "../../workers/site/src/index.mjs
 
 const route = { documentId: "chapter_ch07" };
 const projection = { documentId: "chapter_ch07", revisionId: "revision_live", projectionId: "projection_live", projectionHash: "a".repeat(64), html: '<p id="ch07-p0001">Live prose.</p>', prompts: [{ checkpointId: "checkpoint_live" }] };
-const staticHtml = '<main><div class="chapter-body" data-public-projection="chapter_ch07"><p>Static fallback.</p></div><aside data-reading-record data-document-id="chapter_ch07"></aside></main>';
+const staticHtml = '<main><div class="chapter-body" data-public-projection="chapter_ch07"><p>Static fallback.</p><section data-inline-scholar-gallery><aside><div>Duplicate fallback thinker.</div></aside></section></div><template data-public-projection-end="chapter_ch07"></template><aside data-reading-record data-document-id="chapter_ch07"></aside></main>';
 
 test("HTML fallback helper injects exact server-side projection and prompts", () => {
   const html = injectPublicProjection(staticHtml, route, projection);
   assert.match(html, /Live prose/);
   assert.doesNotMatch(html, /Static fallback/);
+  assert.doesNotMatch(html, /Duplicate fallback thinker/);
   assert.match(html, /checkpoint_live/);
   assert.match(html, /data-chapter-version="revision_live"/);
+});
+
+test("HTML fallback refuses an unmarked or malformed nested projection boundary", () => {
+  assert.throws(() => injectPublicProjection('<div data-public-projection="chapter_ch07"><div>nested</div></div>', route, projection), /boundary is missing or malformed/);
 });
 
 test("site Worker serves verified projection for every allowlisted chapter without direct D1", async () => {
