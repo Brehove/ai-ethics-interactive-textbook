@@ -121,6 +121,20 @@ export function projectOrderedChapter(chapter, options = {}) {
     ordered.push(...anchored.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     if (anchor && ownsAnchor) emittedAfter.add(anchor);
   }
+  const unmatchedAnchors = [...new Set([...before.keys(), ...after.keys()])]
+    .filter((anchor) => !emittedBefore.has(anchor) || !emittedAfter.has(anchor));
+  for (const anchor of unmatchedAnchors) {
+    if (!emittedBefore.has(anchor)) {
+      const anchoredBefore = before.get(anchor) || [];
+      anchoredBefore.sort((left, right) => left.order - right.order || left.index - right.index);
+      ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    }
+    if (!emittedAfter.has(anchor)) {
+      const anchoredAfter = after.get(anchor) || [];
+      anchoredAfter.sort((left, right) => left.order - right.order || left.index - right.index);
+      ordered.push(...anchoredAfter.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    }
+  }
   return ordered;
 }
 

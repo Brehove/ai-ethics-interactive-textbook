@@ -58,6 +58,18 @@ test("shared passage anchors emit each checkpoint and managed placement once", (
   assert.equal((projection.html.match(/data-checkpoint-id=/g) || []).length, 2);
 });
 
+test("sidebar prompts backed only by the legacy passages collection are retained", () => {
+  const legacyPassageChapter = {
+    ...chapter,
+    passages: [{ passageId: "passage_legacy_only", text: "Legacy passage." }],
+    checkpoints: [{ checkpointId: "checkpoint_legacy_only", passageId: "passage_legacy_only", displayOrder: 0, title: "Legacy prompt", prompt: "Respond.", showInSidebar: true }],
+    managedPlacements: [],
+  };
+  const projection = renderChapterProjection(legacyPassageChapter);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_legacy_only"]);
+  assert.equal(projection.orderedNodes.at(-1).value.checkpointId, "checkpoint_legacy_only");
+});
+
 test("anchored managed blocks do not steal checkpoint placement from the owning passage", () => {
   const mediaBeforeOwner = {
     ...chapter,
