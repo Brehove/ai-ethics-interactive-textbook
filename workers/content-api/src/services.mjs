@@ -784,6 +784,7 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
   checkpoints.forEach((item, index) => {
     const slotLabel = item.slotLabel ?? item.slot;
     if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: `checkpoints.${index}.slotLabel` });
+    if (item.stage !== undefined && (typeof item.stage !== 'string' || item.stage.trim().length < 1 || item.stage.trim().length > 120)) errors.push({ code: 'CHECKPOINT_STAGE_INVALID', path: `checkpoints.${index}.stage` });
     if (!Number.isInteger(item.displayOrder ?? index) || (item.displayOrder ?? index) < 0) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder` });
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });
     if (!/^[a-f0-9]{64}$/.test(item.passageExcerptHash || '')) errors.push({ code: 'CHECKPOINT_EXCERPT_HASH_INVALID', path: `checkpoints.${index}.passageExcerptHash` });

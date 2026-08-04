@@ -68,7 +68,7 @@ export const ChapterBlockSchema = z.union([
 export type ChapterBlock = z.infer<typeof ChapterBlockSchema>;
 
 export const PromptCheckpointSchema = z.object({
-  checkpointId: id("checkpoint"), legacyId: text.optional(), passageId: id("passage"), passageExcerptHash: sha256, displayOrder: z.number().int().nonnegative(), slotLabel: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/).optional(), stage: text.optional(),
+  checkpointId: id("checkpoint"), legacyId: text.optional(), passageId: id("passage"), passageExcerptHash: sha256, displayOrder: z.number().int().nonnegative(), slotLabel: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/).optional(), stage: text.max(120).optional(),
   strategy: z.enum(["initial-judgment", "self-explanation", "argument-reconstruction", "evidence-warrant", "contrast-case", "counterexample", "consider-alternative", "objection-repair", "question-generation", "epistemic-calibration", "framework-comparison", "transfer", "metacognitive-trace"]), title: text, trigger: text, prompt: text, guidance: text, responseStructure: z.enum(["prose", "movement-plus-prose"]), minWords: z.number().int().min(1).max(1_000), maxWords: z.number().int().min(1).max(1_000), showInSidebar: z.boolean(), rationale: text, editorialApprovalId: id("approval").optional(),
 }).strict().superRefine((value, ctx) => { if (value.minWords > value.maxWords) ctx.addIssue({ code: "custom", path: ["minWords"], message: "Minimum words cannot exceed maximum words" }); });
 const Reference = z.object({ referenceId: id("reference"), label: text, url: https.optional() }).strict();

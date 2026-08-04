@@ -829,6 +829,16 @@ test('checkpoint validation rejects unstable anchors and caller-selected IDs whi
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: clientId }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_SERVER_ASSIGNED');
 });
 
+test('chapter replacement rejects empty or oversized optional checkpoint labels', () => {
+  for (const stage of ['', 'x'.repeat(121)]) {
+    const chapter = baseChapter();
+    chapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-stage-limit', stage });
+    assert.deepEqual(validateChapter(chapter).errors.filter((error) => error.code === 'CHECKPOINT_STAGE_INVALID'), [
+      { code: 'CHECKPOINT_STAGE_INVALID', path: 'checkpoints.0.stage' }
+    ]);
+  }
+});
+
 test('locked legacy anchorPassageId values satisfy checkpoint anchor validation', () => {
   const chapter = baseChapter();
   chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy-anchor', anchorPassageId: 'p-legacy-anchor', locked: true, sanitizedHtml: '<aside>Worked example</aside>', importedFrom: 'git-markdown-v1' });
