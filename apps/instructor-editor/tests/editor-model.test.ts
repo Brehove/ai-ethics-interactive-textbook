@@ -68,6 +68,17 @@ test("checkpoint reorder uses the combined checkpoint and placement order", () =
   assert.deepEqual(managedNodeSequence(chapter, first.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), sequence);
 });
 
+test("editor checkpoint ties use the same stable ID order as the reader", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const template = chapter.checkpoints[0];
+  chapter.checkpoints = [
+    { ...structuredClone(template), checkpointId: "checkpoint_z", displayOrder: 1 },
+    { ...structuredClone(template), checkpointId: "checkpoint_a", displayOrder: 1 },
+  ];
+  chapter.managedPlacements = [];
+  assert.deepEqual(managedNodeSequence(chapter, template.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), ["checkpoint_a", "checkpoint_z"]);
+});
+
 test("first checkpoint can move before an existing placement at a new anchor", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
   const checkpoint = chapter.checkpoints[0];

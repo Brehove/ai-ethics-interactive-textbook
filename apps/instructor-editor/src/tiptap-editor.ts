@@ -126,7 +126,12 @@ function proseNode(block: ProseBlock) {
 export function managedNodeSequence(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
   const checkpoints = position === "after" ? chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 })).filter((node) => node.item.passageId === passageId) : [];
   const placements = chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 })).filter((node) => node.item.anchorPassageId === passageId && node.item.position === position);
-  return [...checkpoints, ...placements].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
+  return [...checkpoints, ...placements].sort((a, b) => {
+    const orderDifference = a.order - b.order;
+    if (orderDifference) return orderDifference;
+    if (a.kind === "checkpoint" && b.kind === "checkpoint") return a.item.checkpointId.localeCompare(b.item.checkpointId);
+    return a.index - b.index || a.sequence - b.sequence;
+  });
 }
 
 function managedNodes(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after", publicOrigin = "https://ethicsandai.your-digital-life.org") {

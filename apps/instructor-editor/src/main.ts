@@ -636,17 +636,17 @@ function bindForms() {
   app.querySelector<HTMLFormElement>("[data-leave-form]")?.addEventListener("submit", async (event) => { event.preventDefault(); if (await save()) window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
   app.querySelector<HTMLButtonElement>("[data-discard]")?.addEventListener("click", () => { sessionStorage.removeItem(recoveryKey()); window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
   const applyCheckpointInspector = async (formElement: HTMLFormElement, shift = 0) => {
-    if (!formElement.reportValidity() || !inspector || inspector.kind !== "checkpoint") return;
+    if (!inspector || inspector.kind !== "checkpoint") return;
     const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
     if (!item) return;
     const form = new FormData(formElement);
-    const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
-    const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
-    const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
     const minWords = Number(form.get("minWords")); const maxWords = Number(form.get("maxWords"));
     const maxWordsInput = formElement.elements.namedItem("maxWords") as HTMLInputElement | null;
     maxWordsInput?.setCustomValidity(minWords > maxWords ? "Maximum words must be at least the minimum words." : "");
     if (!formElement.reportValidity()) return;
+    const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
+    const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
+    const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
     updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
     moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
     selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention");
