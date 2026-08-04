@@ -77,6 +77,8 @@ test("editor checkpoint ties use the same stable ID order as the reader", () => 
   ];
   chapter.managedPlacements = [];
   assert.deepEqual(managedNodeSequence(chapter, template.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), ["checkpoint_a", "checkpoint_z"]);
+  const unchanged = moveCheckpoint(chapter, "checkpoint_a", template.passageId, 0);
+  assert.equal(unchanged.displayOrder, 1);
 });
 
 test("first checkpoint can move before an existing placement at a new anchor", () => {

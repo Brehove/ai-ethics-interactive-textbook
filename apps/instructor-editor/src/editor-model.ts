@@ -16,7 +16,12 @@ const orderedAnchor = (chapter: ChapterDocument, anchor: string, excludedId?: st
     .filter((node) => node.item.passageId === anchor && node.item.checkpointId !== excludedId),
   ...chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 }))
     .filter((node) => node.item.anchorPassageId === anchor && node.item.position !== "before"),
-].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
+].sort((a, b) => {
+  const orderDifference = a.order - b.order;
+  if (orderDifference) return orderDifference;
+  if (a.kind === "checkpoint" && b.kind === "checkpoint") return a.item.checkpointId.localeCompare(b.item.checkpointId);
+  return a.index - b.index || a.sequence - b.sequence;
+});
 export const nextCheckpointOrder = (chapter: ChapterDocument, anchor: string) => Math.max(-1, ...orderedAnchor(chapter, anchor).map((node) => node.order)) + 1;
 export function updateCheckpointDetails(checkpoint: Checkpoint, update: { title: string; prompt: string; guidance: string; stage?: string; trigger: string; strategy: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; showInSidebar: boolean; rationale: string }) {
   const required = { title: update.title.trim(), prompt: update.prompt.trim(), trigger: update.trigger.trim(), strategy: update.strategy.trim(), rationale: update.rationale.trim() };
