@@ -2,51 +2,63 @@
 
 ## End-to-End Implementation Plan
 
-- **Status:** Chapter 7 production canary operational; remaining chapters stay Git-authoritative pending explicit batch cutover
-- **Plan version:** 1.6
-- **Last updated:** 2026-08-03
+- **Status:** Implemented, deployed, and production-verified across all 18 chapters
+- **Plan version:** 2.0
+- **Last updated:** 2026-08-04
 - **Target repository:** `Brehove/ai-ethics-interactive-textbook`
-- **Migration baseline:** `origin/main` at `0a2716182953f492a654aa8b704d420216f39450`
-- **Confidence:** High on the live Chapter 7 canary, release controls, and restore path; moderate on the remaining 8–18 chapter cutover schedule
+- **Completion baseline:** `origin/main` at `3586277516e63c72d6c594314b005107a8633679`
+- **Confidence:** High; implementation, deployment, API/MCP conformance, D1 authority, public delivery, and signed-in browser behavior were verified against production
 
-> **Focused follow-on:** The implementation-ready plan for a reader-identical editor, one-click live Save, shared scholar/media rendering, flexible checkpoints, and browser/agent publication is [Unified Reader–Authoring Experience](./UNIFIED_READER_AUTHORING_IMPLEMENTATION_PLAN.md).
+> **Completion companion:** The implemented reader-identical editor, one-click live Save, shared scholar/media rendering, flexible checkpoints, and browser/agent publication are documented in [Unified Reader–Authoring Experience](./UNIFIED_READER_AUTHORING_IMPLEMENTATION_PLAN.md).
 
 ---
 
-## 0. Live implementation status
+## 0. Completion record — 2026-08-04
 
-This document remains the end-to-end implementation plan. The implementation branch now contains the Chapter 7 vertical canary rather than only a proposal. Status must be read from tested artifacts and deployed infrastructure, not inferred from the original estimates below.
+This plan is complete. The remaining sections preserve the detailed architecture, sequencing, failure handling, and acceptance criteria used to implement it. Current production state is summarized here and must be re-read from the authority and release APIs before future migrations or rollback.
 
-| Phase | Current state on 2026-08-03 | Remaining gate |
+| Phase | Final state | Production evidence |
 |---|---|---|
-| 0 — governance/baseline | Complete: clean worktree, five ADRs, signed baseline, archived visual/runtime evidence | None |
-| 1 — contract/spike | Complete for the Chapter 7 canary: shared schemas, Git/D1 repository paths, deterministic import/export/round-trip, media/embed projections, live R2 storage, and a restore-verified encrypted backup | None for the Chapter 7 canary |
-| 2 — control plane/shadow migration | Deployed and remotely seeded: 18 documents/revisions/authority records; isolated 1–18 document change sets; document-targeted edits; aggregate diff/validation; all-target CAS submission; inherited live-D1 snapshot closure; idempotency, audit, human-only review, restore, passage/dependency reads, protected preview issuance, deployment staging, exact receipts, pointer history, and rollback selection | Remaining non-chapter graph repositories |
-| 3 — instructor editor/checkpoints | Live authenticated Chapter 7 write canary plus gated all-book browser selection: real Chapter, Checkpoints, Media, Embeds, and Review workspaces load every chapter/block type, keep repository-authoritative chapters read-only, and support prose, block insertion/reordering, checkpoint/media/embed authoring, one-click Save, prominent paginated version history with actor provenance, safe restore-to-draft, diff/dependency receipts, validation, preview, submit, and exact-snapshot human approve/reject | Complete behavioral accessibility test pass |
-| 4 — native media | R2 buckets and least-privilege credentials are live; private-original preservation plus quarantined processing for PNG, JPEG, GIF, WebP, MP3, WAV, M4A, MP4, WebM, PDF, and UTF-8 text; callbacks, GIF poster/playback, responsive images, document cards, and media policy tests are implemented | One real end-to-end production authoring upload and approval |
-| 5 — provider registry | YouTube, Vimeo, X, safe rich links, and fallback-first extended adapters implemented with no arbitrary HTML | Live multi-browser/network smoke checks |
-| 6 — API hardening | Production Content API is live with actor provenance, scope separation, CAS/idempotency, exact snapshot verification, multi-document diff/validation/submission, reject/restore, authority gating, passage dependencies, one-time preview, service-only deployment/authority controls, canonical-head promotion, complete-release state audit, expired-transaction reconciliation, and hostile-input tests | Generated exhaustive response schemas and broader operational limits |
-| 7 — MCP/Skills | Hosted MCP registration and four versioned Codex Skills are installed. Agents can create and address multi-chapter proposals, paginate/get passages, inspect evidence, edit checkpoints/media/embeds, preview, validate, diff, submit, and—only with the explicit `content:live-save` capability—publish one validated D1-authoritative chapter as a new immutable version. Agents still cannot approve/reject, change authority, promote a protected whole-site release, or roll back. | Complete remaining response schemas and run a live third-party MCP client conformance check |
-| 8 — immutable release | Signed Chapter 7 release is live with a complete 18-entry authority map, exact snapshot, asset digests, commit-pinned build, expected-active CAS, hash-bound receipt, atomic promotion, post-release recovery audit, and a restore-verified encrypted disaster backup | Schedule the first quarterly rollback exercise without changing routine production traffic |
-| 9 — cutover | Chapter 7 is D1-authoritative in production; Chapters 1–6 and 8–18 remain Git-authoritative and read-only in the editor. The service-only cutover-proposal path removes the remaining migration deadlock without opening dual-authority editing. | Prepare, review, and release explicit remaining-chapter batches; never switch authority implicitly |
-| 10 — extended media | Spotify click-to-load plus SoundCloud and Bluesky link-first adapters are implemented in contract, editor, reader, print, and conformance tests | Live provider smoke checks and post-canary quarterly operational drills |
+| 0 — governance/baseline | Complete | ADRs, threat model, signed baselines, and public-boundary audits are in the repository and CI |
+| 1 — contract/spike | Complete | Shared release/command/schema/OpenAPI contracts; deterministic import, projection, export, and round-trip gates |
+| 2 — control plane/migration | Complete | All 18 documents are D1-authoritative and their authority records point at the exact current canonical revisions |
+| 3 — editor/checkpoints | Complete | Continuous-document editor; zero-to-many checkpoints; contextual inspectors; one-click Save; immutable History and restore-to-draft |
+| 4 — native media | Complete | R2-backed, quarantined native image, animated GIF/WebP, audio, video, PDF, and text flows with captions, credits, alt text, rights metadata, fallbacks, and tests |
+| 5 — provider registry | Complete | Typed YouTube, Vimeo, X, Spotify, SoundCloud, Bluesky, and safe rich-link adapters; no arbitrary executable embed HTML |
+| 6 — API hardening | Complete | Scoped auth, CAS, idempotency, audit lineage, hostile-input gates, exact projection delivery verification, and protected authority/release operations |
+| 7 — MCP/Skills | Complete | Hosted MCP plus versioned authoring, checkpoint, and media Skills; live Codex MCP conformance including Save live and exact public-delivery receipt |
+| 8 — immutable release | Complete | Commit-pinned signed release, candidate/snapshot attestations, recovery audit, rollback transaction, and encrypted restore-verified backup |
+| 9 — cutover | Complete | Chapters 1–18 are D1-authoritative; all 18 public routes and matching editor deep links returned HTTP 200 |
+| 10 — extended media | Complete | Extended provider contracts, editor/reader/print fallbacks, validation, and conformance tests are deployed |
 
-Cloudflare R2 usage-based billing is active. The operating target remains **$5/month**, with a **$4 early-warning alert** and a **$5 target alert**. Remote D1 migrations through `0014_release_candidate_attempts.sql` are applied. The signed production release `release_2070f55c665eb9afa7201db9` promoted Chapter 7 to D1 authority while preserving Git authority for the other 17 chapters. The post-release recovery audit and the private backup workflow are green; the independently downloaded age-encrypted artifact restored 18 documents with SQLite integrity `ok`, zero foreign-key violations, and verified R2 object checksums.
+Cloudflare R2 usage-based billing is active. The operating target remains **$5/month**, with the existing **$4 early-warning** and **$5 target** controls. Quarterly restore/rollback drills and cost review are continuing operations, not unfinished implementation phases.
 
-### 0.1 Production evidence snapshot — 2026-08-03
+### 0.1 Final production evidence
 
 - Public reader: `https://ethicsandai.your-digital-life.org`
-- Instructor editor: `https://ethicsandai.your-digital-life.org/admin/`
+- Instructor editor: `https://editor.ethicsandai.your-digital-life.org`
 - Protected preview: `https://preview.ethicsandai.your-digital-life.org`
 - Hosted MCP endpoint: `https://mcp.ethicsandai.your-digital-life.org`
-- Active content release: `release_2070f55c665eb9afa7201db9`
-- Active release manifest hash: `f4bb54e6b019518dc85c5384f228540bcc590229f5c7a8da240f5f4892a19068`
-- Signed release Worker version: `d456820f-4e05-42ef-b952-8e229786ff89`
-- Deployment receipt: `receipt_1f10a276bf6b933e5cf09444`
-- Recovery audit: GitHub Actions run `30822281318` — success
-- Encrypted backup and restore workflow: GitHub Actions run `30823126706` — success
+- Final reader release: `release_fbd24b22bd639ce4c290c701`, sequence 24, published `2026-08-04T11:41:15.373Z`
+- Manifest hash: `2caf61d57646a83dce2f5e142067999cbd27e40f7933b8661d880910a4ad080b`
+- Candidate: `candidate_7456f60599709b8533a96d01`
+- Snapshot: `7456f60599709b8533a96d01b839a80e4383128f349054f59082494c0152c491`; revision `snapshotrev_5036da58740a703c334d9c79`
+- Reader Worker version: `2d911f91-31b6-4ee0-a1bb-deab3dd1d2c3`
+- Final Content API version: `40e3dc51-2a6f-4b10-a556-85ff89bf19ab`
+- Final instructor-editor version: `f9e9edc3-403e-489b-b8a4-a77796c60056`
+- Deployment receipt: `receipt_cbd8af771fd366872a25a9ec`; completed transaction `deployment_66deb1066a872b108151203f`
+- Protected release workflow: GitHub Actions run `30905539939` — success
+- Final stale-draft correction: PR 67, merged commit `3586277516e63c72d6c594314b005107a8633679`
+- Production browser verification: Chapter 7 loaded the exact canonical `revision_c6bb0561dc5598fa89d9f35d`, three checkpoints, and two rendered Wikimedia media placements; the retired verification checkpoint was absent. Chapter 5 rendered the Thomas Aquinas person feature in both reader and editor.
+- Live MCP conformance: 5 tools discovered; chapter read, history, embed resolution, Save live, delivery verification, and restore-to-current-revision draft all succeeded.
 
-These identifiers are operational evidence, not mutable configuration defaults. Current state must still be read from the release and authority APIs before any later cutover or rollback.
+### 0.2 Instructor and agent outcomes now live
+
+- A signed-in instructor can open **Edit chapter** from the public chapter menu, edit in the reader-identical continuous document, click **Save** once, and return with **Done** to the same chapter and passage.
+- Media, embeds, scholar cards, captions, credits, links, emphasis, tables, and checkpoint cards render as managed visual content in the editor rather than raw HTML.
+- The editor and API accept any valid checkpoint count, including zero, and reject only empty or structurally invalid checkpoint content.
+- Browser uploads and MCP/API media operations share the same validation, accessibility, rights, processing, and placement contracts.
+- An agent with explicit `content:live-save` authority can publish; ordinary agents can draft, inspect, diff, validate, and restore without acquiring release or authority-changing powers.
 
 ---
 
@@ -2359,10 +2371,17 @@ The platform is complete when all statements below are true:
 
 ---
 
-## 20. Immediate next decision
+## 20. Final decision and continuing operations
 
 Phase 0 architecture decision (approved):
 
 > After shadow migration and canary, D1/R2 becomes the sole routine content authority; Git remains the code authority; the public reader remains a static immutable release; arbitrary embed HTML remains prohibited; X renders its authored rich fallback by default and may load the single reviewed official widget only after explicit student activation/consent.
 
-Implementation begins with the clean `origin/main` worktree and the vertical spike. It does not begin by modifying the currently dirty redesign checkout.
+Implementation proceeded from clean, reviewable branches and is now complete on `origin/main`. Future work under this section is operational maintenance rather than a remaining rollout gate:
+
+- retain the D1/R2 content authority and Git code authority split;
+- keep public Save intentional and never publish on each keystroke;
+- run the documented quarterly restore/rollback exercise;
+- review Cloudflare usage against the $4 warning and $5 operating target;
+- add providers only through typed, fallback-first adapters;
+- require the protected release path for code, schema, renderer, authority, or infrastructure changes.
