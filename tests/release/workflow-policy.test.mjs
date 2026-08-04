@@ -25,6 +25,7 @@ test("release workflow derives an immutable snapshot route from the hash", async
   assert.match(workflow, /! -path '\.\/admin\/index\.html'/);
   assert.match(workflow, /! -path '\.\/chapter\/\*\/index\.html'/);
   assert.match(workflow, /Capture immutable built-asset digests[\s\S]*?\(cd release-artifacts\/dist/);
+  assert.match(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --candidate release-artifacts\/candidate\.json/);
   assert.doesNotMatch(workflow, /sed 's#/);
 });
 
@@ -61,7 +62,7 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /post-promotion-version\.json/);
   assert.match(workflow, /state\.json\.'\+c\.candidateId\+'\.json'/);
   assert.match(workflow, /test "\$observed" = "\$expected"/);
-  assert.match(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --out release-artifacts\/production-verification\.json/);
+  assert.match(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --candidate release-artifacts\/candidate\.json --out release-artifacts\/production-verification\.json/);
   assert.doesNotMatch(workflow, /smoke\.mjs --base-url https:\/\/ethicsandai\.your-digital-life\.org --asset-digests/);
   assert.match(workflow, /--receipt release-artifacts\/deployment-receipt\.json/);
   assert.match(workflow, /RELEASE_DEPLOY_RECEIPT_TOKEN: \$\{\{ secrets\.RELEASE_DEPLOY_RECEIPT_TOKEN \}\}/);

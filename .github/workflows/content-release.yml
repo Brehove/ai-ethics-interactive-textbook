@@ -193,7 +193,7 @@ jobs:
           observed="$(node -e "console.log(require('./release-artifacts/post-promotion-version.json').cloudflareVersionId)")"
           expected="$(node -e "const c=require('./release-artifacts/candidate.json');const s=require('./release-artifacts/state.json.'+c.candidateId+'.json');console.log(s.candidates[c.candidateId].versionId)")"
           test "$observed" = "$expected"
-          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out release-artifacts/production-verification.json
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --candidate release-artifacts/candidate.json --out release-artifacts/production-verification.json
           node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
       - name: Activate only the exact D1 revisions now present in the active release
         id: authority
