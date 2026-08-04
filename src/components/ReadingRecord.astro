@@ -262,6 +262,7 @@ const strategyPreview: Record<string, string> = {
         return id ? { ...item, id } : null;
       })
       .filter((item): item is InteractivePrompt => item !== null);
+    const promptStage = (item: PromptRecord) => item.stage ?? item.slotLabel ?? "Reading checkpoint";
     const activityPreview = record.dataset.activityPreview === "true";
     const responses = new Map<string, PreservedResponse>();
     const notes: ReadingNote[] = [];
@@ -370,7 +371,7 @@ const strategyPreview: Record<string, string> = {
       recordEntryButton?.setAttribute("aria-expanded", "false");
       recordMap?.setAttribute("hidden", "");
       promptPanel?.removeAttribute("hidden");
-      if (stage) stage.textContent = selected.stage ?? selected.slotLabel ?? "Reading checkpoint";
+      if (stage) stage.textContent = promptStage(selected);
       if (title) title.textContent = selected.title;
       if (promptCopy) promptCopy.textContent = selected.prompt;
       if (guidance) guidance.textContent = selected.guidance;
@@ -686,7 +687,7 @@ const strategyPreview: Record<string, string> = {
         preservedMovement.toggleAttribute("hidden", !preserved?.movement);
       }
       updateProgress();
-      if (status) status.textContent = `${activePrompt.stage} response preserved. ${responses.size} of ${prompts.length} complete.`;
+      if (status) status.textContent = `${promptStage(activePrompt)} response preserved. ${responses.size} of ${prompts.length} complete.`;
       focusAfterDialogClose = preservedBox;
     });
 
@@ -703,7 +704,7 @@ const strategyPreview: Record<string, string> = {
       const generatedAt = new Date();
       const items = prompts.map((item, index) => {
         const saved = responses.get(item.id);
-        return `<section><p class="stage">${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage ?? item.slotLabel ?? "Reading checkpoint")} · ${escapeHtml(item.passageId)}</p><h2>${escapeHtml(item.title)}</h2><p class="prompt">${escapeHtml(item.prompt)}</p>${saved ? `${saved.movement ? `<p class="movement">Judgment movement: <strong>${escapeHtml(saved.movement)}</strong></p>` : ""}<blockquote>${escapeHtml(saved.response).replaceAll("\n", "<br>")}</blockquote><p class="time">Preserved ${escapeHtml(new Date(saved.preservedAt).toLocaleString())}</p>` : `<p class="missing">No response preserved.</p>`}</section>`;
+        return `<section><p class="stage">${String(index + 1).padStart(2, "0")} · ${escapeHtml(promptStage(item))} · ${escapeHtml(item.passageId)}</p><h2>${escapeHtml(item.title)}</h2><p class="prompt">${escapeHtml(item.prompt)}</p>${saved ? `${saved.movement ? `<p class="movement">Judgment movement: <strong>${escapeHtml(saved.movement)}</strong></p>` : ""}<blockquote>${escapeHtml(saved.response).replaceAll("\n", "<br>")}</blockquote><p class="time">Preserved ${escapeHtml(new Date(saved.preservedAt).toLocaleString())}</p>` : `<p class="missing">No response preserved.</p>`}</section>`;
       }).join("");
       const noteItems = notes.map((item, index) => `<section><p class="stage">Passage note ${index + 1}${item.passageId ? ` · ${escapeHtml(item.passageId)}` : ""}</p>${item.quote ? `<blockquote>${escapeHtml(item.quote).replaceAll("\n", "<br>")}</blockquote>` : ""}<p>${escapeHtml(item.note).replaceAll("\n", "<br>")}</p><p class="time">Added ${escapeHtml(new Date(item.createdAt).toLocaleString())}</p></section>`).join("");
       const notesSection = notes.length ? `<h2>Passage notes</h2>${noteItems}` : "";
@@ -719,7 +720,7 @@ const strategyPreview: Record<string, string> = {
       ];
       prompts.forEach((item, index) => {
         const saved = responses.get(item.id);
-        lines.push(`${index + 1}. ${item.stage} — ${item.title} · ${item.passageId}`, item.prompt);
+        lines.push(`${index + 1}. ${promptStage(item)} — ${item.title} · ${item.passageId}`, item.prompt);
         if (saved?.movement) lines.push(`Judgment movement: ${saved.movement}`);
         lines.push(saved?.response ?? "No response preserved.", "");
       });
