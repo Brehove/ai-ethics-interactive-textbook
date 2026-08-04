@@ -724,7 +724,9 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const removing = findUniqueBlock(chapter, operation.blockId);
     if (removing.block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be removed');
     if (removing.block.type === 'mediaFigure') throw new ApiError(422, 'MEDIA_REMOVE_REQUIRED', 'Use media.remove so the immutable media asset remains explicit');
-    const passageId = removing.block.passageId || removing.block.anchorPassageId;
+    const referencedAnchor = removing.block.anchorPassageId;
+    const ownsReferencedAnchor = referencedAnchor && !chapter.body.some((item) => item.blockId !== operation.blockId && item.passageId === referencedAnchor);
+    const passageId = removing.block.passageId || (ownsReferencedAnchor ? referencedAnchor : undefined);
     const dependents = passageId ? [
       ...chapter.checkpoints.filter((item) => item.passageId === passageId).map((item) => ({ kind: 'checkpoint', id: item.checkpointId })),
       ...chapter.body.filter((item) => item.blockId !== operation.blockId && item.anchorPassageId === passageId).map((item) => ({ kind: item.type, id: item.blockId }))

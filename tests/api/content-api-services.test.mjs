@@ -1029,6 +1029,15 @@ test('block.remove fails closed on anchored dependents and atomically reanchors 
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
 });
 
+test('block.remove does not treat an attached embed as the owner of its paragraph anchor', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-anchor-owner' }];
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-attached-embed', embedId: 'embed-attached', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-attached-embed' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-attached-embed'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-work');
+});
+
 test('checkpoint.remove targets either the internal key or stable ID', async () => {
   const added = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   const id = added.chapter.checkpoints[0].checkpointId;
