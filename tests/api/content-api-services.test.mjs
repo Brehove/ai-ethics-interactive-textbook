@@ -999,8 +999,20 @@ test('block.insert creates deterministic unique IDs from a stable anchor and rej
   const second = await applySemanticOperation(baseChapter(), operation);
   assert.equal(first.chapter.body[2].blockId, second.chapter.body[2].blockId);
   assert.match(first.chapter.body[2].passageId, /^passage_/);
+  const table = await applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'table', columns: ['Claim', 'Reason'], rows: [['A', 'B']] }, position: { afterBlockId: 'b-work' } });
+  assert.deepEqual(table.chapter.body[2].columns, ['Claim', 'Reason']);
+  await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'table', columns: ['Claim'], rows: [['A', 'B']] }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'TABLE_INVALID');
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'legacyMarkup', html: '<script>x</script>' }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'BLOCK_TYPE_FORBIDDEN');
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'paragraph', text: '<style>body{display:none}</style>' }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'RAW_MARKUP_FORBIDDEN');
+});
+
+test('API-created diagrams bind checkpoint hashes to their reader-visible description', async () => {
+  const inserted = await applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'diagram', diagramId: 'diagram_judgment', alt: 'Visible judgment map' }, position: { afterBlockId: 'b-work' } });
+  const diagram = inserted.chapter.body.find((block) => block.type === 'diagram');
+  assert.equal(diagram.description, 'Visible judgment map');
+  assert.equal('alt' in diagram, false);
+  const withCheckpoint = await applySemanticOperation(inserted.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('diagram', diagram.anchorPassageId) });
+  assert.equal(withCheckpoint.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible judgment map'));
 });
 
 test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {

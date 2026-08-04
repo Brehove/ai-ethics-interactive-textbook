@@ -11,10 +11,11 @@ import {
   cloneChapter,
   moveCheckpoint,
   newId,
+  nextCheckpointOrder,
   nearestPassage,
   type ChapterDocument,
 } from "./editor-model";
-import { mountTiptap } from "./tiptap-editor";
+import { managedNodeSequence, mountTiptap } from "./tiptap-editor";
 import { legacyCuratedArtifacts } from "./generated-legacy-artifacts";
 import { CHAPTER_ROUTE_BY_SLUG } from "./chapter-route-manifest";
 import "./styles.css";
@@ -351,13 +352,9 @@ function inspectorHtml() {
   if (inspector.kind === "checkpoint") {
     const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
     if (!item) return "";
-    const anchorCheckpoints = chapter.checkpoints
-      .map((checkpoint, index) => ({ checkpoint, index }))
-      .filter(({ checkpoint }) => checkpoint.passageId === item.passageId)
-      .sort((a, b) => a.checkpoint.displayOrder - b.checkpoint.displayOrder || a.index - b.index)
-      .map(({ checkpoint }) => checkpoint);
-    const itemPosition = Math.max(0, anchorCheckpoints.findIndex((checkpoint) => checkpoint.checkpointId === item.checkpointId));
-    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorCheckpoints.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
+    const anchorSequence = managedNodeSequence(chapter, item.passageId);
+    const itemPosition = Math.max(0, anchorSequence.findIndex((node) => node.kind === "checkpoint" && node.item.checkpointId === item.checkpointId));
+    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
   if (!placement) return "";
@@ -480,7 +477,7 @@ function bindForms() {
     const anchor = selectedBlock();
     if (dataSource && anchor) {
       const passageText = checkpointExcerpt(anchor);
-      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: chapter.checkpoints.filter((item) => item.passageId === selectedPassage).length, title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
+      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: nextCheckpointOrder(chapter, selectedPassage), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
     } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
     activeDialog = null; setState("dirty");
   };

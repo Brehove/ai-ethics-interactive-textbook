@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder } from "../src/editor-model";
 import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
@@ -49,7 +49,7 @@ test("an unchanged checkpoint position remains stable when persisted orders are 
   assert.deepEqual(ordered.map((checkpoint) => checkpoint.displayOrder), [4, 5]);
 });
 
-test("checkpoint reorder preserves managed placement position and title-only order", () => {
+test("checkpoint reorder uses the combined checkpoint and placement order", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
   const first = chapter.checkpoints[0];
   chapter.checkpoints = [
@@ -58,15 +58,24 @@ test("checkpoint reorder preserves managed placement position and title-only ord
   ];
   chapter.managedPlacements = [{ placementId: "placement_between", kind: "personFeature", contentId: "personfeature_aristotle", anchorPassageId: first.passageId, position: "after", orderAtAnchor: 2, displayPreset: "thinker-card" }];
   moveCheckpoint(chapter, "checkpoint_managed_first", first.passageId, 0);
-  assert.deepEqual(chapter.checkpoints.map((item) => item.displayOrder), [4, 5]);
-  assert.equal(chapter.managedPlacements[0].orderAtAnchor, 2);
+  assert.deepEqual(managedNodeSequence(chapter, first.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), ["checkpoint_managed_first", "placement_between", "checkpoint_managed_second"]);
   moveCheckpoint(chapter, "checkpoint_managed_second", first.passageId, 0);
   const sequence = [
     ...chapter.checkpoints.map((item) => ({ id: item.checkpointId, order: item.displayOrder })),
     { id: chapter.managedPlacements[0].placementId, order: chapter.managedPlacements[0].orderAtAnchor },
   ].sort((a, b) => a.order - b.order).map((item) => item.id);
-  assert.deepEqual(sequence, ["placement_between", "checkpoint_managed_second", "checkpoint_managed_first"]);
+  assert.deepEqual(sequence, ["checkpoint_managed_second", "checkpoint_managed_first", "placement_between"]);
   assert.deepEqual(managedNodeSequence(chapter, first.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), sequence);
+});
+
+test("first checkpoint can move before an existing placement at a new anchor", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const checkpoint = chapter.checkpoints[0];
+  const targetAnchor = chapter.body.map(blockPassage).find((passageId) => passageId && passageId !== checkpoint.passageId)!;
+  chapter.managedPlacements = [{ placementId: "placement_target", kind: "personFeature", contentId: "personfeature_aristotle", anchorPassageId: targetAnchor, position: "after", orderAtAnchor: 0, displayPreset: "thinker-card" }];
+  moveCheckpoint(chapter, checkpoint.checkpointId, targetAnchor, 0, "b".repeat(64));
+  assert.deepEqual(managedNodeSequence(chapter, targetAnchor).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), [checkpoint.checkpointId, "placement_target"]);
+  assert.equal(nextCheckpointOrder(chapter, targetAnchor), 2);
 });
 
 test("checkpoint excerpts cover code and table anchors and prefer passage owners", () => {

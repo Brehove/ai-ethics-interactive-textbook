@@ -9,6 +9,15 @@ export type ChapterDocument = Record<string, unknown> & { documentId: string; ch
 export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 export const cloneChapter = (chapter: ChapterDocument): ChapterDocument => structuredClone(chapter);
 export const blockPassage = (block: ChapterBlock) => String(block.passageId ?? block.anchorPassageId ?? "");
+type AnchorNode = { kind: "checkpoint"; item: Checkpoint; order: number; index: number; sequence: number }
+  | { kind: "placement"; item: ManagedPlacement; order: number; index: number; sequence: number };
+const orderedAnchor = (chapter: ChapterDocument, anchor: string, excludedId?: string): AnchorNode[] => [
+  ...chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 }))
+    .filter((node) => node.item.passageId === anchor && node.item.checkpointId !== excludedId),
+  ...chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 }))
+    .filter((node) => node.item.anchorPassageId === anchor && node.item.position !== "before"),
+].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
+export const nextCheckpointOrder = (chapter: ChapterDocument, anchor: string) => Math.max(-1, ...orderedAnchor(chapter, anchor).map((node) => node.order)) + 1;
 export const checkpointExcerpt = (block?: ChapterBlock) => {
   if (!block) return "";
   if (block.type === "list" && Array.isArray(block.items)) return block.items.map(String).join("\n");
@@ -35,7 +44,7 @@ export function nearestPassage(chapter: ChapterDocument, passageId?: string) {
   return available[0] ?? "";
 }
 export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, "checkpointId" | "displayOrder" | "passageId">, passageId: string) {
-  const anchor = nearestPassage(chapter, passageId); const checkpoint: Checkpoint = { checkpointId: newId("checkpoint"), passageId: anchor, displayOrder: chapter.checkpoints.filter((item) => item.passageId === anchor).length, ...draft }; chapter.checkpoints.push(checkpoint); return checkpoint;
+  const anchor = nearestPassage(chapter, passageId); const checkpoint: Checkpoint = { checkpointId: newId("checkpoint"), passageId: anchor, displayOrder: nextCheckpointOrder(chapter, anchor), ...draft }; chapter.checkpoints.push(checkpoint); return checkpoint;
 }
 export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, passageId: string, displayOrder: number, passageExcerptHash?: string) {
   const checkpoint = chapter.checkpoints.find((item) => item.checkpointId === checkpointId);
@@ -43,36 +52,22 @@ export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, p
   const previousAnchor = checkpoint.passageId;
   const nextAnchor = nearestPassage(chapter, passageId);
   if (previousAnchor !== nextAnchor && !/^[a-f0-9]{64}$/.test(passageExcerptHash ?? "")) throw new Error("Moving a checkpoint requires the destination passage excerpt hash.");
-  type AnchorNode = { kind: "checkpoint"; item: Checkpoint; order: number; index: number; sequence: number }
-    | { kind: "placement"; item: ManagedPlacement; order: number; index: number; sequence: number };
-  const orderedAnchor = (anchor: string, excludedId?: string): AnchorNode[] => [
-    ...chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 }))
-      .filter((node) => node.item.passageId === anchor && node.item.checkpointId !== excludedId),
-    ...chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 }))
-      .filter((node) => node.item.anchorPassageId === anchor && node.item.position !== "before"),
-  ].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
   const reindex = (nodes: AnchorNode[]) => nodes.forEach((node, index) => {
     if (node.kind === "checkpoint") node.item.displayOrder = index;
     else node.item.orderAtAnchor = index;
   });
-  const currentSiblings = orderedAnchor(previousAnchor).filter((node) => node.kind === "checkpoint");
-  const currentPosition = currentSiblings.findIndex((node) => node.item.checkpointId === checkpointId);
+  const currentSequence = orderedAnchor(chapter, previousAnchor);
+  const currentPosition = currentSequence.findIndex((node) => node.kind === "checkpoint" && node.item.checkpointId === checkpointId);
   const requested = Number.isInteger(displayOrder) ? Math.max(0, displayOrder) : currentPosition;
-  const requestedAtCurrentAnchor = Math.min(requested, Math.max(0, currentSiblings.length - 1));
+  const requestedAtCurrentAnchor = Math.min(requested, Math.max(0, currentSequence.length - 1));
   if (previousAnchor === nextAnchor && requestedAtCurrentAnchor === currentPosition) return checkpoint;
-  const target = orderedAnchor(nextAnchor, checkpointId);
-  const targetCheckpoints = target.filter((node) => node.kind === "checkpoint");
-  const requestedAtTarget = Math.min(requested, targetCheckpoints.length);
-  const insertionIndex = requestedAtTarget < targetCheckpoints.length
-    ? target.indexOf(targetCheckpoints[requestedAtTarget])
-    : targetCheckpoints.length
-      ? target.indexOf(targetCheckpoints.at(-1)!) + 1
-      : target.length;
+  const target = orderedAnchor(chapter, nextAnchor, checkpointId);
+  const insertionIndex = Math.min(requested, target.length);
   target.splice(insertionIndex, 0, { kind: "checkpoint", item: checkpoint, order: checkpoint.displayOrder, index: chapter.checkpoints.indexOf(checkpoint), sequence: 0 });
   checkpoint.passageId = nextAnchor;
   if (previousAnchor !== nextAnchor) checkpoint.passageExcerptHash = passageExcerptHash;
   reindex(target);
-  if (previousAnchor !== nextAnchor) reindex(orderedAnchor(previousAnchor, checkpointId));
+  if (previousAnchor !== nextAnchor) reindex(orderedAnchor(chapter, previousAnchor, checkpointId));
   return checkpoint;
 }
 export function addPersonFeature(chapter: ChapterDocument, personFeatureId: string, passageId: string) {
