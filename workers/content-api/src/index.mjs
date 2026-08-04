@@ -697,10 +697,22 @@ async function observePublicDelivery(env, command) {
   const checkedAt = now();
   let observedRevisionId = null; let observedProjectionHash = null;
   try {
-    const request = new Request(command.public_url, { method: 'GET', headers: { accept: 'text/html', ...(env.PUBLIC_READER?.fetch ? { 'x-textbook-delivery-probe': 'v1' } : {}) }, redirect: 'error' });
-    const response = env.PUBLIC_READER?.fetch ? await env.PUBLIC_READER.fetch(request) : await fetch(request);
-    observedRevisionId = response.headers.get('x-textbook-revision') || response.headers.get('x-content-revision');
-    observedProjectionHash = response.headers.get('x-textbook-projection-hash') || response.headers.get('x-content-projection-hash');
+    if (env.PUBLIC_READER_DELIVERY?.getDeliveryIdentity) {
+      const identity = await env.PUBLIC_READER_DELIVERY.getDeliveryIdentity(command.document_id);
+      const expectedPath = new URL(command.public_url).pathname;
+      if (identity?.documentId === command.document_id && identity.publicPath === expectedPath) {
+        observedRevisionId = identity.revisionId || null;
+        observedProjectionHash = identity.projectionHash || null;
+      }
+    } else {
+      // HTTP remains a local/test fallback. Production uses the named RPC
+      // entrypoint so Cloudflare static-asset resolution is never nested inside
+      // a service binding.
+      const request = new Request(command.public_url, { method: 'GET', headers: { accept: 'text/html', ...(env.PUBLIC_READER?.fetch ? { 'x-textbook-delivery-probe': 'v1' } : {}) }, redirect: 'error' });
+      const response = env.PUBLIC_READER?.fetch ? await env.PUBLIC_READER.fetch(request) : await fetch(request);
+      observedRevisionId = response.headers.get('x-textbook-revision') || response.headers.get('x-content-revision');
+      observedProjectionHash = response.headers.get('x-textbook-projection-hash') || response.headers.get('x-content-projection-hash');
+    }
   } catch {
     // Delivery verification is intentionally recoverable after the atomic D1 commit.
   }

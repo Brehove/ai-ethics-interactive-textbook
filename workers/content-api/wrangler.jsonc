@@ -21,7 +21,7 @@
     }
   ],
   "services": [
-    { "binding": "PUBLIC_READER", "service": "ethicsandai" },
+    { "binding": "PUBLIC_READER_DELIVERY", "service": "ethicsandai", "entrypoint": "DeliveryIdentity" },
     { "binding": "AUTH_CAPABILITY", "service": "ethicsandai-editor-auth", "entrypoint": "AgentCapabilityVerifier" }
   ],
   "r2_buckets": [

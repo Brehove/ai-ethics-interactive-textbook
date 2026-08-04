@@ -1,5 +1,7 @@
 import { CHAPTER_ROUTES } from "./chapter-routes.mjs";
 
+const chapterByDocumentId = new Map(Object.entries(CHAPTER_ROUTES).map(([slug, route]) => [route.documentId, { slug, ...route }]));
+
 const chapterRoute = (pathname) => {
   const match = pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
   return match ? CHAPTER_ROUTES[match[1]] || null : null;
@@ -14,6 +16,24 @@ const publicProjection = async (env, documentId) => {
     if (payload?.documentId !== documentId || typeof payload.html !== "string" || !Array.isArray(payload.prompts) || !/^revision_[A-Za-z0-9_-]+$/.test(payload.revisionId || "") || !/^projection_[A-Za-z0-9_-]+$/.test(payload.projectionId || "")) return null;
     return payload;
   } catch { return null; }
+};
+
+// This identity is exposed only through the Worker's named RPC entrypoint. It
+// binds a document to the exact public route compiled into this reader and to
+// the live immutable projection the reader would render there.
+export const getReaderDeliveryIdentity = async (env, documentId) => {
+  const route = chapterByDocumentId.get(documentId);
+  if (!route) return null;
+  const projection = await publicProjection(env, documentId);
+  if (!projection) return null;
+  return {
+    documentId,
+    slug: route.slug,
+    publicPath: `/chapter/${route.slug}/`,
+    revisionId: projection.revisionId,
+    projectionId: projection.projectionId,
+    projectionHash: projection.projectionHash,
+  };
 };
 
 const projectionHeaders = (headers, projection) => {
