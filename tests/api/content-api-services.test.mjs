@@ -853,6 +853,13 @@ test('checkpoint hashes are server-derived for every selectable anchor type', as
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(code)));
   assert.notEqual(result.chapter.checkpoints[0].passageExcerptHash, await sha256(''));
   assert.equal(checkpointExcerpt({ type: 'list', text: 'stale', items: ['Visible A', 'Visible B'] }), 'Visible A\nVisible B');
+  const listChapter = baseChapter();
+  listChapter.body[0] = { type: 'list', blockId: 'b-commit', passageId: 'p-commit', text: 'stale', ordered: false, items: ['Before'] };
+  listChapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-list-hash' });
+  const replacedBody = structuredClone(listChapter.body);
+  replacedBody[0].items = ['Visible A', 'Visible B'];
+  const bodyResult = await applySemanticOperation(listChapter, { type: 'chapter.replaceBody', body: replacedBody });
+  assert.equal(bodyResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible A\nVisible B'));
 });
 
 test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {

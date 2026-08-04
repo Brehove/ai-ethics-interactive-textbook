@@ -123,15 +123,21 @@ function proseNode(block: ProseBlock) {
   return { type: "paragraph", attrs, content: inlineContent(block.text) };
 }
 
+export function managedNodeSequence(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
+  const checkpoints = position === "after" ? chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 })).filter((node) => node.item.passageId === passageId) : [];
+  const placements = chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 })).filter((node) => node.item.anchorPassageId === passageId && node.item.position === position);
+  return [...checkpoints, ...placements].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
+}
+
 function managedNodes(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
-  const placements = chapter.managedPlacements.filter((placement) => placement.anchorPassageId === passageId && placement.position === position).sort((a, b) => a.orderAtAnchor - b.orderAtAnchor).map((placement) => {
+  return managedNodeSequence(chapter, passageId, position).map((entry) => {
+    if (entry.kind === "checkpoint") return { type: "managedNode", attrs: { placementId: entry.item.checkpointId, kind: "Checkpoint", html: renderOrderedNode({ kind: "checkpoint", value: entry.item }, { context: "editor" }) } };
+    const placement = entry.item;
     const feature = placement.kind === "personFeature" ? chapter.personFeatures.find((item) => item.personFeatureId === placement.contentId) : undefined;
     const block = (chapter.managedContent as Record<string, Record<string, unknown>> | undefined)?.[placement.contentId];
     const node = feature ? { kind: "personFeature" as const, value: { ...feature, ...placement } } : { kind: "block" as const, value: block ?? { type: placement.kind === "media" ? "mediaFigure" : "externalEmbed", blockId: placement.placementId, title: "Managed content preview", caption: "Typed placement preview" } };
     return { type: "managedNode", attrs: { placementId: placement.placementId, kind: placement.kind === "personFeature" ? "Person feature" : placement.kind === "media" ? "Media" : "Embed", html: renderOrderedNode(node, { context: "editor", publicOrigin: location.origin }) } };
   });
-  const checkpoints = position === "after" ? chapter.checkpoints.filter((checkpoint) => checkpoint.passageId === passageId).sort((a, b) => a.displayOrder - b.displayOrder).map((checkpoint) => ({ type: "managedNode", attrs: { placementId: checkpoint.checkpointId, kind: "Checkpoint", html: renderOrderedNode({ kind: "checkpoint", value: checkpoint }, { context: "editor" }) } })) : [];
-  return [...placements, ...checkpoints];
 }
 
 export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void, legacyArtifacts: readonly LegacyCuratedArtifact[] = []) {

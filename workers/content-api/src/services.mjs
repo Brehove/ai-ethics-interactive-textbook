@@ -472,11 +472,6 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
   }
   if (missing.length) throw new ApiError(409, 'DEPENDENCIES_REQUIRE_REANCHOR', 'The pasted chapter would orphan anchored content; keep those passages or reanchor them first', { dependents: missing });
   chapter.body = scratch.body;
-  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => {
-    const block = chapter.body.find((item) => item.passageId === checkpoint.passageId);
-    const excerpt = block?.text || block?.items?.join(' ') || '';
-    return excerpt ? { ...checkpoint, passageExcerptHash: await sha256(excerpt) } : checkpoint;
-  }));
 };
 
 const importPlainTextChapter = async (chapter, input) => {
@@ -804,6 +799,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const [removed] = chapter.managedPlacements.splice(index, 1);
     if (removed.kind === 'personFeature') chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== removed.contentId && item.placementId !== removed.placementId);
   }
+  await bindCheckpointExcerptHashes(chapter);
   return { chapter, contentHash: await sha256(chapter) };
 };
 

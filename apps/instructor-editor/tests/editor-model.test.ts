@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
 import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
-import { serializeBody } from "../src/tiptap-editor";
+import { managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
@@ -66,6 +66,7 @@ test("checkpoint reorder preserves managed placement position and title-only ord
     { id: chapter.managedPlacements[0].placementId, order: chapter.managedPlacements[0].orderAtAnchor },
   ].sort((a, b) => a.order - b.order).map((item) => item.id);
   assert.deepEqual(sequence, ["placement_between", "checkpoint_managed_second", "checkpoint_managed_first"]);
+  assert.deepEqual(managedNodeSequence(chapter, first.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), sequence);
 });
 
 test("checkpoint excerpts cover code and table anchors and prefer passage owners", () => {
