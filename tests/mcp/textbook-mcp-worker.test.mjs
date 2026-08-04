@@ -5,8 +5,8 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import worker, { createMcp, verifyCapability } from '../../workers/textbook-mcp/src/index.mjs';
 
 const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
-const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'upload_media', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
-const claims = (overrides = {}) => ({ actorId: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', jti: 'grant_test_123', scopes: ['content:read', 'content:write', 'media:upload'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: editOperations, expiresAt: '2026-08-03T20:00:00.000Z', ...overrides });
+const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
+const claims = (overrides = {}) => ({ actorId: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', jti: 'grant_test_123', scopes: ['content:read', 'content:write', 'media:read', 'media:upload'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: editOperations, expiresAt: '2026-08-03T20:00:00.000Z', ...overrides });
 function makeEnv({ verified = claims(), api = async () => ({ ok: true }) } = {}) {
   return {
     AUTH_CAPABILITY: { verifyCapability: async (token, target) => { assert.equal(token, 'device-flow-test'); assert.equal(typeof target, 'object'); return typeof verified === 'function' ? verified() : verified; } },
@@ -32,9 +32,29 @@ test('central private verifier is required and validates bounded claims', async 
 test('MCP exposes the Unified authoring contract rather than raw or legacy write tools', async () => {
   const env = makeEnv(); const { client, server } = await connected(env);
   const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
-  for (const name of ['get_authoring_view', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
+  for (const name of ['get_authoring_view', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
   for (const name of ['save_live_revision', 'create_changeset', 'replace_text', 'approve_changeset', 'publish_changeset']) assert.equal(names.includes(name), false, name);
   assert.equal(names.includes('commit_live'), false);
+  await client.close(); await server.close();
+});
+
+test('media and provider tools expose the complete Skill workflow and exact API routes', async () => {
+  const calls = [];
+  const env = makeEnv({ api: async (request) => {
+    calls.push({ path: `${new URL(request.url).pathname}${new URL(request.url).search}`, method: request.method, body: request.method === 'GET' ? null : await request.clone().json() });
+    return { ok: true };
+  } });
+  const { client, server } = await connected(env);
+  await client.callTool({ name: 'search_media', arguments: { query: 'Aristotle', kind: 'image', rightsStatus: 'cleared', limit: 10 } });
+  await client.callTool({ name: 'create_media_review_package', arguments: { rights: { basis: 'publicDomain', creator: 'Unknown', sourceUrl: 'https://commons.wikimedia.org/wiki/File:Example.jpg', license: 'Public domain', attribution: 'Public domain image.' }, editorial: { teachingUse: 'Compare the portrait with the chapter account.', placementIntent: 'After the philosopher introduction.' }, accessibility: { decorative: false, altText: 'A portrait used to identify the philosopher.', motionReview: 'notApplicable' }, idempotencyKey: key } });
+  await client.callTool({ name: 'get_media_job', arguments: { jobId: 'mediajob_7' } });
+  await client.callTool({ name: 'get_media_asset', arguments: { mediaId: 'media_7' } });
+  await client.callTool({ name: 'resolve_provider_url', arguments: { url: 'https://www.youtube.com/watch?v=abc123', expectedProvider: 'youtube' } });
+  assert.equal(calls[0].path, '/v1/media?limit=10&cursor=0&q=Aristotle&kind=image&rightsStatus=cleared');
+  assert.equal(calls[1].path, '/v1/media-review-packages'); assert.equal(calls[1].body.accessibility.decorative, false);
+  assert.equal(calls[2].path, '/v1/media/jobs/mediajob_7');
+  assert.equal(calls[3].path, '/v1/media/media_7');
+  assert.equal(calls[4].path, '/v1/embeds:resolve'); assert.equal(calls[4].body.expectedProvider, 'youtube');
   await client.close(); await server.close();
 });
 
