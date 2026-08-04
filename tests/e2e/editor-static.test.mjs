@@ -12,6 +12,13 @@ test("reader keeps the metadata title as the only visible chapter H1", async () 
   assert.match(globalCss, /\.chapter-prose > \.chapter-body > h1:first-child \{ display: none; \}/);
 });
 
+test("static scholar fallback is inside the replaceable public projection boundary", async () => {
+  const chapterPage = await readFile(new URL("../../src/pages/chapter/[slug]/index.astro", import.meta.url), "utf8");
+  const projectionBoundary = chapterPage.match(/<div class="chapter-body" data-public-projection=[\s\S]*?<\/div>/)?.[0] ?? "";
+  assert.match(projectionBoundary, /<InlineScholarFigures/);
+  assert.equal((chapterPage.match(/<InlineScholarFigures/g) ?? []).length, 1);
+});
+
 test("the public admin route is redirect-only and the dedicated editor is the sole writer", async () => {
   const [adminPage, editorMain, editorModel, editorWorker] = await Promise.all([
     readFile(new URL("../../src/pages/admin/index.astro", import.meta.url), "utf8"),

@@ -45,10 +45,10 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
     <div class="chapter-prose first-read">
       <div class="chapter-body" data-public-projection={`chapter_${meta.id}`}>
         <Content />
+        <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
       </div>
       <InlineConceptDiagrams diagrams={chapterDiagrams} />
       <InlineArtifacts artifacts={chapterArtifacts} />
-      <InlineScholarFigures people={chapterPeople} primarySources={sourceLinks.primarySources} />
       <InlineReleasePlacements placements={releasePlacements} />
     </div>
     <ReadingRecord
