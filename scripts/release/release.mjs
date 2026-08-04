@@ -78,9 +78,9 @@ function decodeImportedLegacy(block) {
   if (!match) fail("E_LEGACY_PROJECTION", `Legacy block ${block.blockId} does not use the reviewed Git-import envelope.`);
   return match[1].replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&quot;", '"').replaceAll("&#039;", "'").replaceAll("&amp;", "&");
 }
-function markdownForBlock(block, includePassageMarker = true) {
+function markdownForBlock(block, includePassageMarker = true, passageMarker = null) {
   if (block.type === "heading") return `<!-- phil-section-id: ${block.sectionId.replace(/^section_/, "")} -->\n${"#".repeat(block.level)} ${block.text}`;
-  const anchor = block.passageId || block.anchorPassageId; const prefix = includePassageMarker && anchor ? `<!-- phil-passage-id: ${anchor.replace(/^passage_/, "")} -->\n` : "";
+  const anchor = passageMarker || block.passageId || block.anchorPassageId; const prefix = includePassageMarker && anchor ? `<!-- phil-passage-id: ${anchor.replace(/^passage_/, "")} -->\n` : "";
   if (block.type === "paragraph") return `${prefix}${block.text}`;
   if (block.type === "blockquote") return `${prefix}${block.text.split("\n").map(x => `> ${x}`).join("\n")}`;
   if (block.type === "list") return `${prefix}${block.items.map((x, i) => `${block.ordered ? `${i + 1}.` : "-"} ${x}`).join("\n")}`;
@@ -88,24 +88,64 @@ function markdownForBlock(block, includePassageMarker = true) {
   if (block.type === "table") return `${prefix}| ${block.columns.join(" | ")} |\n| ${block.columns.map(() => "---").join(" | ")} |\n${block.rows.map((row) => `| ${row.join(" | ")} |`).join("\n")}`;
   if (block.type === "callout") return `${prefix}> **${block.tone[0].toUpperCase()}${block.tone.slice(1)}:** ${block.text.replaceAll("\n", "\n> ")}`;
   if (block.type === "diagram") return `${prefix}> **Diagram:** ${block.description}`;
-  if (block.type === "legacyMarkup") return decodeImportedLegacy(block);
+  if (block.type === "legacyMarkup") return `${prefix}${decodeImportedLegacy(block)}`;
   if (["externalEmbed", "richLink", "mediaFigure"].includes(block.type)) return "";
   fail("E_BLOCK_PROJECTION", `No reviewed Markdown projection exists for block type ${block.type}.`);
+}
+export function materializationPassageAliases(chapter) {
+  const chapterCode = chapter.chapterId.replace(/^chapter_/, "");
+  if (!/^ch(?:0[1-9]|1[0-8])$/.test(chapterCode)) fail("E_MATERIALIZATION_PASSAGE", `Invalid chapter identity ${chapter.chapterId}.`);
+  const aliases = new Map();
+  const canonicalPassages = chapter.body.map((block) => block.passageId || block.anchorPassageId).filter(Boolean);
+  let nextPassage = canonicalPassages.reduce((maximum, passage) => {
+    const match = passage.replace(/__\d+$/, "").match(new RegExp(`^passage_${chapterCode}-p(\\d+)$`));
+    return Math.max(maximum, Number.parseInt(match?.[1] || "0", 10));
+  }, 0) + 1;
+  const used = new Set();
+  for (const passage of canonicalPassages) {
+    const sourcePassage = passage.replace(/__\d+$/, "");
+    let alias = aliases.get(sourcePassage);
+    if (!alias) {
+      const local = sourcePassage.match(new RegExp(`^passage_(${chapterCode}-p\\d+)$`));
+      alias = local?.[1];
+      if (!alias) {
+        do { alias = `${chapterCode}-p${String(nextPassage).padStart(4, "0")}`; nextPassage += 1; } while (used.has(alias));
+      }
+      aliases.set(sourcePassage, alias); used.add(alias);
+    }
+    aliases.set(passage, alias);
+  }
+  return aliases;
+}
+const passageAlias = (aliases, passage, chapterId) => {
+  const alias = aliases.get(passage);
+  if (!alias) fail("E_MATERIALIZATION_PASSAGE", `No release passage alias exists for ${passage} in ${chapterId}.`);
+  return alias;
+};
+export function markdownBlocksForChapterBody(chapter, aliases = materializationPassageAliases(chapter)) {
+  let priorSourcePassage = null;
+  return chapter.body.map((block) => {
+    // The canonical importer gives additional semantic blocks from one legacy
+    // source passage deterministic `__2`, `__3`, ... identities. Markdown has
+    // one marker for that source passage, so collapse descendants only while
+    // materializing the release source; their canonical identities remain in
+    // the signed D1 snapshot.
+    const passage = block.passageId || block.anchorPassageId || null;
+    const sourcePassage = passage ? passageAlias(aliases, passage, chapter.chapterId) : null;
+    const rendered = markdownForBlock(block, !sourcePassage || sourcePassage !== priorSourcePassage, sourcePassage);
+    if (sourcePassage) priorSourcePassage = sourcePassage;
+    return rendered;
+  }).filter(Boolean);
 }
 async function materializeChapter({ workspace, releaseSnapshot, chapter, materializationPath, materializedAssets }) {
   const dir = path.resolve(workspace, materializationPath);
   const chapterRoot = `${path.resolve(workspace, "content/chapters")}${path.sep}`;
   if (!dir.startsWith(chapterRoot)) fail("E_MATERIALIZATION_PATH", `Materialization path escaped the chapter root for ${chapter.chapterId}.`);
-  let priorPassage = null;
-  const markdownBlocks = chapter.body.map((block) => {
-    const passage = block.passageId || block.anchorPassageId || null;
-    const rendered = markdownForBlock(block, !passage || passage !== priorPassage);
-    if (passage) priorPassage = passage;
-    return rendered;
-  }).filter(Boolean);
+  const aliases = materializationPassageAliases(chapter);
+  const markdownBlocks = markdownBlocksForChapterBody(chapter, aliases);
   await writeFile(path.join(dir, "chapter.md"), `# ${chapter.title}\n\n${markdownBlocks.join("\n\n")}\n`);
   const record = JSON.parse(await readFile(path.join(dir, "reading-record.json"), "utf8"));
-  record.reasoningObjective = chapter.reasoningObjective; record.checkpoints = chapter.checkpoints.map((item) => ({ id: item.legacyId || item.checkpointId.replace(/^checkpoint_/, ""), passageId: item.passageId.replace(/^passage_/, ""), stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure || item.responseFormat, minWords: item.minWords, maxWords: item.maxWords, showInSidebar: item.showInSidebar, rationale: item.rationale }));
+  record.reasoningObjective = chapter.reasoningObjective; record.checkpoints = chapter.checkpoints.map((item) => ({ id: item.legacyId || item.checkpointId.replace(/^checkpoint_/, ""), passageId: passageAlias(aliases, item.passageId, chapter.chapterId), stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure || item.responseFormat, minWords: item.minWords, maxWords: item.maxWords, showInSidebar: item.showInSidebar, rationale: item.rationale }));
   await writeFile(path.join(dir, "reading-record.json"), `${JSON.stringify(record, null, 2)}\n`);
   const placements = chapter.body.filter((block) => ["externalEmbed", "richLink", "mediaFigure"].includes(block.type)).map((block) => {
     if (block.type === "mediaFigure") {
@@ -119,9 +159,9 @@ async function materializeChapter({ workspace, releaseSnapshot, chapter, materia
       const kind = version.kind ?? (detectedMime.startsWith("image/") ? (poster ? "gif" : "image") : detectedMime.startsWith("audio/") ? "audio" : detectedMime.startsWith("video/") ? "video" : detectedMime === "application/pdf" ? "pdf" : detectedMime === "text/plain" ? "document" : null);
       if (!kind) fail("E_MEDIA_PROJECTION", `Media figure ${block.figureId} has no supported release kind.`);
       const responsive = versionAssets.filter((item) => /^responsive-(?:640|1280|1920)$/.test(item.role)).map((item) => ({ src: item.publicPath, width: Number(item.role.slice("responsive-".length)) })).sort((a, b) => a.width - b.width);
-      return { type: block.type, blockId: block.blockId, anchorPassageId: block.anchorPassageId, figureId: block.figureId, mediaId: block.mediaId, mediaVersionId: block.mediaVersionId, rightsCaseId: block.rightsCaseId, kind, src: primary.publicPath, ...(responsive.length ? { srcset: responsive } : {}), ...(poster ? { poster: poster.publicPath } : {}), title: version.title, downloadName: `${version.title || block.figureId}.${SAFE_MIME.get(primary.mimeType)}`.replace(/[^A-Za-z0-9._-]+/g, "-"), alt: block.alt, caption: block.caption, captionOmissionReason: block.captionOmissionReason, teachingUse: block.teachingUse, credit: block.creditOverride ?? version.rights?.credit ?? "Source and rights recorded in this release.", transcript: version.transcriptEquivalent?.text ?? version.technical?.transcriptEquivalent?.text, mimeType: detectedMime, bytes: primary.bytes, canonicalSource: `${RELEASE_ASSET_ORIGIN}/v1/release-assets/${primary.sha256}`, downloadable: block.downloadable, printPolicy: block.printPolicy, displayPreset: block.displayPreset, align: block.align };
+      return { type: block.type, blockId: block.blockId, anchorPassageId: `passage_${passageAlias(aliases, block.anchorPassageId, chapter.chapterId)}`, figureId: block.figureId, mediaId: block.mediaId, mediaVersionId: block.mediaVersionId, rightsCaseId: block.rightsCaseId, kind, src: primary.publicPath, ...(responsive.length ? { srcset: responsive } : {}), ...(poster ? { poster: poster.publicPath } : {}), title: version.title, downloadName: `${version.title || block.figureId}.${SAFE_MIME.get(primary.mimeType)}`.replace(/[^A-Za-z0-9._-]+/g, "-"), alt: block.alt, caption: block.caption, captionOmissionReason: block.captionOmissionReason, teachingUse: block.teachingUse, credit: block.creditOverride ?? version.rights?.credit ?? "Source and rights recorded in this release.", transcript: version.transcriptEquivalent?.text ?? version.technical?.transcriptEquivalent?.text, mimeType: detectedMime, bytes: primary.bytes, canonicalSource: `${RELEASE_ASSET_ORIGIN}/v1/release-assets/${primary.sha256}`, downloadable: block.downloadable, printPolicy: block.printPolicy, displayPreset: block.displayPreset, align: block.align };
     }
-    return { type: block.type, blockId: block.blockId, anchorPassageId: block.anchorPassageId, ...(block.type === "externalEmbed" ? { identity: block.identity, canonicalUrl: block.canonicalUrl, caption: block.caption, teachingUse: block.teachingUse, fallback: block.fallback, adapterVersion: block.adapterVersion } : {}), ...(block.type === "richLink" ? { canonicalUrl: block.canonicalUrl, title: block.title, summary: block.summary, linkLabel: block.linkLabel, teachingUse: block.teachingUse } : {}) };
+    return { type: block.type, blockId: block.blockId, anchorPassageId: `passage_${passageAlias(aliases, block.anchorPassageId, chapter.chapterId)}`, ...(block.type === "externalEmbed" ? { identity: block.identity, canonicalUrl: block.canonicalUrl, caption: block.caption, teachingUse: block.teachingUse, fallback: block.fallback, adapterVersion: block.adapterVersion } : {}), ...(block.type === "richLink" ? { canonicalUrl: block.canonicalUrl, title: block.title, summary: block.summary, linkLabel: block.linkLabel, teachingUse: block.teachingUse } : {}) };
   });
   const sidecar = path.join(dir, "release-placements.json"); await writeFile(sidecar, `${JSON.stringify({ schemaVersion: 1, chapterId: chapter.chapterId, placements }, null, 2)}\n`);
   return { documentId: chapter.chapterId, materializationPath, chapterPath: path.join(dir, "chapter.md"), readingRecordPath: path.join(dir, "reading-record.json"), placementsPath: sidecar, chapterDigest: sha256(await readFile(path.join(dir, "chapter.md"))), readingRecordDigest: sha256(await readFile(path.join(dir, "reading-record.json"))), placementsDigest: sha256(await readFile(sidecar)) };
