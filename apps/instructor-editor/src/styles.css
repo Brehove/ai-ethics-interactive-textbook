@@ -91,6 +91,7 @@ button.danger, .danger { border-color: #e5bab6; color: var(--editor-danger); }
 
 .inspector { border-left: 1px solid var(--editor-line); background: var(--editor-chrome); padding: clamp(1.25rem, 2.5vw, 2rem); }
 .inspector__empty, .inspector-form { position: sticky; top: 92px; }
+.inspector-form { max-height: calc(100dvh - 112px); overflow: auto; padding-right: .25rem; }
 .eyebrow { margin: 0 0 .65rem; color: var(--editor-muted); font: 700 .68rem/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; }
 .inspector h2 { margin: 0 0 1rem; font: 500 1.45rem/1.2 var(--serif); }
 .inspector p, .inspector dd { color: var(--editor-muted); font: .9rem/1.55 var(--sans); }
@@ -100,6 +101,10 @@ button.danger, .danger { border-color: #e5bab6; color: var(--editor-danger); }
 .inspector dd { margin: 0; overflow-wrap: anywhere; }
 .inspector-form label, dialog label { display: grid; gap: .35rem; margin: 1rem 0; color: var(--editor-ink); font: 700 .76rem/1.25 var(--sans); }
 .inspector-form input, .inspector-form textarea, .inspector-form select, dialog input, dialog textarea, dialog select { width: 100%; border: 1px solid var(--editor-line); border-radius: var(--editor-radius-control); background: #fff; padding: .55rem .65rem; color: var(--editor-ink); font: 400 .9rem/1.45 var(--sans); }
+.inspector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.inspector-grid label { margin-block: 0; }
+.inspector-form .checkbox-row { display: flex; grid-template-columns: none; align-items: center; gap: .55rem; }
+.inspector-form .checkbox-row input { width: 1.1rem; height: 1.1rem; padding: 0; }
 .inspector-actions { display: grid; gap: .6rem; margin-top: 1.25rem; }
 .inspector-note, .dialog-note { border-left: 2px solid var(--editor-accent); padding-left: .75rem; }
 

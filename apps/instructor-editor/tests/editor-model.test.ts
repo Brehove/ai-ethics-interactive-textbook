@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, updateCheckpointDetails } from "../src/editor-model";
 import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
@@ -76,6 +76,13 @@ test("first checkpoint can move before an existing placement at a new anchor", (
   moveCheckpoint(chapter, checkpoint.checkpointId, targetAnchor, 0, "b".repeat(64));
   assert.deepEqual(managedNodeSequence(chapter, targetAnchor).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), [checkpoint.checkpointId, "placement_target"]);
   assert.equal(nextCheckpointOrder(chapter, targetAnchor), 2);
+});
+
+test("checkpoint details expose and validate the complete pedagogical control surface", () => {
+  const checkpoint = structuredClone(DEMO_CHAPTER.checkpoints[0]);
+  updateCheckpointDetails(checkpoint, { title: "Revised", prompt: "Explain the judgment.", guidance: "Use a reason.", trigger: "After the example", strategy: "counterexample", responseStructure: "movement-plus-prose", minWords: 20, maxWords: 80, showInSidebar: false, rationale: "Makes the objection visible.", stage: "Challenge" });
+  assert.deepEqual({ title: checkpoint.title, trigger: checkpoint.trigger, strategy: checkpoint.strategy, responseStructure: checkpoint.responseStructure, minWords: checkpoint.minWords, maxWords: checkpoint.maxWords, showInSidebar: checkpoint.showInSidebar, rationale: checkpoint.rationale, stage: checkpoint.stage }, { title: "Revised", trigger: "After the example", strategy: "counterexample", responseStructure: "movement-plus-prose", minWords: 20, maxWords: 80, showInSidebar: false, rationale: "Makes the objection visible.", stage: "Challenge" });
+  assert.throws(() => updateCheckpointDetails(checkpoint, { title: "Revised", prompt: "Explain.", guidance: "", trigger: "After", strategy: "counterexample", responseStructure: "prose", minWords: 90, maxWords: 20, showInSidebar: true, rationale: "Reason" }), /word guidance/);
 });
 
 test("checkpoint excerpts cover code and table anchors and prefer passage owners", () => {

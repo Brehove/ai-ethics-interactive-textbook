@@ -18,6 +18,25 @@ const orderedAnchor = (chapter: ChapterDocument, anchor: string, excludedId?: st
     .filter((node) => node.item.anchorPassageId === anchor && node.item.position !== "before"),
 ].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
 export const nextCheckpointOrder = (chapter: ChapterDocument, anchor: string) => Math.max(-1, ...orderedAnchor(chapter, anchor).map((node) => node.order)) + 1;
+export function updateCheckpointDetails(checkpoint: Checkpoint, update: { title: string; prompt: string; guidance: string; stage?: string; trigger: string; strategy: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; showInSidebar: boolean; rationale: string }) {
+  const required = { title: update.title.trim(), prompt: update.prompt.trim(), trigger: update.trigger.trim(), strategy: update.strategy.trim(), rationale: update.rationale.trim() };
+  if (Object.values(required).some((value) => !value)) throw new Error("Checkpoint title, prompt, trigger, strategy, and rationale are required.");
+  if (!Number.isInteger(update.minWords) || !Number.isInteger(update.maxWords) || update.minWords < 1 || update.maxWords > 1000 || update.minWords > update.maxWords) throw new Error("Checkpoint word guidance must be between 1 and 1000, with the minimum no greater than the maximum.");
+  if (!["prose", "movement-plus-prose"].includes(update.responseStructure)) throw new Error("Checkpoint response structure is invalid.");
+  checkpoint.title = required.title;
+  checkpoint.prompt = required.prompt;
+  checkpoint.trigger = required.trigger;
+  checkpoint.guidance = update.guidance.trim();
+  checkpoint.strategy = required.strategy;
+  checkpoint.responseStructure = update.responseStructure;
+  checkpoint.minWords = update.minWords;
+  checkpoint.maxWords = update.maxWords;
+  checkpoint.showInSidebar = update.showInSidebar;
+  checkpoint.rationale = required.rationale;
+  const stage = update.stage?.trim();
+  if (stage) checkpoint.stage = stage; else delete checkpoint.stage;
+  return checkpoint;
+}
 export const checkpointExcerpt = (block?: ChapterBlock) => {
   if (!block) return "";
   if (block.type === "list" && Array.isArray(block.items)) return block.items.map(String).join("\n");

@@ -1038,6 +1038,16 @@ test('block.remove does not treat an attached embed as the owner of its paragrap
   assert.equal(result.chapter.checkpoints[0].passageId, 'p-work');
 });
 
+test('block.remove preserves a checkpoint anchor backed by another referenced block', async () => {
+  const chapter = baseChapter();
+  chapter.body.push({ type: 'codeBlock', blockId: 'b-code-owner', anchorPassageId: 'p-code-shared', code: 'const answer = 42;' });
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-code-embed', embedId: 'embed-code', anchorPassageId: 'p-code-shared', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  chapter.checkpoints = [{ ...checkpoint('code', 'p-code-shared'), checkpointId: 'checkpoint-code-owner' }];
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-code-embed' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-code-owner'), true);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-code-shared');
+});
+
 test('checkpoint.remove targets either the internal key or stable ID', async () => {
   const added = await applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   const id = added.chapter.checkpoints[0].checkpointId;

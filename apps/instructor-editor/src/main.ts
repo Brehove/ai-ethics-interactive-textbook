@@ -13,6 +13,7 @@ import {
   newId,
   nextCheckpointOrder,
   nearestPassage,
+  updateCheckpointDetails,
   type ChapterDocument,
 } from "./editor-model";
 import { managedNodeSequence, mountTiptap } from "./tiptap-editor";
@@ -22,6 +23,8 @@ import "./styles.css";
 
 type SaveState = "clean" | "dirty" | "saving" | "pending" | "saved" | "attention";
 type Inspector = { kind: "checkpoint"; id: string } | { kind: "managed"; id: string } | { kind: "chapter" } | null;
+
+const CHECKPOINT_STRATEGIES = ["initial-judgment", "self-explanation", "argument-reconstruction", "evidence-warrant", "contrast-case", "counterexample", "consider-alternative", "objection-repair", "question-generation", "epistemic-calibration", "framework-comparison", "transfer", "metacognitive-trace"];
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Instructor editor mount is missing.");
@@ -312,6 +315,10 @@ function checkpointAnchorOptions(selected: string) {
   }).join("");
 }
 
+function checkpointStrategyOptions(selected: string) {
+  return CHECKPOINT_STRATEGIES.map((strategy) => `<option value="${strategy}" ${strategy === selected ? "selected" : ""}>${escapeText(strategy.replaceAll("-", " "))}</option>`).join("");
+}
+
 async function loadChapter() {
   if (!dataSource) return;
   try {
@@ -354,7 +361,7 @@ function inspectorHtml() {
     if (!item) return "";
     const anchorSequence = managedNodeSequence(chapter, item.passageId);
     const itemPosition = Math.max(0, anchorSequence.findIndex((node) => node.kind === "checkpoint" && node.item.checkpointId === item.checkpointId));
-    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
+    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>When should this appear?<input name="trigger" value="${escapeAttribute(String(item.trigger ?? ""))}" required></label><label>Strategy<select name="strategy" required>${checkpointStrategyOptions(String(item.strategy ?? "self-explanation"))}</select></label><label>Response format<select name="responseStructure"><option value="prose" ${item.responseStructure === "prose" ? "selected" : ""}>Written response</option><option value="movement-plus-prose" ${item.responseStructure === "movement-plus-prose" ? "selected" : ""}>Movement plus written response</option></select></label><div class="inspector-grid"><label>Minimum words<input name="minWords" type="number" min="1" max="1000" value="${Number(item.minWords ?? 1)}" required></label><label>Maximum words<input name="maxWords" type="number" min="1" max="1000" value="${Number(item.maxWords ?? 150)}" required></label></div><label class="checkbox-row"><input name="showInSidebar" type="checkbox" ${item.showInSidebar !== false ? "checked" : ""}> Show in the reading side panel</label><label>Teaching rationale<textarea name="rationale" rows="3" required>${escapeText(String(item.rationale ?? ""))}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
   if (!placement) return "";
@@ -635,8 +642,11 @@ function bindForms() {
     const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
     const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
     const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
-    item.title = String(form.get("title") ?? ""); item.prompt = String(form.get("prompt") ?? ""); item.guidance = String(form.get("guidance") ?? "");
-    const stage = String(form.get("stage") ?? "").trim(); if (stage) item.stage = stage; else delete item.stage;
+    const minWords = Number(form.get("minWords")); const maxWords = Number(form.get("maxWords"));
+    const maxWordsInput = formElement.elements.namedItem("maxWords") as HTMLInputElement | null;
+    maxWordsInput?.setCustomValidity(minWords > maxWords ? "Maximum words must be at least the minimum words." : "");
+    if (!formElement.reportValidity()) return;
+    updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
     moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
     selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention");
   };
