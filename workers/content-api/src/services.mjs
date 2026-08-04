@@ -233,7 +233,7 @@ export const finalizeChapterRevision = async (chapter, { editorialContentHash, s
 
 const passageIds = (chapter) => new Set([
   ...(Array.isArray(chapter.passages) ? chapter.passages.map((item) => item?.passageId) : []),
-  ...(Array.isArray(chapter.body) ? chapter.body.map((item) => item?.passageId) : [])
+  ...(Array.isArray(chapter.body) ? chapter.body.flatMap((item) => [item?.passageId, item?.anchorPassageId]) : [])
 ].filter(Boolean));
 
 const normalizeCheckpoint = async (chapter, input, existing = null) => {

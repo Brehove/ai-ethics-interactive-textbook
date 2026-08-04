@@ -4,6 +4,7 @@ import test from "node:test";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GitContentRepository } from "../../packages/content-repository/src/index.ts";
+import { validateChapter } from "../../workers/content-api/src/services.mjs";
 
 const contentRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../content");
 test("Git repository imports the full book deterministically with exact baseline identities", async () => {
@@ -12,6 +13,17 @@ test("Git repository imports the full book deterministically with exact baseline
   const totalBlocks = Object.values(first.report.blockTypeCounts).reduce((total, count) => total + count, 0);
   assert.ok(first.report.blockTypeCounts.paragraph > 1_000, "ordinary Markdown must become typed paragraphs");
   assert.ok(first.report.legacyMarkupBlocks / totalBlocks < 0.1, `legacy blocks must be bounded; received ${first.report.legacyMarkupBlocks}/${totalBlocks}`);
+});
+test("every imported chapter is publishable with unique passage identities and resolvable legacy anchors", async () => {
+  const repository = new GitContentRepository(contentRoot);
+  const book = await repository.getBook();
+  for (const chapter of book.chapters) {
+    const validation = validateChapter(chapter, { publishable: true });
+    assert.deepEqual(validation.errors, [], `${chapter.chapterId} must pass the production publish validator`);
+  }
+  const chapter2 = await repository.getChapter("ch02");
+  const quoteIds = chapter2!.body.filter((block) => block.type === "blockquote" && block.passageId.startsWith("passage_ch02-p0063")).map((block) => block.passageId);
+  assert.deepEqual(quoteIds, ["passage_ch02-p0063", "passage_ch02-p0063__2"]);
 });
 test("Chapter 7 preserves source anchors, checkpoints, and source/world metadata", async () => {
   const repository = new GitContentRepository(contentRoot); const chapter = await repository.getChapter("ch07");

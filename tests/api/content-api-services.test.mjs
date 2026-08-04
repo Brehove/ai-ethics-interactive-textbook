@@ -793,6 +793,13 @@ test('checkpoint validation rejects unstable anchors and caller-selected IDs whi
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: clientId }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_SERVER_ASSIGNED');
 });
 
+test('locked legacy anchorPassageId values satisfy checkpoint anchor validation', () => {
+  const chapter = baseChapter();
+  chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy-anchor', anchorPassageId: 'p-legacy-anchor', locked: true, sanitizedHtml: '<aside>Worked example</aside>', importedFrom: 'git-markdown-v1' });
+  chapter.checkpoints.push(checkpoint('legacy-anchor', 'p-legacy-anchor'));
+  assert.deepEqual(validateChapter(chapter, { publishable: true }).errors, []);
+});
+
 test('media placements live in chapter body with pinned rights/version and complete presentation semantics', async () => {
   const placement = { mediaId: 'media-1', mediaVersionId: 'media-version-1', rightsCaseId: 'rights-1', anchorPassageId: 'p-work', decorative: false, alt: 'A trolley diagram.', caption: 'The standard switch case.', teachingUse: 'Compare outcome and duty-based reasoning.', displayPreset: 'reading', align: 'center', animationPolicy: 'clickToPlay', printPolicy: 'poster', downloadable: false };
   const placed = await applySemanticOperation(baseChapter(), { type: 'media.place', placement, position: { afterBlockId: 'b-work' } });

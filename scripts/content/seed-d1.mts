@@ -44,8 +44,9 @@ for (const chapter of exported.snapshot.chapters) {
       expectedLength += Array.from(chunk).length;
       return statement;
     }),
-    `UPDATE documents SET current_revision_id = ${quote(revisionId)}, current_content_hash = ${quote(contentHash)}, updated_at = ${quote(importedAt)} WHERE id = ${quote(chapter.chapterId)} AND current_revision_id IS NULL;`,
-    `INSERT OR IGNORE INTO authority_registry (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at) VALUES (${quote(authorityId)}, ${quote(chapter.chapterId)}, 'git', ${quote(sourcePath)}, ${quote(sourceRevision)}, ${quote(contentHash)}, 1, ${quote(importedAt)}, ${quote(importedAt)});`,
+    `UPDATE documents SET current_revision_id = ${quote(revisionId)}, current_content_hash = ${quote(contentHash)}, updated_at = ${quote(importedAt)} WHERE id = ${quote(chapter.chapterId)} AND (current_revision_id IS NULL OR EXISTS (SELECT 1 FROM authority_registry WHERE document_id = ${quote(chapter.chapterId)} AND active = 1 AND authority = 'git'));`,
+    `UPDATE authority_registry SET active = 0, valid_until = ${quote(importedAt)} WHERE document_id = ${quote(chapter.chapterId)} AND active = 1 AND authority = 'git' AND normalized_snapshot_hash <> ${quote(contentHash)};`,
+    `INSERT OR IGNORE INTO authority_registry (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at) SELECT ${quote(authorityId)}, ${quote(chapter.chapterId)}, 'git', ${quote(sourcePath)}, ${quote(sourceRevision)}, ${quote(contentHash)}, 1, ${quote(importedAt)}, ${quote(importedAt)} WHERE NOT EXISTS (SELECT 1 FROM authority_registry WHERE document_id = ${quote(chapter.chapterId)} AND active = 1);`,
   );
 }
 
