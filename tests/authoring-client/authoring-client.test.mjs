@@ -32,6 +32,22 @@ test("browser client creates or resumes one chapter changeset and applies an ato
   assert.equal(calls.every((call) => call.init.headers["x-editor-csrf"] === "csrf"), true);
 });
 
+test("human cutover review reads, submits, and approves the exact changeset through CSRF-protected routes", async () => {
+  const calls = [];
+  const client = createAuthoringClient({ baseUrl: "https://content.example", getCsrf: () => "csrf", fetch: async (url, init) => { calls.push({ url: String(url), init }); return Response.json({ state: "ok" }); } });
+  await client.getChangeset("changeset_cutover");
+  await client.submitChangeset("changeset_cutover", { documents: [], idempotencyKey: crypto.randomUUID() });
+  await client.approveChangeset("changeset_cutover", { snapshotHash: "a".repeat(64), snapshotRevision: "snapshotrev_1", decisionKind: "release", idempotencyKey: crypto.randomUUID() });
+  assert.deepEqual(calls.map((call) => call.url), [
+    "https://content.example/v1/changesets/changeset_cutover",
+    "https://content.example/v1/changesets/changeset_cutover:submitReview",
+    "https://content.example/v1/changesets/changeset_cutover:approve",
+  ]);
+  assert.equal(calls[0].init.headers["x-editor-csrf"], undefined);
+  assert.equal(calls[1].init.headers["x-editor-csrf"], "csrf");
+  assert.equal(calls[2].init.headers["x-editor-csrf"], "csrf");
+});
+
 test("agent client forwards the original bearer and validates path segments", async () => {
   let authorization;
   const client = createAuthoringClient({ baseUrl: "https://content.example", getBearer: () => "original-capability", fetch: async (_url, init) => { authorization = init.headers.authorization; return Response.json({ title: "Chapter" }); } });

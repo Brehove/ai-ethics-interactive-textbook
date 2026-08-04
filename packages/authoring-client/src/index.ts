@@ -49,6 +49,9 @@ export interface AuthoringClient {
   getSession(signal?: AbortSignal): Promise<{ csrf_token: string; expires_at: number }>;
   getAuthoringView(documentId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
   createOrResumeChangeset(documentId: string, request: { title: string; description?: string; resume?: boolean; idempotencyKey: string }, signal?: AbortSignal): Promise<ChangesetSession>;
+  getChangeset(changeSetId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  submitChangeset(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  approveChangeset(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   applyOperationBatch(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   searchMedia(query?: { q?: string; kind?: "image" | "audio" | "video" | "document"; rightsStatus?: "reviewRequired" | "cleared" | "blocked"; sha256?: string; limit?: number; cursor?: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
   /**

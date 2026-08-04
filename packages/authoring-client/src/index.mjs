@@ -39,6 +39,9 @@ export function createAuthoringClient(options) {
     getSession: (signal) => request(`/api/session`, { method: "GET" }, signal),
     getAuthoringView: (documentId, signal) => request(`/v1/chapters/${boundedSegment(documentId, "documentId")}/authoring-view`, { method: "GET" }, signal),
     createOrResumeChangeset: (documentId, body, signal) => request(`/v1/chapters/${boundedSegment(documentId, "documentId")}/changesets`, { method: "POST", body: JSON.stringify(body) }, signal),
+    getChangeset: (changeSetId, signal) => request(`/v1/changesets/${boundedSegment(changeSetId, "changeSetId")}`, { method: "GET" }, signal),
+    submitChangeset: (changeSetId, body, signal) => request(`/v1/changesets/${boundedSegment(changeSetId, "changeSetId")}:submitReview`, { method: "POST", body: JSON.stringify(body) }, signal),
+    approveChangeset: (changeSetId, body, signal) => request(`/v1/changesets/${boundedSegment(changeSetId, "changeSetId")}:approve`, { method: "POST", body: JSON.stringify(body) }, signal),
     applyOperationBatch: (changeSetId, body, signal) => request(`/v1/changesets/${boundedSegment(changeSetId, "changeSetId")}/operations:batch`, { method: "POST", body: JSON.stringify(body) }, signal),
     searchMedia: (query = {}, signal) => {
       const params = new URLSearchParams();
