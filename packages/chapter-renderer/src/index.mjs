@@ -47,6 +47,16 @@ const orderOf = (value, fallback = 0) => {
   return Number.isFinite(Number(candidate)) ? Number(candidate) : fallback;
 };
 
+const compareAnchoredNodes = (left, right) => {
+  const orderDifference = left.order - right.order;
+  if (orderDifference) return orderDifference;
+  const kindDifference = (left.kind === "checkpoint" ? 0 : 1) - (right.kind === "checkpoint" ? 0 : 1);
+  if (kindDifference) return kindDifference;
+  const leftId = left.kind === "checkpoint" ? left.value.checkpointId : left.value.placementId || left.value.personFeatureId;
+  const rightId = right.kind === "checkpoint" ? right.value.checkpointId : right.value.placementId || right.value.personFeatureId;
+  return String(leftId || "").localeCompare(String(rightId || "")) || left.index - right.index;
+};
+
 const featureFromRelation = (relation, person, anchorPassageId, displayOrder) => ({
   placementId: relation.placementId || `placement_${relation.entityId}_${anchorPassageId}`,
   personId: relation.entityId,
@@ -105,14 +115,37 @@ export function projectOrderedChapter(chapter, options = {}) {
     after.set(anchor, nodes.filter((node) => node.position !== "before"));
   }
   const ordered = [];
+  const ownedPassages = new Set(blocks.map((block) => block?.passageId).filter(Boolean));
+  const emittedBefore = new Set();
+  const emittedAfter = new Set();
   for (const block of blocks) {
-    const anchoredBefore = before.get(passageId(block)) || [];
-    anchoredBefore.sort((left, right) => left.order - right.order || left.index - right.index);
+    const anchor = passageId(block);
+    const ownsAnchor = Boolean(block?.passageId) || (anchor && !ownedPassages.has(anchor));
+    const anchoredBefore = ownsAnchor && !emittedBefore.has(anchor) ? before.get(anchor) || [] : [];
+    anchoredBefore.sort(compareAnchoredNodes);
     ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    if (anchor && ownsAnchor) emittedBefore.add(anchor);
     ordered.push({ kind: "block", value: block });
-    const anchored = after.get(passageId(block)) || [];
-    anchored.sort((left, right) => left.order - right.order || left.index - right.index);
+    const anchored = ownsAnchor && !emittedAfter.has(anchor) ? after.get(anchor) || [] : [];
+    anchored.sort(compareAnchoredNodes);
     ordered.push(...anchored.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    if (anchor && ownsAnchor) emittedAfter.add(anchor);
+  }
+  const legacyPassageOrder = new Map((Array.isArray(chapter?.passages) ? chapter.passages : []).map((passage, index) => [passage?.passageId, index]));
+  const unmatchedAnchors = [...new Set([...before.keys(), ...after.keys()])]
+    .filter((anchor) => !emittedBefore.has(anchor) || !emittedAfter.has(anchor))
+    .sort((left, right) => (legacyPassageOrder.get(left) ?? Number.MAX_SAFE_INTEGER) - (legacyPassageOrder.get(right) ?? Number.MAX_SAFE_INTEGER) || String(left).localeCompare(String(right)));
+  for (const anchor of unmatchedAnchors) {
+    if (!emittedBefore.has(anchor)) {
+      const anchoredBefore = before.get(anchor) || [];
+      anchoredBefore.sort(compareAnchoredNodes);
+      ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    }
+    if (!emittedAfter.has(anchor)) {
+      const anchoredAfter = after.get(anchor) || [];
+      anchoredAfter.sort(compareAnchoredNodes);
+      ordered.push(...anchoredAfter.map(({ order: _order, index: _index, position: _position, ...node }) => node));
+    }
   }
   return ordered;
 }
@@ -194,7 +227,7 @@ export function renderChapterProjection(chapter, options = {}) {
     title: chapter?.title || "Untitled chapter",
     stylesheetVersion: CHAPTER_RENDERER_STYLE_VERSION,
     html: orderedNodes.map((node) => renderOrderedNode(node, options)).join("\n"),
-    prompts: (chapter?.checkpoints || []).filter((item) => item.showInSidebar !== false).map((item) => ({ ...item })),
+    prompts: orderedNodes.filter((node) => node.kind === "checkpoint" && node.value.showInSidebar !== false).map((node) => ({ ...node.value })),
     orderedNodes,
   };
 }

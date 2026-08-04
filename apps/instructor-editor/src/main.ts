@@ -4,20 +4,27 @@ import {
   addCheckpoint,
   addPersonFeature,
   blockPassage,
+  checkpointAnchorBlock,
+  checkpointExcerpt,
   chapterFromAuthoringView,
   chapterReplaceOperation,
   cloneChapter,
+  moveCheckpoint,
   newId,
+  nextCheckpointOrder,
   nearestPassage,
+  updateCheckpointDetails,
   type ChapterDocument,
 } from "./editor-model";
-import { mountTiptap } from "./tiptap-editor";
+import { managedNodeSequence, mountTiptap } from "./tiptap-editor";
 import { legacyCuratedArtifacts } from "./generated-legacy-artifacts";
 import { CHAPTER_ROUTE_BY_SLUG } from "./chapter-route-manifest";
 import "./styles.css";
 
 type SaveState = "clean" | "dirty" | "saving" | "pending" | "saved" | "attention";
 type Inspector = { kind: "checkpoint"; id: string } | { kind: "managed"; id: string } | { kind: "chapter" } | null;
+
+const CHECKPOINT_STRATEGIES = ["initial-judgment", "self-explanation", "argument-reconstruction", "evidence-warrant", "contrast-case", "counterexample", "consider-alternative", "objection-repair", "question-generation", "epistemic-calibration", "framework-comparison", "transfer", "metacognitive-trace"];
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Instructor editor mount is missing.");
@@ -289,11 +296,28 @@ async function loadMediaLibrary() {
 }
 
 function selectedBlock() {
-  return chapter.body.find((block) => blockPassage(block) === selectedPassage) ?? chapter.body.find((block) => Boolean(block.blockId));
+  return checkpointAnchorBlock(chapter, selectedPassage) ?? chapter.body.find((block) => Boolean(block.blockId));
 }
 
 function safeTitle(value: unknown) {
   return typeof value === "string" && value.trim() ? value : chapter.title;
+}
+
+function checkpointAnchorOptions(selected: string) {
+  const seen = new Set<string>();
+  const legacyPassages = Array.isArray(chapter.passages) ? chapter.passages as typeof chapter.body : [];
+  return [...chapter.body, ...legacyPassages].flatMap((block) => {
+    const passageId = blockPassage(block);
+    if (!passageId || seen.has(passageId)) return [];
+    seen.add(passageId);
+    const description = checkpointExcerpt(checkpointAnchorBlock(chapter, passageId));
+    const label = description.trim().replace(/\s+/g, " ").slice(0, 72);
+    return [`<option value="${escapeAttribute(passageId)}" ${passageId === selected ? "selected" : ""}>${escapeText(label ? `${passageId} — ${label}` : passageId)}</option>`];
+  }).join("");
+}
+
+function checkpointStrategyOptions(selected: string) {
+  return CHECKPOINT_STRATEGIES.map((strategy) => `<option value="${strategy}" ${strategy === selected ? "selected" : ""}>${escapeText(strategy.replaceAll("-", " "))}</option>`).join("");
 }
 
 async function loadChapter() {
@@ -336,7 +360,9 @@ function inspectorHtml() {
   if (inspector.kind === "checkpoint") {
     const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
     if (!item) return "";
-    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage<select name="stage"><option ${item.stage === "Commit" ? "selected" : ""}>Commit</option><option ${item.stage === "Work" ? "selected" : ""}>Work</option><option ${item.stage === "Reconcile" ? "selected" : ""}>Reconcile</option></select></label><p class="inspector-note">Anchored after <strong>${item.passageId}</strong></p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
+    const anchorSequence = managedNodeSequence(chapter, item.passageId);
+    const itemPosition = Math.max(0, anchorSequence.findIndex((node) => node.kind === "checkpoint" && node.item.checkpointId === item.checkpointId));
+    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>When should this appear?<input name="trigger" value="${escapeAttribute(String(item.trigger ?? ""))}" required></label><label>Strategy<select name="strategy" required>${checkpointStrategyOptions(String(item.strategy ?? "self-explanation"))}</select></label><label>Response format<select name="responseStructure"><option value="prose" ${item.responseStructure === "prose" ? "selected" : ""}>Written response</option><option value="movement-plus-prose" ${item.responseStructure === "movement-plus-prose" ? "selected" : ""}>Movement plus written response</option></select></label><div class="inspector-grid"><label>Minimum words<input name="minWords" type="number" min="1" max="1000" value="${Number(item.minWords ?? 1)}" required></label><label>Maximum words<input name="maxWords" type="number" min="1" max="1000" value="${Number(item.maxWords ?? 150)}" required></label></div><label class="checkbox-row"><input name="showInSidebar" type="checkbox" ${item.showInSidebar !== false ? "checked" : ""}> Show in the reading side panel</label><label>Teaching rationale<textarea name="rationale" rows="3" required>${escapeText(String(item.rationale ?? ""))}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
   if (!placement) return "";
@@ -347,7 +373,7 @@ function inspectorHtml() {
 
 function dialogHtml() {
   if (!activeDialog) return "";
-  if (activeDialog === "checkpoint") return `<dialog open data-dialog><form data-checkpoint-form><header><h2>Add checkpoint</h2><button type="button" data-close aria-label="Close">×</button></header><p>Anchored after <strong>${selectedPassage || "the selected passage"}</strong>. It will not be created until required fields are complete.</p><label>Title<input name="title" required autofocus></label><label>Prompt<textarea name="prompt" rows="5" required></textarea></label><label>Guidance<textarea name="guidance" rows="3"></textarea></label><label>Stage<select name="stage"><option>Commit</option><option>Work</option><option>Reconcile</option></select></label><footer><button type="button" data-close>Cancel</button><button type="button" data-add-checkpoint>Add checkpoint</button></footer></form></dialog>`;
+  if (activeDialog === "checkpoint") return `<dialog open data-dialog><form data-checkpoint-form><header><h2>Add checkpoint</h2><button type="button" data-close aria-label="Close">×</button></header><p>Anchored after <strong>${selectedPassage || "the selected passage"}</strong>. It will not be created until required fields are complete.</p><label>Title<input name="title" required autofocus></label><label>Prompt<textarea name="prompt" rows="5" required></textarea></label><label>Guidance<textarea name="guidance" rows="3"></textarea></label><label>Stage or label<input name="stage" list="new-checkpoint-stages" maxlength="120" value="Commit"><datalist id="new-checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><footer><button type="button" data-close>Cancel</button><button type="button" data-add-checkpoint>Add checkpoint</button></footer></form></dialog>`;
   if (activeDialog === "person") return `<dialog open data-dialog><form data-person-form><header><h2>Add person feature</h2><button type="button" data-close aria-label="Close">×</button></header><p>Choose a frozen curated person feature; biography, portrait, and rights remain centralized.</p><label>Person<select name="personIndex" autofocus>${(personItems.length ? personItems : chapter.personFeatures).map((feature, index) => `<option value="${index}">${escapeText(String(feature.name))}</option>`).join("")}</select></label><p class="dialog-note">The thinker-card preset will appear after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit" ${(personItems.length || chapter.personFeatures.length) ? "" : "disabled"}>Add person feature</button></footer></form></dialog>`;
   if (activeDialog === "media") {
     const firstPreview = mediaItems.length ? managedMediaPreviewUrl(mediaItems[0]) : "";
@@ -455,11 +481,12 @@ function bindEvents() {
 function bindForms() {
   const addCheckpointFromForm = async (form: HTMLFormElement) => {
     const values = new FormData(form); const title = String(values.get("title") ?? "").trim(); const prompt = String(values.get("prompt") ?? "").trim(); if (!title || !prompt) { setState("attention"); return; }
+    const stage = String(values.get("stage") ?? "").trim() || undefined;
     const anchor = selectedBlock();
     if (dataSource && anchor) {
-      const passageText = String(anchor.text ?? anchor.items?.join(" ") ?? "");
-      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: chapter.checkpoints.filter((item) => item.passageId === selectedPassage).length, title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage: String(values.get("stage") ?? "Commit"), strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
-    } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage: String(values.get("stage") ?? "Commit"), strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
+      const passageText = checkpointExcerpt(anchor);
+      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: nextCheckpointOrder(chapter, selectedPassage), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
+    } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
     activeDialog = null; setState("dirty");
   };
   app.querySelector<HTMLButtonElement>("[data-add-checkpoint]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-checkpoint-form]"); if (form) void addCheckpointFromForm(form); });
@@ -608,7 +635,24 @@ function bindForms() {
   app.querySelector<HTMLFormElement>("[data-replace-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyReplacement(event.currentTarget); });
   app.querySelector<HTMLFormElement>("[data-leave-form]")?.addEventListener("submit", async (event) => { event.preventDefault(); if (await save()) window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
   app.querySelector<HTMLButtonElement>("[data-discard]")?.addEventListener("click", () => { sessionStorage.removeItem(recoveryKey()); window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
-  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); if (!inspector || inspector.kind !== "checkpoint") return; const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id); if (!item) return; const form = new FormData(event.currentTarget); item.title = String(form.get("title") ?? ""); item.prompt = String(form.get("prompt") ?? ""); item.guidance = String(form.get("guidance") ?? ""); item.stage = String(form.get("stage") ?? ""); setState(item.title && item.prompt ? "dirty" : "attention"); });
+  const applyCheckpointInspector = async (formElement: HTMLFormElement, shift = 0) => {
+    if (!inspector || inspector.kind !== "checkpoint") return;
+    const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
+    if (!item) return;
+    const form = new FormData(formElement);
+    const minWords = Number(form.get("minWords")); const maxWords = Number(form.get("maxWords"));
+    const maxWordsInput = formElement.elements.namedItem("maxWords") as HTMLInputElement | null;
+    maxWordsInput?.setCustomValidity(minWords > maxWords ? "Maximum words must be at least the minimum words." : "");
+    if (!formElement.reportValidity()) return;
+    const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
+    const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
+    const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
+    updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
+    moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
+    selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention");
+  };
+  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyCheckpointInspector(event.currentTarget).catch((error) => { console.error("Unable to update checkpoint.", error); setState("attention"); }); });
+  app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-inspector-form]"); if (form) void applyCheckpointInspector(form, Number(button.dataset.shiftCheckpoint ?? 0)).catch((error) => { console.error("Unable to reorder checkpoint.", error); setState("attention"); }); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { chapter.checkpoints = chapter.checkpoints.filter((item) => item.checkpointId !== button.dataset.removeCheckpoint); inspector = { kind: "chapter" }; setState("dirty"); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== button.dataset.removePlacement); inspector = { kind: "chapter" }; setState("dirty"); }));
   app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); } });

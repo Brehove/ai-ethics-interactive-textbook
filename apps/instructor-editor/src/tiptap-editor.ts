@@ -123,30 +123,79 @@ function proseNode(block: ProseBlock) {
   return { type: "paragraph", attrs, content: inlineContent(block.text) };
 }
 
-function managedNodes(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
-  const placements = chapter.managedPlacements.filter((placement) => placement.anchorPassageId === passageId && placement.position === position).sort((a, b) => a.orderAtAnchor - b.orderAtAnchor).map((placement) => {
+export function managedNodeSequence(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
+  const checkpoints = position === "after" ? chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 })).filter((node) => node.item.passageId === passageId) : [];
+  const placements = chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 })).filter((node) => node.item.anchorPassageId === passageId && node.item.position === position);
+  return [...checkpoints, ...placements].sort((a, b) => {
+    const orderDifference = a.order - b.order;
+    if (orderDifference) return orderDifference;
+    const kindDifference = a.sequence - b.sequence;
+    if (kindDifference) return kindDifference;
+    const leftId = a.kind === "checkpoint" ? a.item.checkpointId : a.item.placementId;
+    const rightId = b.kind === "checkpoint" ? b.item.checkpointId : b.item.placementId;
+    return leftId.localeCompare(rightId) || a.index - b.index;
+  });
+}
+
+function managedNodes(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after", publicOrigin = "https://ethicsandai.your-digital-life.org") {
+  return managedNodeSequence(chapter, passageId, position).map((entry) => {
+    if (entry.kind === "checkpoint") return { type: "managedNode", attrs: { placementId: entry.item.checkpointId, kind: "Checkpoint", html: renderOrderedNode({ kind: "checkpoint", value: entry.item }, { context: "editor" }) } };
+    const placement = entry.item;
     const feature = placement.kind === "personFeature" ? chapter.personFeatures.find((item) => item.personFeatureId === placement.contentId) : undefined;
     const block = (chapter.managedContent as Record<string, Record<string, unknown>> | undefined)?.[placement.contentId];
     const node = feature ? { kind: "personFeature" as const, value: { ...feature, ...placement } } : { kind: "block" as const, value: block ?? { type: placement.kind === "media" ? "mediaFigure" : "externalEmbed", blockId: placement.placementId, title: "Managed content preview", caption: "Typed placement preview" } };
-    return { type: "managedNode", attrs: { placementId: placement.placementId, kind: placement.kind === "personFeature" ? "Person feature" : placement.kind === "media" ? "Media" : "Embed", html: renderOrderedNode(node, { context: "editor", publicOrigin: location.origin }) } };
+    return { type: "managedNode", attrs: { placementId: placement.placementId, kind: placement.kind === "personFeature" ? "Person feature" : placement.kind === "media" ? "Media" : "Embed", html: renderOrderedNode(node, { context: "editor", publicOrigin }) } };
   });
-  const checkpoints = position === "after" ? chapter.checkpoints.filter((checkpoint) => checkpoint.passageId === passageId).sort((a, b) => a.displayOrder - b.displayOrder).map((checkpoint) => ({ type: "managedNode", attrs: { placementId: checkpoint.checkpointId, kind: "Checkpoint", html: renderOrderedNode({ kind: "checkpoint", value: checkpoint }, { context: "editor" }) } })) : [];
-  return [...placements, ...checkpoints];
+}
+
+export function editorDocumentContent(chapter: ChapterDocument, legacyArtifacts: readonly LegacyCuratedArtifact[] = [], publicOrigin = "https://ethicsandai.your-digital-life.org") {
+  const content: Record<string, unknown>[] = [];
+  const ownedPassages = new Set(chapter.body.map((block) => block.passageId).filter(Boolean));
+  const emittedBefore = new Set<string>();
+  const emittedAfter = new Set<string>();
+  for (const block of chapter.body) {
+    const passage = blockPassage(block);
+    const ownsAnchor = Boolean(block.passageId) || Boolean(passage && !ownedPassages.has(passage));
+    if (ownsAnchor && !emittedBefore.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "before", publicOrigin));
+      emittedBefore.add(passage);
+    }
+    if (!isProse(block)) {
+      content.push({ type: "managedNode", attrs: { placementId: block.blockId, sourceBlockId: block.blockId, kind: block.type === "mediaFigure" ? "Media" : block.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: block }, { context: "editor", publicOrigin }) } });
+    } else {
+      content.push(proseNode(block));
+    }
+    if (ownsAnchor && !emittedAfter.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "after", publicOrigin));
+      for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
+        content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
+      }
+      emittedAfter.add(passage);
+    }
+  }
+  const legacyPassageOrder = new Map((Array.isArray(chapter.passages) ? chapter.passages as ChapterBlock[] : []).map((passage, index) => [blockPassage(passage), index]));
+  const unmatchedAnchors = [...new Set([
+    ...chapter.checkpoints.map((checkpoint) => checkpoint.passageId),
+    ...chapter.managedPlacements.map((placement) => placement.anchorPassageId),
+  ].filter(Boolean))].sort((left, right) => (legacyPassageOrder.get(left) ?? Number.MAX_SAFE_INTEGER) - (legacyPassageOrder.get(right) ?? Number.MAX_SAFE_INTEGER) || left.localeCompare(right));
+  for (const passage of unmatchedAnchors) {
+    if (!emittedBefore.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "before", publicOrigin));
+      emittedBefore.add(passage);
+    }
+    if (!emittedAfter.has(passage)) {
+      content.push(...managedNodes(chapter, passage, "after", publicOrigin));
+      for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
+        content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
+      }
+      emittedAfter.add(passage);
+    }
+  }
+  return content;
 }
 
 export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void, legacyArtifacts: readonly LegacyCuratedArtifact[] = []) {
-  const content: Record<string, unknown>[] = [];
-  for (const block of chapter.body) {
-    if (!isProse(block)) {
-      content.push({ type: "managedNode", attrs: { placementId: block.blockId, sourceBlockId: block.blockId, kind: block.type === "mediaFigure" ? "Media" : block.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: block }, { context: "editor", publicOrigin: location.origin }) } });
-      continue;
-    }
-    const passage = blockPassage(block);
-    content.push(...managedNodes(chapter, passage, "before")); content.push(proseNode(block)); content.push(...managedNodes(chapter, passage, "after"));
-    for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
-      content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
-    }
-  }
+  const content = editorDocumentContent(chapter, legacyArtifacts, location.origin);
   const reportPassage = (active: Editor) => {
     const { $from } = active.state.selection;
     for (let depth = $from.depth; depth >= 0; depth -= 1) {

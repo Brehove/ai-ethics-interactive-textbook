@@ -236,6 +236,39 @@ const passageIds = (chapter) => new Set([
   ...(Array.isArray(chapter.body) ? chapter.body.flatMap((item) => [item?.passageId, item?.anchorPassageId]) : [])
 ].filter(Boolean));
 
+export const checkpointExcerpt = (block) => {
+  if (!block) return '';
+  if (block.type === 'externalEmbed' || block.type === 'richLink') {
+    const fallback = block.fallback && typeof block.fallback === 'object' ? block.fallback : {};
+    return [block.title || fallback.title || block.caption || 'External resource', block.summary || fallback.summary || block.teachingUse, block.linkLabel || fallback.linkLabel || 'Open canonical source'].filter((value) => typeof value === 'string' && value).join('\n');
+  }
+  if (block.type === 'mediaFigure') return [block.decorative ? undefined : block.alt, block.caption, block.creditOverride || block.credit].filter((value) => typeof value === 'string' && value).join('\n');
+  if (block.type === 'list' && Array.isArray(block.items)) return block.items.map(String).join('\n');
+  if (typeof block.text === 'string') return block.text;
+  if (typeof block.code === 'string') return block.code;
+  const tableCells = [
+    ...(Array.isArray(block.columns) ? block.columns : []),
+    ...(Array.isArray(block.rows) ? block.rows.flat() : [])
+  ];
+  if (tableCells.length) return tableCells.map(String).join('\n');
+  if (typeof block.sanitizedHtml === 'string') return block.sanitizedHtml;
+  return [block.caption, block.alt, block.teachingUse, block.title, block.summary, block.description].filter((value) => typeof value === 'string').join('\n');
+};
+
+const checkpointAnchorBlock = (chapter, passageId) => (chapter.body || []).find((block) => block?.passageId === passageId)
+  || (chapter.body || []).find((block) => block?.anchorPassageId === passageId)
+  || (chapter.passages || []).find((passage) => passage?.passageId === passageId);
+
+const checkpointExcerptHash = async (chapter, passageId) => sha256(checkpointExcerpt(checkpointAnchorBlock(chapter, passageId)));
+
+export const bindCheckpointExcerptHashes = async (chapter) => {
+  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => ({
+    ...checkpoint,
+    passageExcerptHash: await checkpointExcerptHash(chapter, checkpoint.passageId)
+  })));
+  return chapter;
+};
+
 const normalizeCheckpoint = async (chapter, input, existing = null) => {
   rejectUnknown(input, ['checkpointId', 'legacyId', 'passageId', 'passageExcerptHash', 'displayOrder', 'slotLabel', 'slot', 'stage', 'strategy', 'title', 'trigger', 'prompt', 'guidance', 'responseStructure', 'minWords', 'maxWords', 'rationale', 'showInSidebar']);
   const slotLabel = input.slotLabel ?? input.slot;
@@ -250,12 +283,13 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   if (!Number.isInteger(input.minWords) || !Number.isInteger(input.maxWords) || input.minWords < 1 || input.maxWords > 1000 || input.minWords > input.maxWords) throw new ApiError(422, 'CHECKPOINT_RESPONSE_RANGE_INVALID', 'Checkpoint response word range is invalid');
   if (!existing && input.checkpointId !== undefined) throw new ApiError(422, 'CHECKPOINT_ID_SERVER_ASSIGNED', 'New checkpoint IDs are assigned by the server');
   if (existing && input.checkpointId !== undefined && input.checkpointId !== existing.checkpointId) throw new ApiError(422, 'CHECKPOINT_ID_IMMUTABLE', 'Checkpoint ID cannot be changed');
+  requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64);
   const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, passageId, displayOrder, slotLabel: slotLabel || null, title: input.title });
   return {
     checkpointId,
     ...(input.legacyId ? { legacyId: requireString(input.legacyId, 'checkpoint.legacyId', 200) } : {}),
     passageId,
-    passageExcerptHash: requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64),
+    passageExcerptHash: await checkpointExcerptHash(chapter, passageId),
     displayOrder,
     ...(slotLabel ? { slotLabel } : {}),
     ...(input.stage ? { stage: requireString(input.stage, 'checkpoint.stage', 120) } : {}),
@@ -303,7 +337,7 @@ const normalizeInsertedBlock = async (chapter, input, position) => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ApiError(400, 'INVALID_OPERATION', 'block payload is required');
   const allowed = {
     paragraph: ['type', 'text'], heading: ['type', 'text', 'level'], blockquote: ['type', 'text'], callout: ['type', 'text', 'tone'],
-    list: ['type', 'ordered', 'items'], codeBlock: ['type', 'code', 'language'], table: ['type', 'rows'], diagram: ['type', 'diagramId', 'alt']
+    list: ['type', 'ordered', 'items'], codeBlock: ['type', 'code', 'language'], table: ['type', 'columns', 'rows'], diagram: ['type', 'diagramId', 'description', 'alt']
   };
   if (input.type === 'legacyMarkup' || input.type === 'externalEmbed' || input.type === 'richLink' || input.type === 'mediaFigure') throw new ApiError(422, 'BLOCK_TYPE_FORBIDDEN', 'Use the dedicated typed operation for this block type');
   if (!allowed[input.type]) throw new ApiError(422, 'BLOCK_TYPE_UNSUPPORTED', 'Block type is not supported by block.insert');
@@ -315,18 +349,21 @@ const normalizeInsertedBlock = async (chapter, input, position) => {
   if (['paragraph', 'blockquote'].includes(input.type)) block = { type: input.type, blockId, passageId, text: safeText(input.text, 'block.text', 50000) };
   else if (input.type === 'heading') {
     if (!Number.isInteger(input.level) || input.level < 2 || input.level > 6) throw new ApiError(422, 'HEADING_LEVEL_INVALID', 'Heading level must be 2 through 6');
-    block = { type: 'heading', blockId, passageId, sectionId: await deterministicId('section', identitySeed), level: input.level, text: safeText(input.text, 'block.text', 1000) };
+    block = { type: 'heading', blockId, anchorPassageId: passageId, sectionId: await deterministicId('section', identitySeed), level: input.level, text: safeText(input.text, 'block.text', 1000) };
   } else if (input.type === 'callout') {
     if (!['note', 'warning', 'example', 'question'].includes(input.tone)) throw new ApiError(422, 'CALLOUT_TONE_INVALID', 'Callout tone is invalid');
     block = { type: 'callout', blockId, passageId, tone: input.tone, text: safeText(input.text, 'block.text', 20000) };
   } else if (input.type === 'list') {
     if (typeof input.ordered !== 'boolean' || !Array.isArray(input.items) || input.items.length < 1 || input.items.length > 100) throw new ApiError(422, 'LIST_INVALID', 'List requires ordered and 1 to 100 items');
     block = { type: 'list', blockId, passageId, ordered: input.ordered, items: input.items.map((item, index) => safeText(item, `block.items.${index}`, 4000)) };
-  } else if (input.type === 'codeBlock') block = { type: 'codeBlock', blockId, passageId, code: requireString(input.code, 'block.code', 50000), ...(input.language ? { language: requireString(input.language, 'block.language', 50) } : {}) };
+  } else if (input.type === 'codeBlock') block = { type: 'codeBlock', blockId, anchorPassageId: passageId, code: requireString(input.code, 'block.code', 50000), ...(input.language ? { language: requireString(input.language, 'block.language', 50) } : {}) };
   else if (input.type === 'table') {
     if (!Array.isArray(input.rows) || input.rows.length < 1 || input.rows.length > 100 || input.rows.some((row) => !Array.isArray(row) || row.length < 1 || row.length > 20)) throw new ApiError(422, 'TABLE_INVALID', 'Table dimensions are invalid');
-    block = { type: 'table', blockId, passageId, rows: input.rows.map((row, r) => row.map((cell, c) => safeText(cell, `block.rows.${r}.${c}`, 4000))) };
-  } else block = { type: 'diagram', blockId, passageId, diagramId: requireString(input.diagramId, 'block.diagramId', 200), alt: safeText(input.alt, 'block.alt', 1000) };
+    const width = input.rows[0].length;
+    if (input.rows.some((row) => row.length !== width) || (input.columns !== undefined && (!Array.isArray(input.columns) || input.columns.length !== width))) throw new ApiError(422, 'TABLE_INVALID', 'Table rows and columns must have one consistent width');
+    const columns = (input.columns ?? Array.from({ length: width }, (_, index) => `Column ${index + 1}`)).map((cell, index) => safeText(cell, `block.columns.${index}`, 4000));
+    block = { type: 'table', blockId, passageId, columns, rows: input.rows.map((row, r) => row.map((cell, c) => safeText(cell, `block.rows.${r}.${c}`, 4000))) };
+  } else block = { type: 'diagram', blockId, anchorPassageId: passageId, diagramId: requireString(input.diagramId, 'block.diagramId', 200), description: safeText(input.description ?? input.alt, input.description === undefined ? 'block.alt' : 'block.description', 1000) };
   assertUniqueBodyIds(chapter, block);
   return block;
 };
@@ -443,11 +480,6 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
   }
   if (missing.length) throw new ApiError(409, 'DEPENDENCIES_REQUIRE_REANCHOR', 'The pasted chapter would orphan anchored content; keep those passages or reanchor them first', { dependents: missing });
   chapter.body = scratch.body;
-  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => {
-    const block = chapter.body.find((item) => item.passageId === checkpoint.passageId);
-    const excerpt = block?.text || block?.items?.join(' ') || '';
-    return excerpt ? { ...checkpoint, passageExcerptHash: await sha256(excerpt) } : checkpoint;
-  }));
 };
 
 const importPlainTextChapter = async (chapter, input) => {
@@ -672,6 +704,9 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a structured document');
     if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
     const replacement = structuredClone(operation.document);
+    const shapeValidation = validateChapter(replacement);
+    if (!shapeValidation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', shapeValidation);
+    await bindCheckpointExcerptHashes(replacement);
     const validation = validateChapter(replacement);
     if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', validation);
     return { chapter: replacement, contentHash: await sha256(replacement) };
@@ -694,7 +729,11 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const removing = findUniqueBlock(chapter, operation.blockId);
     if (removing.block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be removed');
     if (removing.block.type === 'mediaFigure') throw new ApiError(422, 'MEDIA_REMOVE_REQUIRED', 'Use media.remove so the immutable media asset remains explicit');
-    const passageId = removing.block.passageId;
+    const referencedAnchor = removing.block.anchorPassageId;
+    const removedAnchor = removing.block.passageId || referencedAnchor;
+    const legacyPassageSurvives = (chapter.passages || []).some((item) => item?.passageId === removedAnchor);
+    const bodyAnchorSurvives = removedAnchor && chapter.body.some((item) => item.blockId !== operation.blockId && (item.passageId === removedAnchor || item.anchorPassageId === removedAnchor));
+    const passageId = removedAnchor && !legacyPassageSurvives && !bodyAnchorSurvives ? removedAnchor : undefined;
     const dependents = passageId ? [
       ...chapter.checkpoints.filter((item) => item.passageId === passageId).map((item) => ({ kind: 'checkpoint', id: item.checkpointId })),
       ...chapter.body.filter((item) => item.blockId !== operation.blockId && item.anchorPassageId === passageId).map((item) => ({ kind: item.type, id: item.blockId }))
@@ -772,11 +811,13 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const [removed] = chapter.managedPlacements.splice(index, 1);
     if (removed.kind === 'personFeature') chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== removed.contentId && item.placementId !== removed.placementId);
   }
+  await bindCheckpointExcerptHashes(chapter);
   return { chapter, contentHash: await sha256(chapter) };
 };
 
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
+  if (!Array.isArray(chapter.checkpoints)) errors.push({ code: 'CHECKPOINT_COLLECTION_INVALID', path: 'checkpoints' });
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
   const checkpointIds = checkpoints.map((item) => item.checkpointId);
   if (new Set(checkpointIds).size !== checkpointIds.length) errors.push({ code: 'CHECKPOINT_ID_DUPLICATE', path: 'checkpoints' });
@@ -784,6 +825,7 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
   checkpoints.forEach((item, index) => {
     const slotLabel = item.slotLabel ?? item.slot;
     if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: `checkpoints.${index}.slotLabel` });
+    if (item.stage !== undefined && (typeof item.stage !== 'string' || item.stage.trim().length < 1 || item.stage.trim().length > 120)) errors.push({ code: 'CHECKPOINT_STAGE_INVALID', path: `checkpoints.${index}.stage` });
     if (!Number.isInteger(item.displayOrder ?? index) || (item.displayOrder ?? index) < 0) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder` });
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });
     if (!/^[a-f0-9]{64}$/.test(item.passageExcerptHash || '')) errors.push({ code: 'CHECKPOINT_EXCERPT_HASH_INVALID', path: `checkpoints.${index}.passageExcerptHash` });

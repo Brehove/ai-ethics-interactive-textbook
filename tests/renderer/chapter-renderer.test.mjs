@@ -35,10 +35,86 @@ test("reader and editor projection share identical canonical markup", () => {
   const reader = renderChapterProjection(chapter, { context: "reader" });
   const editor = renderChapterProjection(chapter, { context: "editor" });
   assert.equal(normalizeRenderedHtml(reader.html), normalizeRenderedHtml(editor.html));
+  assert.deepEqual(reader.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
   assert.match(reader.html, /chapter-person/);
   assert.match(reader.html, /checkpoint_first/);
   assert.match(reader.html, /https:\/\/ethicsandai\.your-digital-life\.org\/media\/aristotle\.webp/);
   assert.match(reader.html, /Nicomachean Ethics/);
+});
+
+test("checkpoint ID deterministically breaks shared anchor and display-order ties", () => {
+  const tied = {
+    ...chapter,
+    checkpoints: [
+      { ...chapter.checkpoints[0], checkpointId: "checkpoint_z", displayOrder: 1 },
+      { ...chapter.checkpoints[1], checkpointId: "checkpoint_a", displayOrder: 1 },
+    ],
+    managedPlacements: [{ ...chapter.managedPlacements[0], orderAtAnchor: 1 }],
+  };
+  const forward = renderChapterProjection(tied);
+  const reverse = renderChapterProjection({ ...tied, checkpoints: [...tied.checkpoints].reverse() });
+  assert.deepEqual(forward.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_a", "checkpoint_z"]);
+  assert.deepEqual(forward.orderedNodes.filter((node) => node.kind !== "block").map((node) => node.value.checkpointId || node.value.placementId), ["checkpoint_a", "checkpoint_z", "placement_aristotle"]);
+  assert.equal(forward.html, reverse.html);
+  assert.deepEqual(forward.prompts, reverse.prompts);
+});
+
+test("shared passage anchors emit each checkpoint and managed placement once", () => {
+  const repeatedAnchorChapter = {
+    ...chapter,
+    body: [
+      chapter.body[0],
+      { type: "codeBlock", blockId: "block_code_a", anchorPassageId: "passage_a", code: "same anchor" },
+      chapter.body[1],
+    ],
+  };
+  const projection = renderChapterProjection(repeatedAnchorChapter);
+  assert.equal(projection.orderedNodes.filter((node) => node.kind === "checkpoint").length, 2);
+  assert.equal(projection.orderedNodes.filter((node) => node.kind === "personFeature").length, 1);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
+  assert.equal((projection.html.match(/data-checkpoint-id=/g) || []).length, 2);
+});
+
+test("sidebar prompts backed only by the legacy passages collection are retained", () => {
+  const legacyPassageChapter = {
+    ...chapter,
+    passages: [{ passageId: "passage_legacy_only", text: "Legacy passage." }],
+    checkpoints: [{ checkpointId: "checkpoint_legacy_only", passageId: "passage_legacy_only", displayOrder: 0, title: "Legacy prompt", prompt: "Respond.", showInSidebar: true }],
+    managedPlacements: [],
+  };
+  const projection = renderChapterProjection(legacyPassageChapter);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_legacy_only"]);
+  assert.equal(projection.orderedNodes.at(-1).value.checkpointId, "checkpoint_legacy_only");
+});
+
+test("legacy-only prompt anchors follow legacy passage order rather than checkpoint storage order", () => {
+  const legacyPassageChapter = {
+    ...chapter,
+    passages: [{ passageId: "passage_legacy_first", text: "First." }, { passageId: "passage_legacy_second", text: "Second." }],
+    checkpoints: [
+      { checkpointId: "checkpoint_second", passageId: "passage_legacy_second", displayOrder: 0, title: "Second", prompt: "Second prompt.", showInSidebar: true },
+      { checkpointId: "checkpoint_first", passageId: "passage_legacy_first", displayOrder: 0, title: "First", prompt: "First prompt.", showInSidebar: true },
+    ],
+    managedPlacements: [],
+  };
+  const projection = renderChapterProjection(legacyPassageChapter);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
+});
+
+test("anchored managed blocks do not steal checkpoint placement from the owning passage", () => {
+  const mediaBeforeOwner = {
+    ...chapter,
+    body: [
+      { type: "mediaFigure", blockId: "block_media_a", anchorPassageId: "passage_a", caption: "Context image" },
+      chapter.body[0],
+      chapter.body[1],
+    ],
+  };
+  const nodes = projectOrderedChapter(mediaBeforeOwner);
+  const ids = nodes.map((node) => node.value.blockId || node.value.placementId || node.value.checkpointId);
+  assert.ok(ids.indexOf("block_media_a") < ids.indexOf("block_a"));
+  assert.ok(ids.indexOf("block_a") < ids.indexOf("checkpoint_first"));
+  assert.equal(nodes.filter((node) => node.kind === "checkpoint").length, 2);
 });
 
 test("semantic person relations do not implicitly create scholar cards", () => {

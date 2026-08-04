@@ -2,14 +2,69 @@
 
 ## Detailed implementation plan
 
-- **Status:** Implementation-ready proposal; Phase 0 starts with a superseding ADR, and no code/schema PR may merge until that ADR is accepted
-- **Plan version:** 1.0
-- **Last updated:** 2026-08-03
+- **Status:** Implemented, deployed, and production-verified across all 18 chapters
+- **Plan version:** 2.0
+- **Last updated:** 2026-08-04
 - **Target repository:** Brehove/ai-ethics-interactive-textbook
 - **Operating target:** At or below $5/month for Cloudflare infrastructure
-- **Delivery estimate:** 11–16 focused engineering weeks for one engineer, or 7–10 calendar weeks with three parallel lanes plus integration/review
-- **First production canary:** Chapters 5 and 7
-- **Confidence:** High on the architecture and migration sequence; moderate on schedule until the editor-engine spike and production browser tests are complete
+- **Completion baseline:** `origin/main` at `3586277516e63c72d6c594314b005107a8633679`
+- **Final production scope:** Chapters 1–18
+- **Confidence:** High; exact production revisions, public projections, editor parity, scholar/media rendering, reader-editor continuity, and browser/agent publication were verified
+
+---
+
+## Completion record — 2026-08-04
+
+This plan is complete. The detailed material below is retained as the implementation specification and operational reference; proposal language and estimates describe the route taken, not unfinished work.
+
+| Phase | Result | Verification |
+|---|---|---|
+| 0 — decisions and spike | Complete | Superseding ADR/security boundaries accepted; editor engine and reader-identical projection validated |
+| 1 — content contract and migration | Complete | Stable IDs, person relations, zero-to-many checkpoints, managed placements, and deterministic migration/round-trip tests |
+| 2 — shared projection/renderer | Complete | Reader, editor, public D1 delivery, print, and fallbacks consume the shared projection; visual cards replace raw HTML |
+| 3 — atomic commit/public projection | Complete | One-click Save creates an immutable revision, advances the guarded D1 head, materializes the projection, and verifies exact public delivery |
+| 4 — deep-link authentication | Complete | Dedicated editor origin, GitHub OAuth return state, same-chapter/passage deep links, Done return, CSRF/origin/session tests |
+| 5 — continuous authoring UI | Complete | Continuous chapter surface; formatted prose; contextual checkpoint, media, embed, and person-feature dialogs; whole-chapter paste/import |
+| 6 — history/API/MCP/Skills | Complete | Immutable version history, safe restore-as-draft, OpenAPI 1.7.1, capability-scoped hosted MCP tools, and versioned Codex Skills |
+| 7 — verification | Complete | Contract, migration, API, security, accessibility, browser, visual, build, Cloudflare bundle, and public boundary gates passed |
+| 8 — canary/cutover | Complete | Chapters 5 and 7 passed reader/editor media and scholar-card QA; protected release cut over all 18 chapters to D1 |
+| 9 — full rollout/retirement | Complete | All public routes and editor deep links are live; routine content updates no longer require commits, PRs, validation clicks, or whole-site deploys |
+
+### Final experience verified
+
+~~~text
+public chapter
+  → chapter menu → Edit chapter
+  → GitHub sign-in only when the session is absent
+  → same chapter and passage in the continuous visual editor
+  → edit prose, checkpoints, scholar cards, images/GIFs, captions, or embeds
+  → Save
+  → immutable version created and exact public delivery verified
+  → Done
+  → same public chapter and passage
+~~~
+
+Production browser acceptance confirmed:
+
+- Chapter 7 opened at `revision_c6bb0561dc5598fa89d9f35d`, showed exactly three current checkpoint cards, two rendered Wikimedia media placements, working **Checkpoint**, **Media**, **Embed**, **Person / Scholar**, **History**, **Save**, and **Done** controls, and no stale production-verification checkpoint.
+- Chapter 5 showed the Thomas Aquinas person feature—including image, dates, description, and primary text—in both the public reader and signed-in editor.
+- **Done** returned from the editor to the matching public chapter and preserved the passage anchor.
+- The production browser emitted no console errors or warnings during final Chapter 5 editor verification.
+- A stale browser idempotency key can no longer resume an old/submitted/approved draft: the server resumes only an open change set based on the exact current canonical revision, and the editor uses a fresh in-memory request key.
+
+### Final service and release identity
+
+- Reader: `https://ethicsandai.your-digital-life.org`
+- Editor: `https://editor.ethicsandai.your-digital-life.org`
+- MCP: `https://mcp.ethicsandai.your-digital-life.org`
+- Release: `release_fbd24b22bd639ce4c290c701`
+- Reader Worker: `2d911f91-31b6-4ee0-a1bb-deab3dd1d2c3`
+- Content API: `40e3dc51-2a6f-4b10-a556-85ff89bf19ab`
+- Instructor editor: `f9e9edc3-403e-489b-b8a4-a77796c60056`
+- Release workflow: `30905539939`
+- Final application commit: `3586277516e63c72d6c594314b005107a8633679`
+
+Cloudflare R2 usage billing remains enabled with the operating target at **$5/month**. The $4 early-warning and $5 target alerts, quarterly restore/rollback exercise, provider-health checks, and routine cost review are ongoing operations rather than implementation gates.
 
 ---
 
@@ -17,7 +72,7 @@
 
 This document defines the implementation needed to make the PHIL 123 textbook feel like one product when reading and editing. It is a focused successor to the browser-editor, rendering, API, and publication sections of the [Agent-Native Authoring and Media Platform plan](./AGENT_NATIVE_AUTHORING_PLATFORM_IMPLEMENTATION_PLAN.md).
 
-The earlier plan established the D1/R2 content control plane, Chapter 7 canary, media and embed contracts, GitHub authentication, MCP, Skills, revision history, and protected release machinery. This plan addresses the remaining product and architectural gap:
+The earlier plan established the D1/R2 content control plane, Chapter 7 canary, media and embed contracts, GitHub authentication, MCP, Skills, revision history, and protected release machinery. This plan defined the product and architectural gap that the completed implementation closed:
 
 > An instructor should be able to move from a published chapter to an identical-looking editing view, edit prose or managed content, click Save once, and immediately see a new public version without entering a separate administrative application or running a validation/review ritual.
 
@@ -33,7 +88,7 @@ Where this document conflicts with [ADR 0004](./architecture/adr/0004-auth-and-a
 
 The superseding ADR must also explicitly retain or replace ADR 0004’s PKCE, token rotation, short-lived scoped agent authorization, step-up controls, emergency revocation, rollback, and origin/CSRF requirements. Product approval does not silently supersede an accepted security ADR.
 
-This is a plan document. Creating it does not change production, content authority, authentication, or deployment state.
+The completion record above is the authoritative implementation status. The sections below retain the pre-implementation specification so future maintainers can trace each production behavior to its requirement, migration, verification gate, and rollback rule.
 
 ---
 

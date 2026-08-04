@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
-import worker, { releaseMediaKind } from '../../workers/content-api/src/index.mjs';
+import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
+import worker, { rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
   const response = await worker.fetch(new Request('https://content.example/health'), {});
@@ -829,6 +829,61 @@ test('checkpoint validation rejects unstable anchors and caller-selected IDs whi
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: clientId }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_SERVER_ASSIGNED');
 });
 
+test('chapter replacement rejects empty or oversized optional checkpoint labels', () => {
+  for (const stage of ['', 'x'.repeat(121)]) {
+    const chapter = baseChapter();
+    chapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-stage-limit', stage });
+    assert.deepEqual(validateChapter(chapter).errors.filter((error) => error.code === 'CHECKPOINT_STAGE_INVALID'), [
+      { code: 'CHECKPOINT_STAGE_INVALID', path: 'checkpoints.0.stage' }
+    ]);
+  }
+});
+
+test('checkpoint hashes are server-derived for every selectable anchor type', async () => {
+  const chapter = baseChapter();
+  const table = { type: 'table', blockId: 'b-table', passageId: 'p-table', columns: ['Claim', 'Reason'], rows: [['A', 'B']] };
+  const code = { type: 'codeBlock', blockId: 'b-code', passageId: 'p-code', code: 'const judgment = true;' };
+  chapter.body.push(table, code);
+  let result = await applySemanticOperation(chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('table', 'p-table') });
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(table)));
+  const replacement = structuredClone(result.chapter);
+  replacement.checkpoints[0].passageId = 'p-code';
+  replacement.checkpoints[0].passageExcerptHash = '0'.repeat(64);
+  result = await applySemanticOperation(result.chapter, { type: 'chapter.replaceDocument', document: replacement });
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(code)));
+  assert.notEqual(result.chapter.checkpoints[0].passageExcerptHash, await sha256(''));
+  assert.equal(checkpointExcerpt({ type: 'list', text: 'stale', items: ['Visible A', 'Visible B'] }), 'Visible A\nVisible B');
+  const listChapter = baseChapter();
+  listChapter.body[0] = { type: 'list', blockId: 'b-commit', passageId: 'p-commit', text: 'stale', ordered: false, items: ['Before'] };
+  listChapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-list-hash' });
+  const replacedBody = structuredClone(listChapter.body);
+  replacedBody[0].items = ['Visible A', 'Visible B'];
+  const bodyResult = await applySemanticOperation(listChapter, { type: 'chapter.replaceBody', body: replacedBody });
+  assert.equal(bodyResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible A\nVisible B'));
+  const embedChapter = baseChapter();
+  embedChapter.body.push({ type: 'externalEmbed', blockId: 'b-standalone-embed', embedId: 'embed-standalone', anchorPassageId: 'p-standalone-embed', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Outer caption', teachingUse: 'Outer use', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Fallback title', summary: 'Fallback summary', linkLabel: 'Open source', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const embedResult = await applySemanticOperation(embedChapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('standalone-embed', 'p-standalone-embed') });
+  assert.equal(embedResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Fallback title\nFallback summary\nOpen source'));
+  const mediaChapter = baseChapter();
+  mediaChapter.body.push({ type: 'mediaFigure', blockId: 'b-standalone-media', anchorPassageId: 'p-standalone-media', decorative: false, alt: 'Accessible portrait', caption: 'Portrait caption', credit: 'Projected credit', creditOverride: 'Authored credit', teachingUse: 'Invisible teaching note' });
+  const mediaResult = await applySemanticOperation(mediaChapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('standalone-media', 'p-standalone-media') });
+  assert.equal(mediaResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Accessible portrait\nPortrait caption\nAuthored credit'));
+});
+
+test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-malformed-body' });
+  await assert.rejects(
+    applySemanticOperation(chapter, { type: 'chapter.replaceDocument', document: { ...chapter, body: { invalid: true } } }),
+    (error) => error instanceof ApiError && error.status === 422 && error.code === 'CHAPTER_BODY_INVALID'
+  );
+  await assert.rejects(
+    applySemanticOperation(chapter, { type: 'chapter.replaceDocument', document: { ...chapter, checkpoints: { invalid: true } } }),
+    (error) => error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_FAILED'
+      && error.details?.errors?.some((item) => item.code === 'CHECKPOINT_COLLECTION_INVALID')
+  );
+});
+
 test('locked legacy anchorPassageId values satisfy checkpoint anchor validation', () => {
   const chapter = baseChapter();
   chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy-anchor', anchorPassageId: 'p-legacy-anchor', locked: true, sanitizedHtml: '<aside>Worked example</aside>', importedFrom: 'git-markdown-v1' });
@@ -952,22 +1007,103 @@ test('block.insert creates deterministic unique IDs from a stable anchor and rej
   const second = await applySemanticOperation(baseChapter(), operation);
   assert.equal(first.chapter.body[2].blockId, second.chapter.body[2].blockId);
   assert.match(first.chapter.body[2].passageId, /^passage_/);
+  const table = await applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'table', columns: ['Claim', 'Reason'], rows: [['A', 'B']] }, position: { afterBlockId: 'b-work' } });
+  assert.deepEqual(table.chapter.body[2].columns, ['Claim', 'Reason']);
+  await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'table', columns: ['Claim'], rows: [['A', 'B']] }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'TABLE_INVALID');
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'legacyMarkup', html: '<script>x</script>' }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'BLOCK_TYPE_FORBIDDEN');
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'paragraph', text: '<style>body{display:none}</style>' }, position: { afterBlockId: 'b-work' } }), (error) => error instanceof ApiError && error.code === 'RAW_MARKUP_FORBIDDEN');
+});
+
+test('API-created diagrams bind checkpoint hashes to their reader-visible description', async () => {
+  const inserted = await applySemanticOperation(baseChapter(), { type: 'block.insert', block: { type: 'diagram', diagramId: 'diagram_judgment', alt: 'Visible judgment map' }, position: { afterBlockId: 'b-work' } });
+  const diagram = inserted.chapter.body.find((block) => block.type === 'diagram');
+  assert.equal(diagram.description, 'Visible judgment map');
+  assert.equal('alt' in diagram, false);
+  const withCheckpoint = await applySemanticOperation(inserted.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('diagram', diagram.anchorPassageId) });
+  assert.equal(withCheckpoint.chapter.checkpoints[0].passageExcerptHash, await sha256('Visible judgment map'));
+});
+
+test('media checkpoint hashes include the exact pinned default credit without persisting delivery fields', async () => {
+  const chapter = baseChapter();
+  chapter.body = [{ type: 'mediaFigure', blockId: 'b-media', figureId: 'figure-media', mediaId: 'media-1', mediaVersionId: 'version-1', rightsCaseId: 'rights-1', anchorPassageId: 'p-media', decorative: false, alt: 'Accessible portrait', caption: 'Portrait caption', teachingUse: 'Inspect the portrait.', displayPreset: 'reading', align: 'center', printPolicy: 'poster', downloadable: false }];
+  chapter.checkpoints = [{ ...checkpoint('media', 'p-media'), checkpointId: 'checkpoint-media' }];
+  const CONTENT_DB = fakeDb((sql, _args, mode) => {
+    if (sql.includes('FROM media_assets a JOIN media_asset_versions v') && sql.includes('LEFT JOIN media_review_packages')) return {
+      media_id: 'media-1', title: 'Portrait', media_state: 'ready', media_version_id: 'version-1', source_sha256: 'a'.repeat(64), source_bytes: 120, detected_mime: 'image/jpeg', immutable_address: 'r2://media/original.jpg', technical_json: '{}', rights_case_id: 'rights-1', review_id: 'review-1', rights_status: 'cleared', review_package_id: 'package-1', rights_json: JSON.stringify({ attribution: 'Frozen Wikimedia credit' }), editorial_json: '{}', accessibility_json: '{}', declaration_hash: 'b'.repeat(64), review_package_state: 'cleared'
+    };
+    if (sql.includes('FROM media_version_objects') && mode === 'all') return { results: [{ id: 'object-1', role: 'derivative', object_key: 'media/version-1/derivative.webp', object_sha256: 'c'.repeat(64), object_bytes: 100, content_type: 'image/webp' }] };
+    return null;
+  });
+  const rebound = await rebindProjectedMediaCheckpointHashes({ CONTENT_DB }, chapter);
+  assert.equal(rebound.checkpoints[0].passageExcerptHash, await sha256('Accessible portrait\nPortrait caption\nFrozen Wikimedia credit'));
+  assert.equal('credit' in rebound.body[0], false);
+  assert.equal('src' in rebound.body[0], false);
+});
+
+test('live replacement rebinding refreshes every ordinary checkpoint excerpt hash', async () => {
+  const chapter = baseChapter();
+  chapter.body.find((block) => block.passageId === 'p-work').text = 'Revised live prose.';
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-live-prose', passageExcerptHash: 'a'.repeat(64) }];
+  const rebound = await rebindProjectedMediaCheckpointHashes({}, chapter);
+  assert.equal(rebound.checkpoints[0].passageExcerptHash, await sha256('Revised live prose.'));
+});
+
+test('live replacement rebinding rejects malformed collections as a structured validation error', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = { invalid: true };
+  await assert.rejects(() => rebindProjectedMediaCheckpointHashes({}, chapter), (error) => error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_FAILED' && error.details.errors.some((item) => item.code === 'CHECKPOINT_COLLECTION_INVALID'));
 });
 
 test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {
   const chapter = baseChapter();
   chapter.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
-  chapter.body.push({ type: 'externalEmbed', blockId: 'b-embed', embedId: 'embed-1', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
   chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work' }), (error) => error instanceof ApiError && error.code === 'DEPENDENCIES_REQUIRE_REANCHOR');
   const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work', replacementPassageId: 'p-commit' });
   assert.equal(result.chapter.body.some((item) => item.blockId === 'b-work'), false);
   assert.equal(result.chapter.checkpoints[0].passageId, 'p-commit');
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Commit passage.'));
-  assert.equal(result.chapter.body.find((item) => item.blockId === 'b-embed').anchorPassageId, 'p-commit');
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
+});
+
+test('block.remove preserves a direct passage anchor represented by a surviving body block', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-direct-owner' }];
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-surviving-embed', embedId: 'embed-survivor', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-work'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-work');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Video\nSummary\nOpen'));
+});
+
+test('block.remove does not treat an attached embed as the owner of its paragraph anchor', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-anchor-owner' }];
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-attached-embed', embedId: 'embed-attached', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-attached-embed' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-attached-embed'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-work');
+});
+
+test('block.remove preserves a checkpoint anchor backed by another referenced block', async () => {
+  const chapter = baseChapter();
+  chapter.body.push({ type: 'codeBlock', blockId: 'b-code-owner', anchorPassageId: 'p-code-shared', code: 'const answer = 42;' });
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-code-embed', embedId: 'embed-code', anchorPassageId: 'p-code-shared', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  chapter.checkpoints = [{ ...checkpoint('code', 'p-code-shared'), checkpointId: 'checkpoint-code-owner' }];
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-code-embed' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-code-owner'), true);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-code-shared');
+});
+
+test('block.remove preserves an anchor owned by the legacy passages collection', async () => {
+  const chapter = baseChapter();
+  chapter.passages = [{ type: 'paragraph', blockId: 'legacy-passage-owner', passageId: 'p-legacy-shared', text: 'Legacy canonical passage.' }];
+  chapter.body.push({ type: 'codeBlock', blockId: 'b-legacy-reference', anchorPassageId: 'p-legacy-shared', code: 'const legacy = true;' });
+  chapter.checkpoints = [{ ...checkpoint('legacy', 'p-legacy-shared'), checkpointId: 'checkpoint-legacy-owner' }];
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy-reference' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-legacy-reference'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-legacy-shared');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Legacy canonical passage.'));
 });
 
 test('checkpoint.remove targets either the internal key or stable ID', async () => {
