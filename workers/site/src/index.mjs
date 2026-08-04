@@ -75,7 +75,13 @@ export default {
     }
     const route = chapterRoute(url.pathname);
     const deliveryProbe = request.method === "GET" && route && request.headers.get("x-textbook-delivery-probe") === "v1";
-    const staticResponse = await env.ASSETS.fetch(request);
+    // The probe is a Worker-to-Worker control signal, not an asset request
+    // variant. Strip it before resolving the immutable deployed chapter shell
+    // so service bindings and the public custom domain exercise the same asset.
+    const assetRequest = deliveryProbe
+      ? new Request(request.url, { method: "GET", headers: { accept: "text/html" } })
+      : request;
+    const staticResponse = await env.ASSETS.fetch(assetRequest);
     if (deliveryProbe) {
       if (!staticResponse.ok || !staticResponse.headers.get("content-type")?.includes("text/html")) {
         return new Response("Public chapter asset is unavailable", { status: 503, headers: { "cache-control": "no-store" } });

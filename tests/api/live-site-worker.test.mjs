@@ -35,7 +35,12 @@ test("site Worker serves verified projection for every allowlisted chapter witho
 test("delivery identity probe verifies the deployed chapter asset can render the immutable projection", async () => {
   let assetCalls = 0;
   const env = {
-    ASSETS: { fetch: async () => { assetCalls += 1; return new Response(staticHtml, { headers: { "content-type": "text/html; charset=utf-8" } }); } },
+    ASSETS: { fetch: async (request) => {
+      assetCalls += 1;
+      assert.equal(request.headers.get("x-textbook-delivery-probe"), null);
+      assert.equal(request.headers.get("accept"), "text/html");
+      return new Response(staticHtml, { headers: { "content-type": "text/html; charset=utf-8" } });
+    } },
     PUBLIC_PROJECTION: { fetch: async (request) => {
       assert.equal(new URL(request.url).pathname, "/v1/public/chapters/chapter_ch07");
       return Response.json(projection);
