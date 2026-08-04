@@ -1040,18 +1040,34 @@ test('media checkpoint hashes include the exact pinned default credit without pe
   assert.equal('src' in rebound.body[0], false);
 });
 
+test('live replacement rebinding refreshes every ordinary checkpoint excerpt hash', async () => {
+  const chapter = baseChapter();
+  chapter.body.find((block) => block.passageId === 'p-work').text = 'Revised live prose.';
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-live-prose', passageExcerptHash: 'a'.repeat(64) }];
+  const rebound = await rebindProjectedMediaCheckpointHashes({}, chapter);
+  assert.equal(rebound.checkpoints[0].passageExcerptHash, await sha256('Revised live prose.'));
+});
+
 test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {
   const chapter = baseChapter();
   chapter.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];
-  chapter.body.push({ type: 'externalEmbed', blockId: 'b-embed', embedId: 'embed-1', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
   chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Legacy</aside>', importedFrom: 'chapter.md' });
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work' }), (error) => error instanceof ApiError && error.code === 'DEPENDENCIES_REQUIRE_REANCHOR');
   const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work', replacementPassageId: 'p-commit' });
   assert.equal(result.chapter.body.some((item) => item.blockId === 'b-work'), false);
   assert.equal(result.chapter.checkpoints[0].passageId, 'p-commit');
   assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Commit passage.'));
-  assert.equal(result.chapter.body.find((item) => item.blockId === 'b-embed').anchorPassageId, 'p-commit');
   await assert.rejects(() => applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-legacy' }), (error) => error instanceof ApiError && error.code === 'LEGACY_MARKUP_LOCKED');
+});
+
+test('block.remove preserves a direct passage anchor represented by a surviving body block', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = [{ ...checkpoint('work', 'p-work'), checkpointId: 'checkpoint-direct-owner' }];
+  chapter.body.push({ type: 'externalEmbed', blockId: 'b-surviving-embed', embedId: 'embed-survivor', anchorPassageId: 'p-work', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Video', teachingUse: 'Compare.', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Video', summary: 'Summary', linkLabel: 'Open', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
+  const result = await applySemanticOperation(chapter, { type: 'block.remove', blockId: 'b-work' });
+  assert.equal(result.chapter.body.some((item) => item.blockId === 'b-work'), false);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-work');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('Video\nSummary\nOpen'));
 });
 
 test('block.remove does not treat an attached embed as the owner of its paragraph anchor', async () => {

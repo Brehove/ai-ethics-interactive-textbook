@@ -984,11 +984,13 @@ export async function rebindProjectedMediaCheckpointHashes(env, chapter) {
       || (canonical.body || []).find((item) => item?.anchorPassageId === checkpoint.passageId);
     return block?.type === 'mediaFigure' && !block.creditOverride;
   });
-  if (!mediaAnchorNeedsProjection) return canonical;
-  const mediaProjection = await buildMediaProjection(env, canonical);
-  const projected = withProjectedMedia(canonical, mediaProjection.projection);
-  await bindCheckpointExcerptHashes(projected);
-  return stripTransientMediaPreviewFields(projected);
+  let hashSource = canonical;
+  if (mediaAnchorNeedsProjection) {
+    const mediaProjection = await buildMediaProjection(env, canonical);
+    hashSource = withProjectedMedia(canonical, mediaProjection.projection);
+  }
+  await bindCheckpointExcerptHashes(hashSource);
+  return stripTransientMediaPreviewFields(hashSource);
 }
 
 function mergeMediaProjections(items) {
