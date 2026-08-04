@@ -47,6 +47,7 @@ test('tools use current Unified routes, batch semantic operations, and preserve 
   const { client, server } = await connected(env);
   await client.callTool({ name: 'get_authoring_view', arguments: { chapterId: 'chapter_ch07' } });
   await client.callTool({ name: 'create_or_resume_changeset', arguments: { chapterId: 'chapter_ch07', title: 'Repair', resume: true, idempotencyKey: key } });
+  await client.callTool({ name: 'replace_passage_text', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'text.replace', blockId: 'block_7', text: 'Revised passage.' } } });
   await client.callTool({ name: 'replace_chapter_document', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key, operation: { type: 'chapter.replaceDocument', document: { blocks: [] } } } });
   const reorderedCheckpoint = { checkpointId: 'checkpoint_7', passageId: 'passage_7', displayOrder: 9, strategy: 'self-explanation', title: 'Reordered pause', trigger: 'Pause.', prompt: 'Explain.', guidance: 'Use the chapter.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'Reorder the prompt.', showInSidebar: true };
   await client.callTool({ name: 'reorder_checkpoint', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 3, idempotencyKey: key, operation: { type: 'checkpoint.upsert', checkpoint: reorderedCheckpoint } } });
@@ -58,10 +59,11 @@ test('tools use current Unified routes, batch semantic operations, and preserve 
   assert.equal(calls[1].path, '/v1/chapters/chapter_ch07/changesets');
   assert.equal(calls[1].body.documentIds, undefined);
   assert.equal(calls[2].path, '/v1/changesets/changeset_7/operations:batch');
-  assert.equal(calls[2].body.operations[0].type, 'chapter.replaceDocument');
-  assert.equal(calls[3].body.operations[0].checkpoint.displayOrder, 9);
-  assert.equal(calls[4].body.operations[0].type, 'personFeature.upsert');
-  assert.equal(calls[5].path, '/v1/live-commits/commit_7');
+  assert.deepEqual(calls[2].body.operations[0], { type: 'text.replace', blockId: 'block_7', text: 'Revised passage.' });
+  assert.equal(calls[3].body.operations[0].type, 'chapter.replaceDocument');
+  assert.equal(calls[4].body.operations[0].checkpoint.displayOrder, 9);
+  assert.equal(calls[5].body.operations[0].type, 'personFeature.upsert');
+  assert.equal(calls[6].path, '/v1/live-commits/commit_7');
   assert.equal(calls.every((call) => call.authorization === 'Bearer device-flow-test'), true);
   assert.equal(calls.every((call) => call.actorHeader === null), true);
   await client.close(); await server.close();
@@ -87,6 +89,16 @@ test('commit_live is hidden without the exact scope and operation, and re-verifi
   const { client, server } = await connected(env, initialIdentity);
   const response = await client.callTool({ name: 'commit_live', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key } });
   assert.equal(response.isError, true); assert.match(response.content[0].text, /does not grant commit_live/);
+  await client.close(); await server.close();
+});
+
+test('commit_live sends an explicit empty operation array for an already-edited changeset', async () => {
+  let body;
+  const liveIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
+  const env = makeEnv({ verified: liveIdentity, api: async (request) => { body = await request.json(); return { deliveryStatus: 'verified' }; } });
+  const { client, server } = await connected(env, liveIdentity);
+  const response = await client.callTool({ name: 'commit_live', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key } });
+  assert.equal(response.isError, undefined); assert.deepEqual(body.operations, []);
   await client.close(); await server.close();
 });
 

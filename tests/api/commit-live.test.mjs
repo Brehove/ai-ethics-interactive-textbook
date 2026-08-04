@@ -69,6 +69,26 @@ test('commitLive writes its guarded receipt first, then one revision and one pub
   } finally { globalThis.fetch = originalFetch; }
 });
 
+test('commitLive publishes an already-edited working draft even when the final replacement is identical to that draft', async () => {
+  const canonical = chapter(); const canonicalHash = await sha256(canonical);
+  const draft = structuredClone(canonical); draft.body[0].text = 'Drafted before the final commit call.';
+  const working = { id: 'working_draft', document_id: canonical.chapterId, base_revision_id: 'revision-base', content_hash: await sha256(draft), content_text: JSON.stringify(draft), version: 3, state: 'open', purpose: 'authoring', current_revision_id: 'revision-base', current_content_hash: canonicalHash };
+  const db = fakeDb((sql) => {
+    if (sql.includes('FROM live_commit_commands')) return null;
+    if (sql.includes('INSERT INTO api_rate_limits')) return { results: [{ request_count: 1 }] };
+    if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    if (sql.includes('SELECT id, authority, source_revision')) return { id: 'authority_1', authority: 'd1', source_revision: 'revision-base', normalized_snapshot_hash: canonicalHash };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs_draft:commitLive', {
+    method: 'POST', headers: gatewayHeaders(), body: JSON.stringify({ documentId: canonical.chapterId, baseRevisionId: 'revision-base', expectedVersion: 3, idempotencyKey: 'commit-existing-draft-1', operations: [{ type: 'chapter.replaceDocument', document: draft }] })
+  }), { CONTENT_DB: db, PUBLIC_READER_ORIGIN: 'https://reader.example' });
+  assert.equal(response.status, 202, await response.text());
+  const batch = db.batches.find((items) => items.some((statement) => statement.sql.includes('INSERT INTO live_commit_commands')));
+  assert.ok(batch?.some((statement) => statement.sql.includes('INSERT INTO document_revisions')));
+  assert.equal(batch?.some((statement) => statement.sql.includes("state = 'unchanged'")), false);
+});
+
 test('authoring view is revision-bound and status polling promotes only a pending receipt', async () => {
   const source = chapter(); const sourceHash = await sha256(source);
   const command = { id: 'commit_1', changeset_id: 'cs_1', document_id: source.chapterId, result_revision_id: 'revision_2', result_content_hash: 'b'.repeat(64), projection_id: 'projection_1', projection_hash: 'a'.repeat(64), public_url: 'https://reader.example/chapter/aristotle-character-and-ai-assisted-life/', state: 'committed', delivery_state: 'confirmation_pending', actor_id: 'actor_editor_1', client_id: 'editor', created_at: '2026-08-03T00:00:00Z', committed_at: '2026-08-03T00:00:00Z', status_expires_at: '2099-08-04T00:00:00Z' };

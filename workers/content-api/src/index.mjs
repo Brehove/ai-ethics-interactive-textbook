@@ -49,6 +49,25 @@ const requireAgentTarget = (identity, { documentId, operation }) => {
   if (documentId && !identity.allowedDocumentIds?.includes(documentId)) throw new ApiError(403, 'CAPABILITY_DOCUMENT_FORBIDDEN', 'Agent capability does not allow this chapter');
   if (operation && !identity.allowedOperations?.includes(operation)) throw new ApiError(403, 'CAPABILITY_OPERATION_FORBIDDEN', 'Agent capability does not allow this operation');
 };
+const SEMANTIC_OPERATION_CAPABILITIES = Object.freeze({
+  'text.replace': ['replace_passage_text'],
+  'chapter.replaceDocument': ['replace_chapter_document'],
+  'checkpoint.upsert': ['upsert_checkpoint', 'reorder_checkpoint'],
+  'checkpoint.replace': ['upsert_checkpoint', 'reorder_checkpoint'],
+  'checkpoint.remove': ['remove_checkpoint'],
+  'media.place': ['place_media'],
+  'media.remove': ['remove_managed_placement'],
+  'embed.upsert': ['upsert_embed'],
+  'personFeature.upsert': ['upsert_person_feature'],
+  'managedPlacement.move': ['move_managed_placement'],
+  'managedPlacement.remove': ['remove_managed_placement']
+});
+const requireAgentSemanticOperation = (identity, documentId, operationType) => {
+  if (identity.actorType !== 'agent') return;
+  requireAgentTarget(identity, { documentId });
+  const capabilities = SEMANTIC_OPERATION_CAPABILITIES[operationType] || [];
+  if (!capabilities.some((operation) => identity.allowedOperations?.includes(operation))) throw new ApiError(403, 'CAPABILITY_OPERATION_FORBIDDEN', 'Agent capability does not allow this semantic operation');
+};
 const requireHumanIdentity = (identity, action) => {
   if (identity.actorType !== 'human') throw new ApiError(403, 'HUMAN_ACTOR_REQUIRED', `${action} requires an authenticated human actor`);
 };
@@ -539,7 +558,7 @@ async function applyOperation(request, env, identity, changesetId) {
   const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:apply`, body.idempotencyKey, body);
   if (idem.replay) return idem.replay;
   const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId), body.documentId);
-  requireAgentTarget(identity, { documentId: working.document_id, operation: body.operation?.type });
+  requireAgentSemanticOperation(identity, working.document_id, body.operation?.type);
   if (working.state !== 'open') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open changeset can be edited');
   if (working.purpose === 'authority_cutover') throw new ApiError(409, 'CUTOVER_PROPOSAL_READ_ONLY', 'Authority cutover proposals are immutable review snapshots and cannot be edited');
   if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter changed after this changeset opened', { expected: working.base_revision_id, current: working.current_revision_id });
@@ -572,7 +591,7 @@ async function applyOperationBatch(request, env, identity, changesetId) {
   if (idem.replay) return idem.replay;
   const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId), body.documentId);
   requireAgentTarget(identity, { documentId: working.document_id });
-  for (const operation of body.operations) requireAgentTarget(identity, { documentId: working.document_id, operation: operation?.type });
+  for (const operation of body.operations) requireAgentSemanticOperation(identity, working.document_id, operation?.type);
   if (working.state !== 'open' || working.purpose === 'authority_cutover') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open authoring changeset can be edited');
   if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter changed after this changeset opened', { expected: working.base_revision_id, current: working.current_revision_id });
   if (body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'Working document version is stale', { expectedVersion: body.expectedVersion, currentVersion: working.version });
@@ -769,8 +788,8 @@ async function commitChangesetLive(request, env, identity, changesetId) {
   const chapter = await applyCommitOperations(env, source, body.operations);
   const validation = validateChapter(chapter, { publishable: true });
   if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'The chapter cannot be saved live until its structural errors are resolved', validation);
-  const currentContentHash = await sha256(source);
-  if (stableStringify(chapter) === stableStringify(source) || currentContentHash === working.current_content_hash && body.operations.length === 0) {
+  const resultingContentHash = await sha256(chapter);
+  if (resultingContentHash === working.current_content_hash) {
     const head = await env.CONTENT_DB.prepare(`SELECT h.projection_id, h.projection_hash, h.revision_id, p.slug
       FROM public_chapter_heads h JOIN public_chapter_projections p ON p.id = h.projection_id WHERE h.document_id = ?`).bind(body.documentId).first();
     if (!head) throw new ApiError(409, 'PUBLIC_PROJECTION_MISSING', 'The current D1-authoritative chapter has no public projection');

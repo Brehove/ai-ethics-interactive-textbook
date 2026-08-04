@@ -84,11 +84,15 @@ export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onCh
 
 export function serializeBody(json: Record<string, unknown>, previous: ChapterBlock[]): ChapterBlock[] {
   const previousById = new Map(previous.map((block) => [block.blockId, block])); const result: ChapterBlock[] = [];
+  const nestedText = (node: Record<string, unknown>): string => {
+    if (typeof node.text === "string") return node.text;
+    return (Array.isArray(node.content) ? node.content as Record<string, unknown>[] : []).map(nestedText).join("");
+  };
   const visit = (node: Record<string, unknown>) => {
     const content = Array.isArray(node.content) ? node.content as Record<string, unknown>[] : [];
     if (node.type === "managedNode") { const sourceBlockId = String(((node.attrs ?? {}) as Record<string, unknown>).sourceBlockId ?? ""); const preserved = previousById.get(sourceBlockId); if (preserved) result.push(structuredClone(preserved)); return; }
     if (node.type === "paragraph" || node.type === "heading" || node.type === "blockquote") {
-      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? previousById.get(blockId)?.passageId ?? newId("passage")); const text = content.map((item) => String(item.text ?? "")).join("");
+      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? previousById.get(blockId)?.passageId ?? newId("passage")); const text = content.map(nestedText).join("");
       result.push(node.type === "heading" ? { type: "heading", blockId, sectionId: previousById.get(blockId)?.sectionId ?? newId("section"), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text } : { type: node.type as "paragraph" | "blockquote", blockId, passageId, text }); return;
     }
     if (node.type === "bulletList" || node.type === "orderedList") { const firstParagraph = content[0]?.content as Record<string, unknown>[] | undefined; const attrs = (firstParagraph?.[0]?.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? newId("passage")); result.push({ type: "list", blockId, passageId, ordered: node.type === "orderedList", items: content.map((item) => ((item.content as Record<string, unknown>[] | undefined)?.[0]?.content as Record<string, unknown>[] | undefined)?.map((part) => String(part.text ?? "")).join("") ?? "") }); return;

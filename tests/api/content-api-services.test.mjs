@@ -199,6 +199,22 @@ test('multi-document edits require and honor an exact document target', async ()
   assert.equal(update.args[5], 'working-b');
 });
 
+test('agent MCP tool grants authorize only their mapped semantic operations', async () => {
+  const source = { ...baseChapter(), chapterId: 'chapter_ch07' };
+  const working = { id: 'working-agent', document_id: 'chapter_ch07', base_revision_id: 'revision-agent', content_hash: await sha256(source), content_text: JSON.stringify(source), version: 1, state: 'open', purpose: 'authoring', current_revision_id: 'revision-agent' };
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    return null;
+  });
+  const allowed = withAgentCapability({ CONTENT_DB }, { scopes: ['content:write'], allowedOperations: ['replace_passage_text'] });
+  let response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-1', operations: [{ type: 'text.replace', blockId: 'b-work', text: 'Mapped MCP edit.' }] }) }), allowed);
+  assert.equal(response.status, 200, await response.text());
+
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-2', operations: [{ type: 'chapter.replaceDocument', document: source }] }) }), allowed);
+  assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'CAPABILITY_OPERATION_FORBIDDEN');
+});
+
 test('multi-document diff returns one content-free result per working copy', async () => {
   const base = baseChapter(); const changed = structuredClone(base); changed.body[0].text = 'Changed without leaking into the diff.';
   const CONTENT_DB = fakeDb((sql) => sql.includes('FROM changesets c JOIN working_documents') ? { results: [

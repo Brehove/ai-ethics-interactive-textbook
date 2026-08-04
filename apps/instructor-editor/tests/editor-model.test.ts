@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
 import { addCheckpoint, addPersonFeature, chapterReplaceOperation, cloneChapter, nearestPassage } from "../src/editor-model";
+import { serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
@@ -38,4 +39,13 @@ test("Save emits one atomic chapter.replaceDocument operation", () => {
     assert.equal("editorPreviewUrl" in savedMedia, false);
     assert.equal("previewPath" in savedMedia, false);
   }
+});
+
+test("continuous serialization preserves text nested inside a blockquote paragraph", () => {
+  const previous = [{ type: "blockquote", blockId: "quote_1", passageId: "passage_quote_1", text: "Original quotation." }] as const;
+  const body = serializeBody({ type: "doc", content: [{
+    type: "blockquote", attrs: { blockId: "quote_1", passageId: "passage_quote_1" },
+    content: [{ type: "paragraph", content: [{ type: "text", text: "Revised quotation." }] }]
+  }] }, structuredClone(previous) as never);
+  assert.deepEqual(body, [{ type: "blockquote", blockId: "quote_1", passageId: "passage_quote_1", text: "Revised quotation." }]);
 });
