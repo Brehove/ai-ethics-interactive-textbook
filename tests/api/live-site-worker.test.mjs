@@ -32,6 +32,44 @@ test("site Worker serves verified projection for every allowlisted chapter witho
   assert.match(await response.text(), /Live prose/);
 });
 
+test("delivery identity probe verifies the deployed chapter asset can render the immutable projection", async () => {
+  let assetCalls = 0;
+  const env = {
+    ASSETS: { fetch: async () => { assetCalls += 1; return new Response(staticHtml, { headers: { "content-type": "text/html; charset=utf-8" } }); } },
+    PUBLIC_PROJECTION: { fetch: async (request) => {
+      assert.equal(new URL(request.url).pathname, "/v1/public/chapters/chapter_ch07");
+      return Response.json(projection);
+    } },
+  };
+  const response = await worker.fetch(new Request("https://example.test/chapter/aristotle-character-and-ai-assisted-life/", {
+    headers: { "x-textbook-delivery-probe": "v1" },
+  }), env);
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("x-content-revision"), "revision_live");
+  assert.equal(response.headers.get("x-content-projection"), "projection_live");
+  assert.equal(response.headers.get("x-content-projection-hash"), projection.projectionHash);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(await response.text(), "");
+  assert.equal(assetCalls, 1);
+});
+
+test("delivery identity probe refuses missing or malformed public chapter assets", async () => {
+  for (const response of [
+    new Response("missing", { status: 404, headers: { "content-type": "text/html" } }),
+    new Response("not html", { headers: { "content-type": "text/plain" } }),
+    new Response("<main>no projection boundary</main>", { headers: { "content-type": "text/html" } }),
+  ]) {
+    const result = await worker.fetch(new Request("https://example.test/chapter/aristotle-character-and-ai-assisted-life/", {
+      headers: { "x-textbook-delivery-probe": "v1" },
+    }), {
+      ASSETS: { fetch: async () => response.clone() },
+      PUBLIC_PROJECTION: { fetch: async () => Response.json(projection) },
+    });
+    assert.equal(result.status, 503);
+    assert.equal(result.headers.get("x-content-revision"), null);
+  }
+});
+
 test("projection failure leaves the complete static chapter visible", async () => {
   const env = { ASSETS: { fetch: async () => new Response(staticHtml, { headers: { "content-type": "text/html" } }) }, PUBLIC_PROJECTION: { fetch: async () => new Response("unavailable", { status: 503 }) } };
   const response = await worker.fetch(new Request("https://example.test/chapter/aristotle-character-and-ai-assisted-life/"), env);
