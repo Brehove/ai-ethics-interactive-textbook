@@ -6,7 +6,7 @@
 - **Plan version:** 2.0
 - **Last updated:** 2026-08-04
 - **Target repository:** `Brehove/ai-ethics-interactive-textbook`
-- **Completion baseline:** `origin/main` at `d9f450e4b842259db318c10e7584ae50d9c4d5f1`
+- **Final application baseline:** `d9f450e4b842259db318c10e7584ae50d9c4d5f1` (documentation-only completion records follow this commit)
 - **Confidence:** High; implementation, deployment, API/MCP conformance, D1 authority, public delivery, and signed-in browser behavior were verified against production
 
 > **Completion companion:** The implemented reader-identical editor, one-click live Save, shared scholar/media rendering, flexible checkpoints, and browser/agent publication are documented in [Unified Reader–Authoring Experience](./UNIFIED_READER_AUTHORING_IMPLEMENTATION_PLAN.md).

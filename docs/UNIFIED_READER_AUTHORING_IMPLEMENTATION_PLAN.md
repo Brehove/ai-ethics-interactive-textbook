@@ -7,7 +7,7 @@
 - **Last updated:** 2026-08-04
 - **Target repository:** Brehove/ai-ethics-interactive-textbook
 - **Operating target:** At or below $5/month for Cloudflare infrastructure
-- **Completion baseline:** `origin/main` at `d9f450e4b842259db318c10e7584ae50d9c4d5f1`
+- **Final application baseline:** `d9f450e4b842259db318c10e7584ae50d9c4d5f1` (documentation-only completion records follow this commit)
 - **Final production scope:** Chapters 1–18
 - **Confidence:** High; exact production revisions, public projections, editor parity, scholar/media rendering, reader-editor continuity, and browser/agent publication were verified
 
