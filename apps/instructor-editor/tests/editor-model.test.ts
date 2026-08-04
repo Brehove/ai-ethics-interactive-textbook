@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, chapterReplaceOperation, cloneChapter, nearestPassage } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
 import { serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
@@ -11,6 +11,25 @@ test("new checkpoints require a real passage anchor and do not create prose bloc
   assert.equal(checkpoint.passageId, nearestPassage(chapter));
   assert.equal(chapter.body.length, proseCount);
   assert.equal(chapter.checkpoints.at(-1)?.checkpointId, checkpoint.checkpointId);
+});
+
+test("checkpoints can be reordered at one anchor and moved to another passage", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const firstAnchor = chapter.checkpoints[0].passageId;
+  const sameAnchor = chapter.checkpoints.filter((item) => item.passageId === firstAnchor);
+  if (sameAnchor.length < 2) {
+    const original = sameAnchor[0];
+    chapter.checkpoints.push({ ...structuredClone(original), checkpointId: "checkpoint_reorder_test", displayOrder: 1, title: "Second" });
+  }
+  const ordered = chapter.checkpoints.filter((item) => item.passageId === firstAnchor).sort((a, b) => a.displayOrder - b.displayOrder);
+  const moved = moveCheckpoint(chapter, ordered.at(-1)!.checkpointId, firstAnchor, 0);
+  assert.equal(moved.displayOrder, 0);
+  assert.deepEqual(chapter.checkpoints.filter((item) => item.passageId === firstAnchor).map((item) => item.displayOrder).sort(), [0, 1]);
+  const otherAnchor = chapter.body.map((block) => blockPassage(block)).find((passageId) => passageId && passageId !== firstAnchor)!;
+  moveCheckpoint(chapter, moved.checkpointId, otherAnchor, 0);
+  assert.equal(moved.passageId, otherAnchor);
+  assert.equal(moved.displayOrder, 0);
+  assert.deepEqual(chapter.checkpoints.filter((item) => item.passageId === firstAnchor).map((item) => item.displayOrder).sort(), [0]);
 });
 
 test("person features remain independent managed placements, never editable prose", () => {

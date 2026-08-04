@@ -7,6 +7,7 @@ import {
   chapterFromAuthoringView,
   chapterReplaceOperation,
   cloneChapter,
+  moveCheckpoint,
   newId,
   nearestPassage,
   type ChapterDocument,
@@ -296,6 +297,18 @@ function safeTitle(value: unknown) {
   return typeof value === "string" && value.trim() ? value : chapter.title;
 }
 
+function checkpointAnchorOptions(selected: string) {
+  const seen = new Set<string>();
+  return chapter.body.flatMap((block) => {
+    const passageId = blockPassage(block);
+    if (!passageId || seen.has(passageId)) return [];
+    seen.add(passageId);
+    const description = typeof block.text === "string" ? block.text : Array.isArray(block.items) ? block.items.join(" ") : "";
+    const label = description.trim().replace(/\s+/g, " ").slice(0, 72);
+    return [`<option value="${escapeAttribute(passageId)}" ${passageId === selected ? "selected" : ""}>${escapeText(label ? `${passageId} — ${label}` : passageId)}</option>`];
+  }).join("");
+}
+
 async function loadChapter() {
   if (!dataSource) return;
   try {
@@ -336,7 +349,8 @@ function inspectorHtml() {
   if (inspector.kind === "checkpoint") {
     const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
     if (!item) return "";
-    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage<select name="stage"><option ${item.stage === "Commit" ? "selected" : ""}>Commit</option><option ${item.stage === "Work" ? "selected" : ""}>Work</option><option ${item.stage === "Reconcile" ? "selected" : ""}>Reconcile</option></select></label><p class="inspector-note">Anchored after <strong>${item.passageId}</strong></p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
+    const anchorCount = chapter.checkpoints.filter((checkpoint) => checkpoint.passageId === item.passageId).length;
+    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length - 1)}" value="${item.displayOrder}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${item.displayOrder <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${item.displayOrder >= anchorCount - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
   if (!placement) return "";
@@ -347,7 +361,7 @@ function inspectorHtml() {
 
 function dialogHtml() {
   if (!activeDialog) return "";
-  if (activeDialog === "checkpoint") return `<dialog open data-dialog><form data-checkpoint-form><header><h2>Add checkpoint</h2><button type="button" data-close aria-label="Close">×</button></header><p>Anchored after <strong>${selectedPassage || "the selected passage"}</strong>. It will not be created until required fields are complete.</p><label>Title<input name="title" required autofocus></label><label>Prompt<textarea name="prompt" rows="5" required></textarea></label><label>Guidance<textarea name="guidance" rows="3"></textarea></label><label>Stage<select name="stage"><option>Commit</option><option>Work</option><option>Reconcile</option></select></label><footer><button type="button" data-close>Cancel</button><button type="button" data-add-checkpoint>Add checkpoint</button></footer></form></dialog>`;
+  if (activeDialog === "checkpoint") return `<dialog open data-dialog><form data-checkpoint-form><header><h2>Add checkpoint</h2><button type="button" data-close aria-label="Close">×</button></header><p>Anchored after <strong>${selectedPassage || "the selected passage"}</strong>. It will not be created until required fields are complete.</p><label>Title<input name="title" required autofocus></label><label>Prompt<textarea name="prompt" rows="5" required></textarea></label><label>Guidance<textarea name="guidance" rows="3"></textarea></label><label>Stage or label<input name="stage" list="new-checkpoint-stages" value="Commit"><datalist id="new-checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><footer><button type="button" data-close>Cancel</button><button type="button" data-add-checkpoint>Add checkpoint</button></footer></form></dialog>`;
   if (activeDialog === "person") return `<dialog open data-dialog><form data-person-form><header><h2>Add person feature</h2><button type="button" data-close aria-label="Close">×</button></header><p>Choose a frozen curated person feature; biography, portrait, and rights remain centralized.</p><label>Person<select name="personIndex" autofocus>${(personItems.length ? personItems : chapter.personFeatures).map((feature, index) => `<option value="${index}">${escapeText(String(feature.name))}</option>`).join("")}</select></label><p class="dialog-note">The thinker-card preset will appear after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit" ${(personItems.length || chapter.personFeatures.length) ? "" : "disabled"}>Add person feature</button></footer></form></dialog>`;
   if (activeDialog === "media") {
     const firstPreview = mediaItems.length ? managedMediaPreviewUrl(mediaItems[0]) : "";
@@ -608,7 +622,8 @@ function bindForms() {
   app.querySelector<HTMLFormElement>("[data-replace-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyReplacement(event.currentTarget); });
   app.querySelector<HTMLFormElement>("[data-leave-form]")?.addEventListener("submit", async (event) => { event.preventDefault(); if (await save()) window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
   app.querySelector<HTMLButtonElement>("[data-discard]")?.addEventListener("click", () => { sessionStorage.removeItem(recoveryKey()); window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
-  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); if (!inspector || inspector.kind !== "checkpoint") return; const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id); if (!item) return; const form = new FormData(event.currentTarget); item.title = String(form.get("title") ?? ""); item.prompt = String(form.get("prompt") ?? ""); item.guidance = String(form.get("guidance") ?? ""); item.stage = String(form.get("stage") ?? ""); setState(item.title && item.prompt ? "dirty" : "attention"); });
+  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); if (!inspector || inspector.kind !== "checkpoint") return; const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id); if (!item) return; const form = new FormData(event.currentTarget); item.title = String(form.get("title") ?? ""); item.prompt = String(form.get("prompt") ?? ""); item.guidance = String(form.get("guidance") ?? ""); item.stage = String(form.get("stage") ?? ""); moveCheckpoint(chapter, item.checkpointId, String(form.get("passageId") ?? item.passageId), Number(form.get("displayOrder") ?? item.displayOrder)); selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention"); });
+  app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { if (!inspector || inspector.kind !== "checkpoint") return; const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id); if (!item) return; moveCheckpoint(chapter, item.checkpointId, item.passageId, item.displayOrder + Number(button.dataset.shiftCheckpoint ?? 0)); selectedPassage = item.passageId; setState("dirty"); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { chapter.checkpoints = chapter.checkpoints.filter((item) => item.checkpointId !== button.dataset.removeCheckpoint); inspector = { kind: "chapter" }; setState("dirty"); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== button.dataset.removePlacement); inspector = { kind: "chapter" }; setState("dirty"); }));
   app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); } });

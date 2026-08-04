@@ -20,6 +20,24 @@ export function nearestPassage(chapter: ChapterDocument, passageId?: string) {
 export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, "checkpointId" | "displayOrder" | "passageId">, passageId: string) {
   const anchor = nearestPassage(chapter, passageId); const checkpoint: Checkpoint = { checkpointId: newId("checkpoint"), passageId: anchor, displayOrder: chapter.checkpoints.filter((item) => item.passageId === anchor).length, ...draft }; chapter.checkpoints.push(checkpoint); return checkpoint;
 }
+export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, passageId: string, displayOrder: number) {
+  const checkpoint = chapter.checkpoints.find((item) => item.checkpointId === checkpointId);
+  if (!checkpoint) throw new Error("The selected checkpoint is unavailable.");
+  const previousAnchor = checkpoint.passageId;
+  const nextAnchor = nearestPassage(chapter, passageId);
+  const normalizeAnchor = (anchor: string, excludedId?: string) => chapter.checkpoints
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.passageId === anchor && item.checkpointId !== excludedId)
+    .sort((a, b) => a.item.displayOrder - b.item.displayOrder || a.index - b.index)
+    .map(({ item }) => item);
+  const target = normalizeAnchor(nextAnchor, checkpointId);
+  const requested = Number.isInteger(displayOrder) ? displayOrder : checkpoint.displayOrder;
+  target.splice(Math.max(0, Math.min(requested, target.length)), 0, checkpoint);
+  checkpoint.passageId = nextAnchor;
+  target.forEach((item, index) => { item.displayOrder = index; });
+  if (previousAnchor !== nextAnchor) normalizeAnchor(previousAnchor, checkpointId).forEach((item, index) => { item.displayOrder = index; });
+  return checkpoint;
+}
 export function addPersonFeature(chapter: ChapterDocument, personFeatureId: string, passageId: string) {
   const source = chapter.personFeatures.find((item) => item.personFeatureId === personFeatureId); if (!source) throw new Error("The selected frozen person feature is unavailable.");
   const anchor = nearestPassage(chapter, passageId); const placementId = newId("placement"); const nextFeatureId = newId("personfeature");

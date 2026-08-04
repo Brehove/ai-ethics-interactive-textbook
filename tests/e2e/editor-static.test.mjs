@@ -36,6 +36,9 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.match(editorMain, /chapter\.importPlainText/);
   assert.match(editorMain, /Structured source/);
   assert.match(editorMain, /Checkpoint/);
+  assert.match(editorMain, /Anchor passage/);
+  assert.match(editorMain, /data-shift-checkpoint/);
+  assert.match(editorModel, /moveCheckpoint/);
   assert.match(editorMain, /Media/);
   assert.match(editorMain, /Upload new media/);
   assert.match(editorMain, /createMediaReviewPackage/);
