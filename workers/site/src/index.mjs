@@ -1,96 +1,85 @@
-const DOCUMENT_ID = 'chapter_ch07';
+import { CHAPTER_ROUTES } from "./chapter-routes.mjs";
 
-const escapeHtml = (value = '') => String(value)
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;')
-  .replaceAll("'", '&#039;');
+const chapterRoute = (pathname) => {
+  const match = pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
+  return match ? CHAPTER_ROUTES[match[1]] || null : null;
+};
 
-const safeHttps = (value) => {
+const publicProjection = async (env, documentId) => {
+  if (!env.PUBLIC_PROJECTION?.fetch) return null;
   try {
-    const url = new URL(value);
-    return url.protocol === 'https:' ? url.toString() : null;
+    const response = await env.PUBLIC_PROJECTION.fetch(new Request(`https://public-projection.internal/v1/public/chapters/${documentId}`, { headers: { accept: "application/json" } }));
+    if (!response.ok) return null;
+    const payload = await response.json();
+    if (payload?.documentId !== documentId || typeof payload.html !== "string" || !Array.isArray(payload.prompts) || !/^revision_[A-Za-z0-9_-]+$/.test(payload.revisionId || "") || !/^projection_[A-Za-z0-9_-]+$/.test(payload.projectionId || "")) return null;
+    return payload;
   } catch { return null; }
 };
 
-const inline = (value = '') => {
-  let rendered = escapeHtml(value);
-  rendered = rendered.replace(/\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/))[^\s)]+)\)/g, (_match, label, href) => `<a href="${escapeHtml(href)}">${label}</a>`);
-  rendered = rendered.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  rendered = rendered.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  return rendered;
+const projectionHeaders = (headers, projection) => {
+  const next = new Headers(headers);
+  next.set("x-content-revision", projection.revisionId);
+  next.set("x-content-projection", projection.projectionId);
+  next.set("x-content-projection-hash", projection.projectionHash);
+  next.set("cache-control", "public, max-age=0, must-revalidate");
+  return next;
 };
 
-const idFor = (value, prefix) => value ? String(value).replace(new RegExp(`^${prefix}_`), '') : null;
-
-const decodeLegacy = (block) => {
-  if (/_metadata$/.test(block.blockId ?? '')) return '';
-  const match = String(block.sanitizedHtml ?? '').match(/^<pre data-content-source="git-markdown-v1">([\s\S]*)<\/pre>$/);
-  if (!match) return '';
-  return match[1]
-    .replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"')
-    .replaceAll('&#039;', "'").replaceAll('&amp;', '&')
-    .replace(/<(script|style|form|iframe|object|embed|link|meta|base)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
-    .replace(/<(script|style|form|iframe|object|embed|link|meta|base)\b[^>]*\/?\s*>/gi, '')
-    .replace(/\s(?:on[a-z]+|style|srcdoc)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/\s(?:href|src)\s*=\s*(?:"(?!https:\/\/|\/|#)[^"]*"|'(?!https:\/\/|\/|#)[^']*')/gi, '');
+const publicMedia = async (request, env, hash) => {
+  if (!env.PUBLIC_PROJECTION?.fetch) return null;
+  try {
+    const headers = new Headers();
+    for (const name of ["accept", "if-none-match", "range", "if-range"]) {
+      const value = request.headers.get(name); if (value) headers.set(name, value);
+    }
+    return await env.PUBLIC_PROJECTION.fetch(new Request(`https://public-projection.internal/v1/public/assets/${hash}`, { method: request.method, headers }));
+  } catch { return null; }
 };
 
-const placement = (block) => {
-  const url = safeHttps(block.canonicalUrl);
-  const title = block.caption ?? block.title ?? block.fallback?.title ?? (block.type === 'mediaFigure' ? 'Media' : 'Embedded media');
-  const summary = block.fallback?.summary ?? block.summary ?? block.teachingUse ?? block.alt ?? '';
-  return `<figure class="live-media live-media--${escapeHtml(block.type)}" data-live-block-id="${escapeHtml(block.blockId ?? '')}">
-    <div class="live-media__preview"><strong>${escapeHtml(title)}</strong>${summary ? `<p>${inline(summary)}</p>` : ''}${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">View original media</a>` : ''}</div>
-    ${block.caption && block.caption !== title ? `<figcaption>${inline(block.caption)}</figcaption>` : ''}
-  </figure>`;
+export const injectPublicProjection = (html, route, projection) => {
+  const bodyPattern = new RegExp(`(<[^>]+data-public-projection=["']${route.documentId}["'][^>]*>)[\\s\\S]*?(<\\/div>)`);
+  const body = html.replace(bodyPattern, `$1${projection.html}$2`);
+  return body.replace(new RegExp(`(<[^>]+data-reading-record[^>]+data-document-id=["']${route.documentId}["'][^>]*)(>)`), (_match, start, end) => `${start} data-prompts="${String(JSON.stringify(projection.prompts)).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;")}" data-chapter-version="${projection.revisionId}"${end}`);
 };
 
-const renderBlock = (block) => {
-  const passageId = idFor(block.passageId ?? block.anchorPassageId, 'passage');
-  const id = passageId ? ` id="${escapeHtml(passageId)}"` : '';
-  if (block.type === 'heading') return `<h${block.level ?? 2} id="${escapeHtml(idFor(block.sectionId, 'section') ?? passageId ?? '')}">${inline(block.text)}</h${block.level ?? 2}>`;
-  if (block.type === 'paragraph') return `<p${id}>${inline(block.text)}</p>`;
-  if (block.type === 'blockquote') return `<blockquote${id}>${inline(block.text).replaceAll('\n', '<br>')}</blockquote>`;
-  if (block.type === 'list') return `<${block.ordered ? 'ol' : 'ul'}${id}>${(block.items ?? []).map((item) => `<li>${inline(item)}</li>`).join('')}</${block.ordered ? 'ol' : 'ul'}>`;
-  if (block.type === 'codeBlock') return `<pre${id}><code>${escapeHtml(block.code ?? block.text ?? '')}</code></pre>`;
-  if (block.type === 'table') return `<table${id}><thead><tr>${(block.columns ?? []).map((cell) => `<th>${inline(cell)}</th>`).join('')}</tr></thead><tbody>${(block.rows ?? []).map((row) => `<tr>${row.map((cell) => `<td>${inline(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  if (block.type === 'callout') return `<aside${id} class="textbook shaded textbox--${escapeHtml(block.tone ?? 'note')}" role="note"><p>${inline(block.text)}</p></aside>`;
-  if (block.type === 'legacyMarkup') return `<div${id} data-live-block-id="${escapeHtml(block.blockId ?? '')}">${decodeLegacy(block)}</div>`;
-  if (['mediaFigure', 'externalEmbed', 'richLink', 'diagram'].includes(block.type)) return placement(block);
-  return '';
-};
-
-export const projectChapter = (chapter) => ({
-  revisionId: chapter.revisionId ?? chapter.chapterVersion,
-  chapterVersion: chapter.chapterVersion ?? chapter.revisionId,
-  title: chapter.title,
-  html: (chapter.body ?? []).map(renderBlock).join('\n'),
-  prompts: (chapter.checkpoints ?? []).filter((item) => item.showInSidebar !== false).map((item) => ({
-    id: item.legacyId || String(item.checkpointId ?? '').replace(/^checkpoint_/, ''),
-    passageId: String(item.passageId ?? '').replace(/^passage_/, ''),
-    stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger,
-    prompt: item.prompt, guidance: item.guidance,
-    responseStructure: item.responseStructure || item.responseFormat,
-    minWords: item.minWords, maxWords: item.maxWords, showInSidebar: item.showInSidebar,
-  })),
-});
-
-async function liveChapter(env) {
-  const row = await env.CONTENT_DB.prepare(`SELECT d.current_revision_id AS revision_id, r.content_text
-    FROM documents d JOIN document_revisions r ON r.id = d.current_revision_id
-    WHERE d.id = ?`).bind(DOCUMENT_ID).first();
-  if (!row?.content_text) return new Response(JSON.stringify({ error: 'Live chapter unavailable' }), { status: 503, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
-  const payload = projectChapter(JSON.parse(row.content_text));
-  payload.revisionId = row.revision_id;
-  return new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
-}
+const transformWithHtmlRewriter = (response, route, projection) => new HTMLRewriter()
+  .on(`[data-public-projection="${route.documentId}"]`, {
+    element(element) {
+      element.setInnerContent(projection.html, { html: true });
+      element.setAttribute("data-content-revision", projection.revisionId);
+      element.setAttribute("data-content-projection", projection.projectionId);
+    },
+  })
+  .on(`[data-reading-record][data-document-id="${route.documentId}"]`, {
+    element(element) {
+      element.setAttribute("data-prompts", JSON.stringify(projection.prompts));
+      element.setAttribute("data-chapter-version", projection.revisionId);
+    },
+  })
+  .transform(new Response(response.body, { status: response.status, statusText: response.statusText, headers: projectionHeaders(response.headers, projection) }));
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === 'GET' && url.pathname === `/api/live/chapters/${DOCUMENT_ID}`) return liveChapter(env);
-    return env.ASSETS.fetch(request);
+    if ((request.method === "GET" || request.method === "HEAD") && /^\/admin\/?$/.test(url.pathname)) {
+      const target = new URL("https://auth.ethicsandai.your-digital-life.org/auth/start");
+      target.searchParams.set("chapter", "what-are-you-becoming-aristotle-character-and-ai-assisted-life");
+      target.searchParams.set("mode", "edit");
+      return Response.redirect(target.toString(), 302);
+    }
+    const mediaMatch = url.pathname.match(/^\/media\/([a-f0-9]{64})$/);
+    if ((request.method === "GET" || request.method === "HEAD") && mediaMatch) {
+      const response = await publicMedia(request, env, mediaMatch[1]);
+      return response || new Response("Public media is unavailable", { status: 503, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+    }
+    const staticResponse = await env.ASSETS.fetch(request);
+    if (request.method !== "GET" && request.method !== "HEAD") return staticResponse;
+    const route = chapterRoute(url.pathname);
+    if (!route || request.method === "HEAD" || !staticResponse.ok || !staticResponse.headers.get("content-type")?.includes("text/html")) return staticResponse;
+    const projection = await publicProjection(env, route.documentId);
+    if (!projection) return staticResponse;
+    if (typeof HTMLRewriter !== "undefined") return transformWithHtmlRewriter(staticResponse, route, projection);
+    const html = await staticResponse.text();
+    return new Response(injectPublicProjection(html, route, projection), { status: staticResponse.status, headers: projectionHeaders(staticResponse.headers, projection) });
   },
 };

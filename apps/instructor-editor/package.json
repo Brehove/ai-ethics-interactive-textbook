@@ -1,0 +1,18 @@
+{
+  "name": "@ai-ethics/instructor-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "tsx --test --test-reporter=spec tests/*.test.ts"
+  },
+  "dependencies": {
+    "@ai-ethics/authoring-client": "0.1.0",
+    "@ai-ethics/chapter-renderer": "0.1.0",
+    "@tiptap/core": "^3.20.0",
+    "@tiptap/extension-underline": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0"
+  }
+}

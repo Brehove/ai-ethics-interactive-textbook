@@ -9,6 +9,8 @@
 - **Migration baseline:** `origin/main` at `0a2716182953f492a654aa8b704d420216f39450`
 - **Confidence:** High on the live Chapter 7 canary, release controls, and restore path; moderate on the remaining 8–18 chapter cutover schedule
 
+> **Focused follow-on:** The implementation-ready plan for a reader-identical editor, one-click live Save, shared scholar/media rendering, flexible checkpoints, and browser/agent publication is [Unified Reader–Authoring Experience](./UNIFIED_READER_AUTHORING_IMPLEMENTATION_PLAN.md).
+
 ---
 
 ## 0. Live implementation status

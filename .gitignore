@@ -4,6 +4,8 @@ dist/
 .astro/
 coverage/
 artifacts/
+test-results/
+playwright-report/
 
 # Cloudflare local state
 .wrangler/

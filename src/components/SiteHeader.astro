@@ -4,9 +4,16 @@ interface Props {
   chapterTotal?: number;
   readingRecordPilot?: boolean;
   readingRecordTotal?: number;
+  documentId?: string;
+  canonicalPath?: string;
 }
 
-const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRecordTotal = 0 } = Astro.props;
+const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRecordTotal = 0, documentId, canonicalPath = Astro.url.pathname } = Astro.props;
+const authOrigin = import.meta.env.PUBLIC_EDITOR_AUTH_ORIGIN ?? "https://auth.ethicsandai.your-digital-life.org";
+const chapterSlug = canonicalPath.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1];
+const editorUrl = new URL("/auth/start", authOrigin);
+if (chapterSlug) editorUrl.searchParams.set("chapter", chapterSlug);
+editorUrl.searchParams.set("mode", "edit");
 ---
 
 <header class="site-header">
@@ -25,6 +32,15 @@ const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRec
     {chapterNumber && !readingRecordPilot && <button type="button" data-open-notes>Notes</button>}
     <button type="button" class="type-toggle" data-type-toggle aria-label="Change text size">Aa</button>
     {chapterNumber && <button type="button" data-print-header>Print</button>}
+    {chapterNumber && documentId && (
+      <details class="chapter-menu">
+        <summary aria-label="Chapter menu">•••</summary>
+        <div class="chapter-menu__items">
+          <a href={editorUrl.toString()} data-edit-chapter data-auth-base={editorUrl.toString()}>Edit chapter</a>
+          <a href="/instructors/reading-records/">Instructor guide</a>
+        </div>
+      </details>
+    )}
   </nav>
 </header>
 
@@ -37,6 +53,18 @@ const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRec
   });
   document.querySelectorAll<HTMLButtonElement>("[data-print-header]").forEach((button) => {
     button.addEventListener("click", () => window.print());
+  });
+  document.querySelectorAll<HTMLAnchorElement>("[data-edit-chapter]").forEach((link) => {
+    link.addEventListener("click", () => {
+      const target = new URL(link.dataset.authBase ?? link.href);
+      const visible = [...document.querySelectorAll<HTMLElement>("main [id]")]
+        .filter((element) => /^[A-Za-z][A-Za-z0-9._:-]{0,127}$/.test(element.id))
+        .map((element) => ({ element, distance: Math.abs(element.getBoundingClientRect().top - 120) }))
+        .sort((left, right) => left.distance - right.distance)[0]?.element;
+      const anchor = visible?.id || (window.location.hash ? window.location.hash.slice(1) : "");
+      if (anchor && /^[A-Za-z][A-Za-z0-9._:-]{0,127}$/.test(anchor)) target.searchParams.set("anchor", anchor);
+      link.href = target.toString();
+    });
   });
 </script>
 
@@ -88,6 +116,32 @@ const { chapterNumber, chapterTotal = 18, readingRecordPilot = false, readingRec
   nav a:hover, nav button:hover { color: var(--gold); }
   .record-header-button b { font: inherit; }
   .record-label-short { display: none; }
+  .chapter-menu { position: relative; }
+  .chapter-menu summary {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    list-style: none;
+    color: var(--paper-deep);
+    cursor: pointer;
+    font: 700 0.8rem/1 var(--sans);
+    letter-spacing: 0.12em;
+  }
+  .chapter-menu summary::-webkit-details-marker { display: none; }
+  .chapter-menu__items {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    width: max-content;
+    min-width: 12rem;
+    padding: 0.35rem;
+    border: 1px solid var(--frame-line);
+    background: var(--frame);
+    box-shadow: 0 0.8rem 2rem rgb(5 6 6 / 16%);
+  }
+  .chapter-menu__items a { justify-content: flex-start; padding-inline: 0.8rem; }
   @media (max-width: 640px) {
     .site-header { grid-template-columns: 1fr auto; }
     .chapter-count { display: none; }

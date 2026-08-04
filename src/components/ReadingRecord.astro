@@ -21,7 +21,7 @@ interface Props {
   chapterVersion: string;
   prompts: ReadingPrompt[];
   activityPreview?: boolean;
-  liveEndpoint?: string;
+  documentId?: string;
 }
 
 const {
@@ -31,7 +31,7 @@ const {
   chapterVersion,
   prompts,
   activityPreview = false,
-  liveEndpoint,
+  documentId,
 } = Astro.props;
 
 const strategyPreview: Record<string, string> = {
@@ -54,7 +54,7 @@ const strategyPreview: Record<string, string> = {
   data-chapter-version={chapterVersion}
   data-prompts={JSON.stringify(prompts)}
   data-activity-preview={activityPreview ? "true" : undefined}
-  data-live-endpoint={liveEndpoint}
+  data-document-id={documentId}
   tabindex="-1"
 >
   <header class="record-head">
@@ -243,66 +243,10 @@ const strategyPreview: Record<string, string> = {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 
-  const strategyGuidance: Record<string, string> = {
-    "initial-judgment": "Commit to a provisional verdict and identify the feature doing the ethical work.",
-    "contrast-case": "Change one feature of the case to test where your boundary really lies.",
-    "metacognitive-trace": "Trace whether the reading changed, qualified, strengthened, or left your judgment unchanged.",
-  };
-
-  const restoreStaticPlacements = (body: HTMLElement, placements: HTMLElement[]): void => {
-    placements.forEach((placement) => {
-      const personPath = placement.dataset.personPath;
-      const personIntroduction = personPath
-        ? [...body.querySelectorAll<HTMLAnchorElement>("a[href]")]
-          .find((link) => link.getAttribute("href") === personPath)?.closest<HTMLElement>("p")
-        : null;
-      const passageIds = (placement.dataset.passageIds ?? placement.dataset.passageId ?? "")
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean);
-      const passage = passageIds
-        .map((id) => body.querySelector<HTMLElement>(`#${CSS.escape(id)}`))
-        .find(Boolean);
-      const target = personIntroduction ?? passage;
-
-      if (!target) {
-        // Missing anchors must degrade to visible media, never silent deletion.
-        body.append(placement);
-        return;
-      }
-
-      let insertionPoint: Element = target;
-      while (insertionPoint.nextElementSibling?.matches("[data-inline-placed]")) {
-        insertionPoint = insertionPoint.nextElementSibling;
-      }
-      placement.dataset.inlinePlaced = "true";
-      insertionPoint.insertAdjacentElement("afterend", placement);
-    });
-  };
-
-  document.querySelectorAll<HTMLElement>("[data-reading-record]").forEach(async (record) => {
+  document.querySelectorAll<HTMLElement>("[data-reading-record]").forEach((record) => {
     if (record.dataset.enhanced) return;
     record.dataset.enhanced = "pending";
 
-    const liveEndpoint = record.dataset.liveEndpoint;
-    if (liveEndpoint) {
-      try {
-        const response = await fetch(liveEndpoint, { headers: { accept: "application/json" }, cache: "no-store" });
-        if (!response.ok) throw new Error(`Live chapter returned ${response.status}`);
-        const live = await response.json() as { revisionId?: string; html?: string; prompts?: PromptRecord[] };
-        const body = document.querySelector<HTMLElement>('[data-live-chapter-body="chapter_ch07"]');
-        if (body && typeof live.html === "string") {
-          const staticPlacements = [...body.querySelectorAll<HTMLElement>("[data-inline-placed]")];
-          staticPlacements.forEach((placement) => placement.remove());
-          body.innerHTML = live.html;
-          restoreStaticPlacements(body, staticPlacements);
-        }
-        if (Array.isArray(live.prompts)) record.dataset.prompts = JSON.stringify(live.prompts);
-        if (live.revisionId) record.dataset.chapterVersion = live.revisionId;
-      } catch (error) {
-        console.warn("The live chapter could not be loaded; the verified static release remains visible.", error);
-      }
-    }
     record.dataset.enhanced = "true";
 
     const prompts = JSON.parse(record.dataset.prompts ?? "[]") as PromptRecord[];
@@ -356,24 +300,6 @@ const strategyPreview: Record<string, string> = {
     const modalState = new Map<HTMLElement, boolean>();
     let focusAfterDialogClose: HTMLElement | null = null;
     let pendingSelection: { passageId: string | null; quote: string } | null = null;
-
-    if (recordMap && liveEndpoint) {
-      const list = recordMap.querySelector<HTMLOListElement>("ol");
-      if (list) list.innerHTML = prompts.map((item, index) => `
-        <li data-record-map-item="${escapeHtml(item.id)}">
-          <div class="map-item-head">
-            <p><span>Checkpoint ${String(index + 1).padStart(2, "0")}</span><b data-map-status>${index === 0 ? "Ready" : index === prompts.length - 1 ? "Near the end" : "Later in chapter"}</b></p>
-            <h3>${escapeHtml(item.title)}</h3>
-            <p class="map-location" data-map-location="${escapeHtml(item.passageId)}">In this chapter</p>
-          </div>
-          <details>
-            <summary>${index === 0 ? "Preview full question" : "What will this ask me to do?"}</summary>
-            <p>${escapeHtml(index === 0 ? item.prompt : strategyGuidance[item.strategy ?? ""] ?? "Use the chapter's central philosophical move before forming a considered judgment.")}</p>
-          </details>
-        </li>`).join("");
-      const mapTitle = recordMap.querySelector<HTMLElement>("h2");
-      if (mapTitle) mapTitle.textContent = prompts.length === 0 ? "No checkpoints in this chapter" : prompts.length === 3 ? "Three moments to stop and think" : `${prompts.length} moments to stop and think`;
-    }
 
     const updateCharacterCount = () => {
       if (!characterCount || !textarea) return;

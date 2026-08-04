@@ -1,28 +1,14 @@
 ---
 import SiteLayout from "../../layouts/SiteLayout.astro";
-import EditorShell from "../../components/editor/EditorShell.astro";
-import { getChapterSummaries } from "../../lib/content";
-import "../../styles/editor.css";
 
-const chapters = await getChapterSummaries();
-const origin = (value: string | undefined) => {
-  if (!value) return "";
-  try {
-    const parsed = new URL(value);
-    const local = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1" || parsed.hostname === "[::1]";
-    return parsed.protocol === "https:" || (parsed.protocol === "http:" && local) ? parsed.origin : "";
-  } catch { return ""; }
-};
-const configuredAuthOrigin = origin(import.meta.env.PUBLIC_EDITOR_AUTH_ORIGIN);
-const configuredContentApiOrigin = origin(import.meta.env.PUBLIC_CONTENT_API_ORIGIN);
-const gatewayOrigin = configuredContentApiOrigin || configuredAuthOrigin || "https://auth.ethicsandai.your-digital-life.org";
-const authOrigin = gatewayOrigin;
-const contentApiOrigin = gatewayOrigin;
-const connectOrigins = [authOrigin, contentApiOrigin].filter(Boolean).join(" ");
-if (connectOrigins) Astro.csp?.insertDirective(`connect-src 'self' ${connectOrigins}`);
+const target = "https://auth.ethicsandai.your-digital-life.org/auth/start?chapter=what-are-you-becoming-aristotle-character-and-ai-assisted-life&mode=edit";
 Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Refresh", `0; url=${target}`);
 ---
 
-<SiteLayout title="Textbook editor" description="Instructor-only structured editor for the AI Ethics textbook." noindex pageClass="editor-page">
-  <EditorShell chapters={chapters} authOrigin={authOrigin} contentApiOrigin={contentApiOrigin} />
+<SiteLayout title="Opening the chapter editor" description="Instructor-only authoring redirect." noindex>
+  <main class="container" style="padding-block: 5rem;">
+    <h1>Opening the chapter editor…</h1>
+    <p><a href={target}>Continue to the secure editor</a></p>
+  </main>
 </SiteLayout>

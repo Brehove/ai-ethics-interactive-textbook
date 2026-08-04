@@ -17,8 +17,8 @@ test("raw patch mutations are refused before reaching the API", () => {
   assert.doesNotThrow(() => refuseRaw({ type: "checkpoint.upsert" }));
 });
 
-test("workflow instructions require draft validation and approval before publish", () => {
-  for (const word of ["read", "changeset", "validate", "submit", "approve", "publish"]) assert.match(SERVER_INSTRUCTIONS, new RegExp(word));
+test("workflow instructions require authoring-view, validation, and explicit publication intent", () => {
+  for (const word of ["authoring view", "changeset", "validation", "preview", "commit live", "publish"]) assert.match(SERVER_INSTRUCTIONS, new RegExp(word));
   assert.match(SERVER_INSTRUCTIONS, /Never send raw HTML/);
 });
 

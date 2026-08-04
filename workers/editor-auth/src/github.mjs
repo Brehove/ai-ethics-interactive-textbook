@@ -68,9 +68,12 @@ async function githubRequest(fetchImpl, path, {
   return parse ? parseJson(response, operation) : response;
 }
 
-export async function exchangeOAuthCode(env, code, redirectUri, fetchImpl = fetch) {
+export async function exchangeOAuthCode(env, code, redirectUri, codeVerifier, fetchImpl = fetch) {
   const clientId = requiredEnv(env, "GITHUB_APP_CLIENT_ID");
   const clientSecret = requiredEnv(env, "GITHUB_APP_CLIENT_SECRET");
+  if (typeof codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier)) {
+    throw new HttpError(400, "invalid_callback", "The GitHub callback is invalid");
+  }
   const response = await fetchImpl(`${GITHUB_WEB}/login/oauth/access_token`, {
     method: "POST",
     headers: {
@@ -83,6 +86,7 @@ export async function exchangeOAuthCode(env, code, redirectUri, fetchImpl = fetc
       client_secret: clientSecret,
       code,
       redirect_uri: redirectUri,
+      code_verifier: codeVerifier,
     }),
     redirect: "manual",
   });

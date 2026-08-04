@@ -12,6 +12,7 @@ const time = z.string().datetime({ offset: true });
 const text = z.string().trim().min(1).max(20_000);
 const transcriptText = z.string().trim().min(1).max(50_000);
 const https = z.string().url().refine((v) => new URL(v).protocol === "https:", "HTTPS is required");
+const url = z.string().url();
 const relativePath = z.string().min(1).refine((v) => !v.startsWith("/") && !v.includes(".."), "must be repo-relative");
 
 export const ActorReferenceSchema = z.object({ actorId: id("actor"), actorType: z.enum(["human", "agent", "service"]), displayName: text.max(200).optional() }).strict();
@@ -67,26 +68,78 @@ export const ChapterBlockSchema = z.union([
 export type ChapterBlock = z.infer<typeof ChapterBlockSchema>;
 
 export const PromptCheckpointSchema = z.object({
-  checkpointId: id("checkpoint"), legacyId: text.optional(), passageId: id("passage"), passageExcerptHash: sha256, slot: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/), stage: text,
+  checkpointId: id("checkpoint"), legacyId: text.optional(), passageId: id("passage"), passageExcerptHash: sha256, displayOrder: z.number().int().nonnegative(), slotLabel: z.string().regex(/^[a-z][a-z0-9-]{0,79}$/).optional(), stage: text.optional(),
   strategy: z.enum(["initial-judgment", "self-explanation", "argument-reconstruction", "evidence-warrant", "contrast-case", "counterexample", "consider-alternative", "objection-repair", "question-generation", "epistemic-calibration", "framework-comparison", "transfer", "metacognitive-trace"]), title: text, trigger: text, prompt: text, guidance: text, responseStructure: z.enum(["prose", "movement-plus-prose"]), minWords: z.number().int().min(1).max(1_000), maxWords: z.number().int().min(1).max(1_000), showInSidebar: z.boolean(), rationale: text, editorialApprovalId: id("approval").optional(),
 }).strict().superRefine((value, ctx) => { if (value.minWords > value.maxWords) ctx.addIssue({ code: "custom", path: ["minWords"], message: "Minimum words cannot exceed maximum words" }); });
-const Relation = z.object({ entityId: text, relation: text }).strict();
 const Reference = z.object({ referenceId: id("reference"), label: text, url: https.optional() }).strict();
-const ChapterBaseSchema = z.object({
-  schemaVersion: z.literal(CONTENT_SCHEMA_VERSION), chapterId: id("chapter"), contentKey: text, slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), title: text, subtitle: text.optional(), description: text, part: PartReferenceSchema, order: z.number().int().positive(), chapterVersion: text, revisionId: id("revision"), body: z.array(ChapterBlockSchema), reasoningObjective: text, readingRecordLicense: z.literal("CC0-1.0"), sidePanelModules: z.array(z.object({ moduleId: id("module"), type: z.enum(["readingRecord", "sources", "glossary"]), order: z.number().int().nonnegative() }).strict()), annotations: z.array(z.object({ annotationId: id("annotation"), passageId: id("passage"), body: text }).strict()), sources: z.array(Reference), people: z.array(Relation), concepts: z.array(Relation), traditions: z.array(Relation), worldLayer: z.object({ worldLayerId: id("world"), version: text }).strict(), diagrams: z.array(z.object({ diagramId: id("diagram"), title: text }).strict()), mediaPlacementIds: z.array(id("figure")), rightsCaseIds: z.array(rightsCaseId), licenses: z.object({ chapter: text, assets: z.array(text) }).strict(), exports: z.object({ web: z.boolean(), print: z.boolean(), offline: z.boolean(), voice: z.boolean() }).strict(), aliases: z.array(IdentityAliasSchema), tombstones: z.array(IdentityTombstoneSchema), updatedBy: ActorReferenceSchema, updatedAt: time,
+const personId = z.string().regex(/^[a-z][a-z0-9-]{0,119}$/);
+export const ChapterPersonRelationSchema = z.object({ personId, role: text, passageIds: z.array(id("passage")).max(100) }).strict();
+export type ChapterPersonRelation = z.infer<typeof ChapterPersonRelationSchema>;
+export const EntityRevisionSchema = z.object({ entityRevisionId: id("revision"), personId, sha256, sourcePath: relativePath }).strict();
+export const PersonFeatureProjectionSchema = z.object({
+  // `personFeatureId` is the immutable managed-content key. `placementId` is retained
+  // in the frozen renderer projection so the projected card cannot be duplicated.
+  personFeatureId: id("personfeature").optional(), placementId: id("placement"), personId, entityRevisionId: id("revision"), name: text.max(300), dates: text.max(120), role: text, teachingNote: text, biography: text,
+  primarySources: z.array(z.object({ sourceId: text, title: text, creator: text, locator: text.optional(), translation: text.optional(), excerpt: text.optional(), teachingUse: text, label: text, url: https.optional() }).strict()),
+  portrait: z.object({ mediaVersionId, src: z.string().min(1), width: z.number().int().positive(), height: z.number().int().positive(), alt: text, credit: text, title: text, creator: text.optional(), derivativeModification: text.optional(), license: text, licenseUrl: url.optional(), sourceUrl: https.optional(), commonsPageUrl: https.optional(), reviewedSourceRevision: z.string().min(1).optional() }).strict(),
+  displayPreset: z.literal("thinker-card"),
 }).strict();
-const uniqueCheckpoints = (v: { checkpoints: Array<{ checkpointId: string; slot: string }> }, ctx: z.RefinementCtx) => {
-  if (new Set(v.checkpoints.map((p) => p.slot)).size !== v.checkpoints.length) ctx.addIssue({ code: "custom", path: ["checkpoints"], message: "Checkpoint slots must be unique" });
+export type PersonFeatureProjection = z.infer<typeof PersonFeatureProjectionSchema>;
+export const ManagedPlacementSchema = z.object({
+  placementId: id("placement"), kind: z.enum(["personFeature", "media", "embed", "diagram", "artifact"]), contentId: z.string().min(1), anchorPassageId: id("passage"), position: z.enum(["before", "after"]), orderAtAnchor: z.number().int().nonnegative(), displayPreset: z.enum(["thinker-card", "narrow", "reading", "wide", "bleed", "compact"]),
+}).strict().superRefine((value, ctx) => {
+  if (value.kind === "personFeature" && value.displayPreset !== "thinker-card") ctx.addIssue({ code: "custom", path: ["displayPreset"], message: "Person features require the thinker-card preset" });
+});
+export type ManagedPlacement = z.infer<typeof ManagedPlacementSchema>;
+const ChapterBaseSchema = z.object({
+  schemaVersion: z.literal(CONTENT_SCHEMA_VERSION), chapterId: id("chapter"), contentKey: text, slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), title: text, subtitle: text.optional(), description: text, part: PartReferenceSchema, order: z.number().int().positive(), chapterVersion: text, revisionId: id("revision"), body: z.array(ChapterBlockSchema), reasoningObjective: text, readingRecordLicense: z.literal("CC0-1.0"), sidePanelModules: z.array(z.object({ moduleId: id("module"), type: z.enum(["readingRecord", "sources", "glossary"]), order: z.number().int().nonnegative() }).strict()), annotations: z.array(z.object({ annotationId: id("annotation"), passageId: id("passage"), body: text }).strict()), sources: z.array(Reference), people: z.array(ChapterPersonRelationSchema), entityRevisions: z.array(EntityRevisionSchema).default([]), personFeatures: z.array(PersonFeatureProjectionSchema).default([]), managedPlacements: z.array(ManagedPlacementSchema).default([]), concepts: z.array(z.object({ entityId: text, relation: text }).strict()), traditions: z.array(z.object({ entityId: text, relation: text }).strict()), worldLayer: z.object({ worldLayerId: id("world"), version: text }).strict(), diagrams: z.array(z.object({ diagramId: id("diagram"), title: text }).strict()), mediaPlacementIds: z.array(id("figure")), rightsCaseIds: z.array(rightsCaseId), licenses: z.object({ chapter: text, assets: z.array(text) }).strict(), exports: z.object({ web: z.boolean(), print: z.boolean(), offline: z.boolean(), voice: z.boolean() }).strict(), aliases: z.array(IdentityAliasSchema), tombstones: z.array(IdentityTombstoneSchema), updatedBy: ActorReferenceSchema, updatedAt: time,
+}).strict();
+const validateChapterReferences = (v: z.infer<typeof ChapterBaseSchema> & { checkpoints: Array<{ checkpointId: string }> }, ctx: z.RefinementCtx) => {
   if (new Set(v.checkpoints.map((p) => p.checkpointId)).size !== v.checkpoints.length) ctx.addIssue({ code: "custom", path: ["checkpoints"], message: "Checkpoint IDs must be unique" });
+  const passages = new Set(v.body.flatMap((block) => [block.anchorPassageId, "passageId" in block ? block.passageId : undefined]).filter((value): value is string => Boolean(value)));
+  const replacements = new Map(v.tombstones.filter((item) => item.id.startsWith("passage_") && item.replacementId).map((item) => [item.id, item.replacementId!]));
+  const resolvesAnchor = (anchor: string) => passages.has(anchor) || (replacements.has(anchor) && passages.has(replacements.get(anchor)!));
+  for (const [index, relation] of v.people.entries()) for (const anchor of relation.passageIds) if (!resolvesAnchor(anchor)) ctx.addIssue({ code: "custom", path: ["people", index, "passageIds"], message: "Person relation passage must resolve to a chapter anchor" });
+  const relationPeople = new Set(v.people.map((relation) => relation.personId));
+  const revisions = new Map(v.entityRevisions.map((revision) => [revision.entityRevisionId, revision]));
+  const features = new Map(v.personFeatures.map((feature) => [feature.personFeatureId ?? feature.placementId, feature]));
+  const placementIds = new Set<string>(); const placementPositions = new Set<string>();
+  for (const [index, placement] of v.managedPlacements.entries()) {
+    if (placementIds.has(placement.placementId)) ctx.addIssue({ code: "custom", path: ["managedPlacements", index, "placementId"], message: "Placement IDs must be unique within a chapter" });
+    placementIds.add(placement.placementId);
+    const positionKey = `${placement.anchorPassageId}:${placement.position}:${placement.orderAtAnchor}`;
+    if (placementPositions.has(positionKey)) ctx.addIssue({ code: "custom", path: ["managedPlacements", index, "orderAtAnchor"], message: "Placement order must be unique at an anchor and position" });
+    placementPositions.add(positionKey);
+    if (!resolvesAnchor(placement.anchorPassageId)) ctx.addIssue({ code: "custom", path: ["managedPlacements", index, "anchorPassageId"], message: "Managed placement anchor must resolve to a chapter anchor" });
+    if (placement.kind === "personFeature") {
+      const feature = features.get(placement.contentId);
+      if (!feature) ctx.addIssue({ code: "custom", path: ["managedPlacements", index, "contentId"], message: "Person feature placement must reference a frozen person feature" });
+      else if (feature.placementId !== placement.placementId) ctx.addIssue({ code: "custom", path: ["managedPlacements", index, "contentId"], message: "Person feature placement must match its frozen projection" });
+    }
+  }
+  for (const [index, feature] of v.personFeatures.entries()) {
+    if (!relationPeople.has(feature.personId)) ctx.addIssue({ code: "custom", path: ["personFeatures", index, "personId"], message: "Person feature must reference a chapter person relation" });
+    const revision = revisions.get(feature.entityRevisionId);
+    if (!revision || revision.personId !== feature.personId) ctx.addIssue({ code: "custom", path: ["personFeatures", index, "entityRevisionId"], message: "Person feature must reference a frozen revision for the same person" });
+    if (!placementIds.has(feature.placementId)) ctx.addIssue({ code: "custom", path: ["personFeatures", index, "placementId"], message: "Person feature projection must have one managed placement" });
+  }
 };
-export const DraftChapterBundleSchema = ChapterBaseSchema.extend({ status: z.enum(["draft", "inReview"]), checkpoints: z.array(PromptCheckpointSchema) }).superRefine(uniqueCheckpoints);
-export const PublishableChapterBundleSchema = ChapterBaseSchema.extend({ status: z.enum(["approved", "published"]), checkpoints: z.array(PromptCheckpointSchema) }).superRefine(uniqueCheckpoints);
+export const DraftChapterBundleSchema = ChapterBaseSchema.extend({ status: z.enum(["draft", "inReview"]), checkpoints: z.array(PromptCheckpointSchema) }).superRefine(validateChapterReferences);
+export const PublishableChapterBundleSchema = ChapterBaseSchema.extend({ status: z.enum(["approved", "published"]), checkpoints: z.array(PromptCheckpointSchema) }).superRefine(validateChapterReferences);
 export const ChapterBundleSchema = z.union([DraftChapterBundleSchema, PublishableChapterBundleSchema]);
 export type DraftChapterBundle = z.infer<typeof DraftChapterBundleSchema>; export type PublishableChapterBundle = z.infer<typeof PublishableChapterBundleSchema>; export type ChapterBundle = z.infer<typeof ChapterBundleSchema>;
 
 export const MediaAssetSchema = z.object({ mediaId: id("media"), title: text, versionIds: z.array(mediaVersionId).min(1) }).strict();
 export const MediaAssetVersionSchema = z.object({ mediaVersionId, mediaId: id("media"), kind: z.enum(["image", "animatedImage", "shortVideo", "audio", "document"]), sourceAssetRef: text, posterAssetRef: text.optional(), derivatives: z.array(z.object({ assetRef: text, kind: text, sha256 }).strict()), technical: z.object({ mimeType: text, bytes: z.number().int().nonnegative(), width: z.number().int().positive().optional(), height: z.number().int().positive().optional(), frameCount: z.number().int().positive().optional(), durationMs: z.number().int().positive().optional(), sha256 }).strict(), accessibility: z.object({ longDescription: text.optional(), transcript: text.optional(), captionTrackRef: text.optional(), motionReview: z.enum(["passed", "reviewRequired"]).optional(), flashReview: z.enum(["passed", "reviewRequired"]).optional() }).strict(), processing: z.object({ status: z.enum(["created", "uploading", "quarantined", "processing", "ready", "failed"]), processorVersion: text, errorCode: text.optional() }).strict(), createdAt: time, createdBy: ActorReferenceSchema }).strict();
-export const RightsCaseSchema = z.object({ rightsCaseId, subject: z.object({ mediaVersionId, sourceRevision: text.optional(), transformationsHash: sha256, placementId: id("figure").optional(), projections: z.array(z.enum(["web", "print", "offline", "download", "voice"])).min(1), downloadable: z.boolean() }).strict(), creator: text.optional(), sourceUrl: https.optional(), license: z.enum(["cc0", "publicDomain", "ccBy", "ccBySa", "fairUse", "permission", "owned", "unknown"]), licenseUrl: https.optional(), attribution: text, evidenceRefs: z.array(Reference), notes: text.optional(), status: z.enum(["reviewRequired", "cleared", "blocked"]), approvedBy: ActorReferenceSchema.optional(), approvedAt: time.optional(), approvedSubjectHash: sha256.optional() }).strict();
+export const RightsClearanceSchema = z.discriminatedUnion("basis", [
+  z.object({ basis: z.literal("humanApproval") }).strict(),
+  z.object({ basis: z.literal("policy"), policyVersion: text, evidenceReceiptId: id("receipt") }).strict(),
+]);
+export const RightsCaseSchema = z.object({ rightsCaseId, subject: z.object({ mediaVersionId, sourceRevision: text.optional(), transformationsHash: sha256, placementId: id("figure").optional(), projections: z.array(z.enum(["web", "print", "offline", "download", "voice"])).min(1), downloadable: z.boolean() }).strict(), creator: text.optional(), sourceUrl: https.optional(), license: z.enum(["cc0", "publicDomain", "ccBy", "ccBySa", "fairUse", "permission", "owned", "unknown"]), licenseUrl: https.optional(), attribution: text, evidenceRefs: z.array(Reference), notes: text.optional(), status: z.enum(["reviewRequired", "cleared", "blocked"]), clearance: RightsClearanceSchema.optional(), approvedBy: ActorReferenceSchema.optional(), approvedAt: time.optional(), approvedSubjectHash: sha256.optional() }).strict().superRefine((value, ctx) => {
+  if (value.status === "cleared" && !value.clearance) ctx.addIssue({ code: "custom", path: ["clearance"], message: "Cleared rights cases require typed clearance evidence" });
+  if (value.status !== "cleared" && value.clearance) ctx.addIssue({ code: "custom", path: ["clearance"], message: "Only cleared rights cases may carry clearance evidence" });
+  if (value.clearance?.basis === "humanApproval" && (!value.approvedBy || !value.approvedAt || !value.approvedSubjectHash)) ctx.addIssue({ code: "custom", path: ["clearance"], message: "Human clearance requires approvedBy, approvedAt, and approvedSubjectHash" });
+});
 export const EditorialApprovalSchema = z.object({ approvalId: id("approval"), subjectType: z.enum(["checkpoint", "mediaPlacement", "chapterRevision", "releaseCandidate"]), subjectId: text, subjectHash: sha256, approvedBy: ActorReferenceSchema, approvedAt: time, notes: text.optional() }).strict();
 
 export const ReleaseMediaProjectionSchema = z.object({

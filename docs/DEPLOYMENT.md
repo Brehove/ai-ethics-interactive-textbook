@@ -39,13 +39,20 @@ The auth Worker requires the non-secret runtime values listed in `workers/editor
 - `RELEASE_SNAPSHOT_READ_TOKEN`
 - `RELEASE_DEPLOY_RECEIPT_TOKEN`
 
+Before the first auth deployment, apply both migrations in the dedicated
+`ai-ethics-editor-auth-state` database. Migration `0002_oauth_pkce_states.sql`
+stores only short-lived OAuth nonce hashes, server-side PKCE verifiers,
+validated chapter targets, and expiry; the hourly Worker trigger removes
+expired rows. It is not the content database and must never be bound to the
+reader or editor static host.
+
 Deploy it with:
 
 ```bash
 npx wrangler deploy --config workers/editor-auth/wrangler.jsonc
 ```
 
-The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `Brehove/ai-ethics-interactive-textbook` and limited to Contents and Pull requests read/write permissions; Metadata read is GitHub's mandatory baseline. Webhooks are disabled. The callback is exactly `https://auth.ethicsandai.your-digital-life.org/auth/callback`.
+The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `Brehove/ai-ethics-interactive-textbook` and limited to Contents and Pull requests read/write permissions; Metadata read is GitHub's mandatory baseline. Webhooks are disabled. The callback is exactly `https://auth.ethicsandai.your-digital-life.org/auth/callback`. Reader Edit links use only `GET /auth/start?chapter=<known-slug>&mode=edit&anchor=<safe-anchor>`; OAuth reconstructs a code-pinned editor chapter route and never accepts a `returnTo` URL.
 
 ## Codex MCP and Skills
 

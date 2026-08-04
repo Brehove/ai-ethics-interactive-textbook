@@ -4,7 +4,7 @@
   "files": [
     {
       "path": "author-textbook-chapter/SKILL.md",
-      "sha256": "9dfec068e6460632eb752b092fe6215bed36edcd5d5fa736df9f7aebf0d71169"
+      "sha256": "1b15400056de9fe2e55a032466efd08bc34c377ad43f0801e2775028ebfb1693"
     },
     {
       "path": "author-textbook-chapter/agents/openai.yaml",
@@ -12,11 +12,11 @@
     },
     {
       "path": "author-textbook-chapter/references/mcp-workflow.md",
-      "sha256": "806fcf68e8a84f74b67fb945b9b93eaba5b6f9763412a074e26d5efba8e5b5ce"
+      "sha256": "0f304e80d9ef06c2b991e1d853ea5011c0af75ef53e7d66cdd0ca73fbfb562c5"
     },
     {
       "path": "manage-prompt-checkpoints/SKILL.md",
-      "sha256": "8aa6d3f92a8fb13867db54343f1afd66e733e21c73d617c00df3e9274c39118c"
+      "sha256": "95d0a06369066a4d514e94b3aea847281c9988d437c028450d011d55cd0c6a96"
     },
     {
       "path": "manage-prompt-checkpoints/agents/openai.yaml",
@@ -24,11 +24,11 @@
     },
     {
       "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
-      "sha256": "af470cac899e20d57199ab895acb6aed86d309d672e47e1bfaa948c6b8d086d0"
+      "sha256": "772ed09167a4c465c2a8adb00b49f19ea6584ed3ff4afa343b906e6bc3777f9d"
     },
     {
       "path": "publish-textbook-media/SKILL.md",
-      "sha256": "91acc13e9e7d1327480c584bafdd5e3777b604a7ab775b1cdffee3098bc33454"
+      "sha256": "73503900d22c245cba1eccf1ec9ad974038565c2ba765239d190e37e42f4d96d"
     },
     {
       "path": "publish-textbook-media/agents/openai.yaml",
@@ -36,7 +36,7 @@
     },
     {
       "path": "publish-textbook-media/references/media-workflow.md",
-      "sha256": "15a2cf446aeee14e0d83da99b879fbed7d6aae0f271e2df86dd539b62f622d9d"
+      "sha256": "3c72b428269432f67a4f68b0c1eb9040d5701a71f4304a352a2f454b5a561094"
     },
     {
       "path": "publish-textbook-media/scripts/upload-media.mjs",
@@ -44,7 +44,7 @@
     },
     {
       "path": "release-steward/SKILL.md",
-      "sha256": "7ccb3407ed8a87d9b8b5e770f0a669dcc3de0cb176e1114f70c1b48569116ea7"
+      "sha256": "7d64fae3f25da2a73770668df8361fc1a732b786c82da2d351fba75a6994d7cc"
     },
     {
       "path": "release-steward/agents/openai.yaml",

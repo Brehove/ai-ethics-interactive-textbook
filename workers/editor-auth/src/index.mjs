@@ -28,6 +28,21 @@ import {
   validateEditablePath,
   validatePullRequestInput,
 } from "./policy.mjs";
+import {
+  approveAgentCapabilityRequest,
+  createAgentCapabilityRequest,
+  exchangeAgentCapabilityRequest,
+  revokeAgentCapability,
+  verifyIssuedAgentCapability,
+} from "./capabilities.mjs";
+import { CHAPTER_ROUTE_BY_SLUG } from "./chapter-route-manifest.mjs";
+import {
+  cleanupExpiredOAuthStates,
+  consumeOAuthState,
+  createOAuthState,
+  editorTargetUrl,
+  validateOAuthTarget,
+} from "./oauth-state.mjs";
 
 const encoder = new TextEncoder();
 
@@ -131,6 +146,27 @@ function safeAllowedOrigin(request, env) {
   }
 }
 
+function optionalAllowedOrigin(request, config) {
+  return request.headers.get("Origin") ? requireAllowedOrigin(request, config) : undefined;
+}
+
+const CAPABILITY_REQUEST_PATH = /^\/auth\/agent-capability-requests\/(capreq_[A-Za-z0-9_-]{8,})$/;
+const CAPABILITY_EXCHANGE_PATH = /^\/auth\/agent-capability-requests\/(capreq_[A-Za-z0-9_-]{8,}):exchange$/;
+const CAPABILITY_REVOKE_PATH = /^\/auth\/agent-capabilities\/(cap_[A-Za-z0-9_-]{8,}):revoke$/;
+
+/**
+ * The service-bound API used by MCP and the content gateway.  It is intentionally
+ * not reachable over this Worker's HTTP surface; the production RPC entrypoint
+ * in worker.mjs delegates to this factory.
+ */
+export function createCapabilityVerifier(env, { now = () => Math.floor(Date.now() / 1000) } = {}) {
+  return Object.freeze({
+    verifyCapability(token, target = {}) {
+      return verifyIssuedAgentCapability(token, target, env, now());
+    },
+  });
+}
+
 async function requireSession(request, config, now) {
   const encoded = parseCookies(request).get(SESSION_COOKIE);
   const session = await verifyToken(encoded, config.sessionSecret, { kind: "session", now });
@@ -144,6 +180,15 @@ async function requireSession(request, config, now) {
     throw new HttpError(401, "unauthorized", "A valid editor session is required");
   }
   return session;
+}
+
+async function optionalSession(request, config, now) {
+  try {
+    return await requireSession(request, config, now);
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 401) return null;
+    throw error;
+  }
 }
 
 function requireCsrf(request, session) {
@@ -333,7 +378,7 @@ export function createEditorAuthApp(dependencies = {}) {
 
         const config = getRuntimeConfig(env);
 
-        if (request.method === "OPTIONS" && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/v1/") || url.pathname === "/auth/logout")) {
+        if (request.method === "OPTIONS" && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/v1/") || url.pathname === "/auth/logout" || url.pathname.startsWith("/auth/agent-capability-requests/") || url.pathname === "/auth/agent-capability-requests" || url.pathname.startsWith("/auth/agent-capabilities/"))) {
           origin = requireAllowedOrigin(request, config);
           return empty(204, {
             origin,
@@ -347,12 +392,20 @@ export function createEditorAuthApp(dependencies = {}) {
 
         if (url.pathname === "/auth/start") {
           if (request.method !== "GET") throw new HttpError(405, "method_not_allowed", "Use GET for this endpoint");
+          if (request.headers.get("Content-Type")?.toLowerCase().startsWith("application/json") || Number.parseInt(request.headers.get("Content-Length") ?? "0", 10) > 0) {
+            throw new HttpError(400, "invalid_oauth_target", "The editor sign-in request must not have a body");
+          }
+          const target = validateOAuthTarget(url, CHAPTER_ROUTE_BY_SLUG);
+          const existingSession = await optionalSession(request, config, now);
+          if (existingSession) return redirect(editorTargetUrl(config.editorOrigin, target));
           const clientId = env.GITHUB_APP_CLIENT_ID;
           if (typeof clientId !== "string" || !clientId.trim()) throw new Error("GITHUB_APP_CLIENT_ID is not configured");
+          const oauth = await createOAuthState(target, env, now, config.stateTtl, randomBytes);
           const state = await signToken({
             v: 1,
             kind: "state",
-            nonce: randomBase64Url(24, randomBytes),
+            nonce: oauth.nonce,
+            target,
             iat: now,
             exp: now + config.stateTtl,
           }, config.sessionSecret);
@@ -360,6 +413,8 @@ export function createEditorAuthApp(dependencies = {}) {
           authorization.searchParams.set("client_id", clientId.trim());
           authorization.searchParams.set("redirect_uri", `${config.authBaseUrl}/auth/callback`);
           authorization.searchParams.set("state", state);
+          authorization.searchParams.set("code_challenge", oauth.challenge);
+          authorization.searchParams.set("code_challenge_method", "S256");
           authorization.searchParams.set("allow_signup", "false");
           return redirect(authorization.href, {
             cookies: [cookie(STATE_COOKIE, state, { maxAge: config.stateTtl, sameSite: "Lax" })],
@@ -374,12 +429,13 @@ export function createEditorAuthApp(dependencies = {}) {
             throw new HttpError(400, "state_mismatch", "The GitHub login state did not match");
           }
           const state = await verifyToken(callbackState, config.sessionSecret, { kind: "state", now });
-          if (!state || typeof state.nonce !== "string") {
+          if (!state || typeof state.nonce !== "string" || !state.target) {
             throw new HttpError(400, "state_expired", "The GitHub login state expired");
           }
 
+          const consumed = await callbackStage("state_consume", () => consumeOAuthState(state, env, now));
           const code = validateOAuthCode(url.searchParams.get("code"));
-          const userToken = await callbackStage("oauth_exchange", () => exchangeOAuthCode(env, code, `${config.authBaseUrl}/auth/callback`, fetchImpl));
+          const userToken = await callbackStage("oauth_exchange", () => exchangeOAuthCode(env, code, `${config.authBaseUrl}/auth/callback`, consumed.verifier, fetchImpl));
           const user = await callbackStage("user_lookup", () => getAuthenticatedUser(userToken, fetchImpl));
           if (!config.allowedUserIds.has(String(user.id))) {
             throw new HttpError(403, "user_not_allowed", "This GitHub account is not an editor");
@@ -394,16 +450,51 @@ export function createEditorAuthApp(dependencies = {}) {
             login: user.login,
             csrf,
             iat: now,
+            stepUpAt: now,
             exp: now + config.sessionTtl,
           }, config.sessionSecret));
-          const destination = new URL(config.adminUrl);
-          destination.searchParams.set("editor_auth", "ok");
-          return redirect(destination.href, {
+          return redirect(editorTargetUrl(config.editorOrigin, consumed.target), {
             cookies: [
               cookie(SESSION_COOKIE, session, { maxAge: config.sessionTtl, sameSite: "Strict" }),
               clearCookie(STATE_COOKIE, "Lax"),
             ],
           });
+        }
+
+        if (url.pathname === "/auth/agent-capability-requests") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          origin = optionalAllowedOrigin(request, config);
+          const result = await createAgentCapabilityRequest(await readJsonBody(request), env, now, randomBytes);
+          return json(result, 201, { origin });
+        }
+
+        const exchangeMatch = url.pathname.match(CAPABILITY_EXCHANGE_PATH);
+        if (exchangeMatch) {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          origin = optionalAllowedOrigin(request, config);
+          const input = await readJsonBody(request);
+          const result = await exchangeAgentCapabilityRequest(exchangeMatch[1], input?.deviceSecret, env, now, randomBytes);
+          return json(result, 200, { origin });
+        }
+
+        const approvalMatch = url.pathname.match(CAPABILITY_REQUEST_PATH);
+        if (approvalMatch) {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          origin = requireAllowedOrigin(request, config);
+          const session = await requireSession(request, config, now);
+          requireCsrf(request, session);
+          const result = await approveAgentCapabilityRequest(approvalMatch[1], await readJsonBody(request), session, env, now);
+          return json(result, 200, { origin });
+        }
+
+        const revokeMatch = url.pathname.match(CAPABILITY_REVOKE_PATH);
+        if (revokeMatch) {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          origin = requireAllowedOrigin(request, config);
+          const session = await requireSession(request, config, now);
+          requireCsrf(request, session);
+          const result = await revokeAgentCapability(revokeMatch[1], (await readJsonBody(request))?.reason, session, env, now);
+          return json(result, 200, { origin });
         }
 
         if (url.pathname === "/api/session") {
@@ -448,7 +539,12 @@ export function createEditorAuthApp(dependencies = {}) {
         }
 
         if (url.pathname.startsWith("/v1/")) {
-          origin = requireAllowedOrigin(request, config);
+          // Browser image requests do not consistently send Origin. Permit its
+          // omission only for the exact read-only managed-media preview route;
+          // a supplied Origin is still allowlisted and the signed instructor
+          // session remains mandatory.
+          const managedMediaPreview = request.method === "GET" && /^\/v1\/media\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}\/versions\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}\/rights\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}:preview$/.test(url.pathname);
+          origin = managedMediaPreview ? optionalAllowedOrigin(request, config) : requireAllowedOrigin(request, config);
           const session = await requireSession(request, config, now);
           if (contentMutationMethods.has(request.method)) requireCsrf(request, session);
           if (!["GET", "HEAD", ...contentMutationMethods].includes(request.method)) {
@@ -510,11 +606,21 @@ export async function dispatchMediaJobs(batch, env, dependencies = {}) {
   }
 }
 
+export async function scheduledCleanup(_event, env, dependencies = {}) {
+  const now = dependencies.now ?? (() => Math.floor(Date.now() / 1000));
+  return cleanupExpiredOAuthStates(env, now());
+}
+
 export default {
   fetch(request, env) {
     return app.fetch(request, env);
   },
   queue(batch, env) {
     return dispatchMediaJobs(batch, env);
+  },
+  scheduled(event, env, ctx) {
+    const task = scheduledCleanup(event, env);
+    if (ctx?.waitUntil) ctx.waitUntil(task);
+    return task;
   },
 };

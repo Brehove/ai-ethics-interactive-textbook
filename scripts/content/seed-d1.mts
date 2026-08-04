@@ -8,6 +8,12 @@ const output = path.resolve(process.argv[2] ?? "artifacts/migration/seed-content
 const sourceRevision = process.env.CONTENT_SOURCE_REVISION ?? "0a2716182953f492a654aa8b704d420216f39450";
 const importedAt = "2026-08-02T00:00:00.000Z";
 const quote = (value: string | null) => value === null ? "NULL" : `'${value.replaceAll("'", "''")}'`;
+const splitSqlText = (value: string, maxCodePoints = 12_000) => {
+  const points = Array.from(value);
+  const chunks: string[] = [];
+  for (let index = 0; index < points.length; index += maxCodePoints) chunks.push(points.slice(index, index + maxCodePoints).join(""));
+  return chunks;
+};
 
 const exported = await new GitContentRepository(path.join(repositoryRoot, "content")).exportSnapshot();
 // Wrangler's remote D1 import endpoint rejects explicit BEGIN/COMMIT. Every
@@ -27,10 +33,17 @@ for (const chapter of exported.snapshot.chapters) {
     bookSnapshotHash: exported.sha256,
     importSource: "git-markdown-v1",
   });
+  const contentChunks = splitSqlText(canonicalJson);
+  let expectedLength = Array.from(contentChunks[0]).length;
 
   statements.push(
     `INSERT OR IGNORE INTO documents (id, canonical_path, media_kind, title, state, created_at, updated_at) VALUES (${quote(chapter.chapterId)}, ${quote(sourcePath)}, 'text', ${quote(chapter.title)}, 'active', ${quote(importedAt)}, ${quote(importedAt)});`,
-    `INSERT OR IGNORE INTO document_revisions (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at) VALUES (${quote(revisionId)}, ${quote(chapter.chapterId)}, NULL, ${quote(contentHash)}, ${quote(canonicalJson)}, NULL, ${quote(metadata)}, 'service_git_importer', ${quote(importedAt)});`,
+    `INSERT OR IGNORE INTO document_revisions (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at) VALUES (${quote(revisionId)}, ${quote(chapter.chapterId)}, NULL, ${quote(contentHash)}, ${quote(contentChunks[0])}, NULL, ${quote(metadata)}, 'service_git_importer', ${quote(importedAt)});`,
+    ...contentChunks.slice(1).map((chunk) => {
+      const statement = `UPDATE document_revisions SET content_text = content_text || ${quote(chunk)} WHERE id = ${quote(revisionId)} AND length(content_text) = ${expectedLength};`;
+      expectedLength += Array.from(chunk).length;
+      return statement;
+    }),
     `UPDATE documents SET current_revision_id = ${quote(revisionId)}, current_content_hash = ${quote(contentHash)}, updated_at = ${quote(importedAt)} WHERE id = ${quote(chapter.chapterId)} AND current_revision_id IS NULL;`,
     `INSERT OR IGNORE INTO authority_registry (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at) VALUES (${quote(authorityId)}, ${quote(chapter.chapterId)}, 'git', ${quote(sourcePath)}, ${quote(sourceRevision)}, ${quote(contentHash)}, 1, ${quote(importedAt)}, ${quote(importedAt)});`,
   );

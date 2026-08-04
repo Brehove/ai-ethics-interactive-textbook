@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const workflowPath = new URL("../../.github/workflows/content-release.yml", import.meta.url);
 const rollbackWorkflowPath = new URL("../../.github/workflows/content-rollback.yml", import.meta.url);
 const reconcileWorkflowPath = new URL("../../.github/workflows/content-release-reconcile.yml", import.meta.url);
+const cutoverWorkflowPath = new URL("../../.github/workflows/prepare-authority-cutover.yml", import.meta.url);
 const ciWorkflowPath = new URL("../../.github/workflows/ci.yml", import.meta.url);
 const releaseCliPath = new URL("../../scripts/release/release-cli.mjs", import.meta.url);
 
@@ -73,6 +74,15 @@ test("release workflow requires signed candidates and human-gated promotion", as
   const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n\s+with:\n([\s\S]*?)(?=\n\s+- (?:uses|name|run):)/g)];
   assert.equal(checkouts.length, 3);
   for (const checkout of checkouts) assert.match(checkout[1], /ref: \$\{\{ inputs\.commit_sha \}\}/);
+});
+
+test("authority cutover proposal is service-prepared but remains human-reviewed", async () => {
+  const workflow = await readFile(cutoverWorkflowPath, "utf8");
+  assert.match(workflow, /environment: content-production/);
+  assert.match(workflow, /RELEASE_DEPLOY_RECEIPT_TOKEN/);
+  assert.match(workflow, /prepare-cutover/);
+  assert.match(workflow, /authority-cutover-proposal\.json/);
+  assert.doesNotMatch(workflow, /submitReview|:approve|activateD1/);
 });
 
 test("release audit resolves its receipt ID without literal shell escapes", async () => {

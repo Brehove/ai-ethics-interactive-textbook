@@ -3,6 +3,7 @@ import {
   deploymentReceiptHash, finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
   validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature
 } from './services.mjs';
+import { CHAPTER_RENDERER_STYLES, CHAPTER_RENDERER_STYLE_VERSION, projectionIdentity, renderChapterProjection } from '@ai-ethics/chapter-renderer';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -17,6 +18,55 @@ const parseStoredJson = (value, label) => {
 };
 const runIdentity = (identity) => {
   if (!identity.runId || identity.runId.length > 200) throw new ApiError(401, 'UNAUTHENTICATED', 'Gateway run identity is required for mutations');
+};
+const bearerToken = (request) => {
+  const authorization = request.headers.get('authorization') || '';
+  const match = authorization.match(/^Bearer\s+([^\s]+)$/i);
+  return match?.[1] || null;
+};
+const resolveIdentity = async (request, env) => {
+  const token = bearerToken(request);
+  if (token) {
+    if (!env.AUTH_CAPABILITY?.verifyCapability) throw new ApiError(503, 'CAPABILITY_VERIFIER_UNAVAILABLE', 'Agent capability verification is unavailable');
+    let verified;
+    try { verified = await env.AUTH_CAPABILITY.verifyCapability(token, {}); }
+    catch { throw new ApiError(401, 'INVALID_CAPABILITY', 'Agent capability is invalid, expired, revoked, or unavailable'); }
+    if (verified?.actorType !== 'agent' || !verified.actorId || !verified.clientId || !verified.runId) throw new ApiError(401, 'INVALID_CAPABILITY', 'Agent capability identity is incomplete');
+    // If an intermediate gateway also asserted identity, it must agree; the
+    // bearer remains the source of truth and no gateway headers are required.
+    if (request.headers.get('x-content-gateway-verified') === 'v1') {
+      const asserted = trustedIdentity(request);
+      if (asserted.actorId !== verified.actorId || asserted.clientId !== verified.clientId || asserted.runId !== verified.runId || asserted.actorType !== 'agent') throw new ApiError(401, 'CAPABILITY_IDENTITY_MISMATCH', 'Gateway identity does not match the original capability');
+    }
+    return Object.freeze({ actorId: verified.actorId, actorType: 'agent', clientId: verified.clientId, runId: verified.runId, scopes: new Set(verified.scopes || []), allowedDocumentIds: Object.freeze([...(verified.allowedDocumentIds || [])]), allowedOperations: Object.freeze([...(verified.allowedOperations || [])]), capabilityJti: verified.jti || null });
+  }
+  const asserted = trustedIdentity(request);
+  if (asserted.actorType === 'agent') throw new ApiError(401, 'AGENT_CAPABILITY_REQUIRED', 'Agent requests must forward the original capability bearer');
+  return asserted;
+};
+const requireAgentTarget = (identity, { documentId, operation }) => {
+  if (identity.actorType !== 'agent') return;
+  if (documentId && !identity.allowedDocumentIds?.includes(documentId)) throw new ApiError(403, 'CAPABILITY_DOCUMENT_FORBIDDEN', 'Agent capability does not allow this chapter');
+  if (operation && !identity.allowedOperations?.includes(operation)) throw new ApiError(403, 'CAPABILITY_OPERATION_FORBIDDEN', 'Agent capability does not allow this operation');
+};
+const SEMANTIC_OPERATION_CAPABILITIES = Object.freeze({
+  'text.replace': ['replace_passage_text'],
+  'chapter.replaceDocument': ['replace_chapter_document'],
+  'checkpoint.upsert': ['upsert_checkpoint', 'reorder_checkpoint'],
+  'checkpoint.replace': ['upsert_checkpoint', 'reorder_checkpoint'],
+  'checkpoint.remove': ['remove_checkpoint'],
+  'media.place': ['place_media'],
+  'media.remove': ['remove_managed_placement'],
+  'embed.upsert': ['upsert_embed'],
+  'personFeature.upsert': ['upsert_person_feature'],
+  'managedPlacement.move': ['move_managed_placement'],
+  'managedPlacement.remove': ['remove_managed_placement']
+});
+const requireAgentSemanticOperation = (identity, documentId, operationType) => {
+  if (identity.actorType !== 'agent') return;
+  requireAgentTarget(identity, { documentId });
+  const capabilities = SEMANTIC_OPERATION_CAPABILITIES[operationType] || [];
+  if (!capabilities.some((operation) => identity.allowedOperations?.includes(operation))) throw new ApiError(403, 'CAPABILITY_OPERATION_FORBIDDEN', 'Agent capability does not allow this semantic operation');
 };
 const requireHumanIdentity = (identity, action) => {
   if (identity.actorType !== 'human') throw new ApiError(403, 'HUMAN_ACTOR_REQUIRED', `${action} requires an authenticated human actor`);
@@ -72,6 +122,18 @@ const boundedQuery = (value, name, max = 100) => {
   return value.trim();
 };
 
+async function enforceRuntimeFlag(env, name, documentId) {
+  if (env.RUNTIME_FLAGS_ENFORCED !== '1') return;
+  if (!env.CONTENT_DB) throw new ApiError(503, 'FEATURE_FLAG_STORE_UNAVAILABLE', 'Runtime feature flag storage is unavailable');
+  let row;
+  try { row = await env.CONTENT_DB.prepare('SELECT enabled, document_ids_json, version FROM runtime_feature_flags WHERE name = ?').bind(name).first(); }
+  catch { throw new ApiError(503, 'FEATURE_FLAG_STORE_UNAVAILABLE', 'Runtime feature flag storage failed closed'); }
+  if (!row) throw new ApiError(503, 'FEATURE_FLAG_MISSING', `Runtime feature flag ${name} is missing`);
+  let targets;
+  try { targets = JSON.parse(row.document_ids_json); } catch { throw new ApiError(503, 'FEATURE_FLAG_INVALID', `Runtime feature flag ${name} is invalid`); }
+  if (row.enabled !== 1 || !Array.isArray(targets) || !targets.includes(documentId)) throw new ApiError(409, 'FEATURE_DISABLED', `${name} is not enabled for this chapter`, { name, documentId, version: row.version });
+}
+
 async function enforceRateLimit(env, identity, routeClass) {
   const limit = RATE_LIMITS[routeClass];
   if (!limit || !env.CONTENT_DB) throw new ApiError(503, 'RATE_LIMIT_STORE_UNAVAILABLE', 'Persistent rate-limit storage is unavailable');
@@ -125,7 +187,7 @@ async function listChapters(env) {
   const rows = await env.CONTENT_DB.prepare(`SELECT d.id, d.canonical_path, d.title, d.state, d.current_revision_id, d.current_content_hash, d.updated_at,
     a.authority, a.source_revision AS authority_source_revision FROM documents d LEFT JOIN authority_registry a ON a.document_id = d.id AND a.active = 1
     WHERE d.media_kind = 'text' AND d.state = 'active' ORDER BY d.canonical_path`).all();
-  return json({ chapters: (rows.results || []).map((row) => ({ ...row, authoringState: row.id === 'chapter_ch07' || row.authority === 'd1' ? 'editable' : 'readOnly' })) });
+  return json({ chapters: (rows.results || []).map((row) => ({ ...row, authoringState: row.authority === 'd1' ? 'editable' : 'readOnly' })) });
 }
 
 async function loadCanonicalChapter(env, id) {
@@ -142,7 +204,44 @@ async function loadCanonicalChapter(env, id) {
 async function getChapter(env, id) {
   const { row, chapter } = await loadCanonicalChapter(env, id);
   const authority = await env.CONTENT_DB.prepare('SELECT authority, source_path, source_revision, normalized_snapshot_hash FROM authority_registry WHERE document_id = ? AND active = 1').bind(id).first();
-  return json({ id: row.id, canonicalPath: row.canonical_path, title: row.title, state: row.state, revisionId: row.current_revision_id, contentHash: row.current_content_hash, revisionCreatedAt: row.revision_created_at, authoringState: id === 'chapter_ch07' || authority?.authority === 'd1' ? 'editable' : 'readOnly', authority: authority || null, chapter, metadata: parseStoredJson(row.metadata_json || '{}', 'Chapter metadata') });
+  return json({ id: row.id, canonicalPath: row.canonical_path, title: row.title, state: row.state, revisionId: row.current_revision_id, contentHash: row.current_content_hash, revisionCreatedAt: row.revision_created_at, authoringState: authority?.authority === 'd1' ? 'editable' : 'readOnly', authority: authority || null, chapter, metadata: parseStoredJson(row.metadata_json || '{}', 'Chapter metadata') });
+}
+
+/**
+ * The editor needs one frozen, revision-bound shape rather than a sequence of
+ * canonical, renderer, and sidebar reads that can drift between requests.
+ */
+async function getAuthoringView(env, id) {
+  await enforceRuntimeFlag(env, 'unified_editor', id);
+  const { row, chapter } = await loadCanonicalChapter(env, id);
+  const authority = await env.CONTENT_DB.prepare(`SELECT id, authority, source_revision, normalized_snapshot_hash
+    FROM authority_registry WHERE document_id = ? AND active = 1`).bind(id).first();
+  if (!authority || authority.authority !== 'd1') throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'This chapter is not D1-authoritative');
+  const publicHead = await env.CONTENT_DB.prepare(`SELECT p.managed_assets_json FROM public_chapter_heads h
+    JOIN public_chapter_projections p ON p.id = h.projection_id WHERE h.document_id = ? AND h.revision_id = ?`).bind(id, row.current_revision_id).first();
+  const managedAssets = publicHead?.managed_assets_json ? parseStoredJson(publicHead.managed_assets_json, 'Public managed assets') : { assets: [], versions: [], placements: [] };
+  const authoringChapter = withProjectedMedia(chapter, managedAssets);
+  const projection = renderChapterProjection(authoringChapter, { context: 'editor', publicOrigin: env.PUBLIC_READER_ORIGIN });
+  const renderer = {
+    schemaVersion: projection.schemaVersion,
+    rendererVersion: CHAPTER_RENDERER_STYLE_VERSION,
+    stylesheetHash: await sha256(CHAPTER_RENDERER_STYLES),
+    html: projection.html,
+    orderedNodes: projection.orderedNodes,
+    prompts: projection.prompts
+  };
+  return json({
+    documentId: row.id,
+    slug: chapter.slug,
+    revisionId: row.current_revision_id,
+    contentHash: row.current_content_hash,
+    authority: { authorityId: authority.id, sourceRevision: authority.source_revision, normalizedSnapshotHash: authority.normalized_snapshot_hash },
+    chapter: authoringChapter,
+    renderer,
+    checkpoints: Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [],
+    media: authoringChapter.body.filter((block) => block?.type === 'mediaFigure'),
+    managedPlacements: Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : []
+  });
 }
 
 async function listChapterRevisions(env, id, url) {
@@ -172,7 +271,7 @@ async function listChapterRevisions(env, id, url) {
 
 async function requireAuthoringAuthority(env, chapterId) {
   const authority = await env.CONTENT_DB.prepare('SELECT authority FROM authority_registry WHERE document_id = ? AND active = 1').bind(chapterId).first();
-  if (chapterId !== 'chapter_ch07' && authority?.authority !== 'd1') throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'This chapter remains repository-authoritative and is read-only in the browser until its controlled D1 cutover');
+  if (authority?.authority !== 'd1') throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'This chapter remains repository-authoritative and is read-only in the browser until its controlled D1 cutover');
   return authority;
 }
 
@@ -310,7 +409,9 @@ async function renderPreview(request, env, identity, changesetId) {
 }
 
 async function createOrResumeChangeset(request, env, identity, chapterId) {
+  await enforceRuntimeFlag(env, 'unified_editor', chapterId);
   requireScope(identity, 'content:write'); runIdentity(identity);
+  requireAgentTarget(identity, { documentId: chapterId, operation: 'create_or_resume_changeset' });
   const body = await readJsonBody(request, { allowedFields: ['title', 'description', 'idempotencyKey', 'resume'] });
   if (typeof body.title !== 'string' || body.title.trim().length < 1 || body.title.length > 200) throw new ApiError(422, 'VALIDATION_FAILED', 'title is required and must be at most 200 characters');
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) throw new ApiError(422, 'VALIDATION_FAILED', 'description must be at most 2000 characters');
@@ -323,10 +424,10 @@ async function createOrResumeChangeset(request, env, identity, chapterId) {
   if (!canonical) throw new ApiError(404, 'NOT_FOUND', 'Chapter was not found');
 
   if (body.resume === true) {
-    const resumed = await env.CONTENT_DB.prepare(`SELECT c.id, c.state, c.created_at FROM changesets c JOIN working_documents w ON w.changeset_id = c.id
+    const resumed = await env.CONTENT_DB.prepare(`SELECT c.id, c.state, c.created_at, w.base_revision_id, w.version, w.content_hash, w.content_text FROM changesets c JOIN working_documents w ON w.changeset_id = c.id
       WHERE c.created_by = ? AND c.state IN ('open', 'submitted', 'approved') AND w.document_id = ? ORDER BY c.updated_at DESC LIMIT 1`).bind(identity.actorId, chapterId).first();
     if (resumed) {
-      const response = { id: resumed.id, state: resumed.state, resumed: true, created_at: resumed.created_at };
+      const response = { id: resumed.id, state: resumed.state, resumed: true, chapterId, baseRevisionId: resumed.base_revision_id, version: resumed.version, contentHash: resumed.content_hash, chapter: parseStoredJson(resumed.content_text, 'Working document'), created_at: resumed.created_at };
       await env.CONTENT_DB.batch([idempotencyStatement(env, idem, body.idempotencyKey, 200, response, now()), await audit(env, identity, 'changeset.resumed', 'changeset', resumed.id, { chapterId }, { idempotencyHash: idem.requestHash })]);
       return json(response);
     }
@@ -357,6 +458,7 @@ async function createMultiDocumentChangeset(request, env, identity, { authorityC
   const targets = body.targets.map((target) => validId(target, 'target'));
   if (new Set(targets).size !== targets.length) throw new ApiError(422, 'TARGETS_INVALID', 'targets must be unique');
   targets.sort();
+  if (!authorityCutover) for (const documentId of targets) requireAgentTarget(identity, { documentId, operation: 'create_changeset' });
   await enforceRateLimit(env, identity, 'mutation');
   if (authorityCutover) {
     for (const documentId of targets) {
@@ -396,6 +498,7 @@ async function createMultiDocumentChangeset(request, env, identity, { authorityC
 
 async function restoreRevisionAsDraft(request, env, identity, chapterId, revisionId) {
   requireScope(identity, 'content:write'); runIdentity(identity);
+  requireAgentTarget(identity, { documentId: chapterId, operation: 'restore_as_draft' });
   const body = await readJsonBody(request, { allowedFields: ['title', 'description', 'idempotencyKey'] });
   if (typeof body.title !== 'string' || body.title.trim().length < 1 || body.title.length > 200) throw new ApiError(422, 'VALIDATION_FAILED', 'title is required and must be at most 200 characters');
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) throw new ApiError(422, 'VALIDATION_FAILED', 'description must be at most 2000 characters');
@@ -455,11 +558,12 @@ async function applyOperation(request, env, identity, changesetId) {
   const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:apply`, body.idempotencyKey, body);
   if (idem.replay) return idem.replay;
   const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId), body.documentId);
+  requireAgentSemanticOperation(identity, working.document_id, body.operation?.type);
   if (working.state !== 'open') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open changeset can be edited');
   if (working.purpose === 'authority_cutover') throw new ApiError(409, 'CUTOVER_PROPOSAL_READ_ONLY', 'Authority cutover proposals are immutable review snapshots and cannot be edited');
   if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter changed after this changeset opened', { expected: working.base_revision_id, current: working.current_revision_id });
   if (body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'Working document version is stale', { expectedVersion: body.expectedVersion, currentVersion: working.version });
-  const result = await applySemanticOperation(parseStoredJson(working.content_text, 'Working document'), body.operation);
+  const result = await applyTrustedSemanticOperation(env, parseStoredJson(working.content_text, 'Working document'), body.operation);
   const nextVersion = working.version + 1;
   const operationId = await deterministicId('op', { changesetId, documentId: working.document_id, idempotencyKey: body.idempotencyKey });
   const response = { operationId, changesetId, documentId: working.document_id, baseRevisionId: working.base_revision_id, version: body.dryRun === true ? working.version : nextVersion, contentHash: result.contentHash, dryRun: body.dryRun === true, chapter: result.chapter };
@@ -471,6 +575,41 @@ async function applyOperation(request, env, identity, changesetId) {
     (id, changeset_id, document_id, operation_kind, operation_json, client_id, run_id, base_revision_id, result_revision_id, idempotency_hash, request_hash, result_hash, working_version, actor_id, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(operationId, changesetId, working.document_id, body.operation.type, stableStringify(body.operation), identity.clientId, identity.runId, working.base_revision_id, null, idem.requestHash, idem.requestHash, result.contentHash, nextVersion, identity.actorId, updatedAt);
   const batch = await env.CONTENT_DB.batch([update, operation, idempotencyStatement(env, idem, body.idempotencyKey, 200, response, updatedAt), await audit(env, identity, 'changeset.operation.applied', 'changeset', changesetId, { operationId, operationKind: body.operation.type, workingVersion: nextVersion }, { baseRevisionId: working.base_revision_id, idempotencyHash: idem.requestHash })]);
+  if (batch[0]?.meta?.changes === 0) throw new ApiError(409, 'REVISION_CONFLICT', 'Working document was concurrently modified');
+  return json(response);
+}
+
+async function applyOperationBatch(request, env, identity, changesetId) {
+  requireScope(identity, 'content:write'); runIdentity(identity);
+  const body = await readJsonBody(request, { maxBytes: 2 * 1024 * 1024, allowedFields: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'dryRun', 'operations'] });
+  if (body.baseRevisionId === undefined) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'baseRevisionId is required');
+  validId(body.baseRevisionId, 'baseRevisionId');
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
+  if (!Array.isArray(body.operations) || body.operations.length < 1 || body.operations.length > 100) throw new ApiError(422, 'OPERATIONS_INVALID', 'operations must contain 1 to 100 semantic operations');
+  await enforceRateLimit(env, identity, 'mutation');
+  const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:operations:batch`, body.idempotencyKey, body);
+  if (idem.replay) return idem.replay;
+  const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId), body.documentId);
+  requireAgentTarget(identity, { documentId: working.document_id });
+  for (const operation of body.operations) requireAgentSemanticOperation(identity, working.document_id, operation?.type);
+  if (working.state !== 'open' || working.purpose === 'authority_cutover') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open authoring changeset can be edited');
+  if (body.baseRevisionId !== working.base_revision_id || working.current_revision_id !== working.base_revision_id) throw new ApiError(409, 'REVISION_CONFLICT', 'Canonical chapter changed after this changeset opened', { expected: working.base_revision_id, current: working.current_revision_id });
+  if (body.expectedVersion !== working.version) throw new ApiError(409, 'REVISION_CONFLICT', 'Working document version is stale', { expectedVersion: body.expectedVersion, currentVersion: working.version });
+  let result = { chapter: stripTransientMediaPreviewFields(parseStoredJson(working.content_text, 'Working document')), contentHash: working.content_hash };
+  for (const operation of body.operations) result = await applyTrustedSemanticOperation(env, result.chapter, operation);
+  const nextVersion = working.version + 1;
+  const operationIds = await Promise.all(body.operations.map((operation, index) => deterministicId('op', { changesetId, documentId: working.document_id, idempotencyKey: body.idempotencyKey, index, type: operation.type })));
+  const response = { operationIds, changesetId, documentId: working.document_id, baseRevisionId: working.base_revision_id, version: body.dryRun === true ? working.version : nextVersion, contentHash: result.contentHash, dryRun: body.dryRun === true, chapter: result.chapter };
+  if (body.dryRun === true) return json(response);
+  const updatedAt = now();
+  const statements = [env.CONTENT_DB.prepare(`UPDATE working_documents SET content_text = ?, content_hash = ?, checkpoint = checkpoint + 1,
+    version = ?, updated_by = ?, updated_at = ? WHERE id = ? AND version = ?`).bind(stableStringify(result.chapter), result.contentHash, nextVersion, identity.actorId, updatedAt, working.id, working.version)];
+  body.operations.forEach((operation, index) => statements.push(env.CONTENT_DB.prepare(`INSERT INTO content_operations
+    (id, changeset_id, document_id, operation_kind, operation_json, client_id, run_id, base_revision_id, result_revision_id, idempotency_hash, request_hash, result_hash, working_version, actor_id, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(operationIds[index], changesetId, working.document_id, operation.type, stableStringify(operation), identity.clientId, identity.runId, working.base_revision_id, null, idem.requestHash, idem.requestHash, result.contentHash, nextVersion, identity.actorId, updatedAt)));
+  statements.push(idempotencyStatement(env, idem, body.idempotencyKey, 200, response, updatedAt));
+  statements.push(await audit(env, identity, 'changeset.operations.applied', 'changeset', changesetId, { operationIds, operationKinds: body.operations.map((operation) => operation.type), workingVersion: nextVersion }, { baseRevisionId: working.base_revision_id, idempotencyHash: idem.requestHash }));
+  const batch = await env.CONTENT_DB.batch(statements);
   if (batch[0]?.meta?.changes === 0) throw new ApiError(409, 'REVISION_CONFLICT', 'Working document was concurrently modified');
   return json(response);
 }
@@ -528,6 +667,212 @@ async function saveChangesetLive(request, env, identity, changesetId) {
   return json(response, 201);
 }
 
+const publicChapterUrl = (env, slug) => {
+  const origin = env.PUBLIC_READER_ORIGIN || 'https://ethicsandai.your-digital-life.org';
+  let base;
+  try { base = new URL(origin); } catch { throw new ApiError(503, 'PUBLIC_DELIVERY_UNAVAILABLE', 'Public reader origin configuration is invalid'); }
+  if (base.protocol !== 'https:' || base.username || base.password) throw new ApiError(503, 'PUBLIC_DELIVERY_UNAVAILABLE', 'Public reader origin configuration is invalid');
+  return new URL(`/chapter/${encodeURIComponent(slug)}/`, base).toString();
+};
+
+const liveCommitResponse = (command, deliveryStatus = command.delivery_state === 'verified' ? 'verified' : 'confirmation_pending') => ({
+  commitReceiptId: command.id,
+  changeSetId: command.changeset_id,
+  documentId: command.document_id,
+  revisionId: command.result_revision_id,
+  contentHash: command.result_content_hash,
+  projectionId: command.projection_id,
+  projectionHash: command.projection_hash,
+  publicUrl: command.public_url,
+  savedAt: command.committed_at || command.created_at,
+  deliveryStatus,
+  committed: command.state === 'committed' || command.state === 'unchanged',
+  live: deliveryStatus === 'verified',
+  noOp: command.state === 'unchanged',
+  statusUrl: `/v1/live-commits/${encodeURIComponent(command.id)}`,
+  statusExpiresAt: command.status_expires_at
+});
+
+async function observePublicDelivery(env, command) {
+  const checkedAt = now();
+  let observedRevisionId = null; let observedProjectionHash = null;
+  try {
+    const request = new Request(command.public_url, { method: 'GET', headers: { accept: 'text/html' }, redirect: 'error' });
+    const response = env.PUBLIC_READER?.fetch ? await env.PUBLIC_READER.fetch(request) : await fetch(request);
+    observedRevisionId = response.headers.get('x-textbook-revision') || response.headers.get('x-content-revision');
+    observedProjectionHash = response.headers.get('x-textbook-projection-hash') || response.headers.get('x-content-projection-hash');
+  } catch {
+    // Delivery verification is intentionally recoverable after the atomic D1 commit.
+  }
+  const verified = observedRevisionId === command.result_revision_id && observedProjectionHash === command.projection_hash;
+  if (env.CONTENT_DB) {
+    await env.CONTENT_DB.prepare(`UPDATE live_commit_delivery_status
+      SET state = CASE WHEN state = 'confirmation_pending' AND ? THEN 'verified' ELSE state END,
+        last_checked_at = ?, verified_at = CASE WHEN state = 'confirmation_pending' AND ? THEN ? ELSE verified_at END,
+        observed_revision_id = ?, observed_projection_hash = ?
+      WHERE command_id = ?`).bind(verified ? 1 : 0, checkedAt, verified ? 1 : 0, verified ? checkedAt : null, observedRevisionId, observedProjectionHash, command.id).run?.();
+  }
+  return { verified, checkedAt, observedRevisionId, observedProjectionHash };
+}
+
+async function readLiveCommit(env, receiptId) {
+  const command = await env.CONTENT_DB.prepare(`SELECT c.*, s.state AS delivery_state, s.last_checked_at AS delivery_checked_at,
+    s.verified_at, s.observed_revision_id, s.observed_projection_hash, s.status_expires_at
+    FROM live_commit_commands c JOIN live_commit_delivery_status s ON s.command_id = c.id WHERE c.id = ?`).bind(receiptId).first();
+  if (!command) throw new ApiError(404, 'NOT_FOUND', 'Live commit receipt was not found');
+  return command;
+}
+
+async function resolveLiveCommitDelivery(env, command) {
+  if (command.delivery_state === 'verified') return { command, verified: true };
+  if (Date.parse(command.status_expires_at) <= Date.now()) throw new ApiError(410, 'STATUS_WINDOW_EXPIRED', 'The public-delivery status window expired', {
+    revisionId: command.result_revision_id, projectionId: command.projection_id, publicUrl: command.public_url,
+    historyUrl: `/v1/chapters/${encodeURIComponent(command.document_id)}/revisions`
+  });
+  const observed = await observePublicDelivery(env, command);
+  return { command: observed.verified ? { ...command, delivery_state: 'verified', delivery_checked_at: observed.checkedAt } : command, verified: observed.verified };
+}
+
+async function getLiveCommitStatus(env, identity, receiptId) {
+  const command = await readLiveCommit(env, receiptId);
+  requireAgentTarget(identity, { documentId: command.document_id, operation: 'get_live_commit_status' });
+  if (command.actor_id !== identity.actorId || command.client_id !== identity.clientId) throw new ApiError(403, 'FORBIDDEN', 'This actor may not read the requested live commit receipt');
+  const { command: updated, verified } = await resolveLiveCommitDelivery(env, command);
+  const response = liveCommitResponse(updated, verified ? 'verified' : 'confirmation_pending');
+  if (verified) return json(response);
+  return json(response, 202, { 'retry-after': '2' });
+}
+
+async function applyCommitOperations(env, chapter, operations) {
+  let next = stripTransientMediaPreviewFields(structuredClone(chapter));
+  for (const operation of operations) {
+    if (operation?.type === 'chapter.replaceDocument') {
+      if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a document');
+      if (operation.document.chapterId !== chapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
+      next = stripTransientMediaPreviewFields(structuredClone(operation.document));
+    } else next = (await applyTrustedSemanticOperation(env, next, operation)).chapter;
+  }
+  return stripTransientMediaPreviewFields(next);
+}
+
+async function commitChangesetLive(request, env, identity, changesetId) {
+  requireScope(identity, 'content:write'); runIdentity(identity); requireLiveSaveIdentity(identity);
+  const body = await readJsonBody(request, { maxBytes: 2 * 1024 * 1024, allowedFields: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operations'] });
+  validId(body.documentId, 'documentId'); validId(body.baseRevisionId, 'baseRevisionId');
+  await enforceRuntimeFlag(env, 'unified_editor', body.documentId);
+  await enforceRuntimeFlag(env, 'shared_renderer', body.documentId);
+  await enforceRuntimeFlag(env, 'server_public_projection', body.documentId);
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
+  if (!Array.isArray(body.operations) || body.operations.length > 100) throw new ApiError(422, 'OPERATIONS_INVALID', 'operations must contain at most 100 semantic operations');
+  requireAgentTarget(identity, { documentId: body.documentId, operation: 'commit_live' });
+  if (typeof body.idempotencyKey !== 'string' || body.idempotencyKey.length < 8 || body.idempotencyKey.length > 200) throw new ApiError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'idempotencyKey must contain 8 to 200 characters');
+  const requestHash = await sha256({ changesetId, ...body });
+  const replay = await env.CONTENT_DB.prepare(`SELECT c.*, s.state AS delivery_state, s.last_checked_at AS delivery_checked_at,
+    s.verified_at, s.observed_revision_id, s.observed_projection_hash, s.status_expires_at
+    FROM live_commit_commands c JOIN live_commit_delivery_status s ON s.command_id = c.id
+    WHERE c.actor_id = ? AND c.idempotency_key = ?`).bind(identity.actorId, body.idempotencyKey).first();
+  if (replay) {
+    if (replay.request_hash !== requestHash) throw new ApiError(409, 'IDEMPOTENCY_KEY_REUSED', 'The idempotency key was already used for a different live-commit request');
+    const { command, verified } = await resolveLiveCommitDelivery(env, replay);
+    const response = liveCommitResponse(command, verified ? 'verified' : 'confirmation_pending');
+    return json(response, verified ? 201 : 202, { 'idempotent-replay': 'true', ...(verified ? {} : { 'retry-after': '2' }) });
+  }
+  await enforceRateLimit(env, identity, 'mutation');
+  const working = selectWorkingDocument(await listWorkingDocuments(env, changesetId), body.documentId);
+  if (working.state !== 'open' || working.purpose === 'authority_cutover') throw new ApiError(409, 'CHANGESET_NOT_OPEN', 'Only an open authoring changeset can be committed live');
+  if (working.base_revision_id !== body.baseRevisionId || working.current_revision_id !== body.baseRevisionId || working.version !== body.expectedVersion) throw new ApiError(409, 'REVISION_CONFLICT', 'The canonical chapter or working document changed after this editor opened', { baseRevisionId: working.base_revision_id, currentRevisionId: working.current_revision_id, currentVersion: working.version });
+  const authority = await env.CONTENT_DB.prepare(`SELECT id, authority, source_revision, normalized_snapshot_hash FROM authority_registry
+    WHERE document_id = ? AND active = 1`).bind(body.documentId).first();
+  if (!authority || authority.authority !== 'd1' || authority.source_revision !== body.baseRevisionId || authority.normalized_snapshot_hash !== working.current_content_hash) throw new ApiError(409, 'AUTHORING_NOT_ENABLED', 'The active D1 authority no longer matches the canonical chapter head');
+  const source = parseStoredJson(working.content_text, 'Working document');
+  const chapter = await applyCommitOperations(env, source, body.operations);
+  const validation = validateChapter(chapter, { publishable: true });
+  if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'The chapter cannot be saved live until its structural errors are resolved', validation);
+  const resultingContentHash = await sha256(chapter);
+  if (resultingContentHash === working.current_content_hash) {
+    const head = await env.CONTENT_DB.prepare(`SELECT h.projection_id, h.projection_hash, h.revision_id, p.slug
+      FROM public_chapter_heads h JOIN public_chapter_projections p ON p.id = h.projection_id WHERE h.document_id = ?`).bind(body.documentId).first();
+    if (!head) throw new ApiError(409, 'PUBLIC_PROJECTION_MISSING', 'The current D1-authoritative chapter has no public projection');
+    if (head.revision_id !== body.baseRevisionId) throw new ApiError(409, 'REVISION_CONFLICT', 'The public projection no longer matches the editor base revision');
+    const recordedAt = now(); const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const commandId = await deterministicId('commit', { actorId: identity.actorId, idempotencyKey: body.idempotencyKey });
+    const publicUrl = publicChapterUrl(env, head.slug);
+    const command = { id: commandId, changeset_id: changesetId, document_id: body.documentId, result_revision_id: head.revision_id, result_content_hash: working.current_content_hash, projection_id: head.projection_id, projection_hash: head.projection_hash, public_url: publicUrl, state: 'unchanged', delivery_state: 'confirmation_pending', created_at: recordedAt, committed_at: recordedAt, status_expires_at: deadline };
+    try {
+      await env.CONTENT_DB.batch([
+        // Insert as committing so the exact authority/head/working guards run even for a no-op.
+        env.CONTENT_DB.prepare(`INSERT INTO live_commit_commands (id, idempotency_key, request_hash, document_id, changeset_id, working_document_id, expected_authority_id, expected_base_revision_id, expected_working_version, result_revision_id, result_content_hash, projection_id, projection_hash, state, public_url, actor_id, actor_type, client_id, run_id, created_at, committed_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'committing', ?, ?, ?, ?, ?, ?, ?)`)
+          .bind(commandId, body.idempotencyKey, requestHash, body.documentId, changesetId, working.id, authority.id, body.baseRevisionId, body.expectedVersion, head.revision_id, working.current_content_hash, head.projection_id, head.projection_hash, publicUrl, identity.actorId, identity.actorType, identity.clientId, identity.runId, recordedAt, recordedAt),
+        env.CONTENT_DB.prepare(`UPDATE live_commit_commands SET state = 'unchanged', response_status = 200 WHERE id = ? AND state = 'committing'`).bind(commandId),
+        env.CONTENT_DB.prepare(`INSERT INTO live_commit_delivery_status (command_id, state, status_expires_at) VALUES (?, 'confirmation_pending', ?)`).bind(commandId, deadline),
+        await audit(env, identity, 'changeset.commit_live_unchanged', 'live_commit', commandId, { changesetId, documentId: body.documentId, revisionId: head.revision_id, projectionId: head.projection_id }, { baseRevisionId: body.baseRevisionId, idempotencyHash: requestHash })
+      ]);
+    } catch (error) {
+      if (/D1_AUTHORITY_REQUIRED/.test(error?.message || '')) throw new ApiError(409, 'D1_AUTHORITY_REQUIRED', 'The exact D1 authority changed while this save was being confirmed');
+      if (/REVISION_CONFLICT/.test(error?.message || '')) throw new ApiError(409, 'REVISION_CONFLICT', 'The chapter authority or revision changed while this save was being confirmed');
+      throw error;
+    }
+    const { verified } = await resolveLiveCommitDelivery(env, command);
+    return json(liveCommitResponse(command, verified ? 'verified' : 'confirmation_pending'), verified ? 200 : 202, verified ? {} : { 'retry-after': '2' });
+  }
+  const savedAt = now(); const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const finalized = await finalizeChapterRevision(chapter, { editorialContentHash: await sha256(chapter), status: 'published', actorId: identity.actorId, actorType: identity.actorType, updatedAt: savedAt });
+  const mediaProjection = await buildMediaProjection(env, finalized.content);
+  const rendered = renderChapterProjection(withProjectedMedia(finalized.content, mediaProjection.projection), { context: 'reader', publicOrigin: env.PUBLIC_READER_ORIGIN });
+  const stylesheetHash = await sha256(CHAPTER_RENDERER_STYLES);
+  const projectionPayload = { documentId: body.documentId, revisionId: finalized.revisionId, rendererVersion: CHAPTER_RENDERER_STYLE_VERSION, stylesheetHash, schemaVersion: rendered.schemaVersion, html: rendered.html, prompts: rendered.prompts, managedAssets: mediaProjection.projection };
+  const projectionHash = await projectionIdentity(projectionPayload);
+  const projectionId = await deterministicId('projection', { revisionId: finalized.revisionId, projectionHash });
+  const commandId = await deterministicId('commit', { actorId: identity.actorId, idempotencyKey: body.idempotencyKey });
+  const publicUrl = publicChapterUrl(env, finalized.content.slug);
+  const command = { id: commandId, changeset_id: changesetId, document_id: body.documentId, result_revision_id: finalized.revisionId, result_content_hash: finalized.contentHash, projection_id: projectionId, projection_hash: projectionHash, public_url: publicUrl, state: 'committed', delivery_state: 'confirmation_pending', created_at: savedAt, committed_at: savedAt, status_expires_at: deadline };
+  const statements = [
+    // The migration trigger makes this first insert the transactional CAS guard.
+    env.CONTENT_DB.prepare(`INSERT INTO live_commit_commands (id, idempotency_key, request_hash, document_id, changeset_id, working_document_id, expected_authority_id, expected_base_revision_id, expected_working_version, state, public_url, actor_id, actor_type, client_id, run_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'committing', ?, ?, ?, ?, ?, ?)`)
+      .bind(commandId, body.idempotencyKey, requestHash, body.documentId, changesetId, working.id, authority.id, body.baseRevisionId, body.expectedVersion, publicUrl, identity.actorId, identity.actorType, identity.clientId, identity.runId, savedAt),
+    env.CONTENT_DB.prepare(`INSERT INTO document_revisions (id, document_id, parent_revision_id, content_hash, content_text, r2_object_key, metadata_json, created_by, created_at, created_actor_type, created_client_id, created_run_id)
+      VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)`)
+      .bind(finalized.revisionId, body.documentId, body.baseRevisionId, finalized.contentHash, stableStringify(finalized.content), stableStringify({ status: 'published', publicationMode: 'instructor-live-save', liveCommitCommandId: commandId }), identity.actorId, savedAt, identity.actorType, identity.clientId, identity.runId),
+    env.CONTENT_DB.prepare(`UPDATE working_documents SET content_text = ?, content_hash = ?, checkpoint = checkpoint + 1, version = ?, updated_by = ?, updated_at = ? WHERE id = ? AND version = ?`)
+      .bind(stableStringify(finalized.content), finalized.contentHash, body.expectedVersion + 1, identity.actorId, savedAt, working.id, body.expectedVersion),
+    ...body.operations.map((operation, index) => env.CONTENT_DB.prepare(`INSERT INTO content_operations (id, changeset_id, document_id, operation_kind, operation_json, client_id, run_id, base_revision_id, result_revision_id, idempotency_hash, request_hash, result_hash, working_version, actor_id, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(`op_${commandId}_${index + 1}`, changesetId, body.documentId, operation.type, stableStringify(operation), identity.clientId, identity.runId, body.baseRevisionId, finalized.revisionId, requestHash, requestHash, finalized.contentHash, body.expectedVersion + index + 1, identity.actorId, savedAt)),
+    env.CONTENT_DB.prepare(`INSERT INTO public_chapter_projections (id, document_id, slug, revision_id, chapter_version, renderer_version, stylesheet_version, stylesheet_hash, projection_hash, title, subtitle, description, html, prompts_json, managed_assets_json, schema_version, generated_at, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(projectionId, body.documentId, finalized.content.slug, finalized.revisionId, finalized.content.chapterVersion, CHAPTER_RENDERER_STYLE_VERSION, CHAPTER_RENDERER_STYLE_VERSION, stylesheetHash, projectionHash, rendered.title, finalized.content.subtitle || null, finalized.content.description, rendered.html, stableStringify(rendered.prompts), stableStringify(mediaProjection.projection), rendered.schemaVersion, savedAt, identity.actorId, savedAt),
+    ...mediaProjection.assetRows.map((asset) => env.CONTENT_DB.prepare(`INSERT INTO public_media_assets (sha256, object_key, bytes, mime_type, created_at)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT(sha256) DO NOTHING`).bind(asset.object_sha256, asset.object_key, asset.object_bytes, asset.content_type, savedAt)),
+    env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ? WHERE id = ? AND current_revision_id = ?`)
+      .bind(finalized.revisionId, finalized.contentHash, savedAt, body.documentId, body.baseRevisionId),
+    // Keep the active D1 authority pinned to the newly advanced immutable head,
+    // so the next guarded commit has the same exact-head precondition.
+    env.CONTENT_DB.prepare(`UPDATE authority_registry SET source_revision = ?, normalized_snapshot_hash = ?
+      WHERE id = ? AND document_id = ? AND active = 1 AND authority = 'd1' AND source_revision = ? AND normalized_snapshot_hash = ?`)
+      .bind(finalized.revisionId, finalized.contentHash, authority.id, body.documentId, body.baseRevisionId, working.current_content_hash),
+    env.CONTENT_DB.prepare(`INSERT INTO public_chapter_heads (document_id, revision_id, projection_id, projection_hash, stylesheet_version, updated_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(document_id) DO UPDATE SET revision_id = excluded.revision_id, projection_id = excluded.projection_id, projection_hash = excluded.projection_hash, stylesheet_version = excluded.stylesheet_version, updated_by = excluded.updated_by, updated_at = excluded.updated_at`)
+      .bind(body.documentId, finalized.revisionId, projectionId, projectionHash, CHAPTER_RENDERER_STYLE_VERSION, identity.actorId, savedAt),
+    env.CONTENT_DB.prepare(`UPDATE changesets SET state = 'applied', applied_at = ?, updated_at = ? WHERE id = ? AND state = 'open'`).bind(savedAt, savedAt, changesetId),
+    env.CONTENT_DB.prepare(`UPDATE live_commit_commands SET result_revision_id = ?, result_content_hash = ?, projection_id = ?, projection_hash = ?, state = 'committed', committed_at = ? WHERE id = ? AND state = 'committing'`)
+      .bind(finalized.revisionId, finalized.contentHash, projectionId, projectionHash, savedAt, commandId),
+    env.CONTENT_DB.prepare(`INSERT INTO live_commit_delivery_status (command_id, state, status_expires_at)
+      VALUES (?, 'confirmation_pending', ?)`).bind(commandId, deadline),
+    await audit(env, identity, 'changeset.committed_live', 'live_commit', commandId, { changesetId, documentId: body.documentId, revisionId: finalized.revisionId, projectionId }, { baseRevisionId: body.baseRevisionId, resultRevisionId: finalized.revisionId, idempotencyHash: requestHash })
+  ];
+  try { await env.CONTENT_DB.batch(statements); }
+  catch (error) {
+    if (/D1_AUTHORITY_REQUIRED/.test(error?.message || '')) throw new ApiError(409, 'D1_AUTHORITY_REQUIRED', 'The exact D1 authority changed while this save was committing');
+    if (/REVISION_CONFLICT|live_commit_document_head_mismatch/.test(error?.message || '')) throw new ApiError(409, 'REVISION_CONFLICT', 'The chapter authority or revision changed while this save was committing');
+    throw error;
+  }
+  const { verified } = await resolveLiveCommitDelivery(env, command);
+  const response = liveCommitResponse(command, verified ? 'verified' : 'confirmation_pending');
+  return json(response, verified ? 201 : 202, verified ? {} : { 'retry-after': '2' });
+}
+
 export const releaseMediaKind = (mimeType, technical) => mimeType === 'application/pdf' ? 'pdf' : mimeType === 'text/plain' ? 'document' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('video/') ? 'video' : technical?.animated ? 'gif' : 'image';
 
 async function buildMediaProjection(env, chapter) {
@@ -583,6 +928,36 @@ async function buildMediaProjection(env, chapter) {
     return { figureId: placement.figureId, mediaId: placement.mediaId, mediaVersionId: placement.mediaVersionId, rightsCaseId: placement.rightsCaseId, kind: version.kind, derivativeSha256: derivative.sha256, posterSha256: poster?.sha256 || null, credit: version.rights.credit, transcriptEquivalent: version.transcriptEquivalent, downloadable: placement.downloadable === true };
   });
   return { projection: { schemaVersion: 1, assets, versions: [...versionMap.values()].sort((a, b) => a.mediaVersionId.localeCompare(b.mediaVersionId)), placements: projectedPlacements }, assetRows: assetsWithIds };
+}
+
+function withProjectedMedia(chapter, projection) {
+  const assets = Array.isArray(projection?.assets) ? projection.assets : [];
+  const versions = new Map((projection?.versions || []).map((version) => [version.mediaVersionId, version]));
+  const derivativeByVersion = new Map(assets.filter((asset) => asset.role === 'derivative').map((asset) => [asset.mediaVersionId, asset]));
+  const posterByVersion = new Map(assets.filter((asset) => asset.role === 'poster').map((asset) => [asset.mediaVersionId, asset]));
+  return {
+    ...chapter,
+    body: chapter.body.map((block) => {
+      if (block?.type !== 'mediaFigure') return block;
+      const derivative = derivativeByVersion.get(block.mediaVersionId); const poster = posterByVersion.get(block.mediaVersionId); const version = versions.get(block.mediaVersionId);
+      return { ...block, ...(derivative ? { src: `/media/${derivative.sha256}` } : {}), ...(poster ? { posterUrl: `/media/${poster.sha256}` } : {}), ...(!block.creditOverride && version?.rights?.credit ? { credit: version.rights.credit } : {}) };
+    })
+  };
+}
+
+// Authoring canvas URLs are authenticated delivery details, never part of the
+// chapter contract. Keep this server-side guard even though the browser client
+// also removes them: agents and direct API callers can submit replacements.
+function stripTransientMediaPreviewFields(chapter) {
+  if (!chapter || typeof chapter !== 'object' || !Array.isArray(chapter.body)) return chapter;
+  let changed = false;
+  const body = chapter.body.map((block) => {
+    if (block?.type !== 'mediaFigure') return block;
+    const { src, posterUrl, derivativeUrl, editorPreviewUrl, previewUrl, previewPath, credit, ...canonical } = block;
+    if (src !== undefined || posterUrl !== undefined || derivativeUrl !== undefined || editorPreviewUrl !== undefined || previewUrl !== undefined || previewPath !== undefined || credit !== undefined) changed = true;
+    return canonical;
+  });
+  return changed ? { ...chapter, body } : chapter;
 }
 
 function mergeMediaProjections(items) {
@@ -1260,6 +1635,42 @@ async function getMediaAsset(env, mediaId) {
   return json({ ...asset, versions: (versions.results || []).map((item) => ({ ...item, technical: parseStoredJson(item.technical_json, 'Media technical metadata'), derivatives: parseStoredJson(item.derivatives_json, 'Media derivatives'), technical_json: undefined, derivatives_json: undefined })) });
 }
 
+const managedMediaPreviewPath = (mediaId, mediaVersionId, rightsCaseId) => `/v1/media/${encodeURIComponent(mediaId)}/versions/${encodeURIComponent(mediaVersionId)}/rights/${encodeURIComponent(rightsCaseId)}:preview`;
+
+async function getManagedMediaPreview(env, mediaId, mediaVersionId, rightsCaseId) {
+  if (!env.CONTENT_DB || !env.CONTENT_MEDIA) throw new ApiError(503, 'MEDIA_BINDING_UNAVAILABLE', 'Managed media metadata or storage is unavailable');
+  const preview = await env.CONTENT_DB.prepare(`SELECT a.id AS media_id, a.state AS media_state, v.id AS media_version_id, v.detected_mime,
+    r.id AS rights_case_id, r.status AS rights_status, p.state AS review_package_state,
+    o.role, o.object_key, o.object_sha256, o.object_bytes, o.content_type
+    FROM media_assets a JOIN media_asset_versions v ON v.media_id = a.id
+    JOIN media_rights_cases r ON r.media_version_id = v.id
+    JOIN media_review_packages p ON p.id = r.review_package_id
+    JOIN media_version_objects o ON o.media_version_id = v.id
+    WHERE a.id = ? AND v.id = ? AND r.id = ?
+      AND o.role = CASE WHEN v.detected_mime LIKE 'image/%' THEN 'derivative' ELSE 'poster' END
+    LIMIT 1`).bind(mediaId, mediaVersionId, rightsCaseId).first();
+  // Do not turn the preview endpoint into an inventory oracle for assets that
+  // are still in review, blocked, or do not have an approved immutable visual.
+  if (!preview || preview.media_state !== 'ready' || preview.rights_status !== 'cleared' || preview.review_package_state !== 'cleared') throw new ApiError(404, 'MEDIA_PREVIEW_NOT_AVAILABLE', 'A cleared preview is not available for this exact media version');
+  if (!/^[a-f0-9]{64}$/.test(preview.object_sha256 || '') || !Number.isInteger(preview.object_bytes) || preview.object_bytes < 1 || !preview.object_key?.startsWith('media/') || preview.object_key.includes('..') || !['derivative', 'poster'].includes(preview.role) || typeof preview.content_type !== 'string' || !preview.content_type.startsWith('image/')) throw new ApiError(500, 'MEDIA_OBJECT_METADATA_INVALID', 'Managed preview metadata is invalid');
+  const object = await env.CONTENT_MEDIA.get(preview.object_key);
+  if (!object) throw new ApiError(503, 'DERIVATIVE_UNAVAILABLE', 'The cleared managed-media preview is temporarily unavailable');
+  if (Number.isFinite(object.size) && object.size !== preview.object_bytes) throw new ApiError(500, 'MEDIA_OBJECT_SIZE_MISMATCH', 'Stored preview object size does not match approved metadata');
+  if (object.customMetadata?.sha256 && object.customMetadata.sha256 !== preview.object_sha256) throw new ApiError(500, 'MEDIA_OBJECT_HASH_MISMATCH', 'Stored preview object metadata hash does not match its immutable record');
+  const bytes = await object.arrayBuffer();
+  if (bytes.byteLength !== preview.object_bytes) throw new ApiError(500, 'MEDIA_OBJECT_SIZE_MISMATCH', 'Stored preview bytes do not match approved metadata');
+  if (await sha256Bytes(bytes) !== preview.object_sha256) throw new ApiError(500, 'MEDIA_OBJECT_HASH_MISMATCH', 'Stored preview bytes failed immutable SHA-256 verification');
+  return new Response(bytes, { headers: {
+    'content-type': preview.content_type,
+    'cache-control': 'private, no-store',
+    'content-disposition': `inline; filename="${mediaId}-${mediaVersionId}"`,
+    'cross-origin-resource-policy': 'same-site',
+    'x-content-sha256': preview.object_sha256,
+    'x-content-media-role': preview.role,
+    'x-content-type-options': 'nosniff'
+  } });
+}
+
 async function searchMedia(env, url) {
   const { limit, cursor } = pageParams(url, { defaultLimit: 20, maxLimit: 50, maxCursor: 10000 });
   const q = boundedQuery(url.searchParams.get('q'), 'q', 100);
@@ -1283,7 +1694,9 @@ async function searchMedia(env, url) {
   if (sourceSha256) { clauses.push('v.source_sha256 = ?'); args.push(sourceSha256); }
   const rows = await env.CONTENT_DB.prepare(`SELECT a.id, a.title, a.state, a.updated_at, v.id AS media_version_id,
     v.source_sha256, v.source_bytes, v.detected_mime, v.immutable_address, v.created_at AS version_created_at,
-    r.id AS rights_case_id, r.status AS rights_status
+    r.id AS rights_case_id, r.status AS rights_status,
+    (SELECT o.role FROM media_version_objects o WHERE o.media_version_id = v.id AND o.role IN ('derivative', 'poster')
+      ORDER BY CASE WHEN v.detected_mime LIKE 'image/%' AND o.role = 'derivative' THEN 0 WHEN v.detected_mime NOT LIKE 'image/%' AND o.role = 'poster' THEN 0 ELSE 1 END, o.id LIMIT 1) AS preview_role
     FROM media_assets a JOIN media_asset_versions v ON v.id = (
       SELECT vx.id FROM media_asset_versions vx WHERE vx.media_id = a.id ORDER BY vx.created_at DESC, vx.id DESC LIMIT 1
     ) LEFT JOIN media_rights_cases r ON r.rowid = (
@@ -1292,7 +1705,68 @@ async function searchMedia(env, url) {
   const items = [...(rows.results || [])];
   const hasMore = items.length > limit;
   if (hasMore) items.pop();
-  return json({ media: items, filters: { q: q || null, kind: kind || null, rightsStatus: rightsStatus || null, sha256: sourceSha256 || null }, page: { limit, cursor: String(cursor), nextCursor: hasMore ? String(cursor + items.length) : null } });
+  const media = items.map((item) => ({ ...item, previewPath: item.rights_status === 'cleared' && ['derivative', 'poster'].includes(item.preview_role) ? managedMediaPreviewPath(item.id, item.media_version_id, item.rights_case_id) : null }));
+  return json({ media, filters: { q: q || null, kind: kind || null, rightsStatus: rightsStatus || null, sha256: sourceSha256 || null }, page: { limit, cursor: String(cursor), nextCursor: hasMore ? String(cursor + media.length) : null } });
+}
+
+async function curatedPersonRows(env) {
+  const rows = await env.CONTENT_DB.prepare(`SELECT d.id AS document_id, r.content_text
+    FROM documents d JOIN document_revisions r ON r.id = d.current_revision_id
+    WHERE json_array_length(json_extract(r.content_text, '$.personFeatures')) > 0
+    ORDER BY d.id LIMIT 100`).all();
+  const people = new Map();
+  for (const row of rows.results || []) {
+    const chapter = parseStoredJson(row.content_text, 'Curated person source');
+    const revisions = new Map((chapter.entityRevisions || []).map((item) => [item.entityRevisionId, item]));
+    for (const feature of chapter.personFeatures || []) {
+      if (!feature?.personId || people.has(feature.personId)) continue;
+      const { placementId: _placementId, personFeatureId: _personFeatureId, ...projection } = feature;
+      people.set(feature.personId, { ...projection, entityRevision: revisions.get(feature.entityRevisionId) || null, sourceDocumentId: row.document_id });
+    }
+  }
+  return [...people.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+}
+
+async function searchPersons(env, url) {
+  const { limit, cursor } = pageParams(url, { defaultLimit: 20, maxLimit: 50, maxCursor: 10000 });
+  const q = boundedQuery(url.searchParams.get('q'), 'q', 100)?.toLowerCase();
+  const people = (await curatedPersonRows(env)).filter((person) => !q || [person.name, person.role, person.biography].some((value) => String(value || '').toLowerCase().includes(q)));
+  const items = people.slice(cursor, cursor + limit);
+  return json({ persons: items, filters: { q: q || null }, page: { limit, cursor: String(cursor), nextCursor: cursor + items.length < people.length ? String(cursor + items.length) : null } });
+}
+
+async function getPerson(env, personId) {
+  const person = (await curatedPersonRows(env)).find((item) => item.personId === personId);
+  if (!person) throw new ApiError(404, 'PERSON_NOT_FOUND', 'Curated person was not found');
+  return json({ person });
+}
+
+async function applyTrustedSemanticOperation(env, sourceChapter, operation) {
+  if (operation?.type !== 'personFeature.upsert') {
+    const result = await applySemanticOperation(stripTransientMediaPreviewFields(sourceChapter), operation);
+    const chapter = stripTransientMediaPreviewFields(result.chapter);
+    return { chapter, contentHash: await sha256(chapter) };
+  }
+  const feature = operation.feature;
+  const placement = operation.placement;
+  if (!feature?.personId || !feature?.entityRevisionId) throw new ApiError(422, 'PERSON_FEATURE_INVALID', 'A curated person and immutable entity revision are required');
+  let chapter = sourceChapter;
+  const hasRelation = (chapter.people || []).some((item) => item.personId === feature.personId);
+  const hasRevision = (chapter.entityRevisions || []).some((item) => item.entityRevisionId === feature.entityRevisionId && item.personId === feature.personId);
+  if (!hasRelation || !hasRevision) {
+    const curated = (await curatedPersonRows(env)).find((item) => item.personId === feature.personId && item.entityRevisionId === feature.entityRevisionId);
+    if (!curated || !curated.entityRevision) throw new ApiError(422, 'PERSON_NOT_CURATED', 'The requested person feature is not an immutable curated record');
+    const comparable = (value) => ({ name: value.name, dates: value.dates, role: value.role, teachingNote: value.teachingNote, biography: value.biography, portrait: value.portrait, primarySources: value.primarySources });
+    if (stableStringify(comparable(curated)) !== stableStringify(comparable(feature))) throw new ApiError(422, 'PERSON_PROJECTION_MISMATCH', 'The person feature does not match the frozen curated projection');
+    chapter = structuredClone(chapter);
+    chapter.people = Array.isArray(chapter.people) ? chapter.people : [];
+    chapter.entityRevisions = Array.isArray(chapter.entityRevisions) ? chapter.entityRevisions : [];
+    if (!hasRelation) chapter.people.push({ personId: feature.personId, role: feature.role, passageIds: [placement.anchorPassageId] });
+    if (!hasRevision) chapter.entityRevisions.push(structuredClone(curated.entityRevision));
+  }
+  const result = await applySemanticOperation(stripTransientMediaPreviewFields(chapter), operation);
+  const canonical = stripTransientMediaPreviewFields(result.chapter);
+  return { chapter: canonical, contentHash: await sha256(canonical) };
 }
 
 async function resolveEmbed(request, identity) {
@@ -1548,7 +2022,31 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
     if (liveAdvance && (current?.authority !== 'd1' || current.source_revision !== item.sourceRevision || current.normalized_snapshot_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'A code-only release may preserve a live-saved canonical head only when the existing D1 authority already matches the exact release snapshot', { documentId: item.documentId });
     const revision = await env.CONTENT_DB.prepare('SELECT document_id, content_hash FROM document_revisions WHERE id = ?').bind(item.sourceRevision).first();
     if (revision && (revision.document_id !== item.documentId || revision.content_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'REVISION_CONFLICT', 'Finalized revision ID already exists with conflicting content', { documentId: item.documentId });
-    prepared.push({ ...item, submitted, chapter, current, revisionExists: Boolean(revision), liveAdvance });
+    let publicProjection = null;
+    if (!liveAdvance) {
+      const mediaProjection = await buildMediaProjection(env, submitted.content);
+      const rendered = renderChapterProjection(withProjectedMedia(submitted.content, mediaProjection.projection), { context: 'reader', publicOrigin: env.PUBLIC_READER_ORIGIN });
+      const stylesheetHash = await sha256(CHAPTER_RENDERER_STYLES);
+      const projectionPayload = {
+        documentId: item.documentId,
+        revisionId: item.sourceRevision,
+        rendererVersion: CHAPTER_RENDERER_STYLE_VERSION,
+        stylesheetHash,
+        schemaVersion: rendered.schemaVersion,
+        html: rendered.html,
+        prompts: rendered.prompts,
+        managedAssets: mediaProjection.projection
+      };
+      const projectionHash = await projectionIdentity(projectionPayload);
+      publicProjection = {
+        id: await deterministicId('projection', { revisionId: item.sourceRevision, projectionHash }),
+        hash: projectionHash,
+        stylesheetHash,
+        rendered,
+        mediaProjection
+      };
+    }
+    prepared.push({ ...item, submitted, chapter, current, revisionExists: Boolean(revision), liveAdvance, publicProjection });
   }
   const changedAt = now();
   const activated = []; const statements = [];
@@ -1560,6 +2058,28 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
       VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)`).bind(item.sourceRevision, item.documentId, item.submitted.baseRevisionId, item.normalizedSnapshotHash, stableStringify(item.submitted.content), stableStringify({ status: 'published', releaseId: body.releaseId, snapshotHash: snapshotRow.snapshot_hash }), identity.actorId, changedAt));
     if (!item.liveAdvance && item.chapter.current_revision_id !== item.sourceRevision) statements.push(env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ?
       WHERE id = ? AND current_revision_id = ?`).bind(item.sourceRevision, item.normalizedSnapshotHash, changedAt, item.documentId, item.submitted.baseRevisionId));
+    if (item.publicProjection) {
+      const projection = item.publicProjection;
+      statements.push(env.CONTENT_DB.prepare(`INSERT INTO public_chapter_projections
+        (id, document_id, slug, revision_id, chapter_version, renderer_version, stylesheet_version, stylesheet_hash, projection_hash, title, subtitle, description, html, prompts_json, managed_assets_json, schema_version, generated_at, created_by, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(document_id, revision_id, renderer_version, stylesheet_hash) DO NOTHING`)
+        .bind(projection.id, item.documentId, item.submitted.content.slug, item.sourceRevision, item.submitted.content.chapterVersion,
+          CHAPTER_RENDERER_STYLE_VERSION, CHAPTER_RENDERER_STYLE_VERSION, projection.stylesheetHash, projection.hash,
+          projection.rendered.title, item.submitted.content.subtitle || null, item.submitted.content.description,
+          projection.rendered.html, stableStringify(projection.rendered.prompts), stableStringify(projection.mediaProjection.projection),
+          projection.rendered.schemaVersion, changedAt, identity.actorId, changedAt));
+      for (const asset of projection.mediaProjection.assetRows) statements.push(env.CONTENT_DB.prepare(`INSERT INTO public_media_assets
+        (sha256, object_key, bytes, mime_type, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(sha256) DO NOTHING`)
+        .bind(asset.object_sha256, asset.object_key, asset.object_bytes, asset.content_type, changedAt));
+      statements.push(env.CONTENT_DB.prepare(`INSERT INTO public_chapter_heads
+        (document_id, revision_id, projection_id, projection_hash, stylesheet_version, updated_by, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(document_id) DO UPDATE SET
+          revision_id = excluded.revision_id, projection_id = excluded.projection_id,
+          projection_hash = excluded.projection_hash, stylesheet_version = excluded.stylesheet_version,
+          updated_by = excluded.updated_by, updated_at = excluded.updated_at`)
+        .bind(item.documentId, item.sourceRevision, projection.id, projection.hash, CHAPTER_RENDERER_STYLE_VERSION, identity.actorId, changedAt));
+    }
     if (item.current?.authority !== 'd1' || item.current.source_revision !== item.sourceRevision || item.current.normalized_snapshot_hash !== item.normalizedSnapshotHash) {
       statements.push(env.CONTENT_DB.prepare('UPDATE authority_registry SET active = 0, valid_until = ? WHERE document_id = ? AND active = 1').bind(changedAt, item.documentId));
       statements.push(env.CONTENT_DB.prepare(`INSERT INTO authority_registry
@@ -1585,16 +2105,18 @@ export default {
       if (request.method === 'GET' && url.pathname === '/health') return json({ ok: true, service: 'content-api', db_configured: Boolean(env.CONTENT_DB), media_configured: Boolean(env.CONTENT_MEDIA) });
       if (!url.pathname.startsWith('/v1/')) throw new ApiError(404, 'NOT_FOUND', 'Route was not found');
       if (request.method === 'POST' && url.pathname === '/v1/media:processorCallback') return await processorCallback(request, env);
-      const identity = trustedIdentity(request);
+      const identity = await resolveIdentity(request, env);
       if (request.method === 'GET' && (url.pathname === '/v1/media' || url.pathname.startsWith('/v1/media/'))) {
         if (!identity.scopes.has('media:read') && !identity.scopes.has('content:read')) throw new ApiError(403, 'FORBIDDEN', 'Scope media:read or content:read is required');
       } else if (request.method === 'GET' && !url.pathname.startsWith('/v1/release-snapshots/') && !url.pathname.startsWith('/v1/release-assets/')) requireScope(identity, 'content:read');
       if (request.method === 'GET' && url.pathname === '/v1/schema') return json({
         schemaVersion: 1,
         mutationEnvelope: { required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operation'], optional: ['documentId', 'dryRun'], multiDocumentRule: 'documentId is required when a changeset targets more than one document' },
-        changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, saveLive: { route: 'POST /v1/changesets/{changesetId}:saveLive', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], requiredScopes: ['content:write'], agentAdditionalScope: 'content:live-save', humanActorAllowed: true, result: 'new immutable canonical revision visible on the public reader' }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
+          changesets: { create: { route: 'POST /v1/changesets', required: ['title', 'targets', 'idempotencyKey'], optional: ['description'], targets: '1-18 unique document IDs with active D1 authoring authority' }, createOrResume: { route: 'POST /v1/chapters/{chapterId}/changesets', required: ['title', 'idempotencyKey'], optional: ['description', 'resume'] }, operationsBatch: { route: 'POST /v1/changesets/{changesetId}/operations:batch', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operations'], limits: { operations: 100, bytes: 2097152 } }, commitLive: { route: 'POST /v1/changesets/{changesetId}:commitLive', required: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'operations'], limits: { operations: 100, bytes: 2097152 }, requiredScopes: ['content:write'], agentAdditionalScope: 'content:live-save', humanActorAllowed: true, result: 'one atomic canonical revision, public projection, and delivery receipt' }, saveLive: { route: 'POST /v1/changesets/{changesetId}:saveLive', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], requiredScopes: ['content:write'], agentAdditionalScope: 'content:live-save', humanActorAllowed: true, result: 'new immutable canonical revision visible on the public reader', deprecated: true }, submit: { route: 'POST /v1/changesets/{changesetId}:submitReview', singleDocumentPreconditions: ['baseRevisionId', 'expectedVersion'], multiDocumentPreconditions: 'documents[] must bind documentId, baseRevisionId, and expectedVersion for every target' } },
         operations: OPERATION_PAYLOAD_SCHEMAS,
         reads: {
+          authoringView: { route: 'GET /v1/chapters/{chapterId}/authoring-view', revisionBound: true, includes: ['canonical chapter', 'frozen renderer projection', 'checkpoints', 'media placements'] },
+          liveCommitStatus: { route: 'GET /v1/live-commits/{commitReceiptId}', statusWindowHours: 24, pendingStatus: 202, verifiedStatus: 200 },
           passages: { route: 'GET /v1/chapters/{chapterId}/passages', query: { limit: '1-100', cursor: '0-10000' } },
           passage: { route: 'GET /v1/chapters/{chapterId}/passages/{passageId}' },
           dependencies: { route: 'GET /v1/chapters/{chapterId}/dependencies', query: { passageId: 'optional stable passage ID', limit: '1-100', cursor: '0-10000' } }
@@ -1619,13 +2141,17 @@ export default {
           snapshot: { route: 'GET /v1/release-snapshots/{snapshotHash}', scope: 'content:releaseSnapshot', integrity: 'exact SHA-256 bytes', requiresExactReleaseApproval: true },
           asset: { route: 'GET /v1/release-assets/{sha256}', scope: 'content:releaseSnapshot', integrity: 'DB-referenced exact SHA-256 bytes', requiresExactReleaseApproval: true }
         },
-        media: { search: { route: 'GET /v1/media', query: { q: 'max 100 characters', kind: ['image', 'audio', 'video', 'document'], rightsStatus: ['reviewRequired', 'cleared', 'blocked'], sha256: 'exact lowercase SHA-256', limit: '1-50', cursor: '0-10000' } }, reviewPackage: { create: { route: 'POST /v1/media-review-packages', required: ['rights', 'editorial', 'accessibility', 'idempotencyKey'], resultState: 'pending' }, decide: { route: 'POST /v1/media-review-packages/{reviewPackageId}:decide', required: ['declarationHash', 'decision', 'comment', 'idempotencyKey'], decisions: ['cleared', 'blocked'], scope: 'content:approve', humanActorRequired: true } }, requestUpload: { route: 'POST /v1/media:requestUpload', required: ['filename', 'mimeType', 'bytes', 'sha256', 'idempotencyKey', 'reviewPackageId'], optional: ['transcriptEquivalent', 'poster'], transcriptEquivalent: { requiredFor: ['audio/*', 'video/*'], required: ['provided', 'language', 'text'], maxTextCharacters: 50000, timedCaptionTrackClaimed: false }, policy: MEDIA_UPLOAD_POLICY }, upload: { route: 'PUT /v1/media/uploads/{ticketId}', body: 'raw bytes', requiredHeaders: ['content-type', 'content-length', 'x-content-sha256', 'x-upload-token'] }, jobStatus: { route: 'GET /v1/media/jobs/{jobId}' }, mediaStatus: { route: 'GET /v1/media/{mediaId}' }, processorCallback: { route: 'POST /v1/media:processorCallback', auth: 'HMAC-SHA-256 raw body', required: ['schemaVersion', 'jobId', 'idempotencyKey', 'quarantineObjectKey', 'outputPrefix', 'immutableAddress', 'manifestKey', 'reviews', 'publication'], requiredHeaders: ['idempotency-key', 'x-media-signature'] } },
+        media: { search: { route: 'GET /v1/media', query: { q: 'max 100 characters', kind: ['image', 'audio', 'video', 'document'], rightsStatus: ['reviewRequired', 'cleared', 'blocked'], sha256: 'exact lowercase SHA-256', limit: '1-50', cursor: '0-10000' } }, preview: { route: 'GET /v1/media/{mediaId}/versions/{mediaVersionId}/rights/{rightsCaseId}:preview', auth: 'media:read or content:read', requires: ['exact ready asset', 'exact cleared rights case', 'cleared review package', 'immutable image derivative or poster'], cache: 'private, no-store', canonicalStorage: 'never' }, reviewPackage: { create: { route: 'POST /v1/media-review-packages', required: ['rights', 'editorial', 'accessibility', 'idempotencyKey'], resultState: 'pending' }, decide: { route: 'POST /v1/media-review-packages/{reviewPackageId}:decide', required: ['declarationHash', 'decision', 'comment', 'idempotencyKey'], decisions: ['cleared', 'blocked'], scope: 'content:approve', humanActorRequired: true } }, requestUpload: { route: 'POST /v1/media:requestUpload', required: ['filename', 'mimeType', 'bytes', 'sha256', 'idempotencyKey', 'reviewPackageId'], optional: ['transcriptEquivalent', 'poster'], transcriptEquivalent: { requiredFor: ['audio/*', 'video/*'], required: ['provided', 'language', 'text'], maxTextCharacters: 50000, timedCaptionTrackClaimed: false }, policy: MEDIA_UPLOAD_POLICY }, upload: { route: 'PUT /v1/media/uploads/{ticketId}', body: 'raw bytes', requiredHeaders: ['content-type', 'content-length', 'x-content-sha256', 'x-upload-token'] }, jobStatus: { route: 'GET /v1/media/jobs/{jobId}' }, mediaStatus: { route: 'GET /v1/media/{mediaId}' }, processorCallback: { route: 'POST /v1/media:processorCallback', auth: 'HMAC-SHA-256 raw body', required: ['schemaVersion', 'jobId', 'idempotencyKey', 'quarantineObjectKey', 'outputPrefix', 'immutableAddress', 'manifestKey', 'reviews', 'publication'], requiredHeaders: ['idempotency-key', 'x-media-signature'] } },
+        persons: { search: { route: 'GET /v1/persons', query: { q: 'max 100 characters', limit: '1-50', cursor: '0-10000' } }, get: { route: 'GET /v1/persons/{personId}', frozenProjection: true } },
         providers: { registry: PROVIDER_REGISTRY, resolve: { route: 'POST /v1/embeds:resolve', required: ['url'], optional: ['expectedProvider'], scope: 'content:write', networkAccess: false } },
         rateLimits: { windowSeconds: RATE_WINDOW_SECONDS, mutation: RATE_LIMITS.mutation, upload: RATE_LIMITS.upload, key: 'trusted actor + client', persistence: 'D1 fail-closed' },
         authority: { prepareCutover: { route: 'POST /v1/authority:prepareCutover', required: ['title', 'targets', 'idempotencyKey'], serviceOnly: true, readOnlyProposal: true, currentAuthority: 'git' }, activateBatch: { route: 'POST /v1/authority:activateD1', required: ['releaseId', 'documents', 'idempotencyKey'], serviceOnly: true, exactActiveReleaseBinding: true, databaseGuarded: true }, canaryCompatibility: { route: 'POST /v1/authority/chapter_ch07:activateD1', required: ['releaseId', 'normalizedSnapshotHash', 'sourceRevision', 'idempotencyKey'], fixedDocumentId: 'chapter_ch07' } }
       });
       if (request.method === 'GET' && url.pathname === '/v1/chapters') return await listChapters(env);
       if (request.method === 'GET' && url.pathname === '/v1/media') return await searchMedia(env, url);
+      if (request.method === 'GET' && url.pathname === '/v1/persons') return await searchPersons(env, url);
+      const personMatch = url.pathname.match(/^\/v1\/persons\/([^/]+)$/);
+      if (request.method === 'GET' && personMatch) return await getPerson(env, validId(decodeURIComponent(personMatch[1]), 'personId'));
       let snapshotMatch = url.pathname.match(/^\/v1\/release-snapshots\/([a-f0-9]{64})$/);
       if (request.method === 'GET' && snapshotMatch) return await getReleaseSnapshot(env, identity, snapshotMatch[1]);
       let releaseAssetMatch = url.pathname.match(/^\/v1\/release-assets\/([a-f0-9]{64})$/);
@@ -1660,7 +2186,11 @@ export default {
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/dependencies$/);
       if (request.method === 'GET' && match) return await getChapterDependencies(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/revisions$/);
-      if (request.method === 'GET' && match) return await listChapterRevisions(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
+      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'list_history' }); return await listChapterRevisions(env, chapterId, url); }
+      match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/authoring-view$/);
+      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_authoring_view' }); return await getAuthoringView(env, chapterId); }
+      match = url.pathname.match(/^\/v1\/live-commits\/([^/:]+)$/);
+      if (request.method === 'GET' && match) return await getLiveCommitStatus(env, identity, validId(decodeURIComponent(match[1]), 'commitReceiptId'));
       match = url.pathname.match(/^\/v1\/(?:chapters|documents)\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getChapter(env, validId(decodeURIComponent(match[1]), 'chapterId'));
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/changesets$/);
@@ -1669,18 +2199,23 @@ export default {
       if (request.method === 'POST' && match) return await restoreRevisionAsDraft(request, env, identity, validId(decodeURIComponent(match[1]), 'chapterId'), validId(decodeURIComponent(match[2]), 'revisionId'));
       match = url.pathname.match(/^\/v1\/changesets\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getChangeset(env, validId(decodeURIComponent(match[1]), 'changesetId'));
+      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+)\/operations:batch$/);
+      if (request.method === 'POST' && match) return await applyOperationBatch(request, env, identity, validId(decodeURIComponent(match[1]), 'changesetId'));
       match = url.pathname.match(/^\/v1\/media\/uploads\/([^/:]+)$/);
       if (request.method === 'PUT' && match) return await uploadMediaBytes(request, env, identity, validId(decodeURIComponent(match[1]), 'ticketId'));
       match = url.pathname.match(/^\/v1\/media\/jobs\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getMediaJob(env, validId(decodeURIComponent(match[1]), 'jobId'));
+      match = url.pathname.match(/^\/v1\/media\/([^/:]+)\/versions\/([^/:]+)\/rights\/([^/:]+):preview$/);
+      if (request.method === 'GET' && match) return await getManagedMediaPreview(env, validId(decodeURIComponent(match[1]), 'mediaId'), validId(decodeURIComponent(match[2]), 'mediaVersionId'), validId(decodeURIComponent(match[3]), 'rightsCaseId'));
       match = url.pathname.match(/^\/v1\/media\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getMediaAsset(env, validId(decodeURIComponent(match[1]), 'mediaId'));
-      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|saveLive|submitReview|approve|reject|diff|renderPreview|publish)$/);
+      match = url.pathname.match(/^\/v1\/changesets\/([^/:]+):(apply|validate|saveLive|commitLive|submitReview|approve|reject|diff|renderPreview|publish)$/);
       if (request.method === 'POST' && match) {
         const changesetId = validId(decodeURIComponent(match[1]), 'changesetId');
         if (match[2] === 'diff') { requireScope(identity, 'content:read'); return await diffChangeset(request, env, changesetId); }
         if (match[2] === 'apply') return await applyOperation(request, env, identity, changesetId);
         if (match[2] === 'saveLive') return await saveChangesetLive(request, env, identity, changesetId);
+        if (match[2] === 'commitLive') return await commitChangesetLive(request, env, identity, changesetId);
         if (match[2] === 'validate') return await validateChangeset(request, env, identity, changesetId);
         if (match[2] === 'renderPreview') return await renderPreview(request, env, identity, changesetId);
         if (match[2] === 'submitReview') return await submitChangeset(request, env, identity, changesetId);

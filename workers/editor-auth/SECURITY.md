@@ -23,13 +23,22 @@ Protect `main` in GitHub with required pull requests, required CI, resolved conv
 
 ## Session and callback boundary
 
-- OAuth state is HMAC-signed, expires in at most 15 minutes, is mirrored in an HttpOnly Secure SameSite=Lax host-only cookie, and is cleared on callback.
-- The GitHub authorization code is exchanged server-side. The returned user token is used only to read `/user` and verify the pinned repository, then discarded.
+- OAuth state is HMAC-signed, names only a generated-manifest chapter target plus optional bounded anchor, expires in at most 15 minutes, is mirrored in an HttpOnly Secure SameSite=Lax host-only cookie, and is cleared on callback. There is no request-controlled return URL.
+- The nonce hash and PKCE verifier live only in the dedicated auth-state D1 binding. The callback atomically consumes the nonce with `DELETE ... RETURNING`; replay, expired state, and a D1 outage all fail closed. A scheduled cleanup removes expired rows.
+- The GitHub authorization code is exchanged server-side with the consumed PKCE verifier. The returned user token is used only to read `/user` and verify the pinned repository, then discarded.
 - The editor session is an HMAC-signed, HttpOnly Secure SameSite=Strict host-only cookie with a maximum two-hour lifetime and a one-hour default.
-- Session payloads contain only GitHub numeric ID, login, expiry, and a random CSRF value. They contain no GitHub or Cloudflare credential.
+- Session payloads contain only GitHub numeric ID, login, expiry, a recent-login (`stepUpAt`) timestamp, and a random CSRF value. They contain no GitHub or Cloudflare credential.
 - Every API request requires an exact credentialed CORS origin. Every state-changing request also requires the session-bound CSRF header.
-- The callback and post-login destinations are fixed configuration, not request parameters.
+- The callback is fixed configuration. The post-login editor target is reconstructed solely from the signed state and the code-pinned chapter manifest, never from an absolute request URL.
 - Production must use a same-site reader and auth hostname. Do not weaken the cookie to `SameSite=None` merely to make a temporary cross-site preview work.
+
+## Agent capability boundary
+
+- The capability D1 database contains hashes of device secrets and verification codes, signed-token claim hashes, expiry/revocation state, and minimal audit metadata. It never stores the bearer capability token itself.
+- Capability creation is intentionally harmless-but-untrusted: it creates a five-minute pending request only. Approval requires the signed GitHub editor session, exact allowed Origin, session CSRF, and the displayed user code.
+- The omitted-scope default is edit-only (`content:read`, `content:write`) for at most 15 minutes. A live Save grant must name exact chapter IDs and `commit_live`, lasts at most 10 minutes, requires a fresh GitHub login within five minutes, and requires a distinct explicit confirmation.
+- Exchange consumes an approved request exactly once. Revocation is persisted and checked at every private verifier call; an expired or revoked grant is rejected even if a token signature remains valid.
+- `AgentCapabilityVerifier` is a Cloudflare Service Binding RPC entrypoint. Do not add an `/internal`, `/verify`, or other HTTP verifier endpoint: verification must remain unavailable to the public network.
 
 ## Stale-write and main-branch boundary
 
@@ -53,8 +62,8 @@ Cloudflare and GitHub retain their own security, request, build, commit, and pul
 1. Review the App owner and confirm installation selection contains exactly the textbook repository.
 2. Review the permission screen against the minimal list above.
 3. Add the production callback URL and no wildcard callback.
-4. Bind the exact admin origin, auth origin, admin URL, numeric user ID, App IDs, and three secrets.
-5. Generate `EDITOR_SESSION_SECRET` from at least 32 cryptographically random bytes.
+4. Bind the exact editor origin, auth origin, editor URLs, numeric user ID, App IDs, the dedicated auth-state D1 database, and four secrets.
+5. Generate `EDITOR_SESSION_SECRET` and `AGENT_CAPABILITY_SIGNING_SECRET` independently from at least 32 cryptographically random bytes.
 6. Deploy only reviewed `main`; do not bind production credentials to pull-request previews.
 7. Confirm `workers_dev` and preview URLs remain disabled.
 8. Run the security tests and a Wrangler dry bundle.

@@ -9,7 +9,8 @@
     "PREVIEW_ORIGIN": "https://preview.ethicsandai.your-digital-life.org",
     "MEDIA_CALLBACK_URL": "https://auth.ethicsandai.your-digital-life.org/v1/media:processorCallback",
     "MEDIA_JOBS_DLQ_NAME": "ai-ethics-media-jobs-dlq",
-    "RELEASE_JOBS_DLQ_NAME": "ai-ethics-release-jobs-dlq"
+    "RELEASE_JOBS_DLQ_NAME": "ai-ethics-release-jobs-dlq",
+    "RUNTIME_FLAGS_ENFORCED": "1"
   },
   "d1_databases": [
     {
@@ -18,6 +19,10 @@
       "database_id": "1f82c4fa-228b-4cf7-9b40-ff10eebeadfb",
       "migrations_dir": "migrations"
     }
+  ],
+  "services": [
+    { "binding": "PUBLIC_READER", "service": "ethicsandai" },
+    { "binding": "AUTH_CAPABILITY", "service": "ethicsandai-editor-auth", "entrypoint": "AgentCapabilityVerifier" }
   ],
   "r2_buckets": [
     {

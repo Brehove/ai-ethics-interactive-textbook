@@ -10,6 +10,30 @@ test('health endpoint is dependency-free and reports binding presence', async ()
   assert.deepEqual(await response.json(), { ok: true, service: 'content-api', db_configured: false, media_configured: false });
 });
 
+test('authenticated managed-media preview streams only the exact cleared immutable image derivative', async () => {
+  const bytes = new TextEncoder().encode('cleared-image-preview');
+  const objectHash = await sha256Bytes(bytes);
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM media_assets a JOIN media_asset_versions v') && sql.includes('media_version_objects o')) return {
+      media_id: 'media_aquinas', media_state: 'ready', media_version_id: 'version_aquinas_1', detected_mime: 'image/jpeg',
+      rights_case_id: 'rights_aquinas_1', rights_status: 'cleared', review_package_state: 'cleared',
+      role: 'derivative', object_key: 'media/aquinas/derivative.webp', object_sha256: objectHash, object_bytes: bytes.byteLength, content_type: 'image/webp'
+    };
+    return null;
+  });
+  const CONTENT_MEDIA = { get: async (key) => key === 'media/aquinas/derivative.webp' ? { size: bytes.byteLength, customMetadata: { sha256: objectHash }, arrayBuffer: async () => bytes.buffer } : null };
+  const response = await worker.fetch(new Request('https://content.example/v1/media/media_aquinas/versions/version_aquinas_1/rights/rights_aquinas_1:preview', { headers: gatewayHeaders('media:read') }), { CONTENT_DB, CONTENT_MEDIA });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'image/webp');
+  assert.equal(response.headers.get('cache-control'), 'private, no-store');
+  assert.equal(response.headers.get('x-content-sha256'), objectHash);
+  assert.equal(await response.text(), 'cleared-image-preview');
+
+  const denied = await worker.fetch(new Request('https://content.example/v1/media/media_aquinas/versions/version_aquinas_1/rights/rights_aquinas_1:preview', { headers: gatewayHeaders('content:read') }), { CONTENT_DB: fakeDb(() => null), CONTENT_MEDIA });
+  assert.equal(denied.status, 404);
+  assert.equal((await denied.json()).error.code, 'MEDIA_PREVIEW_NOT_AVAILABLE');
+});
+
 test('release workflow can fetch only an exact hash-verified submitted snapshot', async () => {
   const raw = '{"ok":true}';
   const snapshotHash = await sha256(raw);
@@ -39,6 +63,15 @@ const gatewayHeaders = (scopes) => ({
   'x-content-client-id': 'studio',
   'x-content-run-id': 'run-review-1',
   'x-content-scopes': scopes
+});
+
+const agentHeaders = () => ({ 'content-type': 'application/json', authorization: 'Bearer test-agent-capability' });
+const withAgentCapability = (env = {}, { actorId = 'actor_agent_1', clientId = 'mcp', runId = 'run-1', scopes = [], allowedDocumentIds = ['chapter_ch07', 'chapter_ch08'], allowedOperations = [] } = {}) => ({
+  ...env,
+  AUTH_CAPABILITY: { verifyCapability: async (token) => {
+    assert.equal(token, 'test-agent-capability');
+    return { actorId, actorType: 'agent', clientId, runId, scopes, allowedDocumentIds, allowedOperations, jti: 'cap_test' };
+  } },
 });
 
 const fakeDb = (resolve) => {
@@ -133,7 +166,7 @@ test('service-only cutover proposals snapshot Git chapters without opening an ed
   assert.equal(body.purpose, 'authority_cutover'); assert.equal(body.readOnly, true);
   const changesetInsert = CONTENT_DB.batchItems.find((item) => item.sql.includes('INSERT INTO changesets'));
   assert.match(changesetInsert.sql, /purpose/); assert.equal(changesetInsert.args.at(-1), 'authority_cutover');
-  const agent = await worker.fetch(new Request('https://content.example/v1/authority:prepareCutover', { method: 'POST', headers: { ...headers, 'x-content-actor-type': 'agent' }, body: JSON.stringify({ title: 'No', targets: ['chapter_ch08'], idempotencyKey: 'prepare-cutover-agent' }) }), { CONTENT_DB });
+  const agent = await worker.fetch(new Request('https://content.example/v1/authority:prepareCutover', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ title: 'No', targets: ['chapter_ch08'], idempotencyKey: 'prepare-cutover-agent' }) }), withAgentCapability({ CONTENT_DB }, { scopes: ['content:authority'] }));
   assert.equal(agent.status, 403);
 
   const readOnlyDb = fakeDb((sql) => {
@@ -164,6 +197,22 @@ test('multi-document edits require and honor an exact document target', async ()
   assert.equal(body.documentId, 'chapter_ch08'); assert.equal(body.chapter.body[1].text, 'Only chapter eight changes.');
   const update = CONTENT_DB.batchItems.find((item) => item.sql.includes('UPDATE working_documents SET'));
   assert.equal(update.args[5], 'working-b');
+});
+
+test('agent MCP tool grants authorize only their mapped semantic operations', async () => {
+  const source = { ...baseChapter(), chapterId: 'chapter_ch07' };
+  const working = { id: 'working-agent', document_id: 'chapter_ch07', base_revision_id: 'revision-agent', content_hash: await sha256(source), content_text: JSON.stringify(source), version: 1, state: 'open', purpose: 'authoring', current_revision_id: 'revision-agent' };
+  const CONTENT_DB = fakeDb((sql) => {
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    return null;
+  });
+  const allowed = withAgentCapability({ CONTENT_DB }, { scopes: ['content:write'], allowedOperations: ['replace_passage_text'] });
+  let response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-1', operations: [{ type: 'text.replace', blockId: 'b-work', text: 'Mapped MCP edit.' }] }) }), allowed);
+  assert.equal(response.status, 200, await response.text());
+
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-2', operations: [{ type: 'chapter.replaceDocument', document: source }] }) }), allowed);
+  assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'CAPABILITY_OPERATION_FORBIDDEN');
 });
 
 test('multi-document diff returns one content-free result per working copy', async () => {
@@ -199,10 +248,10 @@ test('human and explicitly scoped agent live saves atomically advance a D1-autho
   assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes('UPDATE documents SET current_revision_id')));
   assert.ok(CONTENT_DB.batchItems.some((item) => item.sql.includes("UPDATE changesets SET state = 'applied'")));
 
-  const unscopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-denied' }) }), { CONTENT_DB });
+  const unscopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-denied' }) }), withAgentCapability({ CONTENT_DB }, { scopes: ['content:write'] }));
   assert.equal(unscopedAgentResponse.status, 403); assert.equal((await unscopedAgentResponse.json()).error.code, 'LIVE_SAVE_AUTHORITY_REQUIRED');
 
-  const scopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: { ...gatewayHeaders('content:write content:live-save'), 'x-content-actor-type': 'agent' }, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-allowed' }) }), { CONTENT_DB });
+  const scopedAgentResponse = await worker.fetch(new Request('https://content.example/v1/changesets/cs-live:saveLive', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: 'one-click-live-save-agent-allowed' }) }), withAgentCapability({ CONTENT_DB }, { scopes: ['content:write', 'content:live-save'] }));
   assert.equal(scopedAgentResponse.status, 201); assert.equal((await scopedAgentResponse.json()).live, true);
 });
 
@@ -265,9 +314,9 @@ test('reject endpoint requires a reason, binds the exact snapshot, and records a
 });
 
 test('agent and service identities cannot approve, reject, or publish even when they carry privileged scopes', async () => {
-  const headers = { ...gatewayHeaders('content:approve content:publish'), 'x-content-actor-id': 'actor_automation_1', 'x-content-actor-type': 'agent' };
+  const headers = agentHeaders();
   for (const action of ['approve', 'reject', 'publish']) {
-    const response = await worker.fetch(new Request(`https://content.example/v1/changesets/cs-1:${action}`, { method: 'POST', headers, body: '{}' }), {});
+    const response = await worker.fetch(new Request(`https://content.example/v1/changesets/cs-1:${action}`, { method: 'POST', headers, body: '{}' }), withAgentCapability({}, { actorId: 'actor_automation_1', scopes: ['content:approve', 'content:publish'] }));
     assert.equal(response.status, 403);
     assert.equal((await response.json()).error.code, 'HUMAN_ACTOR_REQUIRED');
   }
@@ -352,7 +401,7 @@ test('chapter index exposes per-chapter authoring state and repository-authorita
   });
   let response = await worker.fetch(new Request('https://content.example/v1/chapters', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
   assert.equal(response.status, 200); const index = await response.json();
-  assert.deepEqual(index.chapters.map((item) => item.authoringState), ['editable', 'readOnly', 'editable']);
+  assert.deepEqual(index.chapters.map((item) => item.authoringState), ['readOnly', 'readOnly', 'editable']);
   response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch08/changesets', { method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ title: 'Forbidden shadow write', idempotencyKey: 'authoring-gate-key' }) }), { CONTENT_DB });
   assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'AUTHORING_NOT_ENABLED');
 });
@@ -400,6 +449,20 @@ test('media reuse search is parameterized, bounded, paginated, and available to 
   const invalid = await worker.fetch(new Request('https://content.example/v1/media?limit=500', { headers }), { CONTENT_DB });
   assert.equal(invalid.status, 400);
   assert.equal((await invalid.json()).error.code, 'PAGINATION_INVALID');
+});
+
+test('curated person catalog returns frozen projections and exact person reads', async () => {
+  const chapter = baseChapter();
+  chapter.entityRevisions = [{ entityRevisionId: 'revision_aristotle', personId: 'aristotle', sha256: 'a'.repeat(64), sourcePath: 'content/entities/people/records/aristotle.json' }];
+  chapter.personFeatures = [{ personFeatureId: 'feature_aristotle', placementId: 'placement_aristotle', personId: 'aristotle', entityRevisionId: 'revision_aristotle', name: 'Aristotle', dates: '384–322 BCE', role: 'Greek philosopher', teachingNote: 'Virtue ethics', biography: 'A curated biography.', portrait: { mediaId: 'portrait_aristotle' }, primarySources: [] }];
+  const CONTENT_DB = fakeDb((sql) => sql.includes("json_array_length(json_extract") ? { results: [{ document_id: 'chapter_ch07', content_text: JSON.stringify(chapter) }] } : null);
+  let response = await worker.fetch(new Request('https://content.example/v1/persons?q=aristotle', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  let body = await response.json(); assert.equal(response.status, 200, JSON.stringify(body));
+  assert.equal(body.persons[0].personId, 'aristotle');
+  assert.equal(body.persons[0].personFeatureId, undefined);
+  assert.equal(body.persons[0].entityRevision.entityRevisionId, 'revision_aristotle');
+  response = await worker.fetch(new Request('https://content.example/v1/persons/aristotle', { headers: gatewayHeaders('content:read') }), { CONTENT_DB });
+  body = await response.json(); assert.equal(response.status, 200, JSON.stringify(body)); assert.equal(body.person.name, 'Aristotle');
 });
 
 test('provider resolver is registry-only, performs no fetch, and falls back to authored rich links', async () => {
@@ -490,8 +553,7 @@ test('review packages issue server IDs and only humans can decide the exact decl
   const stale = await worker.fetch(new Request(`https://content.example/v1/media-review-packages/${created.id}:decide`, { method: 'POST', headers: gatewayHeaders('content:approve'), body: JSON.stringify({ declarationHash: 'c'.repeat(64), decision: 'blocked', comment: 'Stale declaration.', idempotencyKey: 'review-decision-key-456' }) }), { CONTENT_DB: decisionDb });
   assert.equal(stale.status, 409);
   assert.equal((await stale.json()).error.code, 'REVISION_CONFLICT');
-  const agentHeaders = { ...gatewayHeaders('content:approve'), 'x-content-actor-id': 'actor_review_agent', 'x-content-actor-type': 'agent' };
-  response = await worker.fetch(new Request(`https://content.example/v1/media-review-packages/${created.id}:decide`, { method: 'POST', headers: agentHeaders, body: '{}' }), {});
+  response = await worker.fetch(new Request(`https://content.example/v1/media-review-packages/${created.id}:decide`, { method: 'POST', headers: agentHeaders(), body: '{}' }), withAgentCapability({}, { actorId: 'actor_review_agent', scopes: ['content:approve'] }));
   assert.equal(response.status, 403);
   assert.equal((await response.json()).error.code, 'HUMAN_ACTOR_REQUIRED');
 });
@@ -650,7 +712,8 @@ const baseChapter = () => ({
 const checkpoint = (slot, passageId) => ({
   passageId,
   passageExcerptHash: 'a'.repeat(64),
-  slot,
+  displayOrder: 0,
+  slotLabel: slot,
   stage: slot,
   strategy: slot === 'commit' ? 'initial-judgment' : slot === 'work' ? 'self-explanation' : 'metacognitive-trace',
   title: `${slot} title`,
@@ -668,7 +731,7 @@ test('semantic diff is deterministic and reports structure, anchors, embeds, and
   const base = baseChapter();
   base.title = 'Original title';
   base.body.push({ type: 'mediaFigure', blockId: 'b-media', figureId: 'figure-1', mediaId: 'media-1', mediaVersionId: 'version-1', rightsCaseId: 'rights-1', passageId: 'p-media' });
-  base.checkpoints = [{ checkpointId: 'checkpoint-work', slot: 'work', passageId: 'p-work', passageExcerptHash: 'a'.repeat(64), prompt: 'Original private prose' }];
+  base.checkpoints = [{ checkpointId: 'checkpoint-work', displayOrder: 1, slotLabel: 'work', passageId: 'p-work', passageExcerptHash: 'a'.repeat(64), prompt: 'Original private prose' }];
   const working = structuredClone(base);
   working.title = 'Revised title';
   working.body = [
@@ -689,7 +752,7 @@ test('semantic diff is deterministic and reports structure, anchors, embeds, and
   assert.deepEqual(diff.blocks.modified.find((item) => item.blockId === 'b-media').changedFields, ['mediaVersionId']);
   assert.equal(diff.blocks.moved.length, 1);
   assert.equal(['b-commit', 'b-reconcile'].includes(diff.blocks.moved[0].blockId), true);
-  assert.deepEqual(diff.checkpoints.anchorsChanged, [{ checkpointId: 'checkpoint-work', slot: 'work', beforePassageId: 'p-work', afterPassageId: 'p-reconcile', excerptHashChanged: true }]);
+  assert.deepEqual(diff.checkpoints.anchorsChanged, [{ checkpointId: 'checkpoint-work', slotLabel: 'work', displayOrder: 1, beforePassageId: 'p-work', afterPassageId: 'p-reconcile', excerptHashChanged: true }]);
   assert.equal(diff.summary.embedsAffected, true);
   assert.equal(diff.summary.mediaAffected, true);
   assert.equal(diff.summary.derivativesAffected, true);
@@ -707,7 +770,7 @@ test('checkpoint operations preserve insertion order, arbitrary count, and stabl
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('commit', 'p-commit') });
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('work', 'p-work') });
   result = await applySemanticOperation(result.chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('follow-up', 'p-reconcile') });
-  assert.deepEqual(result.chapter.checkpoints.map((item) => item.slot), ['reconcile', 'commit', 'work', 'follow-up']);
+  assert.deepEqual(result.chapter.checkpoints.map((item) => item.slotLabel), ['reconcile', 'commit', 'work', 'follow-up']);
   const stableId = result.chapter.checkpoints[2].checkpointId;
   const replacement = checkpoint('work', 'p-reconcile');
   replacement.checkpointId = stableId;
@@ -789,6 +852,19 @@ test('chapter.replaceBody repairs a browser-split editable ID and allows new pro
   assert.equal(result.chapter.body[1].blockId, 'b-commit');
   assert.equal(result.chapter.body[1].passageId, 'p-commit');
   assert.equal(result.chapter.body[1].text, 'Commit passage.');
+});
+
+test('chapter.importPlainText replaces all prose while preserving and reanchoring managed content and checkpoints', async () => {
+  const source = baseChapter();
+  source.checkpoints = [{ ...checkpoint('commit', 'p-reconcile'), checkpointId: 'checkpoint-1' }];
+  source.managedPlacements = [{ placementId: 'placement-1', kind: 'personFeature', contentId: 'feature-1', anchorPassageId: 'p-work', position: 'after', orderAtAnchor: 0, displayPreset: 'thinker-card' }];
+  source.body.splice(2, 0, { type: 'legacyMarkup', blockId: 'b-legacy', locked: true, sanitizedHtml: '<aside>Managed</aside>', importedFrom: 'chapter.md' });
+  const result = await applySemanticOperation(source, { type: 'chapter.importPlainText', paragraphs: ['A complete replacement chapter.'] });
+  assert.equal(result.chapter.body.filter((block) => block.type === 'paragraph').length, 1);
+  assert.equal(result.chapter.body.find((block) => block.type === 'legacyMarkup').sanitizedHtml, '<aside>Managed</aside>');
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-commit');
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256('A complete replacement chapter.'));
+  assert.equal(result.chapter.managedPlacements[0].anchorPassageId, 'p-commit');
 });
 
 test('chapter.replaceBody still rejects duplicate managed block identities', async () => {
@@ -887,13 +963,14 @@ test('richLink uses an authored public-HTTPS fallback and rejects local targets'
 test('operation schemas expose exact required and optional top-level payload fields', () => {
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['text.replace'], { required: ['type', 'blockId', 'text'], optional: [] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['chapter.replaceBody'], { required: ['type', 'body'], optional: [] });
+  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['chapter.importPlainText'], { required: ['type', 'paragraphs'], optional: [] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['block.remove'], { required: ['type', 'blockId'], optional: ['replacementPassageId'] });
-  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type'], optional: ['slot', 'checkpointId'] });
+  assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['checkpoint.remove'], { required: ['type'], optional: ['slot', 'slotLabel', 'checkpointId'] });
   assert.deepEqual(OPERATION_PAYLOAD_SCHEMAS['media.place'], { required: ['type', 'placement'], optional: ['position'] });
 });
 
 test('Worker serves the versioned operation envelope to authenticated readers without database access', async () => {
-  const headers = { 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_agent_1', 'x-content-actor-type': 'agent', 'x-content-client-id': 'mcp', 'x-content-run-id': 'run-1', 'x-content-scopes': 'content:read' };
+  const headers = gatewayHeaders('content:read');
   const response = await worker.fetch(new Request('https://content.example/v1/schema', { headers }), {});
   assert.equal(response.status, 200);
   const body = await response.json();
@@ -975,8 +1052,7 @@ test('revision finalization derives identity from approved editorial hash and ha
 });
 
 test('media upload request rejects missing private bindings before accepting data', async () => {
-  const headers = { 'content-type': 'application/json', 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_agent_1', 'x-content-actor-type': 'agent', 'x-content-client-id': 'mcp', 'x-content-run-id': 'run-1', 'x-content-scopes': 'media:upload' };
-  const response = await worker.fetch(new Request('https://content.example/v1/media:requestUpload', { method: 'POST', headers, body: '{}' }), {});
+  const response = await worker.fetch(new Request('https://content.example/v1/media:requestUpload', { method: 'POST', headers: agentHeaders(), body: '{}' }), withAgentCapability({}, { scopes: ['media:upload'] }));
   assert.equal(response.status, 503);
   assert.equal((await response.json()).error.code, 'MEDIA_BINDING_UNAVAILABLE');
 });
@@ -1011,7 +1087,9 @@ test('authority batch activation is service-only and binds exact canonical heads
   assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO document_revisions')).length, 2);
   assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('UPDATE documents SET current_revision_id')).length, 2);
   assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO authority_registry')).length, 2);
-  response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers: { ...headers, 'x-content-actor-type': 'agent' }, body: JSON.stringify({ ...requestBody, idempotencyKey: 'authority-cutover-key-2' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS });
+  assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO public_chapter_projections')).length, 2);
+  assert.equal(CONTENT_DB.batchItems.filter((item) => item.sql.includes('INSERT INTO public_chapter_heads')).length, 2);
+  response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ ...requestBody, idempotencyKey: 'authority-cutover-key-2' }) }), withAgentCapability({ CONTENT_DB, CONTENT_SNAPSHOTS }, { scopes: ['content:authority'] }));
   assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'RELEASE_WORKFLOW_REQUIRED');
   const staleDb = fakeDb((sql) => sql.includes('FROM idempotency_records') ? null : sql.includes('FROM release_pointers') ? { release_id: 'release-newer' } : null);
   response = await worker.fetch(new Request('https://content.example/v1/authority:activateD1', { method: 'POST', headers, body: JSON.stringify({ ...requestBody, idempotencyKey: 'authority-cutover-key-3' }) }), { CONTENT_DB: staleDb, CONTENT_SNAPSHOTS });
@@ -1050,6 +1128,7 @@ test('authority activation preserves a verified instructor live-save lineage dur
   assert.equal(result.activated[0].headPromoted, false);
   assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('UPDATE documents SET current_revision_id')), false);
   assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('INSERT INTO authority_registry')), false);
+  assert.equal(CONTENT_DB.batchItems.some((item) => item.sql.includes('INSERT INTO public_chapter_heads')), false);
 });
 
 test('processor callback rejects tampered HMAC before touching D1 and canary route is fixed to Chapter 7', async () => {
@@ -1087,20 +1166,51 @@ test('Worker rejects unauthenticated, under-scoped, forged-actor, and oversized 
   assert.equal(response.status, 401);
   assert.equal((await response.json()).error.code, 'UNAUTHENTICATED');
 
-  const readHeaders = { 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_agent_1', 'x-content-actor-type': 'agent', 'x-content-client-id': 'mcp', 'x-content-run-id': 'run-1', 'x-content-scopes': 'content:write' };
-  response = await worker.fetch(new Request('https://content.example/v1/chapters', { headers: readHeaders }), {});
+  const readHeaders = agentHeaders();
+  const agentEnv = withAgentCapability({}, { scopes: ['content:write'], allowedDocumentIds: ['chapter-07'], allowedOperations: ['create_or_resume_changeset'] });
+  response = await worker.fetch(new Request('https://content.example/v1/chapters', { headers: readHeaders }), agentEnv);
   assert.equal(response.status, 403);
   assert.equal((await response.json()).error.code, 'FORBIDDEN');
 
   const mutationHeaders = { ...readHeaders, 'content-type': 'application/json', 'content-length': '200000' };
-  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/changesets', { method: 'POST', headers: mutationHeaders, body: JSON.stringify({ actorId: 'forged' }) }), {});
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/changesets', { method: 'POST', headers: mutationHeaders, body: JSON.stringify({ actorId: 'forged' }) }), agentEnv);
   assert.equal(response.status, 413);
   assert.equal((await response.json()).error.code, 'BODY_TOO_LARGE');
 
   delete mutationHeaders['content-length'];
-  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/changesets', { method: 'POST', headers: mutationHeaders, body: JSON.stringify({ actorId: 'forged' }) }), {});
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter-07/changesets', { method: 'POST', headers: mutationHeaders, body: JSON.stringify({ actorId: 'forged' }) }), agentEnv);
   assert.equal(response.status, 400);
   assert.equal((await response.json()).error.code, 'UNKNOWN_FIELD');
+});
+
+test('agent capabilities fail closed for missing, revoked, mismatched, or out-of-target authority', async () => {
+  const assertedAgent = { 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_agent_1', 'x-content-actor-type': 'agent', 'x-content-client-id': 'mcp', 'x-content-run-id': 'run-1', 'x-content-scopes': 'content:read' };
+  let response = await worker.fetch(new Request('https://content.example/v1/schema', { headers: assertedAgent }), {});
+  assert.equal(response.status, 401); assert.equal((await response.json()).error.code, 'AGENT_CAPABILITY_REQUIRED');
+
+  response = await worker.fetch(new Request('https://content.example/v1/schema', { headers: { authorization: 'Bearer revoked' } }), { AUTH_CAPABILITY: { verifyCapability: async () => { throw new Error('revoked'); } } });
+  assert.equal(response.status, 401); assert.equal((await response.json()).error.code, 'INVALID_CAPABILITY');
+
+  response = await worker.fetch(new Request('https://content.example/v1/schema', { headers: { authorization: 'Bearer test-agent-capability', ...assertedAgent, 'x-content-actor-id': 'actor_forged' } }), withAgentCapability({}, { scopes: ['content:read'] }));
+  assert.equal(response.status, 401); assert.equal((await response.json()).error.code, 'CAPABILITY_IDENTITY_MISMATCH');
+
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/authoring-view', { headers: agentHeaders() }), withAgentCapability({}, { scopes: ['content:read'], allowedDocumentIds: ['chapter_ch08'], allowedOperations: ['get_authoring_view'] }));
+  assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'CAPABILITY_DOCUMENT_FORBIDDEN');
+
+  response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/changesets', { method: 'POST', headers: agentHeaders(), body: '{}' }), withAgentCapability({}, { scopes: ['content:write'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: ['text.replace'] }));
+  assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'CAPABILITY_OPERATION_FORBIDDEN');
+});
+
+test('audited runtime flags gate the unified editor per chapter before private content reads', async () => {
+  const CONTENT_DB = fakeDb((sql, args) => {
+    if (sql.includes('FROM runtime_feature_flags')) {
+      assert.deepEqual(args, ['unified_editor']);
+      return { enabled: 0, document_ids_json: '["chapter_ch07"]', version: 1 };
+    }
+    throw new Error('private content should not be read while the editor flag is disabled');
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/authoring-view', { headers: gatewayHeaders('content:read') }), { CONTENT_DB, RUNTIME_FLAGS_ENFORCED: '1' });
+  assert.equal(response.status, 409); assert.equal((await response.json()).error.code, 'FEATURE_DISABLED');
 });
 
 test('Wrangler binding declaration separates each private R2 concern and both queue DLQs', async () => {

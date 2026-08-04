@@ -52,6 +52,8 @@ const blockId = (kind: string, sourceId: string) => `block_${kind}_${safe(source
 const revisionId = (source: string) => `revision_${sha256(source).slice(0, 24)}`;
 const checkpointId = (source: string) => `checkpoint_${safe(source)}`;
 const worldId = (source: string) => `world_${safe(source)}`;
+const placementId = (chapter: string, person: string, anchor: string, ordinal: number) => `placement_${sha256(`${chapter}:${person}:${anchor}:${ordinal}`).slice(0, 24)}`;
+const personFeatureId = (chapter: string, person: string, anchor: string, ordinal: number) => `personfeature_${sha256(`${chapter}:${person}:${anchor}:${ordinal}`).slice(0, 24)}`;
 const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const lockedMarkdown = (markdown: string) => `<pre data-content-source="${SOURCE_FORMAT}">${escapeHtml(markdown)}</pre>`;
 
@@ -113,17 +115,55 @@ export class GitContentRepository implements ContentRepository {
     const parsed = parseMarkdown(markdown, report);
     const aliases = [...parsed.aliases, { fromId: entry.id, toId: chapterId(entry.id), reason: "Preserves Git chapter identity", createdAt: "2026-08-02T00:00:00.000Z" }];
     const checkpoints = readingRecord.checkpoints.map((item: Json, index: number) => ({
-      checkpointId: checkpointId(item.id), legacyId: item.id, passageId: passageId(item.passageId), passageExcerptHash: sha256(parsed.passageSource.get(item.passageId) ?? ""), slot: (["commit", "work", "reconcile"] as const)[index] ?? `checkpoint-${index + 1}`, stage: item.stage, strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure, minWords: 30, maxWords: 250, showInSidebar: true, rationale: item.rationale,
+      checkpointId: checkpointId(item.id), legacyId: item.id, passageId: passageId(item.passageId), passageExcerptHash: sha256(parsed.passageSource.get(item.passageId) ?? ""), displayOrder: index, slotLabel: item.slot ?? (["commit", "work", "reconcile"] as const)[index] ?? `checkpoint-${index + 1}`, ...(item.stage ? { stage: item.stage } : {}), strategy: item.strategy, title: item.title, trigger: item.trigger, prompt: item.prompt, guidance: item.guidance, responseStructure: item.responseStructure, minWords: 30, maxWords: 250, showInSidebar: true, rationale: item.rationale,
     }));
     const sources = [...(sourceLinks.primarySources ?? []), ...(sourceLinks.companionSources ?? [])].map((item: Json) => ({ referenceId: `reference_${safe(item.id)}`, label: item.title, ...(item.url ? { url: item.url } : {}) }));
+    const people = (world.people ?? []).map((item: Json) => ({ personId: item.id, role: item.role ?? "mentioned", passageIds: (item.passageIds ?? []).map(passageId) }));
+    const { entityRevisions, personFeatures, managedPlacements } = await this.importPersonFeatures({ source, chapterId: chapterId(entry.id), world, sourceLinks, parsed });
     const sideMetadata = { annotations, sourceLinks, world, rights };
     // Exact source metadata is retained in a locked block because the current public contract
     // deliberately has no arbitrary metadata bag. The normalized projections below remain queryable.
     parsed.body.push(legacy(JSON.stringify(sideMetadata), `${entry.id}_metadata`)); countBlock(report, "legacyMarkup");
     report.chapterCount += 1; report.checkpointCount += checkpoints.length; report.annotationCount += annotations.items.length; report.sourceCount += sources.length;
     return {
-      schemaVersion: 2, chapterId: chapterId(entry.id), contentKey, slug: entry.slug, title: meta.title, ...(meta.subtitle ? { subtitle: meta.subtitle } : {}), description: meta.description, part: { partId: `part_${safe(part.id)}`, title: part.title, order: part.order }, order: entry.order, chapterVersion: meta.websiteBaseline?.canonicalMarkdownSha256 ?? sha256(markdown), revisionId: revisionId(markdown), body: parsed.body, reasoningObjective: readingRecord.reasoningObjective ?? "Legacy source did not specify a reasoning objective.", readingRecordLicense: readingRecord.license ?? "CC0-1.0", sidePanelModules: [{ moduleId: `module_reading_${safe(entry.id)}`, type: "readingRecord", order: 0 }, { moduleId: `module_sources_${safe(entry.id)}`, type: "sources", order: 1 }], annotations: annotations.items.map((item: Json) => ({ annotationId: `annotation_${safe(item.id ?? sha256(item).slice(0, 16))}`, passageId: passageId(item.passageId), body: item.body ?? JSON.stringify(item) })), sources, people: (world.people ?? []).map((item: Json) => ({ entityId: item.id, relation: item.role ?? "mentioned" })), concepts: (world.concepts ?? []).map((item: Json) => ({ entityId: item.id, relation: item.role ?? "mentioned" })), traditions: (world.traditions ?? []).map((item: Json) => ({ entityId: item.id, relation: item.role ?? "mentioned" })), worldLayer: { worldLayerId: worldId(entry.id), version: String(world.schemaVersion ?? 1) }, diagrams: [], mediaPlacementIds: [], rightsCaseIds: (rights.rightsRecordIds ?? []).map((id: string) => `rights_${safe(id)}`), licenses: { chapter: rights.proseLicense ?? "CC-BY-4.0", assets: rights.thirdPartyExceptions ?? [] }, exports: { web: true, print: Boolean(meta.exports?.print), offline: Boolean(meta.exports?.offlineHtml), voice: true }, aliases, tombstones: [], updatedBy: actor, updatedAt: "2026-08-02T00:00:00.000Z", status: "approved", checkpoints,
+      schemaVersion: 2, chapterId: chapterId(entry.id), contentKey, slug: entry.slug, title: meta.title, ...(meta.subtitle ? { subtitle: meta.subtitle } : {}), description: meta.description, part: { partId: `part_${safe(part.id)}`, title: part.title, order: part.order }, order: entry.order, chapterVersion: meta.websiteBaseline?.canonicalMarkdownSha256 ?? sha256(markdown), revisionId: revisionId(markdown), body: parsed.body, reasoningObjective: readingRecord.reasoningObjective ?? "Legacy source did not specify a reasoning objective.", readingRecordLicense: readingRecord.license ?? "CC0-1.0", sidePanelModules: [{ moduleId: `module_reading_${safe(entry.id)}`, type: "readingRecord", order: 0 }, { moduleId: `module_sources_${safe(entry.id)}`, type: "sources", order: 1 }], annotations: annotations.items.map((item: Json) => ({ annotationId: `annotation_${safe(item.id ?? sha256(item).slice(0, 16))}`, passageId: passageId(item.passageId), body: item.body ?? JSON.stringify(item) })), sources, people, entityRevisions, personFeatures, managedPlacements, concepts: (world.concepts ?? []).map((item: Json) => ({ entityId: item.id, relation: item.role ?? "mentioned" })), traditions: (world.traditions ?? []).map((item: Json) => ({ entityId: item.id, relation: item.role ?? "mentioned" })), worldLayer: { worldLayerId: worldId(entry.id), version: String(world.schemaVersion ?? 1) }, diagrams: [], mediaPlacementIds: [], rightsCaseIds: (rights.rightsRecordIds ?? []).map((id: string) => `rights_${safe(id)}`), licenses: { chapter: rights.proseLicense ?? "CC-BY-4.0", assets: rights.thirdPartyExceptions ?? [] }, exports: { web: true, print: Boolean(meta.exports?.print), offline: Boolean(meta.exports?.offlineHtml), voice: true }, aliases, tombstones: [], updatedBy: actor, updatedAt: "2026-08-02T00:00:00.000Z", status: "approved", checkpoints,
     };
+  }
+
+  /**
+   * The live reader anchors featured cards at the first in-prose person link and only
+   * falls back to world.passageIds. Persist that resolved anchor once so later editor
+   * and renderer implementations never repeat an implicit DOM-placement heuristic.
+   */
+  private async importPersonFeatures({ source, chapterId: chapter, world, sourceLinks, parsed }: { source: string; chapterId: string; world: Json; sourceLinks: Json; parsed: ReturnType<typeof parseMarkdown> }) {
+    const entityRevisions: Json[] = []; const personFeatures: Json[] = []; const managedPlacements: Json[] = [];
+    const seenPersons = new Set<string>(); const ordinals = new Map<string, number>();
+    for (const relation of world.people ?? []) {
+      if (relation.featured !== true) continue;
+      const person = String(relation.id ?? "");
+      const fallback = Array.isArray(relation.passageIds) ? relation.passageIds.find((item: unknown) => typeof item === "string") : undefined;
+      const linkedPassage = [...parsed.passageSource.entries()].find(([, value]) => value.includes(`](/people/${person}/)`))?.[0];
+      const sourceAnchor = linkedPassage ?? fallback;
+      if (!person || !sourceAnchor) throw new Error(`Featured person ${person || "(missing id)"} in ${chapter} has no resolvable placement anchor`);
+      const anchor = passageId(sourceAnchor); const ordinalKey = `${anchor}:after`; const ordinal = ordinals.get(ordinalKey) ?? 0; ordinals.set(ordinalKey, ordinal + 1);
+      const placement = placementId(chapter, person, anchor, ordinal); const feature = personFeatureId(chapter, person, anchor, ordinal);
+      const record = await readJson(path.join(source, "../../entities/people/records", `${person}.json`));
+      const portraitId = String(record.portraitId ?? "");
+      if (!portraitId) throw new Error(`Featured person ${person} in ${chapter} has no reviewed portrait record`);
+      const [portrait, media] = await Promise.all([
+        readJson(path.join(source, "../../media/wikimedia", `${portraitId}.json`)),
+        readJson(path.join(source, "../../media/records", `${portraitId}.json`)),
+      ]);
+      const entityRevisionId = revisionId(stableStringify(record));
+      if (!seenPersons.has(person)) {
+        entityRevisions.push({ entityRevisionId, personId: person, sha256: sha256(record), sourcePath: `content/entities/people/records/${person}.json` });
+        seenPersons.add(person);
+      }
+      const primarySources = (sourceLinks.primarySources ?? []).filter((item: Json) => item.authorPersonId === person).map((item: Json) => ({ sourceId: String(item.id), title: item.title, creator: item.creator ?? record.displayName, ...(item.locator ? { locator: item.locator } : {}), ...(item.translation ? { translation: item.translation } : {}), ...(item.excerpt ? { excerpt: item.excerpt } : {}), teachingUse: item.teachingUse ?? "Primary source linked from this chapter.", label: "Read the public text", ...(item.url ? { url: item.url } : {}) }));
+      personFeatures.push({ personFeatureId: feature, placementId: placement, personId: person, entityRevisionId, name: record.displayName, dates: record.lifeDates, role: relation.role ?? record.teaching?.whyThisPerson ?? "mentioned", teachingNote: record.teaching?.whyThisPerson ?? "", biography: record.biography, primarySources, portrait: { mediaVersionId: `mediaVersion_${safe(portrait.id)}`, src: portrait.derivative.localPath, width: portrait.derivative.width, height: portrait.derivative.height, alt: media.alt, credit: portrait.rights.credit, title: media.title ?? portrait.commonsTitle, ...(portrait.rights.artist ? { creator: portrait.rights.artist } : {}), ...(portrait.derivative.modification ? { derivativeModification: portrait.derivative.modification } : {}), license: portrait.rights.licenseShortName, ...(portrait.rights.licenseUrl ? { licenseUrl: portrait.rights.licenseUrl } : {}), ...(portrait.derivative.sourceUrl ? { sourceUrl: portrait.derivative.sourceUrl } : {}), ...(portrait.source.pageUrl ? { commonsPageUrl: portrait.source.pageUrl } : {}), ...(portrait.source.revisionId ? { reviewedSourceRevision: String(portrait.source.revisionId) } : {}) }, displayPreset: "thinker-card" });
+      managedPlacements.push({ placementId: placement, kind: "personFeature", contentId: feature, anchorPassageId: anchor, position: "after", orderAtAnchor: ordinal, displayPreset: "thinker-card" });
+    }
+    return { entityRevisions, personFeatures, managedPlacements };
   }
 }
 

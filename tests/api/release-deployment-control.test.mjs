@@ -68,11 +68,12 @@ const stageBody = (overrides = {}) => ({
 });
 
 test('only the protected workflow service can stage deployments or receipts', async () => {
-  const agentHeaders = { ...workflowHeaders(), 'x-content-actor-id': 'actor_agent_1', 'x-content-actor-type': 'agent' };
-  let response = await worker.fetch(new Request('https://content.example/v1/release-deployments:stage', { method: 'POST', headers: agentHeaders, body: JSON.stringify(stageBody()) }), {});
+  const agentHeaders = { 'content-type': 'application/json', authorization: 'Bearer release-test' };
+  const env = { AUTH_CAPABILITY: { verifyCapability: async () => ({ actorId: 'actor_agent_1', actorType: 'agent', clientId: 'mcp', runId: 'run-agent', scopes: ['content:deployReceipt'], allowedDocumentIds: [], allowedOperations: [] }) } };
+  let response = await worker.fetch(new Request('https://content.example/v1/release-deployments:stage', { method: 'POST', headers: agentHeaders, body: JSON.stringify(stageBody()) }), env);
   assert.equal(response.status, 403);
   assert.equal((await response.json()).error.code, 'RELEASE_WORKFLOW_REQUIRED');
-  response = await worker.fetch(new Request('https://content.example/v1/release-deployments/deployment_1:recordReceipt', { method: 'POST', headers: agentHeaders, body: '{}' }), {});
+  response = await worker.fetch(new Request('https://content.example/v1/release-deployments/deployment_1:recordReceipt', { method: 'POST', headers: agentHeaders, body: '{}' }), env);
   assert.equal(response.status, 403);
   assert.equal((await response.json()).error.code, 'RELEASE_WORKFLOW_REQUIRED');
 });

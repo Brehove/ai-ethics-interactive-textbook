@@ -17,11 +17,10 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   },
-  "d1_databases": [
+  "services": [
     {
-      "binding": "CONTENT_DB",
-      "database_name": "ai-ethics-content",
-      "database_id": "1f82c4fa-228b-4cf7-9b40-ff10eebeadfb"
+      "binding": "PUBLIC_PROJECTION",
+      "service": "ai-ethics-public-projection"
     }
   ]
 }

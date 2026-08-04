@@ -99,7 +99,10 @@ export function getRuntimeConfig(env) {
     origins,
     allowedUserIds,
     authBaseUrl: authBaseUrl.origin,
-    adminUrl: adminUrl.href,
+    // The legacy name remains in deployment configuration during the move from
+    // /admin.  OAuth never uses its path: every post-login destination is
+    // reconstructed from the route manifest on this exact editor origin.
+    editorOrigin: adminUrl.origin,
     stateTtl: boundedInteger(env.EDITOR_STATE_TTL_SECONDS, DEFAULT_STATE_TTL_SECONDS, 60, MAX_STATE_TTL_SECONDS, "EDITOR_STATE_TTL_SECONDS"),
     sessionTtl: boundedInteger(env.EDITOR_SESSION_TTL_SECONDS, DEFAULT_SESSION_TTL_SECONDS, 300, MAX_SESSION_TTL_SECONDS, "EDITOR_SESSION_TTL_SECONDS"),
   };
