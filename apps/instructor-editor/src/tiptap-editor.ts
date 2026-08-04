@@ -204,7 +204,14 @@ export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onCh
     }
   };
   const editor = new Editor({ element, extensions: [StarterKit.configure({ heading: { levels: [2, 3, 4] } }), StableIds, ManagedNode, ProtectedManagedNodes], content: { type: "doc", content }, editorProps: { attributes: { class: "chapter-document ProseMirror", "aria-label": "Continuous chapter document" } }, onUpdate: ({ editor: active }) => { onChange(serializeBody(active.getJSON(), chapter.body)); reportPassage(active); }, onSelectionUpdate: ({ editor: active }) => reportPassage(active) });
-  element.addEventListener("instructor-managed-select", ((event: CustomEvent<{ placementId: string }>) => onManagedSelect(event.detail.placementId)) as EventListener);
+  element.addEventListener("instructor-managed-select", ((event: CustomEvent<{ placementId: string }>) => {
+    const placementId = event.detail.placementId;
+    // The inspector render replaces and destroys this editor. Let ProseMirror
+    // finish the originating pointer/selection event first; destroying it in
+    // the same event stack can make its mouse-up handler apply a selection to
+    // the replacement document and throw "Selection ... current document".
+    window.setTimeout(() => onManagedSelect(placementId), 0);
+  }) as EventListener);
   return editor;
 }
 
