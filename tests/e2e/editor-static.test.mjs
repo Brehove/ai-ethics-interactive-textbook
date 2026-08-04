@@ -2,6 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
+test("reader keeps the metadata title as the only visible chapter H1", async () => {
+  const [chapterPage, globalCss] = await Promise.all([
+    readFile(new URL("../../src/pages/chapter/[slug]/index.astro", import.meta.url), "utf8"),
+    readFile(new URL("../../src/styles/global.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(chapterPage, /class="chapter-body" data-live-chapter-body=/);
+  assert.match(globalCss, /\.chapter-prose > \.chapter-body > h1:first-child \{ display: none; \}/);
+});
+
 test("editor shell exposes the structured authoring workflow", async () => {
   const [page, shell, css, externalEmbed, placements, richLink, nativeMedia, readingRecord] = await Promise.all([
     readFile(new URL("../../src/pages/admin/index.astro", import.meta.url), "utf8"),
