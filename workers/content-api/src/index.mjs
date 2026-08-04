@@ -339,9 +339,9 @@ async function getChangeset(env, id) {
     checkpoint, version, updated_at FROM working_documents WHERE changeset_id = ? ORDER BY document_id`).bind(id).all();
   const submitted = await env.CONTENT_DB.prepare(`SELECT id, snapshot_hash, snapshot_revision, document_count, created_at
     FROM submitted_snapshots WHERE changeset_id = ? LIMIT 1`).bind(id).first();
-  const decision = submitted ? await env.CONTENT_DB.prepare(`SELECT id, decision, decision_kind, comment, decided_by, decided_at
+  const decision = submitted ? await env.CONTENT_DB.prepare(`SELECT id, decision, decision_kind, comment, decided_by, created_at AS decided_at
     FROM approvals WHERE changeset_id = ? AND submitted_snapshot_hash = ? AND submitted_snapshot_revision = ?
-    AND decision_kind = 'release' ORDER BY decided_at DESC, id DESC LIMIT 1`).bind(id, submitted.snapshot_hash, submitted.snapshot_revision).first() : null;
+    AND decision_kind = 'release' ORDER BY created_at DESC, id DESC LIMIT 1`).bind(id, submitted.snapshot_hash, submitted.snapshot_revision).first() : null;
   return json({
     ...changeset,
     documents: (documents.results || []).map((item) => ({ ...item, content: parseStoredJson(item.content_text, 'Working document'), metadata: parseStoredJson(item.metadata_json || '{}', 'Working metadata'), content_text: undefined, metadata_json: undefined })),
