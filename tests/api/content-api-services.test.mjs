@@ -1132,7 +1132,7 @@ test('authority activation preserves a verified instructor live-save lineage dur
     if (sql.includes('FROM documents WHERE id')) return { id: 'chapter_ch07', current_revision_id: 'revision-live-2', current_content_hash: 'live-hash-2' };
     if (sql.includes('WITH RECURSIVE lineage')) return { results: lineage };
     if (sql.includes('FROM release_authority_entries')) return { authority: 'd1', source_revision: 'revision-release', normalized_snapshot_hash: contentHash };
-    if (sql.includes('FROM authority_registry')) return { authority: 'd1', source_revision: 'revision-release', normalized_snapshot_hash: contentHash };
+    if (sql.includes('FROM authority_registry')) return { authority: 'd1', source_revision: 'revision-live-2', normalized_snapshot_hash: 'live-hash-2' };
     if (sql.includes('FROM document_revisions')) return { document_id: 'chapter_ch07', content_hash: contentHash };
     return null;
   });
