@@ -425,7 +425,7 @@ async function createOrResumeChangeset(request, env, identity, chapterId) {
 
   if (body.resume === true) {
     const resumed = await env.CONTENT_DB.prepare(`SELECT c.id, c.state, c.created_at, w.base_revision_id, w.version, w.content_hash, w.content_text FROM changesets c JOIN working_documents w ON w.changeset_id = c.id
-      WHERE c.created_by = ? AND c.state IN ('open', 'submitted', 'approved') AND w.document_id = ? ORDER BY c.updated_at DESC LIMIT 1`).bind(identity.actorId, chapterId).first();
+      WHERE c.created_by = ? AND c.state = 'open' AND w.document_id = ? AND w.base_revision_id = ? ORDER BY c.updated_at DESC LIMIT 1`).bind(identity.actorId, chapterId, canonical.current_revision_id).first();
     if (resumed) {
       const response = { id: resumed.id, state: resumed.state, resumed: true, chapterId, baseRevisionId: resumed.base_revision_id, version: resumed.version, contentHash: resumed.content_hash, chapter: parseStoredJson(resumed.content_text, 'Working document'), created_at: resumed.created_at };
       await env.CONTENT_DB.batch([idempotencyStatement(env, idem, body.idempotencyKey, 200, response, now()), await audit(env, identity, 'changeset.resumed', 'changeset', resumed.id, { chapterId }, { idempotencyHash: idem.requestHash })]);

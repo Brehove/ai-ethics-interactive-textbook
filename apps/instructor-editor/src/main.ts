@@ -46,6 +46,7 @@ let tiptapEditor: ReturnType<typeof mountTiptap> | null = null;
 let historyItems: Array<Record<string, unknown>> = [];
 let csrfToken: string | undefined;
 let pendingCommitKey: string | null = null;
+let changeSetRequestKey = crypto.randomUUID();
 let mediaItems: Array<Record<string, unknown>> = [];
 let personItems: Array<Record<string, unknown>> = [];
 let mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" };
@@ -302,10 +303,7 @@ async function loadChapter() {
     csrfToken = session.csrf_token;
     const view = await dataSource.getAuthoringView(requestedDocument);
     chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView(view, chapter));
-    const changeSetKeyName = `ai-ethics-instructor-changeset-key/${requestedDocument}`;
-    let changeSetKey = sessionStorage.getItem(changeSetKeyName);
-    if (!changeSetKey) { changeSetKey = crypto.randomUUID(); sessionStorage.setItem(changeSetKeyName, changeSetKey); }
-    const changeSet = await dataSource.createOrResumeChangeset(requestedDocument, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetKey });
+    const changeSet = await dataSource.createOrResumeChangeset(requestedDocument, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetRequestKey });
     if (changeSet.chapter) chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView({ ...view, chapter: changeSet.chapter, changeSetId: changeSet.id, baseRevisionId: changeSet.baseRevisionId, expectedVersion: changeSet.version }, chapter));
     else { chapter.changeSetId = changeSet.id; chapter.baseRevisionId = changeSet.baseRevisionId ?? chapter.revisionId; chapter.expectedVersion = changeSet.version ?? 1; }
     selectedPassage = nearestPassage(chapter, requestedAnchor);
@@ -618,10 +616,7 @@ function bindForms() {
 
 async function ensureOpenChangeset() {
   if (!dataSource || chapter.changeSetId) return;
-  const keyName = `ai-ethics-instructor-changeset-key/${chapter.documentId}`;
-  let key = sessionStorage.getItem(keyName);
-  if (!key) { key = crypto.randomUUID(); sessionStorage.setItem(keyName, key); }
-  const session = await dataSource.createOrResumeChangeset(chapter.documentId, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: key });
+  const session = await dataSource.createOrResumeChangeset(chapter.documentId, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetRequestKey });
   chapter.changeSetId = session.id; chapter.baseRevisionId = session.baseRevisionId ?? chapter.revisionId; chapter.expectedVersion = session.version ?? 1;
   if (session.chapter) chapter = chapterFromAuthoringView({ chapter: session.chapter, documentId: chapter.documentId, changeSetId: session.id, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion }, chapter);
 }
@@ -663,7 +658,7 @@ async function save(): Promise<boolean> {
       result = { commitReceiptId: `commit_local_${Date.now()}`, changeSetId: chapter.changeSetId, documentId: chapter.documentId, revisionId: `revision_local_${Date.now()}`, contentHash: "local", projectionId: "projection_local", projectionHash: "local", publicUrl: `${publicOrigin}/chapter/${chapter.slug}/`, deliveryStatus: "verified", statusUrl: "", statusExpiresAt: "", committed: true, live: true, noOp: false };
     }
     chapter.revisionId = result.revisionId; chapter.baseRevisionId = result.revisionId; chapter.expectedVersion += 1;
-    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date()); sessionStorage.removeItem(recoveryKey()); sessionStorage.removeItem(`ai-ethics-instructor-changeset-key/${chapter.documentId}`); pendingCommitKey = null; chapter.changeSetId = ""; chapter.expectedVersion = 1; setState("saved");
+    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date()); sessionStorage.removeItem(recoveryKey()); pendingCommitKey = null; changeSetRequestKey = crypto.randomUUID(); chapter.changeSetId = ""; chapter.expectedVersion = 1; setState("saved");
     // Public delivery verification is an integrity check, not another author
     // workflow step. Save is complete once the atomic live commit succeeds.
     void waitForDelivery(result).then((verified) => {
