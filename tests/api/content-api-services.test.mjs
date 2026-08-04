@@ -854,6 +854,15 @@ test('checkpoint hashes are server-derived for every selectable anchor type', as
   assert.notEqual(result.chapter.checkpoints[0].passageExcerptHash, await sha256(''));
 });
 
+test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints.push({ ...checkpoint('commit', 'p-commit'), checkpointId: 'checkpoint-malformed-body' });
+  await assert.rejects(
+    applySemanticOperation(chapter, { type: 'chapter.replaceDocument', document: { ...chapter, body: { invalid: true } } }),
+    (error) => error instanceof ApiError && error.status === 422 && error.code === 'CHAPTER_BODY_INVALID'
+  );
+});
+
 test('locked legacy anchorPassageId values satisfy checkpoint anchor validation', () => {
   const chapter = baseChapter();
   chapter.body.push({ type: 'legacyMarkup', blockId: 'b-legacy-anchor', anchorPassageId: 'p-legacy-anchor', locked: true, sanitizedHtml: '<aside>Worked example</aside>', importedFrom: 'git-markdown-v1' });

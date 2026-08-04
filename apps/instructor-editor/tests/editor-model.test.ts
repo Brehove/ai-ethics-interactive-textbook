@@ -46,7 +46,26 @@ test("an unchanged checkpoint position remains stable when persisted orders are 
     .filter((checkpoint) => checkpoint.passageId === first.passageId)
     .sort((a, b) => a.displayOrder - b.displayOrder);
   assert.deepEqual(ordered.map((checkpoint) => checkpoint.checkpointId), ["checkpoint_sparse_first", "checkpoint_sparse_second"]);
-  assert.deepEqual(ordered.map((checkpoint) => checkpoint.displayOrder), [0, 1]);
+  assert.deepEqual(ordered.map((checkpoint) => checkpoint.displayOrder), [4, 5]);
+});
+
+test("checkpoint reorder preserves managed placement position and title-only order", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const first = chapter.checkpoints[0];
+  chapter.checkpoints = [
+    { ...structuredClone(first), checkpointId: "checkpoint_managed_first", displayOrder: 4 },
+    { ...structuredClone(first), checkpointId: "checkpoint_managed_second", displayOrder: 5 },
+  ];
+  chapter.managedPlacements = [{ placementId: "placement_between", kind: "personFeature", contentId: "personfeature_aristotle", anchorPassageId: first.passageId, position: "after", orderAtAnchor: 2, displayPreset: "thinker-card" }];
+  moveCheckpoint(chapter, "checkpoint_managed_first", first.passageId, 0);
+  assert.deepEqual(chapter.checkpoints.map((item) => item.displayOrder), [4, 5]);
+  assert.equal(chapter.managedPlacements[0].orderAtAnchor, 2);
+  moveCheckpoint(chapter, "checkpoint_managed_second", first.passageId, 0);
+  const sequence = [
+    ...chapter.checkpoints.map((item) => ({ id: item.checkpointId, order: item.displayOrder })),
+    { id: chapter.managedPlacements[0].placementId, order: chapter.managedPlacements[0].orderAtAnchor },
+  ].sort((a, b) => a.order - b.order).map((item) => item.id);
+  assert.deepEqual(sequence, ["placement_between", "checkpoint_managed_second", "checkpoint_managed_first"]);
 });
 
 test("checkpoint excerpts cover code and table anchors and prefer passage owners", () => {

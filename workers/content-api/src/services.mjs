@@ -700,7 +700,10 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
   } else if (operation.type === 'chapter.replaceDocument') {
     if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a structured document');
     if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
-    const replacement = await bindCheckpointExcerptHashes(structuredClone(operation.document));
+    const replacement = structuredClone(operation.document);
+    const shapeValidation = validateChapter(replacement);
+    if (!shapeValidation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', shapeValidation);
+    await bindCheckpointExcerptHashes(replacement);
     const validation = validateChapter(replacement);
     if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', validation);
     return { chapter: replacement, contentHash: await sha256(replacement) };

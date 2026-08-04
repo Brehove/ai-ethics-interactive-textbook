@@ -43,18 +43,36 @@ export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, p
   const previousAnchor = checkpoint.passageId;
   const nextAnchor = nearestPassage(chapter, passageId);
   if (previousAnchor !== nextAnchor && !/^[a-f0-9]{64}$/.test(passageExcerptHash ?? "")) throw new Error("Moving a checkpoint requires the destination passage excerpt hash.");
-  const normalizeAnchor = (anchor: string, excludedId?: string) => chapter.checkpoints
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.passageId === anchor && item.checkpointId !== excludedId)
-    .sort((a, b) => a.item.displayOrder - b.item.displayOrder || a.index - b.index)
-    .map(({ item }) => item);
-  const target = normalizeAnchor(nextAnchor, checkpointId);
-  const requested = Number.isInteger(displayOrder) ? displayOrder : checkpoint.displayOrder;
-  target.splice(Math.max(0, Math.min(requested, target.length)), 0, checkpoint);
+  type AnchorNode = { kind: "checkpoint"; item: Checkpoint; order: number; index: number; sequence: number }
+    | { kind: "placement"; item: ManagedPlacement; order: number; index: number; sequence: number };
+  const orderedAnchor = (anchor: string, excludedId?: string): AnchorNode[] => [
+    ...chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 }))
+      .filter((node) => node.item.passageId === anchor && node.item.checkpointId !== excludedId),
+    ...chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 }))
+      .filter((node) => node.item.anchorPassageId === anchor && node.item.position !== "before"),
+  ].sort((a, b) => a.order - b.order || a.index - b.index || a.sequence - b.sequence);
+  const reindex = (nodes: AnchorNode[]) => nodes.forEach((node, index) => {
+    if (node.kind === "checkpoint") node.item.displayOrder = index;
+    else node.item.orderAtAnchor = index;
+  });
+  const currentSiblings = orderedAnchor(previousAnchor).filter((node) => node.kind === "checkpoint");
+  const currentPosition = currentSiblings.findIndex((node) => node.item.checkpointId === checkpointId);
+  const requested = Number.isInteger(displayOrder) ? Math.max(0, displayOrder) : currentPosition;
+  const requestedAtCurrentAnchor = Math.min(requested, Math.max(0, currentSiblings.length - 1));
+  if (previousAnchor === nextAnchor && requestedAtCurrentAnchor === currentPosition) return checkpoint;
+  const target = orderedAnchor(nextAnchor, checkpointId);
+  const targetCheckpoints = target.filter((node) => node.kind === "checkpoint");
+  const requestedAtTarget = Math.min(requested, targetCheckpoints.length);
+  const insertionIndex = requestedAtTarget < targetCheckpoints.length
+    ? target.indexOf(targetCheckpoints[requestedAtTarget])
+    : targetCheckpoints.length
+      ? target.indexOf(targetCheckpoints.at(-1)!) + 1
+      : target.length;
+  target.splice(insertionIndex, 0, { kind: "checkpoint", item: checkpoint, order: checkpoint.displayOrder, index: chapter.checkpoints.indexOf(checkpoint), sequence: 0 });
   checkpoint.passageId = nextAnchor;
   if (previousAnchor !== nextAnchor) checkpoint.passageExcerptHash = passageExcerptHash;
-  target.forEach((item, index) => { item.displayOrder = index; });
-  if (previousAnchor !== nextAnchor) normalizeAnchor(previousAnchor, checkpointId).forEach((item, index) => { item.displayOrder = index; });
+  reindex(target);
+  if (previousAnchor !== nextAnchor) reindex(orderedAnchor(previousAnchor, checkpointId));
   return checkpoint;
 }
 export function addPersonFeature(chapter: ChapterDocument, personFeatureId: string, passageId: string) {
