@@ -1234,6 +1234,8 @@ test('audited runtime flags gate the unified editor per chapter before private c
 test('Wrangler binding declaration separates each private R2 concern and both queue DLQs', async () => {
   const config = await readFile(new URL('../../workers/content-api/wrangler.jsonc', import.meta.url), 'utf8');
   for (const binding of ['CONTENT_MEDIA', 'UPLOAD_QUARANTINE', 'CONTENT_SNAPSHOTS', 'RELEASE_ARTIFACTS', 'CONTENT_BACKUPS', 'MEDIA_JOB_ENVELOPES', 'MEDIA_JOBS', 'RELEASE_JOBS']) assert.match(config, new RegExp(`\\"${binding}\\"`));
+  assert.match(config, /"binding": "PUBLIC_READER_DELIVERY", "service": "ethicsandai", "entrypoint": "DeliveryIdentity"/);
+  assert.doesNotMatch(config, /"binding": "PUBLIC_READER"/);
   assert.match(config, /ai-ethics-media-jobs-dlq/);
   assert.match(config, /ai-ethics-release-jobs-dlq/);
   assert.doesNotMatch(config, /"consumers"\s*:/);

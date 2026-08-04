@@ -101,31 +101,56 @@ test('authoring view is revision-bound and status polling promotes only a pendin
   const view = await worker.fetch(new Request(`https://content.example/v1/chapters/${source.chapterId}/authoring-view`, { headers: gatewayHeaders() }), { CONTENT_DB: db });
   assert.equal(view.status, 200); const body = await view.json();
   assert.equal(body.revisionId, 'revision-base'); assert.equal(body.renderer.rendererVersion, 'chapter-renderer-v1');
-  let bindingCalled = false;
+  let bindingDocumentId = null;
   const status = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_1', { headers: gatewayHeaders() }), {
     CONTENT_DB: db,
-    PUBLIC_READER: { fetch: async (request) => { bindingCalled = request.url === command.public_url; return new Response('', { headers: { 'x-textbook-revision': 'revision_2', 'x-textbook-projection-hash': 'a'.repeat(64) } }); } }
+    PUBLIC_READER_DELIVERY: { getDeliveryIdentity: async (documentId) => {
+      bindingDocumentId = documentId;
+      return { documentId, publicPath: new URL(command.public_url).pathname, revisionId: 'revision_2', projectionHash: 'a'.repeat(64) };
+    } }
   });
   assert.equal(status.status, 200); assert.equal((await status.json()).deliveryStatus, 'verified');
-  assert.equal(bindingCalled, true);
+  assert.equal(bindingDocumentId, source.chapterId);
   assert.ok(db.statements.some((statement) => statement.sql.includes('UPDATE live_commit_delivery_status')));
 });
 
-test('delivery verification uses the reader Worker identity probe instead of a host-dependent static asset request', async () => {
+test('delivery verification uses the reader Worker RPC identity and rejects a mismatched public route', async () => {
   const command = { id: 'commit_public_probe', changeset_id: 'cs_probe', document_id: 'chapter_ch07', result_revision_id: 'revision_public', result_content_hash: 'b'.repeat(64), projection_id: 'projection_public', projection_hash: 'c'.repeat(64), public_url: 'https://reader.example/chapter/aristotle-character-and-ai-assisted-life/', state: 'committed', delivery_state: 'confirmation_pending', actor_id: 'actor_editor_1', client_id: 'editor', created_at: '2026-08-03T00:00:00Z', committed_at: '2026-08-03T00:00:00Z', status_expires_at: '2099-08-04T00:00:00Z' };
   const db = fakeDb((sql) => sql.includes('FROM live_commit_commands') ? command : null);
-  let probeCalls = 0;
+  let rpcCalls = 0;
   const response = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_public_probe', { headers: gatewayHeaders() }), {
     CONTENT_DB: db,
-    PUBLIC_READER: { fetch: async (request) => {
-      probeCalls += 1;
-      assert.equal(request.url, command.public_url);
-      assert.equal(request.headers.get('x-textbook-delivery-probe'), 'v1');
-      return new Response(null, { status: 204, headers: { 'x-content-revision': command.result_revision_id, 'x-content-projection-hash': command.projection_hash } });
+    PUBLIC_READER_DELIVERY: { getDeliveryIdentity: async (documentId) => {
+      rpcCalls += 1;
+      assert.equal(documentId, command.document_id);
+      return { documentId, publicPath: new URL(command.public_url).pathname, revisionId: command.result_revision_id, projectionHash: command.projection_hash };
     } },
   });
   const responseText = await response.text();
   assert.equal(response.status, 200, responseText);
   assert.equal(JSON.parse(responseText).deliveryStatus, 'verified');
-  assert.equal(probeCalls, 1);
+  assert.equal(rpcCalls, 1);
+
+  command.id = 'commit_wrong_route';
+  const wrongRoute = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_wrong_route', { headers: gatewayHeaders() }), {
+    CONTENT_DB: db,
+    PUBLIC_READER_DELIVERY: { getDeliveryIdentity: async (documentId) => ({ documentId, publicPath: '/chapter/not-the-command-route/', revisionId: command.result_revision_id, projectionHash: command.projection_hash }) },
+  });
+  assert.equal(wrongRoute.status, 202);
+  assert.equal((await wrongRoute.json()).deliveryStatus, 'confirmation_pending');
+});
+
+test('delivery verification retains the HTTP reader probe as a local fallback', async () => {
+  const command = { id: 'commit_http_fallback', changeset_id: 'cs_fallback', document_id: 'chapter_ch07', result_revision_id: 'revision_http', result_content_hash: 'b'.repeat(64), projection_id: 'projection_http', projection_hash: 'd'.repeat(64), public_url: 'https://reader.example/chapter/aristotle-character-and-ai-assisted-life/', state: 'committed', delivery_state: 'confirmation_pending', actor_id: 'actor_editor_1', client_id: 'editor', created_at: '2026-08-03T00:00:00Z', committed_at: '2026-08-03T00:00:00Z', status_expires_at: '2099-08-04T00:00:00Z' };
+  const db = fakeDb((sql) => sql.includes('FROM live_commit_commands') ? command : null);
+  const response = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_http_fallback', { headers: gatewayHeaders() }), {
+    CONTENT_DB: db,
+    PUBLIC_READER: { fetch: async (request) => {
+      assert.equal(request.url, command.public_url);
+      assert.equal(request.headers.get('x-textbook-delivery-probe'), 'v1');
+      return new Response(null, { status: 204, headers: { 'x-content-revision': command.result_revision_id, 'x-content-projection-hash': command.projection_hash } });
+    } },
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).deliveryStatus, 'verified');
 });

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import worker, { injectPublicProjection } from "../../workers/site/src/index.mjs";
+import worker, { getReaderDeliveryIdentity, injectPublicProjection } from "../../workers/site/src/index.mjs";
 
 const route = { documentId: "chapter_ch07" };
 const projection = { documentId: "chapter_ch07", revisionId: "revision_live", projectionId: "projection_live", projectionHash: "a".repeat(64), html: '<p id="ch07-p0001">Live prose.</p>', prompts: [{ checkpointId: "checkpoint_live" }] };
@@ -30,6 +30,43 @@ test("site Worker serves verified projection for every allowlisted chapter witho
   assert.equal(response.headers.get("x-content-revision"), "revision_live");
   assert.equal(response.headers.get("x-content-projection"), "projection_live");
   assert.match(await response.text(), /Live prose/);
+});
+
+test("reader delivery RPC identity binds an allowlisted document to its exact public route and projection", async () => {
+  const env = {
+    ASSETS: { fetch: async (request) => {
+      assert.equal(new URL(request.url).pathname, "/chapter/aristotle-character-and-ai-assisted-life/");
+      assert.equal(request.headers.get("accept"), "text/html");
+      return new Response(staticHtml, { headers: { "content-type": "text/html; charset=utf-8" } });
+    } },
+    PUBLIC_PROJECTION: { fetch: async (request) => {
+      assert.equal(new URL(request.url).pathname, "/v1/public/chapters/chapter_ch07");
+      return Response.json(projection);
+    } },
+  };
+  assert.deepEqual(await getReaderDeliveryIdentity(env, "chapter_ch07"), {
+    documentId: "chapter_ch07",
+    slug: "aristotle-character-and-ai-assisted-life",
+    publicPath: "/chapter/aristotle-character-and-ai-assisted-life/",
+    revisionId: "revision_live",
+    projectionId: "projection_live",
+    projectionHash: projection.projectionHash,
+  });
+  assert.equal(await getReaderDeliveryIdentity(env, "chapter_unknown"), null);
+});
+
+test("reader delivery RPC refuses to attest a missing or unrenderable chapter shell", async () => {
+  for (const assetResponse of [
+    new Response("missing", { status: 404, headers: { "content-type": "text/html" } }),
+    new Response("not html", { headers: { "content-type": "text/plain" } }),
+    new Response("<main>no public projection boundary</main>", { headers: { "content-type": "text/html" } }),
+  ]) {
+    const identity = await getReaderDeliveryIdentity({
+      ASSETS: { fetch: async () => assetResponse.clone() },
+      PUBLIC_PROJECTION: { fetch: async () => Response.json(projection) },
+    }, "chapter_ch07");
+    assert.equal(identity, null);
+  }
 });
 
 test("delivery identity probe verifies the deployed chapter asset can render the immutable projection", async () => {
@@ -112,8 +149,12 @@ test("site Worker proxies immutable public media without touching static assets"
 
 test("production Site Worker has no D1 binding and uses the internal projection service", async () => {
   const config = JSON.parse(await readFile(new URL("../../wrangler.jsonc", import.meta.url), "utf8"));
+  assert.equal(config.main, "workers/site/src/worker.mjs");
   assert.equal(config.assets.binding, "ASSETS");
   assert.equal(config.assets.run_worker_first, true);
   assert.equal(config.d1_databases, undefined);
   assert.deepEqual(config.services, [{ binding: "PUBLIC_PROJECTION", service: "ai-ethics-public-projection" }]);
+  const wrapper = await readFile(new URL("../../workers/site/src/worker.mjs", import.meta.url), "utf8");
+  assert.match(wrapper, /class DeliveryIdentity extends WorkerEntrypoint/);
+  assert.match(wrapper, /getDeliveryIdentity\(documentId\)/);
 });
