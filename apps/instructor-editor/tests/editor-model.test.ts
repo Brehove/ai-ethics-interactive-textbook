@@ -34,6 +34,21 @@ test("checkpoints can be reordered at one anchor and moved to another passage", 
   assert.deepEqual(chapter.checkpoints.filter((item) => item.passageId === firstAnchor).map((item) => item.displayOrder).sort(), [0]);
 });
 
+test("an unchanged checkpoint position remains stable when persisted orders are sparse", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const first = chapter.checkpoints[0];
+  chapter.checkpoints = [
+    { ...structuredClone(first), checkpointId: "checkpoint_sparse_first", displayOrder: 4, title: "First" },
+    { ...structuredClone(first), checkpointId: "checkpoint_sparse_second", displayOrder: 5, title: "Second" }
+  ];
+  moveCheckpoint(chapter, "checkpoint_sparse_first", first.passageId, 0);
+  const ordered = chapter.checkpoints
+    .filter((checkpoint) => checkpoint.passageId === first.passageId)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+  assert.deepEqual(ordered.map((checkpoint) => checkpoint.checkpointId), ["checkpoint_sparse_first", "checkpoint_sparse_second"]);
+  assert.deepEqual(ordered.map((checkpoint) => checkpoint.displayOrder), [0, 1]);
+});
+
 test("person features remain independent managed placements, never editable prose", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);
   const proseCount = chapter.body.length;

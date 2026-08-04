@@ -329,12 +329,12 @@ type ChapterBundleBase = {
 
 type DraftChapterBundle = ChapterBundleBase & {
   status: "draft" | "inReview";
-  checkpoints: PromptCheckpoint[]; // validated as 0..3 with unique fixed slots
+  checkpoints: PromptCheckpoint[]; // zero or many; identity and order are explicit
 };
 
 type PublishableChapterBundle = ChapterBundleBase & {
   status: "approved" | "published";
-  checkpoints: [PromptCheckpoint, PromptCheckpoint, PromptCheckpoint];
+  checkpoints: PromptCheckpoint[]; // zero or many; publish validation is cardinality-neutral
 };
 
 type ChapterBundle = DraftChapterBundle | PublishableChapterBundle;
@@ -2075,7 +2075,7 @@ Only one lane owns a file/module at a time. Contract changes require cross-lane 
 | API | Auth, scopes, revision guards, idempotency, errors, transactions, audit events |
 | Change-set isolation | Multi-document working snapshots, CAS merge/rebase, rejection, concurrent editor/agent sessions |
 | Security | Stored XSS, URL schemes, event handlers, SVG, SSRF, redirects, DNS rebinding, polyglots, oversized assets |
-| Prompt | Exactly three, ordered slots, valid anchors/excerpt hashes, supported response structure, one shared inline/sidebar source |
+| Prompt | Zero-to-many checkpoints, unique IDs, nonnegative anchor-local display ordering, valid anchors/excerpt hashes, supported response structure, one shared inline/sidebar source |
 | Media | MIME/hash/dimensions, rights, alt/caption, placement, responsive variants, GIF controls, captions/transcripts |
 | Editorial approval | Human approval bound to exact checkpoint/placement/version hashes and invalidated by semantic changes |
 | Embed | URL normalization, provider options, zero preactivation network, outage/deletion, CSP, fallback |
