@@ -864,6 +864,10 @@ test('checkpoint hashes are server-derived for every selectable anchor type', as
   embedChapter.body.push({ type: 'externalEmbed', blockId: 'b-standalone-embed', embedId: 'embed-standalone', anchorPassageId: 'p-standalone-embed', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'Outer caption', teachingUse: 'Outer use', displayPreset: 'reading', theme: 'auto', options: { provider: 'youtube', captions: true }, fallback: { title: 'Fallback title', summary: 'Fallback summary', linkLabel: 'Open source', accessedAt: '2026-08-03T00:00:00Z' }, adapterVersion: 'youtube-v1' });
   const embedResult = await applySemanticOperation(embedChapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('standalone-embed', 'p-standalone-embed') });
   assert.equal(embedResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Fallback title\nFallback summary\nOpen source'));
+  const mediaChapter = baseChapter();
+  mediaChapter.body.push({ type: 'mediaFigure', blockId: 'b-standalone-media', anchorPassageId: 'p-standalone-media', decorative: false, alt: 'Accessible portrait', caption: 'Portrait caption', credit: 'Projected credit', creditOverride: 'Authored credit', teachingUse: 'Invisible teaching note' });
+  const mediaResult = await applySemanticOperation(mediaChapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('standalone-media', 'p-standalone-media') });
+  assert.equal(mediaResult.chapter.checkpoints[0].passageExcerptHash, await sha256('Accessible portrait\nPortrait caption\nAuthored credit'));
 });
 
 test('malformed replacement bodies fail as structured validation errors before hash binding', async () => {

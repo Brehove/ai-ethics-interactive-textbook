@@ -242,6 +242,7 @@ export const checkpointExcerpt = (block) => {
     const fallback = block.fallback && typeof block.fallback === 'object' ? block.fallback : {};
     return [block.title || fallback.title || block.caption || 'External resource', block.summary || fallback.summary || block.teachingUse, block.linkLabel || fallback.linkLabel || 'Open canonical source'].filter((value) => typeof value === 'string' && value).join('\n');
   }
+  if (block.type === 'mediaFigure') return [block.decorative ? undefined : block.alt, block.caption, block.creditOverride || block.credit].filter((value) => typeof value === 'string' && value).join('\n');
   if (block.type === 'list' && Array.isArray(block.items)) return block.items.map(String).join('\n');
   if (typeof block.text === 'string') return block.text;
   if (typeof block.code === 'string') return block.code;
