@@ -289,9 +289,9 @@ function bindEvents() {
     setState("dirty");
   });
   app.querySelector<HTMLButtonElement>("[data-link]")?.addEventListener("click", () => {
-    const href = window.prompt("Link URL (https only)");
+    const href = window.prompt("Link URL (HTTPS, /internal-path, or #anchor)");
     if (!href) return;
-    if (!/^https:\/\//.test(href)) { setState("attention"); return; }
+    if (!/^https:\/\//.test(href) && !/^\/(?!\/)/.test(href) && !/^#[A-Za-z][A-Za-z0-9:_-]*$/.test(href)) { setState("attention"); return; }
     tiptapEditor?.chain().focus().extendMarkRange("link").setLink({ href }).run(); setState("dirty");
   });
   app.querySelectorAll<HTMLElement>("[data-managed-node]").forEach((node) => node.addEventListener("keydown", (event) => {

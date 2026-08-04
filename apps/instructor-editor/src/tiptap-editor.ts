@@ -40,14 +40,57 @@ const StableIds = Extension.create({
   addGlobalAttributes() { return [{ types: ["paragraph", "heading", "blockquote"], attributes: { blockId: { default: null, parseHTML: (element: HTMLElement) => element.getAttribute("data-block-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.blockId ? { "data-block-id": attributes.blockId } : {} }, passageId: { default: null, parseHTML: (element: HTMLElement) => element.getAttribute("data-passage-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.passageId ? { "data-passage-id": attributes.passageId } : {} } } }]; },
 });
 
-function textContent(text = "") { return text ? [{ type: "text", text }] : []; }
+type InlineMark = { type: "bold" | "italic" | "underline" | "link"; attrs?: { href: string } };
+type InlineNode = { type: "text"; text: string; marks?: InlineMark[] };
+
+const inlineToken = /\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/)|#)[^\s)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|\+\+([^+]+)\+\+/g;
+
+/** Convert the contract's safe inline-Markdown subset into visible Tiptap marks. */
+export function inlineContent(text = "", inherited: InlineMark[] = []): InlineNode[] {
+  if (!text) return [];
+  const nodes: InlineNode[] = [];
+  let cursor = 0;
+  // Recursion handles combined marks inside link labels. Each level therefore
+  // needs its own regex cursor rather than sharing the module-level instance.
+  const tokenizer = new RegExp(inlineToken.source, "g");
+  for (let match = tokenizer.exec(text); match; match = tokenizer.exec(text)) {
+    if (match.index > cursor) nodes.push({ type: "text", text: text.slice(cursor, match.index), ...(inherited.length ? { marks: inherited } : {}) });
+    if (match[1] !== undefined && match[2] !== undefined) nodes.push(...inlineContent(match[1], [...inherited, { type: "link", attrs: { href: match[2] } }]));
+    else if (match[3] !== undefined) nodes.push(...inlineContent(match[3], [...inherited, { type: "bold" }]));
+    else if (match[4] !== undefined) nodes.push(...inlineContent(match[4], [...inherited, { type: "italic" }]));
+    else if (match[5] !== undefined) nodes.push(...inlineContent(match[5], [...inherited, { type: "underline" }]));
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < text.length) nodes.push({ type: "text", text: text.slice(cursor), ...(inherited.length ? { marks: inherited } : {}) });
+  return nodes;
+}
+
+const inlineChildren = (node: Record<string, unknown>) => Array.isArray(node.content) ? node.content as Record<string, unknown>[] : [];
+
+/** Serialize visual Tiptap marks back to the same safe contract syntax. */
+export function inlineMarkdown(content: Record<string, unknown>[] = []): string {
+  return content.map((node) => {
+    if (node.type === "hardBreak") return "\n";
+    if (node.type !== "text") return inlineMarkdown(inlineChildren(node));
+    let value = String(node.text ?? "");
+    const marks = Array.isArray(node.marks) ? node.marks as Array<Record<string, unknown>> : [];
+    for (const type of ["underline", "bold", "italic"] as const) {
+      if (marks.some((mark) => mark.type === type)) value = type === "underline" ? `++${value}++` : type === "bold" ? `**${value}**` : `*${value}*`;
+    }
+    const link = marks.find((mark) => mark.type === "link");
+    const href = String((link?.attrs as Record<string, unknown> | undefined)?.href ?? "");
+    if (link && (/^https:\/\//.test(href) || /^\/(?!\/)/.test(href) || /^#[A-Za-z][A-Za-z0-9:_-]*$/.test(href))) value = `[${value}](${href})`;
+    return value;
+  }).join("");
+}
+
 const isProse = (block: ChapterBlock): block is ProseBlock => ["paragraph", "heading", "blockquote", "list", "callout"].includes(block.type);
 function proseNode(block: ProseBlock) {
   const attrs = { blockId: block.blockId, passageId: blockPassage(block) || null };
-  if (block.type === "heading") return { type: "heading", attrs: { ...attrs, level: Number(block.level ?? 2) }, content: textContent(block.text) };
-  if (block.type === "blockquote") return { type: "blockquote", attrs, content: [{ type: "paragraph", attrs, content: textContent(block.text) }] };
-  if (block.type === "list") return { type: block.ordered ? "orderedList" : "bulletList", content: (block.items ?? []).map((item) => ({ type: "listItem", content: [{ type: "paragraph", attrs, content: textContent(item) }] })) };
-  return { type: "paragraph", attrs, content: textContent(block.text) };
+  if (block.type === "heading") return { type: "heading", attrs: { ...attrs, level: Number(block.level ?? 2) }, content: inlineContent(block.text) };
+  if (block.type === "blockquote") return { type: "blockquote", attrs, content: [{ type: "paragraph", attrs, content: inlineContent(block.text) }] };
+  if (block.type === "list") return { type: block.ordered ? "orderedList" : "bulletList", content: (block.items ?? []).map((item) => ({ type: "listItem", content: [{ type: "paragraph", attrs, content: inlineContent(item) }] })) };
+  return { type: "paragraph", attrs, content: inlineContent(block.text) };
 }
 
 function managedNodes(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
@@ -84,18 +127,17 @@ export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onCh
 
 export function serializeBody(json: Record<string, unknown>, previous: ChapterBlock[]): ChapterBlock[] {
   const previousById = new Map(previous.map((block) => [block.blockId, block])); const result: ChapterBlock[] = [];
-  const nestedText = (node: Record<string, unknown>): string => {
-    if (typeof node.text === "string") return node.text;
-    return (Array.isArray(node.content) ? node.content as Record<string, unknown>[] : []).map(nestedText).join("");
-  };
   const visit = (node: Record<string, unknown>) => {
     const content = Array.isArray(node.content) ? node.content as Record<string, unknown>[] : [];
     if (node.type === "managedNode") { const sourceBlockId = String(((node.attrs ?? {}) as Record<string, unknown>).sourceBlockId ?? ""); const preserved = previousById.get(sourceBlockId); if (preserved) result.push(structuredClone(preserved)); return; }
     if (node.type === "paragraph" || node.type === "heading" || node.type === "blockquote") {
-      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? previousById.get(blockId)?.passageId ?? newId("passage")); const text = content.map(nestedText).join("");
-      result.push(node.type === "heading" ? { type: "heading", blockId, sectionId: previousById.get(blockId)?.sectionId ?? newId("section"), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text } : { type: node.type as "paragraph" | "blockquote", blockId, passageId, text }); return;
+      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const previousBlock = previousById.get(blockId); const passageId = String(attrs.passageId ?? previousBlock?.passageId ?? newId("passage")); const text = node.type === "blockquote" ? inlineMarkdown(inlineChildren(content[0] ?? {})) : inlineMarkdown(content);
+      if (node.type === "heading") result.push({ type: "heading", blockId, sectionId: previousBlock?.sectionId ?? newId("section"), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text });
+      else if (node.type === "paragraph" && previousBlock?.type === "callout") result.push({ ...previousBlock, passageId, text });
+      else result.push({ type: node.type as "paragraph" | "blockquote", blockId, passageId, text });
+      return;
     }
-    if (node.type === "bulletList" || node.type === "orderedList") { const firstParagraph = content[0]?.content as Record<string, unknown>[] | undefined; const attrs = (firstParagraph?.[0]?.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? newId("passage")); result.push({ type: "list", blockId, passageId, ordered: node.type === "orderedList", items: content.map((item) => ((item.content as Record<string, unknown>[] | undefined)?.[0]?.content as Record<string, unknown>[] | undefined)?.map((part) => String(part.text ?? "")).join("") ?? "") }); return;
+    if (node.type === "bulletList" || node.type === "orderedList") { const firstParagraph = content[0]?.content as Record<string, unknown>[] | undefined; const attrs = (firstParagraph?.[0]?.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? newId("passage")); result.push({ type: "list", blockId, passageId, ordered: node.type === "orderedList", items: content.map((item) => inlineMarkdown(inlineChildren(((item.content as Record<string, unknown>[] | undefined)?.[0] ?? {})))) }); return;
     }
     content.forEach(visit);
   };
