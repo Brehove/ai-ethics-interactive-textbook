@@ -21,10 +21,11 @@ test("static scholar fallback is inside the replaceable public projection bounda
 });
 
 test("the public admin route is redirect-only and the dedicated editor is the sole writer", async () => {
-  const [adminPage, editorMain, editorModel, editorWorker] = await Promise.all([
+  const [adminPage, editorMain, editorModel, tiptapEditor, editorWorker] = await Promise.all([
     readFile(new URL("../../src/pages/admin/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../../apps/instructor-editor/src/main.ts", import.meta.url), "utf8"),
     readFile(new URL("../../apps/instructor-editor/src/editor-model.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../apps/instructor-editor/src/tiptap-editor.ts", import.meta.url), "utf8"),
     readFile(new URL("../../apps/instructor-editor/src/worker.mjs", import.meta.url), "utf8"),
   ]);
 
@@ -51,6 +52,8 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.doesNotMatch(editorMain, /instructor-changeset-key/);
   assert.doesNotMatch(editorMain, /Legacy admin|future editor-engine adapter/);
   assert.match(editorModel, /chapter\.replaceDocument/);
+  assert.match(tiptapEditor, /window\.setTimeout\(\(\) => onManagedSelect\(placementId\), 0\)/);
+  assert.doesNotMatch(tiptapEditor, /=> onManagedSelect\(event\.detail\.placementId\)/);
   assert.match(editorWorker, /cache-control", "no-store"/);
 });
 
