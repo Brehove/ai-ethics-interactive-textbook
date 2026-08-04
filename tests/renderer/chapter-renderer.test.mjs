@@ -35,6 +35,7 @@ test("reader and editor projection share identical canonical markup", () => {
   const reader = renderChapterProjection(chapter, { context: "reader" });
   const editor = renderChapterProjection(chapter, { context: "editor" });
   assert.equal(normalizeRenderedHtml(reader.html), normalizeRenderedHtml(editor.html));
+  assert.deepEqual(reader.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
   assert.match(reader.html, /chapter-person/);
   assert.match(reader.html, /checkpoint_first/);
   assert.match(reader.html, /https:\/\/ethicsandai\.your-digital-life\.org\/media\/aristotle\.webp/);

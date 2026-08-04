@@ -26,9 +26,11 @@ test("checkpoints can be reordered at one anchor and moved to another passage", 
   assert.equal(moved.displayOrder, 0);
   assert.deepEqual(chapter.checkpoints.filter((item) => item.passageId === firstAnchor).map((item) => item.displayOrder).sort(), [0, 1]);
   const otherAnchor = chapter.body.map((block) => blockPassage(block)).find((passageId) => passageId && passageId !== firstAnchor)!;
-  moveCheckpoint(chapter, moved.checkpointId, otherAnchor, 0);
+  assert.throws(() => moveCheckpoint(chapter, moved.checkpointId, otherAnchor, 0), /excerpt hash/);
+  moveCheckpoint(chapter, moved.checkpointId, otherAnchor, 0, "b".repeat(64));
   assert.equal(moved.passageId, otherAnchor);
   assert.equal(moved.displayOrder, 0);
+  assert.equal(moved.passageExcerptHash, "b".repeat(64));
   assert.deepEqual(chapter.checkpoints.filter((item) => item.passageId === firstAnchor).map((item) => item.displayOrder).sort(), [0]);
 });
 

@@ -194,7 +194,7 @@ export function renderChapterProjection(chapter, options = {}) {
     title: chapter?.title || "Untitled chapter",
     stylesheetVersion: CHAPTER_RENDERER_STYLE_VERSION,
     html: orderedNodes.map((node) => renderOrderedNode(node, options)).join("\n"),
-    prompts: (chapter?.checkpoints || []).filter((item) => item.showInSidebar !== false).map((item) => ({ ...item })),
+    prompts: orderedNodes.filter((node) => node.kind === "checkpoint" && node.value.showInSidebar !== false).map((node) => ({ ...node.value })),
     orderedNodes,
   };
 }
