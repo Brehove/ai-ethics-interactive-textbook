@@ -50,7 +50,7 @@ Cloudflare R2 usage-based billing is active. The operating target remains **$5/m
 - Protected release workflow: GitHub Actions run `30905539939` — success
 - Final stale-draft correction: PR 67, merged commit `3586277516e63c72d6c594314b005107a8633679`
 - Production browser verification: Chapter 7 loaded the exact canonical `revision_c6bb0561dc5598fa89d9f35d`, three checkpoints, and two rendered Wikimedia media placements; the retired verification checkpoint was absent. Chapter 5 rendered the Thomas Aquinas person feature in both reader and editor.
-- Live MCP conformance: 5 tools discovered; chapter read, history, embed resolution, Save live, delivery verification, and restore-to-current-revision draft all succeeded.
+- Live MCP conformance: the final capability-scoped token exposed five exact tools—authoring view, history, media search, provider resolution, and live-commit status—and verified the existing restore/Save acceptance receipt against public delivery. Restore-as-draft and Save live had been performed with a separate narrowly scoped capability; the conformance run did not claim that the same five-tool token performed all seven distinct operations.
 
 ### 0.2 Instructor and agent outcomes now live
 
@@ -142,7 +142,7 @@ The system must therefore preserve the current public reader while replacing the
 
 - An instructor can edit a chapter in a browser and save a draft immediately.
 - An instructor can insert, edit, delete, move, and preview structured content blocks without touching Git.
-- An instructor can add a checkpoint when fewer than three exist, edit any checkpoint, assign it to the appropriate fixed Commit–Work–Reconcile slot, change the anchor passage, and preview both the inline trigger and the side-panel presentation.
+- An instructor can add, edit, reorder, move, or remove any number of checkpoints, assign optional pedagogical labels such as Commit, Work, or Reconcile, change the anchor passage, and preview both the inline trigger and side-panel presentation.
 - An instructor can upload media, paste a supported provider URL, write or revise alt text and captions, record rights, choose a display preset, and place the result relative to a stable passage.
 - The editor shows a semantic diff, validation results, impacted anchors, and every output projection before release.
 - Routine authoring never creates a Git commit.
@@ -397,7 +397,7 @@ The importer must not naïvely round-trip the corpus through a generic WYSIWYG e
 
 ### 5.3 Prompt checkpoints
 
-The migration baseline’s `docs/READING_RECORD_PROMPT_DESIGN.md` remains controlling: exactly three checkpoints per chapter, in a Commit–Work–Reconcile sequence. The editor supports “Add checkpoint” while a chapter has fewer than three; once three exist, the action is disabled with a clear explanation. A checkpoint may be edited, moved to a different passage, or replaced without changing the fixed count.
+The original migration baseline used exactly three Commit–Work–Reconcile checkpoints per chapter. That is a preserved migration fact, not a current cardinality rule. The implemented contract permits zero or many checkpoints. Commit, Work, Reconcile, or another pedagogical stage may be retained as an optional label; labels may repeat and do not determine validity. Stable ID, passage anchor, and explicit `displayOrder` determine identity and presentation.
 
 ```ts
 type PromptCheckpoint = {
@@ -405,8 +405,9 @@ type PromptCheckpoint = {
   legacyId?: string;                // e.g. opening-judgment
   passageId: string;
   passageExcerptHash: string;
-  slot: "commit" | "work" | "reconcile";
-  stage: string;
+  displayOrder: number;
+  slotLabel?: string;               // optional pedagogical label
+  stage?: string;
   strategy:
     | "initial-judgment"
     | "self-explanation"
@@ -426,12 +427,15 @@ type PromptCheckpoint = {
   prompt: string;
   guidance: string;
   responseStructure: "prose" | "movement-plus-prose";
+  minWords: number;
+  maxWords: number;
+  showInSidebar: boolean;
   rationale: string;
   editorialApprovalId?: string;
 };
 ```
 
-Draft validation permits zero to three checkpoints with no duplicate slot. Publish validation requires exactly one Commit, one Work, and one Reconcile checkpoint in that order. The inline checkpoint trigger and the side-panel checkpoint render from this single record. No duplicated sidebar copy is allowed. The first renderer migration must preserve the existing `ReadingRecord.astro` behavior, including page-memory-only responses and the hard three-checkpoint progression.
+Draft and publication validation permit any checkpoint count, including zero. IDs must be unique; every checkpoint must have nonempty content, a valid stable passage anchor, a unique display order, valid word bounds, and supported response structure. The inline checkpoint trigger and side-panel checkpoint render from this single record, and `showInSidebar` controls whether it appears in the panel. No duplicated sidebar copy is allowed. The renderer preserves page-memory-only student responses without enforcing the retired three-checkpoint progression.
 
 A checkpoint’s semantic approval binds to the checkpoint content hash, anchor passage ID, and anchor excerpt hash. Editing the prompt, guidance, rationale, strategy, response structure, anchor, or anchored prose invalidates that approval. Automated validation can enforce structure and completeness; an instructor performs the pedagogical review.
 
@@ -963,11 +967,7 @@ Draft saves are immediate API writes to the current isolated change set. Public 
 
 ### 7.2 Prompt Checkpoints tab
 
-The tab displays exactly three ordered cards:
-
-- Checkpoint 1 — Commit;
-- Checkpoint 2 — Work;
-- Checkpoint 3 — Reconcile.
+The tab displays the chapter’s current checkpoint cards in explicit display order. The list may be empty or contain any number of cards. Commit, Work, and Reconcile remain useful defaults and migration labels, not fixed slots or a maximum count.
 
 Each card includes:
 
@@ -989,8 +989,10 @@ Each card includes:
 
 Actions:
 
-- **Add checkpoint** when fewer than three exist;
+- **Add checkpoint** at any valid passage anchor;
 - **Edit**;
+- **Reorder**;
+- **Remove**;
 - **Move anchor**;
 - **Replace** while preserving an alias to the retired checkpoint ID;
 - **Restore** from revision history;
@@ -999,8 +1001,8 @@ Actions:
 
 The release gate checks:
 
-- exactly three checkpoints;
-- slots are Commit, Work, Reconcile in order;
+- checkpoint IDs and display orders are unique;
+- labels and stages are optional and may repeat;
 - all anchor passage IDs exist;
 - all anchor excerpt hashes are current or explicitly reapproved;
 - prompt fields satisfy the current design document;
@@ -1289,10 +1291,10 @@ Create four versioned Skills:
 #### `phil123-checkpoint-editor`
 
 1. Read the controlling checkpoint-design document.
-2. Inspect all three checkpoints as a sequence.
+2. Inspect the complete current checkpoint sequence, including an empty sequence.
 3. Inspect the proposed anchor passage and excerpt hash.
-4. Edit one checkpoint without duplicating inline/sidebar data.
-5. Validate Commit–Work–Reconcile structure and exactly-three count.
+4. Add, edit, reorder, move, or remove checkpoints without duplicating inline/sidebar data.
+5. Validate stable IDs, anchors, display order, word bounds, response structure, and nonempty fields without imposing a count or unique-label rule.
 6. Preview inline trigger, side panel, and exported reading record.
 7. Submit for instructor review.
 
@@ -2172,7 +2174,7 @@ The final cutover gate must prove at least the baseline counts below. If the bas
 - 123 explicit IDs;
 - 54 checkpoint anchors;
 - 37 curated media records/assets;
-- exactly three checkpoints for each chapter.
+- the historical baseline’s 54 checkpoint anchors, while permitting later revisions to contain any valid checkpoint count.
 
 No unexplained deletion, duplication, renumbering, or re-anchoring is accepted.
 
@@ -2296,7 +2298,7 @@ No Textbook Editor polish, broad provider work, or full API surface should prece
 The platform is complete when all statements below are true:
 
 1. Joel can open the Textbook Editor, edit chapter prose, save a draft, preview it, submit it, and publish an approved release without opening GitHub.
-2. Joel can open the Prompt Checkpoints tab, add a missing checkpoint, edit any of the three prompts, move its stable passage anchor, and preview the exact inline and side-panel presentations.
+2. Joel can open the Prompt Checkpoints tab, add, edit, reorder, move, or remove any number of prompts, change stable passage anchors, and preview the exact inline and side-panel presentations.
 3. Joel can upload a still image, GIF/WebP, short audio/video, PDF, or plain-text document; add high-quality alt/caption/transcript/teaching use/rights; place it precisely; and obtain polished web/mobile/print/offline output.
 4. Joel can paste a YouTube, Vimeo, or X URL and receive a structured, editable, click-to-load embed with an authored fallback, or create an instructor-authored rich link card for another URL.
 5. A scoped agent can perform every P0 draft operation through MCP/API and produce a reviewable semantic diff.

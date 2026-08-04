@@ -25,7 +25,7 @@ This plan is complete. The detailed material below is retained as the implementa
 | 3 — atomic commit/public projection | Complete | One-click Save creates an immutable revision, advances the guarded D1 head, materializes the projection, and verifies exact public delivery |
 | 4 — deep-link authentication | Complete | Dedicated editor origin, GitHub OAuth return state, same-chapter/passage deep links, Done return, CSRF/origin/session tests |
 | 5 — continuous authoring UI | Complete | Continuous chapter surface; formatted prose; contextual checkpoint, media, embed, and person-feature dialogs; whole-chapter paste/import |
-| 6 — history/API/MCP/Skills | Complete | Immutable version history, safe restore-as-draft, OpenAPI 1.7.1, five-tool hosted MCP surface, and versioned Codex Skills |
+| 6 — history/API/MCP/Skills | Complete | Immutable version history, safe restore-as-draft, OpenAPI 1.7.1, capability-scoped hosted MCP tools, and versioned Codex Skills |
 | 7 — verification | Complete | Contract, migration, API, security, accessibility, browser, visual, build, Cloudflare bundle, and public boundary gates passed |
 | 8 — canary/cutover | Complete | Chapters 5 and 7 passed reader/editor media and scholar-card QA; protected release cut over all 18 chapters to D1 |
 | 9 — full rollout/retirement | Complete | All public routes and editor deep links are live; routine content updates no longer require commits, PRs, validation clicks, or whole-site deploys |
