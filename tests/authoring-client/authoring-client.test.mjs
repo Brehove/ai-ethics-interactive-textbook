@@ -74,6 +74,38 @@ test("managed-media previews use an authenticated exact version-and-rights route
   assert.throws(() => client.getManagedMediaPreviewUrl("../unsafe", "version_1", "rights_cleared_1"), /mediaId is invalid/);
 });
 
+test("browser client exposes the complete reviewed media upload workflow without weakening CSRF", async () => {
+  const calls = [];
+  const client = createAuthoringClient({
+    baseUrl: "https://content.example/",
+    getCsrf: () => "csrf-media",
+    fetch: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return Response.json({ state: "ok" });
+    },
+  });
+  await client.createMediaReviewPackage({ rights: {}, editorial: {}, accessibility: {}, idempotencyKey: "review-key" });
+  await client.decideMediaReviewPackage("reviewpkg_123", { declarationHash: "a".repeat(64), decision: "cleared", comment: "Reviewed.", idempotencyKey: "decision-key" });
+  await client.requestMediaUpload({ filename: "diagram.png", mimeType: "image/png", bytes: 3, sha256: "b".repeat(64), reviewPackageId: "reviewpkg_123", idempotencyKey: "upload-key" });
+  await client.uploadMediaBytes("ticket_123", new Uint8Array([1, 2, 3]), { mimeType: "image/png", sha256: "b".repeat(64), uploadToken: "one-time-token" });
+  await client.getMediaJob("job_123");
+  await client.getMediaAsset("media_123");
+  assert.deepEqual(calls.map((call) => call.url), [
+    "https://content.example/v1/media-review-packages",
+    "https://content.example/v1/media-review-packages/reviewpkg_123:decide",
+    "https://content.example/v1/media:requestUpload",
+    "https://content.example/v1/media/uploads/ticket_123",
+    "https://content.example/v1/media/jobs/job_123",
+    "https://content.example/v1/media/media_123",
+  ]);
+  assert.equal(calls.slice(0, 4).every((call) => call.init.headers["x-editor-csrf"] === "csrf-media"), true);
+  assert.equal(calls[3].init.headers["content-type"], "image/png");
+  assert.equal(calls[3].init.headers["x-content-sha256"], "b".repeat(64));
+  assert.equal(calls[3].init.headers["x-upload-token"], "one-time-token");
+  assert.ok(calls[3].init.body instanceof Uint8Array);
+  assert.equal(calls[4].init.headers["x-editor-csrf"], undefined);
+});
+
 test("typed API errors retain status, code, and details", async () => {
   const client = createAuthoringClient({ baseUrl: "https://content.example", fetch: async () => Response.json({ error: { code: "REVISION_CONFLICT", message: "Stale", details: { current: "revision_2" } } }, { status: 409 }) });
   await assert.rejects(() => client.getLiveCommitStatus("commit_1"), (error) => error instanceof AuthoringApiError && error.status === 409 && error.code === "REVISION_CONFLICT" && error.details.current === "revision_2");

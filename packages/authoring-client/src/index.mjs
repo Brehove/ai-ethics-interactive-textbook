@@ -51,6 +51,23 @@ export function createAuthoringClient(options) {
       }
       return request(`/v1/media${params.size ? `?${params}` : ""}`, { method: "GET" }, signal);
     },
+    createMediaReviewPackage: (body, signal) => request(`/v1/media-review-packages`, { method: "POST", body: JSON.stringify(body) }, signal),
+    decideMediaReviewPackage: (reviewPackageId, body, signal) => request(`/v1/media-review-packages/${boundedSegment(reviewPackageId, "reviewPackageId")}:decide`, { method: "POST", body: JSON.stringify(body) }, signal),
+    requestMediaUpload: (body, signal) => request(`/v1/media:requestUpload`, { method: "POST", body: JSON.stringify(body) }, signal),
+    uploadMediaBytes: (ticketId, bytes, upload, signal) => {
+      if (!(bytes instanceof ArrayBuffer) && !ArrayBuffer.isView(bytes) && !(typeof Blob !== "undefined" && bytes instanceof Blob)) throw new TypeError("media bytes must be an ArrayBuffer, typed array, or Blob");
+      return request(`/v1/media/uploads/${boundedSegment(ticketId, "ticketId")}`, {
+        method: "PUT",
+        body: bytes,
+        headers: {
+          "content-type": upload.mimeType,
+          "x-content-sha256": upload.sha256,
+          "x-upload-token": upload.uploadToken,
+        },
+      }, signal);
+    },
+    getMediaJob: (jobId, signal) => request(`/v1/media/jobs/${boundedSegment(jobId, "jobId")}`, { method: "GET" }, signal),
+    getMediaAsset: (mediaId, signal) => request(`/v1/media/${boundedSegment(mediaId, "mediaId")}`, { method: "GET" }, signal),
     getManagedMediaPreviewUrl: (mediaId, mediaVersionId, rightsCaseId) => new URL(
       `/v1/media/${boundedSegment(mediaId, "mediaId")}/versions/${boundedSegment(mediaVersionId, "mediaVersionId")}/rights/${boundedSegment(rightsCaseId, "rightsCaseId")}:preview`,
       baseUrl,
