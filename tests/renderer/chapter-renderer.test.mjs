@@ -42,6 +42,22 @@ test("reader and editor projection share identical canonical markup", () => {
   assert.match(reader.html, /Nicomachean Ethics/);
 });
 
+test("checkpoint ID deterministically breaks shared anchor and display-order ties", () => {
+  const tied = {
+    ...chapter,
+    checkpoints: [
+      { ...chapter.checkpoints[0], checkpointId: "checkpoint_z", displayOrder: 1 },
+      { ...chapter.checkpoints[1], checkpointId: "checkpoint_a", displayOrder: 1 },
+    ],
+    managedPlacements: [],
+  };
+  const forward = renderChapterProjection(tied);
+  const reverse = renderChapterProjection({ ...tied, checkpoints: [...tied.checkpoints].reverse() });
+  assert.deepEqual(forward.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_a", "checkpoint_z"]);
+  assert.equal(forward.html, reverse.html);
+  assert.deepEqual(forward.prompts, reverse.prompts);
+});
+
 test("shared passage anchors emit each checkpoint and managed placement once", () => {
   const repeatedAnchorChapter = {
     ...chapter,

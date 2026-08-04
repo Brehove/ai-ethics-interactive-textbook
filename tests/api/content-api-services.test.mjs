@@ -1048,6 +1048,12 @@ test('live replacement rebinding refreshes every ordinary checkpoint excerpt has
   assert.equal(rebound.checkpoints[0].passageExcerptHash, await sha256('Revised live prose.'));
 });
 
+test('live replacement rebinding rejects malformed collections as a structured validation error', async () => {
+  const chapter = baseChapter();
+  chapter.checkpoints = { invalid: true };
+  await assert.rejects(() => rebindProjectedMediaCheckpointHashes({}, chapter), (error) => error instanceof ApiError && error.status === 422 && error.code === 'VALIDATION_FAILED' && error.details.errors.some((item) => item.code === 'CHECKPOINT_COLLECTION_INVALID'));
+});
+
 test('block.remove fails closed on anchored dependents and atomically reanchors when explicit', async () => {
   const chapter = baseChapter();
   chapter.checkpoints = [{ ...checkpoint('commit', 'p-work'), checkpointId: 'checkpoint-1' }];

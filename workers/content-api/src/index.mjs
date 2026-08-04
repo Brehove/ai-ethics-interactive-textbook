@@ -979,6 +979,8 @@ function stripTransientMediaPreviewFields(chapter) {
 // again before persistence.
 export async function rebindProjectedMediaCheckpointHashes(env, chapter) {
   const canonical = stripTransientMediaPreviewFields(chapter);
+  const shapeValidation = validateChapter(canonical);
+  if (!shapeValidation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', shapeValidation);
   const mediaAnchorNeedsProjection = (canonical.checkpoints || []).some((checkpoint) => {
     const block = (canonical.body || []).find((item) => item?.passageId === checkpoint.passageId)
       || (canonical.body || []).find((item) => item?.anchorPassageId === checkpoint.passageId);

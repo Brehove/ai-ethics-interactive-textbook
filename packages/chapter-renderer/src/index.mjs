@@ -47,6 +47,13 @@ const orderOf = (value, fallback = 0) => {
   return Number.isFinite(Number(candidate)) ? Number(candidate) : fallback;
 };
 
+const compareAnchoredNodes = (left, right) => {
+  const orderDifference = left.order - right.order;
+  if (orderDifference) return orderDifference;
+  if (left.kind === "checkpoint" && right.kind === "checkpoint") return String(left.value.checkpointId || "").localeCompare(String(right.value.checkpointId || ""));
+  return left.index - right.index;
+};
+
 const featureFromRelation = (relation, person, anchorPassageId, displayOrder) => ({
   placementId: relation.placementId || `placement_${relation.entityId}_${anchorPassageId}`,
   personId: relation.entityId,
@@ -112,12 +119,12 @@ export function projectOrderedChapter(chapter, options = {}) {
     const anchor = passageId(block);
     const ownsAnchor = Boolean(block?.passageId) || (anchor && !ownedPassages.has(anchor));
     const anchoredBefore = ownsAnchor && !emittedBefore.has(anchor) ? before.get(anchor) || [] : [];
-    anchoredBefore.sort((left, right) => left.order - right.order || left.index - right.index);
+    anchoredBefore.sort(compareAnchoredNodes);
     ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     if (anchor && ownsAnchor) emittedBefore.add(anchor);
     ordered.push({ kind: "block", value: block });
     const anchored = ownsAnchor && !emittedAfter.has(anchor) ? after.get(anchor) || [] : [];
-    anchored.sort((left, right) => left.order - right.order || left.index - right.index);
+    anchored.sort(compareAnchoredNodes);
     ordered.push(...anchored.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     if (anchor && ownsAnchor) emittedAfter.add(anchor);
   }
@@ -126,12 +133,12 @@ export function projectOrderedChapter(chapter, options = {}) {
   for (const anchor of unmatchedAnchors) {
     if (!emittedBefore.has(anchor)) {
       const anchoredBefore = before.get(anchor) || [];
-      anchoredBefore.sort((left, right) => left.order - right.order || left.index - right.index);
+      anchoredBefore.sort(compareAnchoredNodes);
       ordered.push(...anchoredBefore.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     }
     if (!emittedAfter.has(anchor)) {
       const anchoredAfter = after.get(anchor) || [];
-      anchoredAfter.sort((left, right) => left.order - right.order || left.index - right.index);
+      anchoredAfter.sort(compareAnchoredNodes);
       ordered.push(...anchoredAfter.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     }
   }
