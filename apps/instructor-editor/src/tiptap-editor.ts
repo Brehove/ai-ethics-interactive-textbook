@@ -5,6 +5,18 @@ import { renderOrderedNode } from "@ai-ethics/chapter-renderer";
 import { blockPassage, newId, type ChapterBlock, type ChapterDocument, type ProseBlock } from "./editor-model";
 
 type ManagedAttrs = { placementId: string; kind: string; html: string; sourceBlockId?: string };
+export type LegacyCuratedArtifact = {
+  artifactId: string; chapterId: string; anchorPassageId: string; title: string; alt: string; caption: string;
+  teachingUse: string; artifactType: string; src: string; width: number; height: number; sourceUrl: string;
+  creator: string; license: string; licenseUrl: string; reviewedRevision: string; modification: string;
+};
+
+const escapeAttribute = (value: unknown) => String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const escapeVisible = (value: unknown) => escapeAttribute(value).replaceAll("'", "&#039;");
+export function renderLegacyCuratedArtifact(artifact: LegacyCuratedArtifact) {
+  const license = artifact.licenseUrl ? `<a href="${escapeAttribute(artifact.licenseUrl)}" rel="license noreferrer">${escapeVisible(artifact.license)}</a>` : escapeVisible(artifact.license);
+  return `<figure class="inline-artifact legacy-curated-artifact" data-legacy-artifact-id="${escapeAttribute(artifact.artifactId)}"><a class="artifact-image-link" href="${escapeAttribute(artifact.sourceUrl)}" rel="noreferrer" aria-label="Open the Wikimedia Commons record for ${escapeAttribute(artifact.title)}"><img src="${escapeAttribute(artifact.src)}" width="${artifact.width}" height="${artifact.height}" alt="${escapeAttribute(artifact.alt)}" loading="lazy" decoding="async"></a><figcaption><p class="artifact-type">${escapeVisible(artifact.artifactType.replaceAll("-", " "))}</p><h3>${escapeVisible(artifact.title)}</h3>${artifact.caption ? `<p class="artifact-caption">${escapeVisible(artifact.caption)}</p>` : ""}<details><summary>Read the image</summary><div class="artifact-note"><p>${escapeVisible(artifact.teachingUse)}</p><p><strong>Source and rights.</strong> ${escapeVisible(artifact.creator)}. ${license}. <a href="${escapeAttribute(artifact.sourceUrl)}" rel="noreferrer">Commons record</a>, reviewed revision ${escapeVisible(artifact.reviewedRevision)}. Modified: ${escapeVisible(artifact.modification)}.</p></div></details></figcaption></figure>`;
+}
 
 const ManagedNode = Node.create({
   name: "managedNode", group: "block", atom: true, selectable: true, draggable: false,
@@ -122,14 +134,18 @@ function managedNodes(chapter: ChapterDocument, passageId: string, position: "be
   return [...placements, ...checkpoints];
 }
 
-export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void) {
+export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onChange: (body: ChapterBlock[]) => void, onManagedSelect: (placementId: string) => void, onPassageSelect: (passageId: string) => void, legacyArtifacts: readonly LegacyCuratedArtifact[] = []) {
   const content: Record<string, unknown>[] = [];
   for (const block of chapter.body) {
     if (!isProse(block)) {
       content.push({ type: "managedNode", attrs: { placementId: block.blockId, sourceBlockId: block.blockId, kind: block.type === "mediaFigure" ? "Media" : block.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: block }, { context: "editor", publicOrigin: location.origin }) } });
       continue;
     }
-    content.push(...managedNodes(chapter, blockPassage(block), "before")); content.push(proseNode(block)); content.push(...managedNodes(chapter, blockPassage(block), "after"));
+    const passage = blockPassage(block);
+    content.push(...managedNodes(chapter, passage, "before")); content.push(proseNode(block)); content.push(...managedNodes(chapter, passage, "after"));
+    for (const artifact of legacyArtifacts.filter((item) => item.anchorPassageId === passage)) {
+      content.push({ type: "managedNode", attrs: { placementId: `legacy_artifact_${artifact.artifactId}`, kind: "Media", html: renderLegacyCuratedArtifact(artifact) } });
+    }
   }
   const reportPassage = (active: Editor) => {
     const { $from } = active.state.selection;

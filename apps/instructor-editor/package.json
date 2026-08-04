@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "prebuild": "node ../../scripts/generate-editor-legacy-artifacts.mjs",
     "build": "vite build",
     "test": "tsx --test --test-reporter=spec tests/*.test.ts"
   },

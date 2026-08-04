@@ -12,6 +12,7 @@ import {
   type ChapterDocument,
 } from "./editor-model";
 import { mountTiptap } from "./tiptap-editor";
+import { legacyCuratedArtifacts } from "./generated-legacy-artifacts";
 import { CHAPTER_ROUTE_BY_SLUG } from "./chapter-route-manifest";
 import "./styles.css";
 
@@ -315,7 +316,7 @@ function render() {
 
 function bindEvents() {
   const documentNode = app.querySelector<HTMLElement>("[data-document]");
-  if (documentNode) tiptapEditor = mountTiptap(documentNode, chapter, (body) => { chapter.body = body; selectedPassage = nearestPassage(chapter, selectedPassage); if (saveState !== "saving") { saveState = "dirty"; saveRecovery(); const label = app.querySelector<HTMLElement>(".save-state"); if (label) { label.textContent = stateLabel(); label.className = "save-state save-state--dirty"; } } }, (placementId) => { inspector = placementId.startsWith("checkpoint_") ? { kind: "checkpoint", id: placementId } : { kind: "managed", id: placementId }; render(); }, (passageId) => { selectedPassage = nearestPassage(chapter, passageId); inspector = { kind: "chapter" }; const anchor = app.querySelector<HTMLElement>(".inspector__empty dd:last-child"); if (anchor) anchor.textContent = selectedPassage; });
+  if (documentNode) tiptapEditor = mountTiptap(documentNode, chapter, (body) => { chapter.body = body; selectedPassage = nearestPassage(chapter, selectedPassage); if (saveState !== "saving") { saveState = "dirty"; saveRecovery(); const label = app.querySelector<HTMLElement>(".save-state"); if (label) { label.textContent = stateLabel(); label.className = "save-state save-state--dirty"; } } }, (placementId) => { inspector = placementId.startsWith("checkpoint_") ? { kind: "checkpoint", id: placementId } : { kind: "managed", id: placementId }; render(); }, (passageId) => { selectedPassage = nearestPassage(chapter, passageId); inspector = { kind: "chapter" }; const anchor = app.querySelector<HTMLElement>(".inspector__empty dd:last-child"); if (anchor) anchor.textContent = selectedPassage; }, legacyCuratedArtifacts.filter((item) => item.chapterId === chapter.documentId));
   app.querySelectorAll<HTMLButtonElement>("[data-command]").forEach((button) => button.addEventListener("click", () => {
     const command = button.dataset.command ?? "";
     const commands = tiptapEditor?.chain().focus();
