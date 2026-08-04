@@ -100,6 +100,31 @@ const fakeDb = (resolve) => {
   };
 };
 
+test('resume returns only an open draft based on the current canonical revision', async () => {
+  const canonical = baseChapter();
+  canonical.revisionId = 'revision_current';
+  canonical.chapterVersion = 'revision_current';
+  const CONTENT_DB = fakeDb((sql, args) => {
+    if (sql.includes('FROM authority_registry WHERE document_id')) return { authority: 'd1' };
+    if (sql.includes('FROM idempotency_records')) return null;
+    if (sql.includes('FROM documents d JOIN document_revisions r')) return { id: 'chapter_ch07', current_revision_id: 'revision_current', content_hash: 'canonical-hash', content_text: JSON.stringify(canonical), r2_object_key: null, metadata_json: '{}' };
+    if (sql.includes('SELECT c.id, c.state, c.created_at')) {
+      assert.match(sql, /c\.state = 'open'/);
+      assert.match(sql, /w\.base_revision_id = \?/);
+      assert.deepEqual(args, ['actor_reviewer_1', 'chapter_ch07', 'revision_current']);
+      return { id: 'cs_current', state: 'open', created_at: '2026-08-04T00:00:00Z', base_revision_id: 'revision_current', version: 1, content_hash: 'canonical-hash', content_text: JSON.stringify(canonical) };
+    }
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/chapters/chapter_ch07/changesets', {
+    method: 'POST', headers: gatewayHeaders('content:write'), body: JSON.stringify({ title: 'Edit Chapter 7', resume: true, idempotencyKey: 'fresh-editor-load-key' })
+  }), { CONTENT_DB });
+  assert.equal(response.status, 200, await response.clone().text());
+  const body = await response.json();
+  assert.equal(body.resumed, true);
+  assert.equal(body.baseRevisionId, 'revision_current');
+});
+
 test('changeset read restores immutable submitted identity and recorded release decision after reload', async () => {
   const snapshotHash = 'a'.repeat(64);
   const CONTENT_DB = fakeDb((sql) => {

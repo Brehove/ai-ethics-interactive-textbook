@@ -45,6 +45,7 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.match(editorMain, /Embed/);
   assert.match(editorMain, /Person \/ Scholar/);
   assert.match(editorMain, /Revision history/);
+  assert.doesNotMatch(editorMain, /instructor-changeset-key/);
   assert.doesNotMatch(editorMain, /Legacy admin|future editor-engine adapter/);
   assert.match(editorModel, /chapter\.replaceDocument/);
   assert.match(editorWorker, /cache-control", "no-store"/);
