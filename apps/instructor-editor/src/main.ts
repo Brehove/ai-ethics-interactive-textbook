@@ -353,7 +353,7 @@ function bindEvents() {
   app.querySelector<HTMLButtonElement>("[data-more]")?.addEventListener("click", () => { moreOpen = !moreOpen; render(); });
   app.querySelector<HTMLButtonElement>("[data-replace]")?.addEventListener("click", () => { activeDialog = "replace"; moreOpen = false; render(); });
   app.querySelector<HTMLButtonElement>("[data-source]")?.addEventListener("click", () => { activeDialog = "source"; moreOpen = false; render(); });
-  app.querySelectorAll<HTMLButtonElement>("[data-dialog]").forEach((button) => button.addEventListener("click", async () => {
+  app.querySelectorAll<HTMLButtonElement>("button[data-dialog]").forEach((button) => button.addEventListener("click", async () => {
     activeDialog = button.dataset.dialog as typeof activeDialog; render();
     if (activeDialog === "media" && dataSource) {
       try { await loadMediaLibrary(); }
