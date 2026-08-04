@@ -13,6 +13,8 @@ test("safe inline Markdown becomes visual Tiptap marks and round-trips", () => {
   assert.deepEqual(content.find((node) => node.text === "judgment")?.marks, [{ type: "bold" }]);
   assert.deepEqual(content.find((node) => node.text === "underline it")?.marks, [{ type: "underline" }]);
   assert.equal(inlineMarkdown(content), source);
+  assert.equal(inlineMarkdown(inlineContent("A ***combined judgment***.")), "A ***combined judgment***.");
+  assert.deepEqual(inlineContent("***both***").find((node) => node.text === "both")?.marks, [{ type: "bold" }, { type: "italic" }]);
 });
 
 test("serializer preserves visual formatting in paragraphs, quotations, and lists", () => {
@@ -37,6 +39,15 @@ test("callout identity and tone survive visual text editing", () => {
   assert.equal(saved?.type, "callout");
   assert.equal(saved?.text, "**New**");
   assert.equal(saved?.tone, "note");
+});
+
+test("serializer preserves every paragraph created inside a blockquote", () => {
+  const previous = [{ type: "blockquote" as const, blockId: "block_quote", passageId: "passage_quote", text: "Old" }];
+  const [saved] = serializeBody({ type: "doc", content: [{ type: "blockquote", attrs: { blockId: "block_quote", passageId: "passage_quote" }, content: [
+    { type: "paragraph", content: [{ type: "text", text: "First" }] },
+    { type: "paragraph", content: [{ type: "text", text: "Second", marks: [{ type: "italic" }] }] },
+  ] }] }, previous);
+  assert.equal(saved?.text, "First\n\n*Second*");
 });
 
 test("every editable inline string in the 18-chapter migration snapshot round-trips exactly", async () => {

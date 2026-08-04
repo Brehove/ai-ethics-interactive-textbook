@@ -43,7 +43,7 @@ const StableIds = Extension.create({
 type InlineMark = { type: "bold" | "italic" | "underline" | "link"; attrs?: { href: string } };
 type InlineNode = { type: "text"; text: string; marks?: InlineMark[] };
 
-const inlineToken = /\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/)|#)[^\s)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|\+\+([^+]+)\+\+/g;
+const inlineToken = /\[([^\]]+)\]\(((?:https:\/\/|\/(?!\/)|#)[^\s)]+)\)|\*\*\*([^*]+)\*\*\*|\*\*([^*]+)\*\*|\*([^*]+)\*|\+\+([^+]+)\+\+/g;
 
 /** Convert the contract's safe inline-Markdown subset into visible Tiptap marks. */
 export function inlineContent(text = "", inherited: InlineMark[] = []): InlineNode[] {
@@ -56,9 +56,10 @@ export function inlineContent(text = "", inherited: InlineMark[] = []): InlineNo
   for (let match = tokenizer.exec(text); match; match = tokenizer.exec(text)) {
     if (match.index > cursor) nodes.push({ type: "text", text: text.slice(cursor, match.index), ...(inherited.length ? { marks: inherited } : {}) });
     if (match[1] !== undefined && match[2] !== undefined) nodes.push(...inlineContent(match[1], [...inherited, { type: "link", attrs: { href: match[2] } }]));
-    else if (match[3] !== undefined) nodes.push(...inlineContent(match[3], [...inherited, { type: "bold" }]));
-    else if (match[4] !== undefined) nodes.push(...inlineContent(match[4], [...inherited, { type: "italic" }]));
-    else if (match[5] !== undefined) nodes.push(...inlineContent(match[5], [...inherited, { type: "underline" }]));
+    else if (match[3] !== undefined) nodes.push(...inlineContent(match[3], [...inherited, { type: "bold" }, { type: "italic" }]));
+    else if (match[4] !== undefined) nodes.push(...inlineContent(match[4], [...inherited, { type: "bold" }]));
+    else if (match[5] !== undefined) nodes.push(...inlineContent(match[5], [...inherited, { type: "italic" }]));
+    else if (match[6] !== undefined) nodes.push(...inlineContent(match[6], [...inherited, { type: "underline" }]));
     cursor = match.index + match[0].length;
   }
   if (cursor < text.length) nodes.push({ type: "text", text: text.slice(cursor), ...(inherited.length ? { marks: inherited } : {}) });
@@ -148,7 +149,7 @@ export function serializeBody(json: Record<string, unknown>, previous: ChapterBl
     const content = Array.isArray(node.content) ? node.content as Record<string, unknown>[] : [];
     if (node.type === "managedNode") { const sourceBlockId = String(((node.attrs ?? {}) as Record<string, unknown>).sourceBlockId ?? ""); const preserved = previousById.get(sourceBlockId); if (preserved) result.push(structuredClone(preserved)); return; }
     if (node.type === "paragraph" || node.type === "heading" || node.type === "blockquote") {
-      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const previousBlock = previousById.get(blockId); const passageId = String(attrs.passageId ?? previousBlock?.passageId ?? newId("passage")); const text = node.type === "blockquote" ? inlineMarkdown(inlineChildren(content[0] ?? {})) : inlineMarkdown(content);
+      const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const previousBlock = previousById.get(blockId); const passageId = String(attrs.passageId ?? previousBlock?.passageId ?? newId("passage")); const text = node.type === "blockquote" ? content.map((paragraph) => inlineMarkdown(inlineChildren(paragraph))).join("\n\n") : inlineMarkdown(content);
       if (node.type === "heading") result.push({ type: "heading", blockId, sectionId: previousBlock?.sectionId ?? newId("section"), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text });
       else if (node.type === "paragraph" && previousBlock?.type === "callout") result.push({ ...previousBlock, passageId, text });
       else result.push({ type: node.type as "paragraph" | "blockquote", blockId, passageId, text });
