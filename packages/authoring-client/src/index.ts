@@ -54,6 +54,12 @@ export interface AuthoringClient {
   approveChangeset(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   applyOperationBatch(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   searchMedia(query?: { q?: string; kind?: "image" | "audio" | "video" | "document"; rightsStatus?: "reviewRequired" | "cleared" | "blocked"; sha256?: string; limit?: number; cursor?: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  createMediaReviewPackage(request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  decideMediaReviewPackage(reviewPackageId: string, request: { declarationHash: string; decision: "cleared" | "blocked"; comment: string; idempotencyKey: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  requestMediaUpload(request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  uploadMediaBytes(ticketId: string, bytes: ArrayBuffer | ArrayBufferView | Blob, upload: { mimeType: string; sha256: string; uploadToken: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  getMediaJob(jobId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  getMediaAsset(mediaId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
   /**
    * An authenticated, editor-only image URL for one exact cleared media
    * version and rights decision. It is deliberately a view concern: callers

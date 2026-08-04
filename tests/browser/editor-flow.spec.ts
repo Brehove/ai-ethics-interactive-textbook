@@ -35,3 +35,11 @@ test("reader and editor expose keyboard-named landmarks and controls @a11y", asy
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toBeVisible();
 });
+
+test("media library presents a Pressbooks-style upload entry without exposing a second storage path", async ({ page }) => {
+  await page.goto(editor);
+  await page.getByRole("button", { name: "Media", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Insert media" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Upload new media" })).toBeVisible();
+  await expect(page.getByText(/safe derivatives|authenticated derivative/)).toBeVisible();
+});

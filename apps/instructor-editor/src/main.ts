@@ -38,7 +38,7 @@ let inspector: Inspector = { kind: "chapter" };
 let saveState: SaveState = "clean";
 let historyOpen = false;
 let moreOpen = false;
-let activeDialog: "checkpoint" | "person" | "media" | "embed" | "replace" | "source" | "leave" | null = null;
+let activeDialog: "checkpoint" | "person" | "media" | "mediaUpload" | "embed" | "replace" | "source" | "leave" | null = null;
 let lastSavedAt = "";
 let tiptapEditor: ReturnType<typeof mountTiptap> | null = null;
 let historyItems: Array<Record<string, unknown>> = [];
@@ -46,6 +46,14 @@ let csrfToken: string | undefined;
 let pendingCommitKey: string | null = null;
 let mediaItems: Array<Record<string, unknown>> = [];
 let personItems: Array<Record<string, unknown>> = [];
+let mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" };
+
+const MEDIA_MIME_LIMITS = new Map<string, number>([
+  ["image/png", 15 * 1024 * 1024], ["image/jpeg", 15 * 1024 * 1024], ["image/gif", 25 * 1024 * 1024], ["image/webp", 15 * 1024 * 1024],
+  ["audio/mpeg", 25 * 1024 * 1024], ["audio/wav", 25 * 1024 * 1024], ["audio/mp4", 25 * 1024 * 1024],
+  ["video/mp4", 25 * 1024 * 1024], ["video/webm", 25 * 1024 * 1024], ["application/pdf", 25 * 1024 * 1024], ["text/plain", 5 * 1024 * 1024],
+]);
+const MEDIA_EXTENSIONS = new Map<string, string>([["image/png", "png"], ["image/jpeg", "jpg"], ["image/gif", "gif"], ["image/webp", "webp"], ["audio/mpeg", "mp3"], ["audio/wav", "wav"], ["audio/mp4", "m4a"], ["video/mp4", "mp4"], ["video/webm", "webm"], ["application/pdf", "pdf"], ["text/plain", "txt"]]);
 
 const dataSource = apiOrigin
   ? createAuthoringClient({ baseUrl: apiOrigin, getCsrf: () => csrfToken })
@@ -182,6 +190,44 @@ async function sha256Text(value: string) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function sha256File(file: File) {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function normalizedMediaMime(file: File) {
+  if (MEDIA_MIME_LIMITS.has(file.type)) return file.type;
+  const extension = file.name.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "";
+  return ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", mp4: "video/mp4", webm: "video/webm", pdf: "application/pdf", txt: "text/plain" } as Record<string, string>)[extension] ?? "";
+}
+
+function sanitizedMediaFilename(file: File, mimeType: string) {
+  const extension = MEDIA_EXTENSIONS.get(mimeType);
+  if (!extension) throw new Error("Choose a supported PNG, JPEG, GIF, WebP, audio, video, PDF, or text file.");
+  const originalStem = file.name.replace(/\.[^.]*$/, "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  const stem = originalStem.replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 110) || "media";
+  return `${stem}.${extension}`;
+}
+
+async function waitForMediaJob(jobId: string, update: (message: string) => void) {
+  if (!dataSource) throw new Error("The content API is unavailable.");
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const job = await dataSource.getMediaJob(jobId);
+    const state = String(job.state ?? "unknown");
+    update(state === "queued" ? "Uploaded. Creating safe web derivatives…" : state === "processing" ? "Processing media and accessibility metadata…" : `Media job: ${state}`);
+    if (state === "ready") return job;
+    if (["failed", "rejected", "blocked"].includes(state)) throw new Error(`Media processing failed${job.error_code ? `: ${String(job.error_code)}` : "."}`);
+    await new Promise((resolve) => window.setTimeout(resolve, 3000));
+  }
+  throw new Error(`The upload is still processing. Its job ID is ${jobId}; reopen Media shortly to find the cleared item.`);
+}
+
+async function loadMediaLibrary() {
+  if (!dataSource) return;
+  const result = await dataSource.searchMedia({ rightsStatus: "cleared", limit: 50 });
+  mediaItems = Array.isArray(result.media) ? result.media as Array<Record<string, unknown>> : [];
+}
+
 function selectedBlock() {
   return chapter.body.find((block) => blockPassage(block) === selectedPassage) ?? chapter.body.find((block) => Boolean(block.blockId));
 }
@@ -248,8 +294,9 @@ function dialogHtml() {
   if (activeDialog === "person") return `<dialog open data-dialog><form data-person-form><header><h2>Add person feature</h2><button type="button" data-close aria-label="Close">×</button></header><p>Choose a frozen curated person feature; biography, portrait, and rights remain centralized.</p><label>Person<select name="personIndex" autofocus>${(personItems.length ? personItems : chapter.personFeatures).map((feature, index) => `<option value="${index}">${escapeText(String(feature.name))}</option>`).join("")}</select></label><p class="dialog-note">The thinker-card preset will appear after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit" ${(personItems.length || chapter.personFeatures.length) ? "" : "disabled"}>Add person feature</button></footer></form></dialog>`;
   if (activeDialog === "media") {
     const firstPreview = mediaItems.length ? managedMediaPreviewUrl(mediaItems[0]) : "";
-    return `<dialog open data-dialog><form data-media-form><header><h2>Insert media</h2><button type="button" data-close aria-label="Close">×</button></header><p>Choose a rights-cleared item from the shared library. The image below is the authenticated derivative that will appear on the editing canvas.</p>${mediaItems.length ? `<label>Media item<select name="mediaIndex" autofocus>${mediaItems.map((item, index) => `<option value="${index}">${escapeText(String(item.title ?? item.id ?? `Media ${index + 1}`))}</option>`).join("")}</select></label><figure class="media-picker-preview" data-media-picker-preview ${firstPreview ? "" : "hidden"}><img src="${escapeAttribute(firstPreview)}" alt="Selected managed media preview"><figcaption data-media-picker-caption>${escapeText(String(mediaItems[0].title ?? "Selected media"))}</figcaption></figure><p class="dialog-note" data-media-preview-unavailable ${firstPreview ? "hidden" : ""}>This cleared item has no browser-renderable derivative yet.</p>` : `<p class="dialog-note">${dataSource ? "Loading cleared media…" : "Connect the content API to browse cleared media."}</p>`}<label>Alt text<input name="alt" required></label><label>Caption<input name="caption" required></label><label>Teaching use<textarea name="teachingUse" rows="3" required></textarea></label><label>Display<select name="displayPreset"><option>narrow</option><option selected>reading</option><option>wide</option><option>bleed</option></select></label><p class="dialog-note">Placed after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit" ${mediaItems.length ? "" : "disabled"}>Insert media</button></footer></form></dialog>`;
+    return `<dialog open data-dialog><form data-media-form><header><h2>Insert media</h2><button type="button" data-close aria-label="Close">×</button></header><div class="dialog-split-action"><p>Choose a rights-cleared item from the shared library. The preview is the authenticated derivative that will appear on the editing canvas.</p><button type="button" data-upload-media ${dataSource ? "" : "disabled"}>Upload new media</button></div>${mediaItems.length ? `<label>Media item<select name="mediaIndex" autofocus>${mediaItems.map((item, index) => `<option value="${index}">${escapeText(String(item.title ?? item.id ?? `Media ${index + 1}`))}</option>`).join("")}</select></label><figure class="media-picker-preview" data-media-picker-preview ${firstPreview ? "" : "hidden"}><img src="${escapeAttribute(firstPreview)}" alt="Selected managed media preview"><figcaption data-media-picker-caption>${escapeText(String(mediaItems[0].title ?? "Selected media"))}</figcaption></figure><p class="dialog-note" data-media-preview-unavailable ${firstPreview ? "hidden" : ""}>This cleared item has no browser-renderable derivative yet.</p>` : `<p class="dialog-note">${dataSource ? "No cleared media is in the library yet. Upload the first item." : "Connect the content API to browse cleared media."}</p>`}<label>Alt text<input name="alt" value="${escapeAttribute(mediaPlacementDefaults.alt)}" required></label><label>Caption<input name="caption" value="${escapeAttribute(mediaPlacementDefaults.caption)}" required></label><label>Teaching use<textarea name="teachingUse" rows="3" required>${escapeText(mediaPlacementDefaults.teachingUse)}</textarea></label><label>Display<select name="displayPreset"><option>narrow</option><option selected>reading</option><option>wide</option><option>bleed</option></select></label><p class="dialog-note">Placed after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit" ${mediaItems.length ? "" : "disabled"}>Insert media</button></footer></form></dialog>`;
   }
+  if (activeDialog === "mediaUpload") return `<dialog open data-dialog class="media-upload-dialog"><form data-media-upload-form><header><h2>Upload new media</h2><button type="button" data-close aria-label="Close">×</button></header><p>Upload once, document rights and accessibility, then reuse the cleared item anywhere in the book. Originals remain private; the editor and reader use safe derivatives.</p><label>File<input name="file" type="file" accept="image/png,image/jpeg,image/gif,image/webp,audio/mpeg,audio/wav,audio/mp4,video/mp4,video/webm,application/pdf,text/plain" required autofocus></label><p class="dialog-note">PNG, JPEG, WebP up to 15 MB; GIF, audio, video, and PDF up to 25 MB; text up to 5 MB.</p><fieldset><legend>Rights and credit</legend><label>Rights basis<select name="rightsBasis"><option value="owned">I own this media</option><option value="licensed">Licensed for this use</option><option value="permission">Used with permission</option><option value="publicDomain">Public domain</option><option value="fairUse">Documented fair use</option></select></label><label>Creator<input name="creator" required></label><label>Source URL <span>(optional for owned media)</span><input name="sourceUrl" type="url" placeholder="https://"></label><label>License <span>(optional)</span><input name="license" placeholder="CC BY 4.0"></label><label>Attribution / credit line<input name="attribution" required></label></fieldset><fieldset><legend>Chapter presentation and accessibility</legend><label>Caption<input name="caption" required></label><label>Alt text<input name="alt" required></label><label>Teaching use<textarea name="teachingUse" rows="3" required></textarea></label><label>Placement intent<input name="placementIntent" value="Insert after the selected chapter passage." required></label><label>Transcript or equivalent <span>(required for audio/video)</span><textarea name="transcript" rows="5"></textarea></label><label>Transcript language<input name="language" value="en"></label><label>Video poster alt text <span>(required for video)</span><input name="posterAlt"></label></fieldset><div class="review-confirmations"><label><input name="rightsConfirmed" type="checkbox" required> I reviewed the source, license, permission, or fair-use basis and authorize this exact file for the textbook.</label><label><input name="accessibilityConfirmed" type="checkbox" required> I reviewed the alt text, caption, motion, and transcript requirements for this exact file.</label></div><p class="media-upload-status" data-media-upload-status role="status" aria-live="polite"></p><footer><button type="button" data-back-to-media>Back to library</button><button class="primary" type="submit">Review and upload</button></footer></form></dialog>`;
   if (activeDialog === "embed") return `<dialog open data-dialog><form data-embed-form><header><h2>Insert embed</h2><button type="button" data-close aria-label="Close">×</button></header><p>Paste a YouTube, Vimeo, X, Spotify, SoundCloud, Bluesky, or public HTTPS URL. The server resolves the provider; raw HTML is never accepted.</p><label>Canonical URL<input name="url" type="url" value="https://" required autofocus></label><label>Visible title<input name="title" required></label><label>Teaching use / fallback summary<textarea name="teachingUse" rows="3" required></textarea></label><p class="dialog-note">The published fallback and activation control will appear after <strong>${selectedPassage || "the selected passage"}</strong>.</p><footer><button type="button" data-close>Cancel</button><button type="submit">Insert embed</button></footer></form></dialog>`;
   if (activeDialog === "replace") return `<dialog open data-dialog><form data-replace-form><header><h2>Replace chapter</h2><button type="button" data-close aria-label="Close">×</button></header><p>Paste plain text for a safe local replacement preview. Saving remains the only live operation.</p><label>Chapter text<textarea name="body" rows="12" autofocus>${escapeText(chapter.body.map((block) => block.text ?? block.items?.join("\n") ?? "").join("\n\n"))}</textarea></label><footer><button type="button" data-close>Cancel</button><button type="button" data-apply-replacement>Apply local replacement</button></footer></form></dialog>`;
   if (activeDialog === "source") return `<dialog open data-dialog><form data-source-form><header><h2>Structured source</h2><button type="button" data-close aria-label="Close">×</button></header><p>Advanced contract-native editing for agents and precise repairs. Managed media, embeds, scholar cards, and checkpoint identities remain typed data rather than raw HTML.</p><label>Chapter JSON<textarea name="source" rows="18" spellcheck="false" autofocus>${escapeText(JSON.stringify(chapter, null, 2))}</textarea></label><footer><button type="button" data-close>Cancel</button><button type="button" data-apply-source>Apply to draft</button></footer></form></dialog>`;
@@ -309,7 +356,7 @@ function bindEvents() {
   app.querySelectorAll<HTMLButtonElement>("[data-dialog]").forEach((button) => button.addEventListener("click", async () => {
     activeDialog = button.dataset.dialog as typeof activeDialog; render();
     if (activeDialog === "media" && dataSource) {
-      try { const result = await dataSource.searchMedia({ rightsStatus: "cleared", limit: 50 }); mediaItems = Array.isArray(result.media) ? result.media as Array<Record<string, unknown>> : []; }
+      try { await loadMediaLibrary(); }
       catch (error) { console.error("Unable to load cleared media.", error); mediaItems = []; setState("attention"); return; }
       render();
     }
@@ -319,6 +366,12 @@ function bindEvents() {
       render();
     }
   }));
+  app.querySelector<HTMLButtonElement>("[data-upload-media]")?.addEventListener("click", () => { activeDialog = "mediaUpload"; render(); });
+  app.querySelector<HTMLButtonElement>("[data-back-to-media]")?.addEventListener("click", async () => {
+    activeDialog = "media";
+    try { await loadMediaLibrary(); } catch (error) { console.error("Unable to load cleared media.", error); }
+    render();
+  });
   app.querySelectorAll<HTMLButtonElement>("[data-restore-revision]").forEach((button) => button.addEventListener("click", async () => {
     if (!dataSource || !window.confirm("Restore this revision as a new draft? The live chapter will not change until you click Save.")) return;
     try {
@@ -375,12 +428,93 @@ function bindForms() {
       activeDialog = null; setState("dirty");
     } catch (error) { console.error("Unable to add the person feature.", error); setState("attention"); }
   });
+  app.querySelector<HTMLFormElement>("[data-media-upload-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    const fileValue = values.get("file");
+    const status = form.querySelector<HTMLElement>("[data-media-upload-status]");
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const update = (message: string, failed = false) => { if (status) { status.textContent = message; status.classList.toggle("danger", failed); } };
+    if (!dataSource || !(fileValue instanceof File) || fileValue.size < 1) { update("Choose a file before uploading.", true); return; }
+    const mimeType = normalizedMediaMime(fileValue);
+    const limit = MEDIA_MIME_LIMITS.get(mimeType);
+    if (!limit) { update("That file type is not supported.", true); return; }
+    if (fileValue.size > limit) { update(`That file exceeds the ${Math.round(limit / 1024 / 1024)} MB limit for its type.`, true); return; }
+    const transcript = String(values.get("transcript") ?? "").trim();
+    const language = String(values.get("language") ?? "en").trim();
+    const posterAlt = String(values.get("posterAlt") ?? "").trim();
+    const isAudioVideo = mimeType.startsWith("audio/") || mimeType.startsWith("video/");
+    if (isAudioVideo && (!transcript || !language)) { update("Audio and video require a substantive transcript or equivalent and a language.", true); return; }
+    if (mimeType.startsWith("video/") && !posterAlt) { update("Video requires poster alt text.", true); return; }
+    const sourceUrl = String(values.get("sourceUrl") ?? "").trim();
+    if (sourceUrl && !/^https:\/\//.test(sourceUrl)) { update("The source URL must begin with https://.", true); return; }
+    submit?.setAttribute("disabled", "");
+    try {
+      update("Hashing the exact file…");
+      const sha256 = await sha256File(fileValue);
+      const alt = String(values.get("alt") ?? "").trim();
+      const caption = String(values.get("caption") ?? "").trim();
+      const teachingUse = String(values.get("teachingUse") ?? "").trim();
+      const transcriptEquivalent = isAudioVideo ? { language, text: transcript } : undefined;
+      const reviewPackage = await dataSource.createMediaReviewPackage({
+        rights: {
+          basis: String(values.get("rightsBasis") ?? "owned"),
+          creator: String(values.get("creator") ?? "").trim(),
+          attribution: String(values.get("attribution") ?? "").trim(),
+          ...(sourceUrl ? { sourceUrl } : {}),
+          ...(String(values.get("license") ?? "").trim() ? { license: String(values.get("license")).trim() } : {}),
+        },
+        editorial: { teachingUse, placementIntent: String(values.get("placementIntent") ?? "").trim() },
+        accessibility: {
+          decorative: false,
+          altText: alt,
+          motionReview: mimeType === "image/gif" || mimeType.startsWith("video/") ? "passed" : "notApplicable",
+          ...(transcriptEquivalent ? { transcriptEquivalent } : {}),
+        },
+        idempotencyKey: crypto.randomUUID(),
+      });
+      update("Recording your exact rights and accessibility approval…");
+      await dataSource.decideMediaReviewPackage(String(reviewPackage.id), {
+        declarationHash: String(reviewPackage.declarationHash),
+        decision: "cleared",
+        comment: "Instructor reviewed and approved the exact rights, editorial, accessibility, motion, and transcript declarations in the browser editor.",
+        idempotencyKey: crypto.randomUUID(),
+      });
+      update("Requesting a bounded private upload…");
+      const uploadRequest: Record<string, unknown> = {
+        filename: sanitizedMediaFilename(fileValue, mimeType), mimeType, bytes: fileValue.size, sha256,
+        reviewPackageId: String(reviewPackage.id), idempotencyKey: crypto.randomUUID(),
+        ...(transcriptEquivalent ? { transcriptEquivalent: { provided: true, ...transcriptEquivalent } } : {}),
+        ...(mimeType.startsWith("video/") ? { poster: { provided: true, alt: posterAlt } } : {}),
+      };
+      const ticket = await dataSource.requestMediaUpload(uploadRequest);
+      const upload = ticket.upload as Record<string, unknown>;
+      update("Uploading to private quarantine…");
+      await dataSource.uploadMediaBytes(String(ticket.ticketId), await fileValue.arrayBuffer(), { mimeType, sha256, uploadToken: String(upload.token) });
+      const ready = await waitForMediaJob(String(ticket.jobId), (message) => update(message));
+      const mediaId = String(ready.media_id ?? "");
+      const mediaVersionId = String(ready.media_version_id ?? "");
+      const rightsCaseId = String(ready.rights_case_id ?? "");
+      if (!mediaId || !mediaVersionId || !rightsCaseId || ready.rights_status !== "cleared") throw new Error("Processing finished without a cleared, placement-ready media version.");
+      const asset = await dataSource.getMediaAsset(mediaId);
+      const item = { id: mediaId, title: asset.title ?? fileValue.name, media_version_id: mediaVersionId, rights_case_id: rightsCaseId, rights_status: "cleared", detected_mime: mimeType };
+      mediaItems = [item, ...mediaItems.filter((candidate) => candidate.id !== mediaId)];
+      mediaPlacementDefaults = { alt, caption, teachingUse };
+      activeDialog = "media";
+      render();
+    } catch (error) {
+      console.error("Unable to upload media.", error);
+      update(error instanceof Error ? error.message : "The media upload failed.", true);
+      submit?.removeAttribute("disabled");
+    }
+  });
   app.querySelector<HTMLFormElement>("[data-media-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault(); const values = new FormData(event.currentTarget); const item = mediaItems[Number(values.get("mediaIndex"))]; const anchor = selectedBlock();
     if (!item || !anchor || !dataSource) { setState("attention"); return; }
     const placement = { mediaId: String(item.id), mediaVersionId: String(item.media_version_id), rightsCaseId: String(item.rights_case_id), anchorPassageId: selectedPassage, decorative: false, alt: String(values.get("alt") ?? "").trim(), caption: String(values.get("caption") ?? "").trim(), teachingUse: String(values.get("teachingUse") ?? "").trim(), displayPreset: String(values.get("displayPreset") ?? "reading"), align: "center", animationPolicy: "clickToPlay", printPolicy: "poster", downloadable: false };
     if (!placement.alt || !placement.caption || !placement.teachingUse) { setState("attention"); return; }
-    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); activeDialog = null; setState("dirty");
+    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty");
   });
   app.querySelector<HTMLFormElement>("[data-embed-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault(); const values = new FormData(event.currentTarget); const url = String(values.get("url") ?? "").trim(); const title = String(values.get("title") ?? "").trim(); const teachingUse = String(values.get("teachingUse") ?? "").trim(); const anchor = selectedBlock();
