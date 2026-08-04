@@ -466,6 +466,7 @@ test('release-state audit accepts only a continuous published instructor-live-sa
   const active = expected.map((entry) => ({ ...entry, current_revision_id: entry.source_revision, current_content_hash: entry.normalized_snapshot_hash }));
   const chapter = active.find((entry) => entry.document_id === 'chapter_ch07');
   chapter.current_revision_id = 'revision_live_2'; chapter.current_content_hash = 'live-hash-2';
+  chapter.source_revision = 'revision_live_2'; chapter.normalized_snapshot_hash = 'live-hash-2';
   const lineage = [
     { id: 'revision_live_2', parent_revision_id: 'revision_live_1', content_hash: 'live-hash-2', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 0 },
     { id: 'revision_live_1', parent_revision_id: expected.find((entry) => entry.document_id === 'chapter_ch07').source_revision, content_hash: 'live-hash-1', metadata_json: JSON.stringify({ status: 'published', publicationMode: 'instructor-live-save' }), depth: 1 },

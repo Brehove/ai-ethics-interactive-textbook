@@ -1434,23 +1434,27 @@ async function auditReleaseState(request, env, identity, releaseId) {
   for (const [documentId, entry] of expectedById) {
     const current = activeById.get(documentId);
     if (!current) { mismatch('authority_missing', documentId, 'active', null); continue; }
-    for (const field of ['authority', 'normalized_snapshot_hash']) {
-      if ((entry[field] ?? null) !== (current[field] ?? null)) mismatch(field, documentId, entry[field] ?? null, current[field] ?? null);
-    }
+    if ((entry.authority ?? null) !== (current.authority ?? null)) mismatch('authority', documentId, entry.authority ?? null, current.authority ?? null);
     if (entry.authority === 'd1') {
-      for (const field of ['source_path', 'source_revision']) {
-        if ((entry[field] ?? null) !== (current[field] ?? null)) mismatch(field, documentId, entry[field] ?? null, current[field] ?? null);
-      }
+      if ((entry.source_path ?? null) !== (current.source_path ?? null)) mismatch('source_path', documentId, entry.source_path ?? null, current.source_path ?? null);
       const exactReleaseHead = current.current_revision_id === entry.source_revision && current.current_content_hash === entry.normalized_snapshot_hash;
-      if (!exactReleaseHead) {
+      if (exactReleaseHead) {
+        if (current.source_revision !== entry.source_revision) mismatch('source_revision', documentId, entry.source_revision, current.source_revision ?? null);
+        if (current.normalized_snapshot_hash !== entry.normalized_snapshot_hash) mismatch('normalized_snapshot_hash', documentId, entry.normalized_snapshot_hash, current.normalized_snapshot_hash ?? null);
+      } else {
         const liveAdvance = await verifiedLiveSaveLineage(env, documentId, entry.source_revision, current.current_revision_id);
-        if (liveAdvance && liveAdvance.currentContentHash === current.current_content_hash) liveAdvances.push({ documentId, ...liveAdvance });
+        const exactLiveAuthority = liveAdvance && liveAdvance.currentContentHash === current.current_content_hash
+          && current.source_revision === current.current_revision_id && current.normalized_snapshot_hash === current.current_content_hash;
+        if (exactLiveAuthority) liveAdvances.push({ documentId, ...liveAdvance });
         else {
           if (current.current_revision_id !== entry.source_revision) mismatch('canonical_revision', documentId, entry.source_revision, current.current_revision_id || null);
           if (current.current_content_hash !== entry.normalized_snapshot_hash) mismatch('canonical_hash', documentId, entry.normalized_snapshot_hash, current.current_content_hash || null);
+          if (current.source_revision !== current.current_revision_id) mismatch('authority_source_revision', documentId, current.current_revision_id || null, current.source_revision || null);
+          if (current.normalized_snapshot_hash !== current.current_content_hash) mismatch('authority_content_hash', documentId, current.current_content_hash || null, current.normalized_snapshot_hash || null);
         }
       }
     } else if (entry.authority === 'git') {
+      if ((entry.normalized_snapshot_hash ?? null) !== (current.normalized_snapshot_hash ?? null)) mismatch('normalized_snapshot_hash', documentId, entry.normalized_snapshot_hash ?? null, current.normalized_snapshot_hash ?? null);
       // The release contract addresses a chapter bundle directory while the
       // authoring registry addresses its canonical chapter.md file. Git
       // provenance may likewise be a commit ID rather than the normalized
@@ -2019,7 +2023,7 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
       WHERE release_id = ? AND document_id = ?`).bind(body.releaseId, item.documentId).first();
     if (releaseEntry?.authority !== 'd1' || releaseEntry.source_revision !== item.sourceRevision || releaseEntry.normalized_snapshot_hash !== item.normalizedSnapshotHash) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'The active release does not contain the exact requested D1 authority entry', { documentId: item.documentId });
     const current = await env.CONTENT_DB.prepare('SELECT authority, source_revision, normalized_snapshot_hash FROM authority_registry WHERE document_id = ? AND active = 1').bind(item.documentId).first();
-    if (liveAdvance && (current?.authority !== 'd1' || current.source_revision !== item.sourceRevision || current.normalized_snapshot_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'A code-only release may preserve a live-saved canonical head only when the existing D1 authority already matches the exact release snapshot', { documentId: item.documentId });
+    if (liveAdvance && (current?.authority !== 'd1' || current.source_revision !== chapter.current_revision_id || current.normalized_snapshot_hash !== chapter.current_content_hash)) throw new ApiError(409, 'RELEASE_AUTHORITY_MISMATCH', 'A code-only release may preserve a live-saved canonical head only when the active D1 authority matches that exact verified live head', { documentId: item.documentId });
     const revision = await env.CONTENT_DB.prepare('SELECT document_id, content_hash FROM document_revisions WHERE id = ?').bind(item.sourceRevision).first();
     if (revision && (revision.document_id !== item.documentId || revision.content_hash !== item.normalizedSnapshotHash)) throw new ApiError(409, 'REVISION_CONFLICT', 'Finalized revision ID already exists with conflicting content', { documentId: item.documentId });
     let publicProjection = null;
@@ -2080,7 +2084,7 @@ async function activateD1Authorities(request, env, identity, fixedDocumentId = n
           updated_by = excluded.updated_by, updated_at = excluded.updated_at`)
         .bind(item.documentId, item.sourceRevision, projection.id, projection.hash, CHAPTER_RENDERER_STYLE_VERSION, identity.actorId, changedAt));
     }
-    if (item.current?.authority !== 'd1' || item.current.source_revision !== item.sourceRevision || item.current.normalized_snapshot_hash !== item.normalizedSnapshotHash) {
+    if (!item.liveAdvance && (item.current?.authority !== 'd1' || item.current.source_revision !== item.sourceRevision || item.current.normalized_snapshot_hash !== item.normalizedSnapshotHash)) {
       statements.push(env.CONTENT_DB.prepare('UPDATE authority_registry SET active = 0, valid_until = ? WHERE document_id = ? AND active = 1').bind(changedAt, item.documentId));
       statements.push(env.CONTENT_DB.prepare(`INSERT INTO authority_registry
       (id, document_id, authority, source_path, source_revision, normalized_snapshot_hash, active, valid_from, created_at)
