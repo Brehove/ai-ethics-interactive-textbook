@@ -447,6 +447,7 @@ test('media reuse search is parameterized, bounded, paginated, and available to 
   assert.equal(body.page.nextCursor, '6');
   const query = CONTENT_DB.statements.find((item) => item.sql.includes('FROM media_assets a JOIN media_asset_versions'));
   assert.match(query.sql, /LOWER\(a\.title\) LIKE \? ESCAPE/);
+  assert.doesNotMatch(query.sql, /WHEN v\.detected_mime/);
   assert.doesNotMatch(query.sql, /Trolley/);
   assert.deepEqual(query.args.slice(-2), [3, 4]);
   const invalid = await worker.fetch(new Request('https://content.example/v1/media?limit=500', { headers }), { CONTENT_DB });
