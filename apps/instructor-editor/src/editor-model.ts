@@ -19,8 +19,11 @@ const orderedAnchor = (chapter: ChapterDocument, anchor: string, excludedId?: st
 ].sort((a, b) => {
   const orderDifference = a.order - b.order;
   if (orderDifference) return orderDifference;
-  if (a.kind === "checkpoint" && b.kind === "checkpoint") return a.item.checkpointId.localeCompare(b.item.checkpointId);
-  return a.index - b.index || a.sequence - b.sequence;
+  const kindDifference = a.sequence - b.sequence;
+  if (kindDifference) return kindDifference;
+  const leftId = a.kind === "checkpoint" ? a.item.checkpointId : a.item.placementId;
+  const rightId = b.kind === "checkpoint" ? b.item.checkpointId : b.item.placementId;
+  return leftId.localeCompare(rightId) || a.index - b.index;
 });
 export const nextCheckpointOrder = (chapter: ChapterDocument, anchor: string) => Math.max(-1, ...orderedAnchor(chapter, anchor).map((node) => node.order)) + 1;
 export function updateCheckpointDetails(checkpoint: Checkpoint, update: { title: string; prompt: string; guidance: string; stage?: string; trigger: string; strategy: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; showInSidebar: boolean; rationale: string }) {

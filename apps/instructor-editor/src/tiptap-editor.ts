@@ -129,8 +129,11 @@ export function managedNodeSequence(chapter: ChapterDocument, passageId: string,
   return [...checkpoints, ...placements].sort((a, b) => {
     const orderDifference = a.order - b.order;
     if (orderDifference) return orderDifference;
-    if (a.kind === "checkpoint" && b.kind === "checkpoint") return a.item.checkpointId.localeCompare(b.item.checkpointId);
-    return a.index - b.index || a.sequence - b.sequence;
+    const kindDifference = a.sequence - b.sequence;
+    if (kindDifference) return kindDifference;
+    const leftId = a.kind === "checkpoint" ? a.item.checkpointId : a.item.placementId;
+    const rightId = b.kind === "checkpoint" ? b.item.checkpointId : b.item.placementId;
+    return leftId.localeCompare(rightId) || a.index - b.index;
   });
 }
 
@@ -170,10 +173,11 @@ export function editorDocumentContent(chapter: ChapterDocument, legacyArtifacts:
       emittedAfter.add(passage);
     }
   }
-  const unmatchedAnchors = new Set([
+  const legacyPassageOrder = new Map((Array.isArray(chapter.passages) ? chapter.passages as ChapterBlock[] : []).map((passage, index) => [blockPassage(passage), index]));
+  const unmatchedAnchors = [...new Set([
     ...chapter.checkpoints.map((checkpoint) => checkpoint.passageId),
     ...chapter.managedPlacements.map((placement) => placement.anchorPassageId),
-  ].filter(Boolean));
+  ].filter(Boolean))].sort((left, right) => (legacyPassageOrder.get(left) ?? Number.MAX_SAFE_INTEGER) - (legacyPassageOrder.get(right) ?? Number.MAX_SAFE_INTEGER) || left.localeCompare(right));
   for (const passage of unmatchedAnchors) {
     if (!emittedBefore.has(passage)) {
       content.push(...managedNodes(chapter, passage, "before", publicOrigin));

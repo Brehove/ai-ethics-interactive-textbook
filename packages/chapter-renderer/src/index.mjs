@@ -50,8 +50,11 @@ const orderOf = (value, fallback = 0) => {
 const compareAnchoredNodes = (left, right) => {
   const orderDifference = left.order - right.order;
   if (orderDifference) return orderDifference;
-  if (left.kind === "checkpoint" && right.kind === "checkpoint") return String(left.value.checkpointId || "").localeCompare(String(right.value.checkpointId || ""));
-  return left.index - right.index;
+  const kindDifference = (left.kind === "checkpoint" ? 0 : 1) - (right.kind === "checkpoint" ? 0 : 1);
+  if (kindDifference) return kindDifference;
+  const leftId = left.kind === "checkpoint" ? left.value.checkpointId : left.value.placementId || left.value.personFeatureId;
+  const rightId = right.kind === "checkpoint" ? right.value.checkpointId : right.value.placementId || right.value.personFeatureId;
+  return String(leftId || "").localeCompare(String(rightId || "")) || left.index - right.index;
 };
 
 const featureFromRelation = (relation, person, anchorPassageId, displayOrder) => ({
@@ -128,8 +131,10 @@ export function projectOrderedChapter(chapter, options = {}) {
     ordered.push(...anchored.map(({ order: _order, index: _index, position: _position, ...node }) => node));
     if (anchor && ownsAnchor) emittedAfter.add(anchor);
   }
+  const legacyPassageOrder = new Map((Array.isArray(chapter?.passages) ? chapter.passages : []).map((passage, index) => [passage?.passageId, index]));
   const unmatchedAnchors = [...new Set([...before.keys(), ...after.keys()])]
-    .filter((anchor) => !emittedBefore.has(anchor) || !emittedAfter.has(anchor));
+    .filter((anchor) => !emittedBefore.has(anchor) || !emittedAfter.has(anchor))
+    .sort((left, right) => (legacyPassageOrder.get(left) ?? Number.MAX_SAFE_INTEGER) - (legacyPassageOrder.get(right) ?? Number.MAX_SAFE_INTEGER) || String(left).localeCompare(String(right)));
   for (const anchor of unmatchedAnchors) {
     if (!emittedBefore.has(anchor)) {
       const anchoredBefore = before.get(anchor) || [];

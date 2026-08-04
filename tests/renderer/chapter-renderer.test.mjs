@@ -49,11 +49,12 @@ test("checkpoint ID deterministically breaks shared anchor and display-order tie
       { ...chapter.checkpoints[0], checkpointId: "checkpoint_z", displayOrder: 1 },
       { ...chapter.checkpoints[1], checkpointId: "checkpoint_a", displayOrder: 1 },
     ],
-    managedPlacements: [],
+    managedPlacements: [{ ...chapter.managedPlacements[0], orderAtAnchor: 1 }],
   };
   const forward = renderChapterProjection(tied);
   const reverse = renderChapterProjection({ ...tied, checkpoints: [...tied.checkpoints].reverse() });
   assert.deepEqual(forward.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_a", "checkpoint_z"]);
+  assert.deepEqual(forward.orderedNodes.filter((node) => node.kind !== "block").map((node) => node.value.checkpointId || node.value.placementId), ["checkpoint_a", "checkpoint_z", "placement_aristotle"]);
   assert.equal(forward.html, reverse.html);
   assert.deepEqual(forward.prompts, reverse.prompts);
 });
@@ -84,6 +85,20 @@ test("sidebar prompts backed only by the legacy passages collection are retained
   const projection = renderChapterProjection(legacyPassageChapter);
   assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_legacy_only"]);
   assert.equal(projection.orderedNodes.at(-1).value.checkpointId, "checkpoint_legacy_only");
+});
+
+test("legacy-only prompt anchors follow legacy passage order rather than checkpoint storage order", () => {
+  const legacyPassageChapter = {
+    ...chapter,
+    passages: [{ passageId: "passage_legacy_first", text: "First." }, { passageId: "passage_legacy_second", text: "Second." }],
+    checkpoints: [
+      { checkpointId: "checkpoint_second", passageId: "passage_legacy_second", displayOrder: 0, title: "Second", prompt: "Second prompt.", showInSidebar: true },
+      { checkpointId: "checkpoint_first", passageId: "passage_legacy_first", displayOrder: 0, title: "First", prompt: "First prompt.", showInSidebar: true },
+    ],
+    managedPlacements: [],
+  };
+  const projection = renderChapterProjection(legacyPassageChapter);
+  assert.deepEqual(projection.prompts.map((prompt) => prompt.checkpointId), ["checkpoint_first", "checkpoint_second"]);
 });
 
 test("anchored managed blocks do not steal checkpoint placement from the owning passage", () => {

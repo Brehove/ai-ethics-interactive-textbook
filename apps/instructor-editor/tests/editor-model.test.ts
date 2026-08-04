@@ -75,8 +75,8 @@ test("editor checkpoint ties use the same stable ID order as the reader", () => 
     { ...structuredClone(template), checkpointId: "checkpoint_z", displayOrder: 1 },
     { ...structuredClone(template), checkpointId: "checkpoint_a", displayOrder: 1 },
   ];
-  chapter.managedPlacements = [];
-  assert.deepEqual(managedNodeSequence(chapter, template.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), ["checkpoint_a", "checkpoint_z"]);
+  chapter.managedPlacements = [{ placementId: "placement_tied", kind: "personFeature", contentId: "personfeature_aristotle", anchorPassageId: template.passageId, position: "after", orderAtAnchor: 1, displayPreset: "thinker-card" }];
+  assert.deepEqual(managedNodeSequence(chapter, template.passageId).map((node) => node.kind === "checkpoint" ? node.item.checkpointId : node.item.placementId), ["checkpoint_a", "checkpoint_z", "placement_tied"]);
   const unchanged = moveCheckpoint(chapter, "checkpoint_a", template.passageId, 0);
   assert.equal(unchanged.displayOrder, 1);
 });
@@ -140,6 +140,23 @@ test("editor retains checkpoints anchored only in the legacy passages collection
   assert.equal(nearestPassage(chapter, "passage_legacy_only"), "passage_legacy_only");
   const content = editorDocumentContent(chapter);
   assert.equal(content.some((node) => (node.attrs as Record<string, unknown> | undefined)?.placementId === "checkpoint_legacy_only"), true);
+});
+
+test("editor appends legacy-only checkpoints in legacy passage order", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  const template = chapter.checkpoints[0];
+  chapter.body = [];
+  chapter.passages = [
+    { type: "paragraph", blockId: "legacy_first", passageId: "passage_legacy_first", text: "First." },
+    { type: "paragraph", blockId: "legacy_second", passageId: "passage_legacy_second", text: "Second." },
+  ];
+  chapter.checkpoints = [
+    { ...structuredClone(template), checkpointId: "checkpoint_second", passageId: "passage_legacy_second", displayOrder: 0 },
+    { ...structuredClone(template), checkpointId: "checkpoint_first", passageId: "passage_legacy_first", displayOrder: 0 },
+  ];
+  chapter.managedPlacements = [];
+  const content = editorDocumentContent(chapter);
+  assert.deepEqual(content.map((node) => (node.attrs as Record<string, unknown> | undefined)?.placementId), ["checkpoint_first", "checkpoint_second"]);
 });
 
 test("person features remain independent managed placements, never editable prose", () => {
