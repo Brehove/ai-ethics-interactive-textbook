@@ -7,7 +7,7 @@
 - **Last updated:** 2026-08-04
 - **Target repository:** Brehove/ai-ethics-interactive-textbook
 - **Operating target:** At or below $5/month for Cloudflare infrastructure
-- **Completion baseline:** `origin/main` at `3586277516e63c72d6c594314b005107a8633679`
+- **Completion baseline:** `origin/main` at `f041b638db6206c4fec9aaa41fa13bc614913413`
 - **Final production scope:** Chapters 1–18
 - **Confidence:** High; exact production revisions, public projections, editor parity, scholar/media rendering, reader-editor continuity, and browser/agent publication were verified
 
@@ -57,12 +57,15 @@ Production browser acceptance confirmed:
 - Reader: `https://ethicsandai.your-digital-life.org`
 - Editor: `https://editor.ethicsandai.your-digital-life.org`
 - MCP: `https://mcp.ethicsandai.your-digital-life.org`
-- Release: `release_fbd24b22bd639ce4c290c701`
-- Reader Worker: `2d911f91-31b6-4ee0-a1bb-deab3dd1d2c3`
-- Content API: `40e3dc51-2a6f-4b10-a556-85ff89bf19ab`
-- Instructor editor: `f9e9edc3-403e-489b-b8a4-a77796c60056`
-- Release workflow: `30905539939`
-- Final application commit: `3586277516e63c72d6c594314b005107a8633679`
+- Release: `release_eaf83ab480c87235ddb35acc`, sequence 25
+- Candidate: `candidate_7456f60599709b8533a96d01`; manifest `b12ec90898a8ae8b5adbbc16039197cd3bb819d4744ee68a4b66d7ff7e366b0e`
+- Reader Worker: `7e8f8162-cf1f-4960-b252-f0794b1a0ee9` at 100% traffic
+- Content API: `f7f73e58-2b3f-4961-a8b5-cccce840779f`
+- Instructor editor: `b944c52f-0049-48ad-9a62-3e24463301b6`
+- Deployment receipt: `receipt_a6f67c6401eace78ec148d6a`; transaction `deployment_228ef47767a6764c4609ff78`
+- Release workflow: [30933681192](https://github.com/Brehove/ai-ethics-interactive-textbook/actions/runs/30933681192)
+- Final application commit: `f041b638db6206c4fec9aaa41fa13bc614913413` (PR 68)
+- Release audit: all 18 authority records and all 18 release documents verified; state `valid: true`
 
 Cloudflare R2 usage billing remains enabled with the operating target at **$5/month**. The $4 early-warning and $5 target alerts, quarterly restore/rollback exercise, provider-health checks, and routine cost review are ongoing operations rather than implementation gates.
 
