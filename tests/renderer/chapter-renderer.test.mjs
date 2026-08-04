@@ -58,6 +58,22 @@ test("shared passage anchors emit each checkpoint and managed placement once", (
   assert.equal((projection.html.match(/data-checkpoint-id=/g) || []).length, 2);
 });
 
+test("anchored managed blocks do not steal checkpoint placement from the owning passage", () => {
+  const mediaBeforeOwner = {
+    ...chapter,
+    body: [
+      { type: "mediaFigure", blockId: "block_media_a", anchorPassageId: "passage_a", caption: "Context image" },
+      chapter.body[0],
+      chapter.body[1],
+    ],
+  };
+  const nodes = projectOrderedChapter(mediaBeforeOwner);
+  const ids = nodes.map((node) => node.value.blockId || node.value.placementId || node.value.checkpointId);
+  assert.ok(ids.indexOf("block_media_a") < ids.indexOf("block_a"));
+  assert.ok(ids.indexOf("block_a") < ids.indexOf("checkpoint_first"));
+  assert.equal(nodes.filter((node) => node.kind === "checkpoint").length, 2);
+});
+
 test("semantic person relations do not implicitly create scholar cards", () => {
   const projection = renderChapterProjection({ ...chapter, managedPlacements: [], personFeatures: [], people: [{ personId: "aristotle", role: "mentioned", passageIds: ["passage_a"] }] });
   assert.doesNotMatch(projection.html, /chapter-person/);

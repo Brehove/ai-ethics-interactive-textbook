@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage } from "../src/editor-model";
 import { serializeBody } from "../src/tiptap-editor";
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
@@ -47,6 +47,18 @@ test("an unchanged checkpoint position remains stable when persisted orders are 
     .sort((a, b) => a.displayOrder - b.displayOrder);
   assert.deepEqual(ordered.map((checkpoint) => checkpoint.checkpointId), ["checkpoint_sparse_first", "checkpoint_sparse_second"]);
   assert.deepEqual(ordered.map((checkpoint) => checkpoint.displayOrder), [0, 1]);
+});
+
+test("checkpoint excerpts cover code and table anchors and prefer passage owners", () => {
+  const chapter = cloneChapter(DEMO_CHAPTER);
+  chapter.body = [
+    { type: "mediaFigure", blockId: "media_before", anchorPassageId: "passage_table", caption: "Context" },
+    { type: "table", blockId: "table_owner", passageId: "passage_table", columns: ["Claim", "Reason"], rows: [["A", "B"]] },
+    { type: "codeBlock", blockId: "code_owner", passageId: "passage_code", code: "const judgment = true;" },
+  ] as never;
+  assert.equal(checkpointAnchorBlock(chapter, "passage_table")?.blockId, "table_owner");
+  assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_table")), "Claim\nReason\nA\nB");
+  assert.equal(checkpointExcerpt(checkpointAnchorBlock(chapter, "passage_code")), "const judgment = true;");
 });
 
 test("person features remain independent managed placements, never editable prose", () => {

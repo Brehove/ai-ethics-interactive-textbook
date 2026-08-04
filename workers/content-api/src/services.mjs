@@ -236,6 +236,34 @@ const passageIds = (chapter) => new Set([
   ...(Array.isArray(chapter.body) ? chapter.body.flatMap((item) => [item?.passageId, item?.anchorPassageId]) : [])
 ].filter(Boolean));
 
+export const checkpointExcerpt = (block) => {
+  if (!block) return '';
+  if (typeof block.text === 'string') return block.text;
+  if (Array.isArray(block.items)) return block.items.map(String).join('\n');
+  if (typeof block.code === 'string') return block.code;
+  const tableCells = [
+    ...(Array.isArray(block.columns) ? block.columns : []),
+    ...(Array.isArray(block.rows) ? block.rows.flat() : [])
+  ];
+  if (tableCells.length) return tableCells.map(String).join('\n');
+  if (typeof block.sanitizedHtml === 'string') return block.sanitizedHtml;
+  return [block.caption, block.alt, block.teachingUse, block.title, block.summary, block.description].filter((value) => typeof value === 'string').join('\n');
+};
+
+const checkpointAnchorBlock = (chapter, passageId) => (chapter.body || []).find((block) => block?.passageId === passageId)
+  || (chapter.body || []).find((block) => block?.anchorPassageId === passageId)
+  || (chapter.passages || []).find((passage) => passage?.passageId === passageId);
+
+const checkpointExcerptHash = async (chapter, passageId) => sha256(checkpointExcerpt(checkpointAnchorBlock(chapter, passageId)));
+
+const bindCheckpointExcerptHashes = async (chapter) => {
+  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => ({
+    ...checkpoint,
+    passageExcerptHash: await checkpointExcerptHash(chapter, checkpoint.passageId)
+  })));
+  return chapter;
+};
+
 const normalizeCheckpoint = async (chapter, input, existing = null) => {
   rejectUnknown(input, ['checkpointId', 'legacyId', 'passageId', 'passageExcerptHash', 'displayOrder', 'slotLabel', 'slot', 'stage', 'strategy', 'title', 'trigger', 'prompt', 'guidance', 'responseStructure', 'minWords', 'maxWords', 'rationale', 'showInSidebar']);
   const slotLabel = input.slotLabel ?? input.slot;
@@ -250,12 +278,13 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   if (!Number.isInteger(input.minWords) || !Number.isInteger(input.maxWords) || input.minWords < 1 || input.maxWords > 1000 || input.minWords > input.maxWords) throw new ApiError(422, 'CHECKPOINT_RESPONSE_RANGE_INVALID', 'Checkpoint response word range is invalid');
   if (!existing && input.checkpointId !== undefined) throw new ApiError(422, 'CHECKPOINT_ID_SERVER_ASSIGNED', 'New checkpoint IDs are assigned by the server');
   if (existing && input.checkpointId !== undefined && input.checkpointId !== existing.checkpointId) throw new ApiError(422, 'CHECKPOINT_ID_IMMUTABLE', 'Checkpoint ID cannot be changed');
+  requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64);
   const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, passageId, displayOrder, slotLabel: slotLabel || null, title: input.title });
   return {
     checkpointId,
     ...(input.legacyId ? { legacyId: requireString(input.legacyId, 'checkpoint.legacyId', 200) } : {}),
     passageId,
-    passageExcerptHash: requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64),
+    passageExcerptHash: await checkpointExcerptHash(chapter, passageId),
     displayOrder,
     ...(slotLabel ? { slotLabel } : {}),
     ...(input.stage ? { stage: requireString(input.stage, 'checkpoint.stage', 120) } : {}),
@@ -671,7 +700,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
   } else if (operation.type === 'chapter.replaceDocument') {
     if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a structured document');
     if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
-    const replacement = structuredClone(operation.document);
+    const replacement = await bindCheckpointExcerptHashes(structuredClone(operation.document));
     const validation = validateChapter(replacement);
     if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', validation);
     return { chapter: replacement, contentHash: await sha256(replacement) };

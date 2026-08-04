@@ -9,6 +9,23 @@ export type ChapterDocument = Record<string, unknown> & { documentId: string; ch
 export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 export const cloneChapter = (chapter: ChapterDocument): ChapterDocument => structuredClone(chapter);
 export const blockPassage = (block: ChapterBlock) => String(block.passageId ?? block.anchorPassageId ?? "");
+export const checkpointExcerpt = (block?: ChapterBlock) => {
+  if (!block) return "";
+  if (typeof block.text === "string") return block.text;
+  if (Array.isArray(block.items)) return block.items.map(String).join("\n");
+  if (typeof block.code === "string") return block.code;
+  const tableCells = [
+    ...(Array.isArray(block.columns) ? block.columns : []),
+    ...(Array.isArray(block.rows) ? block.rows.flat() : []),
+  ];
+  if (tableCells.length) return tableCells.map(String).join("\n");
+  if (typeof block.sanitizedHtml === "string") return block.sanitizedHtml;
+  return [block.caption, block.alt, block.teachingUse, block.title, block.summary, block.description]
+    .filter((value): value is string => typeof value === "string")
+    .join("\n");
+};
+export const checkpointAnchorBlock = (chapter: ChapterDocument, passageId: string) => chapter.body.find((block) => block.passageId === passageId)
+  ?? chapter.body.find((block) => blockPassage(block) === passageId);
 export function nearestPassage(chapter: ChapterDocument, passageId?: string) {
   const available = chapter.body.map(blockPassage).filter(Boolean);
   if (passageId) {

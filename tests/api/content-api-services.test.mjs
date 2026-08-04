@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
+import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
 import worker, { releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
@@ -837,6 +837,21 @@ test('chapter replacement rejects empty or oversized optional checkpoint labels'
       { code: 'CHECKPOINT_STAGE_INVALID', path: 'checkpoints.0.stage' }
     ]);
   }
+});
+
+test('checkpoint hashes are server-derived for every selectable anchor type', async () => {
+  const chapter = baseChapter();
+  const table = { type: 'table', blockId: 'b-table', passageId: 'p-table', columns: ['Claim', 'Reason'], rows: [['A', 'B']] };
+  const code = { type: 'codeBlock', blockId: 'b-code', passageId: 'p-code', code: 'const judgment = true;' };
+  chapter.body.push(table, code);
+  let result = await applySemanticOperation(chapter, { type: 'checkpoint.upsert', checkpoint: checkpoint('table', 'p-table') });
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(table)));
+  const replacement = structuredClone(result.chapter);
+  replacement.checkpoints[0].passageId = 'p-code';
+  replacement.checkpoints[0].passageExcerptHash = '0'.repeat(64);
+  result = await applySemanticOperation(result.chapter, { type: 'chapter.replaceDocument', document: replacement });
+  assert.equal(result.chapter.checkpoints[0].passageExcerptHash, await sha256(checkpointExcerpt(code)));
+  assert.notEqual(result.chapter.checkpoints[0].passageExcerptHash, await sha256(''));
 });
 
 test('locked legacy anchorPassageId values satisfy checkpoint anchor validation', () => {
