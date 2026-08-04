@@ -22,6 +22,12 @@ test('D1 seed SQL keeps every statement below the remote import limit and makes 
     const lines = sql.trimEnd().split('\n');
     assert.ok(Math.max(...lines.map((line) => Buffer.byteLength(line, 'utf8'))) < 64 * 1024);
     assert.equal(lines.filter((line) => line.startsWith('INSERT OR IGNORE INTO document_revisions')).length, 18);
+    assert.equal(lines.filter((line) => line.startsWith('UPDATE authority_registry SET active = 0')).length, 18);
+    assert.equal(lines.filter((line) => line.startsWith("UPDATE authority_registry SET authority = 'git'")).length, 18);
+    assert.equal(lines.filter((line) => line.startsWith('INSERT OR IGNORE INTO authority_registry')).length, 18);
+    assert.match(sql, /authority = 'git'/);
+    assert.match(sql, /source_revision = '[^']+' AND NOT EXISTS \(SELECT 1 FROM authority_registry active_authority/);
+    assert.match(sql, /WHERE NOT EXISTS \(SELECT 1 FROM authority_registry/);
     assert.ok(lines.filter((line) => line.startsWith('UPDATE document_revisions SET content_text = content_text ||')).length > 18);
     for (const line of lines.filter((line) => line.startsWith('UPDATE document_revisions SET content_text = content_text ||'))) {
       assert.match(line, /AND length\(content_text\) = \d+;$/);
