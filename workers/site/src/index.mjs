@@ -23,9 +23,18 @@ const publicProjection = async (env, documentId) => {
 // the live immutable projection the reader would render there.
 export const getReaderDeliveryIdentity = async (env, documentId) => {
   const route = chapterByDocumentId.get(documentId);
-  if (!route) return null;
+  if (!route || !env.ASSETS?.fetch) return null;
   const projection = await publicProjection(env, documentId);
   if (!projection) return null;
+  try {
+    const response = await env.ASSETS.fetch(new Request(`https://reader.internal/chapter/${route.slug}/`, { headers: { accept: "text/html" } }));
+    if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) return null;
+    // The identity is valid only when this exact deployed shell can accept the
+    // current immutable projection at its marked chapter boundary.
+    injectPublicProjection(await response.text(), route, projection);
+  } catch {
+    return null;
+  }
   return {
     documentId,
     slug: route.slug,

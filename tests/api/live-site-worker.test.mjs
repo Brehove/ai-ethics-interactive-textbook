@@ -34,6 +34,11 @@ test("site Worker serves verified projection for every allowlisted chapter witho
 
 test("reader delivery RPC identity binds an allowlisted document to its exact public route and projection", async () => {
   const env = {
+    ASSETS: { fetch: async (request) => {
+      assert.equal(new URL(request.url).pathname, "/chapter/aristotle-character-and-ai-assisted-life/");
+      assert.equal(request.headers.get("accept"), "text/html");
+      return new Response(staticHtml, { headers: { "content-type": "text/html; charset=utf-8" } });
+    } },
     PUBLIC_PROJECTION: { fetch: async (request) => {
       assert.equal(new URL(request.url).pathname, "/v1/public/chapters/chapter_ch07");
       return Response.json(projection);
@@ -48,6 +53,20 @@ test("reader delivery RPC identity binds an allowlisted document to its exact pu
     projectionHash: projection.projectionHash,
   });
   assert.equal(await getReaderDeliveryIdentity(env, "chapter_unknown"), null);
+});
+
+test("reader delivery RPC refuses to attest a missing or unrenderable chapter shell", async () => {
+  for (const assetResponse of [
+    new Response("missing", { status: 404, headers: { "content-type": "text/html" } }),
+    new Response("not html", { headers: { "content-type": "text/plain" } }),
+    new Response("<main>no public projection boundary</main>", { headers: { "content-type": "text/html" } }),
+  ]) {
+    const identity = await getReaderDeliveryIdentity({
+      ASSETS: { fetch: async () => assetResponse.clone() },
+      PUBLIC_PROJECTION: { fetch: async () => Response.json(projection) },
+    }, "chapter_ch07");
+    assert.equal(identity, null);
+  }
 });
 
 test("delivery identity probe verifies the deployed chapter asset can render the immutable projection", async () => {
