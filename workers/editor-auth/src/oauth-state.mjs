@@ -27,14 +27,21 @@ export async function pkceChallenge(verifier) {
 }
 
 export function validateOAuthTarget(url, routeBySlug) {
-  const accepted = new Set(["chapter", "mode", "anchor"]);
+  const accepted = new Set(["chapter", "mode", "anchor", "request"]);
   for (const [key] of url.searchParams) {
     if (!accepted.has(key)) throw new HttpError(400, "invalid_oauth_target", "The editor return target is invalid");
   }
   const chapter = url.searchParams.getAll("chapter");
   const mode = url.searchParams.getAll("mode");
   const anchor = url.searchParams.getAll("anchor");
-  if (chapter.length !== 1 || mode.length !== 1 || anchor.length > 1) {
+  const request = url.searchParams.getAll("request");
+  if (mode.length === 1 && mode[0] === "agent-access") {
+    if (request.length !== 1 || chapter.length || anchor.length || !/^capreq_[A-Za-z0-9_-]{8,}$/.test(request[0])) {
+      throw new HttpError(400, "invalid_oauth_target", "The agent approval target is invalid");
+    }
+    return Object.freeze({ requestId: request[0], mode: "agent-access" });
+  }
+  if (chapter.length !== 1 || mode.length !== 1 || anchor.length > 1 || request.length) {
     throw new HttpError(400, "invalid_oauth_target", "The editor return target is invalid");
   }
   const slug = chapter[0];
@@ -50,6 +57,12 @@ export function validateOAuthTarget(url, routeBySlug) {
 }
 
 export function editorTargetUrl(editorOrigin, target) {
+  if (target.mode === "agent-access") {
+    const destination = new URL("/agent-access", editorOrigin);
+    destination.searchParams.set("request", target.requestId);
+    destination.searchParams.set("authenticated", "1");
+    return destination.href;
+  }
   const destination = new URL(`/chapter/${target.chapterSlug}/`, editorOrigin);
   destination.searchParams.set("mode", "edit");
   if (target.anchorId) destination.hash = target.anchorId;
@@ -66,7 +79,11 @@ export async function createOAuthState(target, env, nowSeconds, ttlSeconds, rand
     await db.prepare(`INSERT INTO oauth_authorization_states
       (nonce_hash, pkce_verifier, chapter_slug, mode, anchor_id, issued_at, expires_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)`)
-      .bind(await sha256Hex(nonce), verifier, target.chapterSlug, target.mode, target.anchorId ?? null, iso(nowSeconds), expiresAt)
+      // The existing state table deliberately constrains mode to `edit`.
+      // Agent approval is still cryptographically distinguished by the signed
+      // target shape and request-prefixed chapter_slug, without a state-store
+      // migration or an open redirect surface.
+      .bind(await sha256Hex(nonce), verifier, target.chapterSlug ?? target.requestId, "edit", target.anchorId ?? null, iso(nowSeconds), expiresAt)
       .run();
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -88,17 +105,21 @@ export async function consumeOAuthState(state, env, nowSeconds) {
       .first();
     if (!row) throw new HttpError(400, "state_expired", "The GitHub login state expired or was already used");
     const target = state.target;
+    const targetKey = target.chapterSlug ?? target.requestId;
     if (
-      row.chapter_slug !== target.chapterSlug
-      || row.mode !== target.mode
+      row.chapter_slug !== targetKey
+      || row.mode !== "edit"
       || (row.anchor_id ?? undefined) !== (target.anchorId ?? undefined)
       || !PKCE_VERIFIER.test(row.pkce_verifier)
     ) {
       throw new HttpError(400, "state_expired", "The GitHub login state expired");
     }
+    const returnedTarget = target.mode === "agent-access"
+      ? { requestId: row.chapter_slug, mode: target.mode }
+      : { chapterSlug: row.chapter_slug, mode: row.mode, ...(row.anchor_id ? { anchorId: row.anchor_id } : {}) };
     return Object.freeze({
       verifier: row.pkce_verifier,
-      target: Object.freeze({ chapterSlug: row.chapter_slug, mode: row.mode, ...(row.anchor_id ? { anchorId: row.anchor_id } : {}) }),
+      target: Object.freeze(returnedTarget),
     });
   } catch (error) {
     if (error instanceof HttpError) throw error;

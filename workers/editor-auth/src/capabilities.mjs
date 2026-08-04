@@ -69,6 +69,28 @@ export async function createAgentCapabilityRequest(input, env, nowSeconds = Math
   return { requestId, deviceSecret, userCode, verificationUrl: base.toString(), expiresAt, pollingIntervalSeconds: 2 };
 }
 
+export async function getAgentCapabilityRequest(requestId, env, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const db = authDb(env);
+  const row = await db.prepare(`SELECT id, client_id, run_id, scopes_json, allowed_document_ids_json,
+    allowed_operations_json, requested_lifetime_seconds, state, requested_at, expires_at
+    FROM agent_capability_requests WHERE id = ?`).bind(requestId).first();
+  if (!row) throw new HttpError(404, "capability_request_not_found", "Capability request was not found");
+  const expired = Date.parse(row.expires_at) <= nowSeconds * 1000;
+  return Object.freeze({
+    requestId: row.id,
+    clientId: row.client_id,
+    runId: row.run_id,
+    scopes: parseJson(row.scopes_json),
+    allowedDocumentIds: parseJson(row.allowed_document_ids_json),
+    allowedOperations: parseJson(row.allowed_operations_json),
+    lifetimeSeconds: row.requested_lifetime_seconds,
+    state: expired && row.state === "pending" ? "expired" : row.state,
+    requestedAt: row.requested_at,
+    expiresAt: row.expires_at,
+    liveSave: parseJson(row.scopes_json).includes("content:live-save"),
+  });
+}
+
 export async function approveAgentCapabilityRequest(requestId, input, session, env, nowSeconds = Math.floor(Date.now() / 1000)) {
   const db = authDb(env); const at = iso(nowSeconds);
   const row = await db.prepare("SELECT * FROM agent_capability_requests WHERE id = ?").bind(requestId).first();

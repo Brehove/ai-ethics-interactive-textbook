@@ -47,6 +47,8 @@ export interface ChangesetSession {
 
 export interface AuthoringClient {
   getSession(signal?: AbortSignal): Promise<{ csrf_token: string; expires_at: number }>;
+  getAgentCapabilityRequest(requestId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  approveAgentCapabilityRequest(requestId: string, request: { approve: true; userCode: string; confirmLiveSave?: boolean }, signal?: AbortSignal): Promise<Record<string, unknown>>;
   getAuthoringView(documentId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
   createOrResumeChangeset(documentId: string, request: { title: string; description?: string; resume?: boolean; idempotencyKey: string }, signal?: AbortSignal): Promise<ChangesetSession>;
   getChangeset(changeSetId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;

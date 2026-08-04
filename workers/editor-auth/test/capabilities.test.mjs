@@ -177,6 +177,16 @@ test("HTTP device flow uses session + CSRF only for approval, and exposes no HTT
     assert.equal(created.status, 201);
     const request = await created.json();
     const session = await signToken({ v: 1, kind: "session", sub: "123456", login: "instructor", csrf: "csrf", iat: NOW - 10, stepUpAt: NOW - 10, exp: NOW + 900 }, SESSION_SECRET);
+    const details = await app.fetch(new Request(`${AUTH_ORIGIN}/auth/agent-capability-requests/${request.requestId}`, {
+      headers: { Origin: EDITOR_ORIGIN, Cookie: `${SESSION_COOKIE}=${session}` },
+    }), runtime);
+    assert.equal(details.status, 200);
+    const detailBody = await details.json();
+    assert.equal(detailBody.requestId, request.requestId);
+    assert.equal(detailBody.clientId, "codex");
+    assert.deepEqual(detailBody.allowedDocumentIds, ["chapter_ch07"]);
+    assert.equal(JSON.stringify(detailBody).includes(request.deviceSecret), false);
+    assert.equal(JSON.stringify(detailBody).includes(request.userCode), false);
     const approved = await app.fetch(new Request(`${AUTH_ORIGIN}/auth/agent-capability-requests/${request.requestId}`, {
       method: "POST",
       headers: { Origin: EDITOR_ORIGIN, Cookie: `${SESSION_COOKIE}=${session}`, "X-Editor-CSRF": "csrf", "Content-Type": "application/json" },

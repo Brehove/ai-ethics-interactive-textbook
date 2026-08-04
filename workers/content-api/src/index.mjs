@@ -498,7 +498,7 @@ async function createMultiDocumentChangeset(request, env, identity, { authorityC
 
 async function restoreRevisionAsDraft(request, env, identity, chapterId, revisionId) {
   requireScope(identity, 'content:write'); runIdentity(identity);
-  requireAgentTarget(identity, { documentId: chapterId, operation: 'restore_as_draft' });
+  requireAgentTarget(identity, { documentId: chapterId, operation: 'restore_revision_as_draft' });
   const body = await readJsonBody(request, { allowedFields: ['title', 'description', 'idempotencyKey'] });
   if (typeof body.title !== 'string' || body.title.trim().length < 1 || body.title.length > 200) throw new ApiError(422, 'VALIDATION_FAILED', 'title is required and must be at most 200 characters');
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) throw new ApiError(422, 'VALIDATION_FAILED', 'description must be at most 2000 characters');
@@ -2186,7 +2186,7 @@ export default {
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/dependencies$/);
       if (request.method === 'GET' && match) return await getChapterDependencies(env, validId(decodeURIComponent(match[1]), 'chapterId'), url);
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/revisions$/);
-      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'list_history' }); return await listChapterRevisions(env, chapterId, url); }
+      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_version_history' }); return await listChapterRevisions(env, chapterId, url); }
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/authoring-view$/);
       if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_authoring_view' }); return await getAuthoringView(env, chapterId); }
       match = url.pathname.match(/^\/v1\/live-commits\/([^/:]+)$/);

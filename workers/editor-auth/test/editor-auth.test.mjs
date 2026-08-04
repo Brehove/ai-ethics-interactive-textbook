@@ -15,7 +15,7 @@ import {
   verifyToken,
 } from "../src/crypto.mjs";
 import { createEditorAuthApp, dispatchMediaJobs } from "../src/index.mjs";
-import { cleanupExpiredOAuthStates, createOAuthState } from "../src/oauth-state.mjs";
+import { cleanupExpiredOAuthStates, consumeOAuthState, createOAuthState, editorTargetUrl } from "../src/oauth-state.mjs";
 import { validateEditablePath } from "../src/policy.mjs";
 
 const NOW = 1_785_600_000;
@@ -251,6 +251,31 @@ test("start uses a code-pinned chapter target, PKCE, and skips GitHub for a vali
   db.close();
 });
 
+test("agent approval uses a request-pinned target and always performs a fresh GitHub step-up", async () => {
+  const db = await oauthStateDb();
+  const app = createEditorAuthApp({ now: () => NOW, randomBytes: deterministicBytes });
+  const start = `${AUTH_ORIGIN}/auth/start?mode=agent-access&request=capreq_12345678`;
+  const { token } = await sessionFixture();
+  const response = await app.fetch(new Request(start, { headers: { Cookie: `${SESSION_COOKIE}=${token}` } }), runtimeEnv({ AUTH_STATE_DB: db }));
+  assert.equal(response.status, 302);
+  assert.equal(new URL(response.headers.get("Location")).origin, "https://github.com");
+  const stored = await db.prepare("SELECT chapter_slug, mode, anchor_id FROM oauth_authorization_states").bind().first();
+  assert.deepEqual({ ...stored }, { chapter_slug: "capreq_12345678", mode: "edit", anchor_id: null });
+  assert.equal((await db.prepare("SELECT count(*) AS count FROM oauth_authorization_states").bind().first()).count, 1);
+  db.close();
+});
+
+test("agent approval OAuth state returns only to its exact editor request", async () => {
+  const db = await oauthStateDb();
+  const target = { requestId: "capreq_12345678", mode: "agent-access" };
+  const oauth = await createOAuthState(target, runtimeEnv({ AUTH_STATE_DB: db }), NOW, 600, deterministicBytes);
+  const consumed = await consumeOAuthState({ nonce: oauth.nonce, target }, runtimeEnv({ AUTH_STATE_DB: db }), NOW + 1);
+  assert.deepEqual(consumed.target, target);
+  assert.equal(editorTargetUrl(READER_ORIGIN, consumed.target), `${READER_ORIGIN}/agent-access?request=capreq_12345678&authenticated=1`);
+  assert.equal((await db.prepare("SELECT count(*) AS count FROM oauth_authorization_states").bind().first()).count, 0);
+  db.close();
+});
+
 test("OAuth target rejects open redirects, traversal encodings, unknown chapters, and malformed anchors", async () => {
   const db = await oauthStateDb();
   const app = createEditorAuthApp({ now: () => NOW });
@@ -262,6 +287,8 @@ test("OAuth target rejects open redirects, traversal encodings, unknown chapters
     "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&anchor=//attacker.example",
     "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&returnTo=https://attacker.example",
     "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&anchor=",
+    "/auth/start?mode=agent-access&request=invalid",
+    "/auth/start?mode=agent-access&request=capreq_12345678&chapter=aristotle-character-and-ai-assisted-life",
   ];
   for (const path of rejected) {
     const response = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`), runtimeEnv({ AUTH_STATE_DB: db }));
