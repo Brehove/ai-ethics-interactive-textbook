@@ -37,8 +37,9 @@ const publicMedia = async (request, env, hash) => {
 };
 
 export const injectPublicProjection = (html, route, projection) => {
-  const bodyPattern = new RegExp(`(<[^>]+data-public-projection=["']${route.documentId}["'][^>]*>)[\\s\\S]*?(<\\/div>)`);
+  const bodyPattern = new RegExp(`(<[^>]+data-public-projection=["']${route.documentId}["'][^>]*>)[\\s\\S]*?(<\\/div>\\s*<template[^>]+data-public-projection-end=["']${route.documentId}["'][^>]*><\\/template>)`);
   const body = html.replace(bodyPattern, `$1${projection.html}$2`);
+  if (body === html) throw new Error("Public projection boundary is missing or malformed");
   return body.replace(new RegExp(`(<[^>]+data-reading-record[^>]+data-document-id=["']${route.documentId}["'][^>]*)(>)`), (_match, start, end) => `${start} data-prompts="${String(JSON.stringify(projection.prompts)).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;")}" data-chapter-version="${projection.revisionId}"${end}`);
 };
 

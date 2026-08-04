@@ -17,6 +17,7 @@ test("static scholar fallback is inside the replaceable public projection bounda
   const projectionBoundary = chapterPage.match(/<div class="chapter-body" data-public-projection=[\s\S]*?<\/div>/)?.[0] ?? "";
   assert.match(projectionBoundary, /<InlineScholarFigures/);
   assert.equal((chapterPage.match(/<InlineScholarFigures/g) ?? []).length, 1);
+  assert.match(chapterPage, /<template data-public-projection-end=\{`chapter_\$\{meta\.id\}`\}><\/template>/);
 });
 
 test("the public admin route is redirect-only and the dedicated editor is the sole writer", async () => {
