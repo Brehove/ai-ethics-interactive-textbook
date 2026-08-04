@@ -6,7 +6,7 @@ Applies to: every PHIL 123 chapter that includes a downloadable reading record
 
 ## Purpose
 
-The reading record makes students' thinking visible while they read. It is not a comprehension quiz, an automated tutor, a discussion board, or a substitute for the chapter. Its purpose is to give students three well-chosen occasions to perform philosophical reasoning and preserve evidence of how their judgment developed.
+The reading record makes students' thinking visible while they read. It is not a comprehension quiz, an automated tutor, a discussion board, or a substitute for the chapter. Its purpose is to give students a small number of well-chosen occasions to perform philosophical reasoning and preserve evidence of how their judgment developed. Most chapters will still use a Commit–Work–Reconcile sequence, but the instructor may use fewer or more checkpoints when the chapter's intellectual work warrants it.
 
 Every prompt should help a student do at least one of the following:
 
@@ -24,7 +24,7 @@ The downloaded record is submitted through Canvas as evidence of engaged reading
 
 ## Controlling Design Commitments
 
-1. **Exactly three checkpoints per chapter.** The interruptions must remain scarce enough that the chapter is still a reading experience.
+1. **Checkpoint count is an instructor judgment, not a schema limit.** A chapter may contain zero, one, or many checkpoints. Keep interruptions scarce enough that the chapter remains a reading experience; add each checkpoint only when its anchored passage enables a distinct, worthwhile reasoning move.
 2. **The original response is preserved.** A committed response cannot be silently overwritten. Later checkpoints provide space to qualify or revise earlier thinking.
 3. **Prompts are passage-anchored.** Each checkpoint appears after a stable passage whose intellectual work makes the prompt timely.
 4. **Prompts are disciplinary.** Students should practice philosophical interpretation, argumentation, judgment, objection, or conceptual analysis rather than generic self-expression.
@@ -33,11 +33,11 @@ The downloaded record is submitted through Canvas as evidence of engaged reading
 7. **Prompts do not reveal a preferred verdict.** Guidance may name the reasoning operation, not the conclusion students are expected to reach.
 8. **The chapter remains complete without JavaScript.** Checkpoints enhance the reading but never contain required chapter content.
 9. **Student writing stays ephemeral.** No response database, account, analytics event, browser storage, or network transmission is permitted.
-10. **The prompt set tracks development.** The three responses should form an intelligible sequence rather than three unrelated journal entries.
+10. **The prompt set tracks development.** When a chapter uses multiple checkpoints, the responses should form an intelligible sequence rather than unrelated journal entries.
 
-## The Three-Checkpoint Architecture
+## Recommended Commit–Work–Reconcile Pattern
 
-The sequence is stable across the book. The specific reasoning strategy varies with the chapter.
+This is the recommended default, not a publication constraint. The specific reasoning strategy and checkpoint count may vary with the chapter. An instructor may omit a stage, repeat a stage with a descriptive `slotLabel`, or add a checkpoint for another genuine reasoning hinge.
 
 ### 1. Commit: establish a starting position
 
@@ -280,11 +280,11 @@ Use the form:
 
 If the sentence only says "understand," "learn about," or "reflect on," it is not precise enough to guide prompt selection.
 
-### 3. Select the three anchors
+### 3. Select the necessary anchors
 
-- The first anchor must occur before the chapter resolves the dilemma.
-- The second must immediately follow the passage that enables the selected reasoning strategy.
-- The third must follow serious pressure on the framework and precede references or optional further reading.
+- If the chapter uses an opening judgment, anchor it before the chapter resolves the dilemma.
+- Anchor each working checkpoint immediately after the passage that enables its selected reasoning strategy.
+- If the chapter uses an exit judgment, anchor it after serious pressure on the framework and before references or optional further reading.
 
 Do not choose anchors merely to space the prompts evenly.
 
@@ -316,7 +316,7 @@ Before implementation, the agent must answer:
 - Could two thoughtful students reasonably disagree? If no, determine whether the checkpoint has become a quiz.
 - Does the guidance explain quality without doing the reasoning? If no, revise it.
 - Does the sequence produce a visible intellectual trajectory? If no, redesign the set.
-- Is the total response burden proportionate to three brief pauses? If no, reduce it.
+- Is the total response burden proportionate to the chapter and its number of pauses? If no, remove or reduce checkpoints.
 
 ### 7. Produce the planning record before code changes
 
@@ -471,7 +471,7 @@ Teaching students to generate questions about a text improves comprehension on n
 
 Confidence is high in the broad principles: explicit disciplinary reasoning, authentic dilemmas, constructive generation, serious alternatives, argument-counterargument integration, metacognitive monitoring, and student question generation.
 
-Confidence is moderate in the exact distribution and wording of prompts across PHIL 123. Much of the evidence crosses age groups and disciplines, and no published study tests this exact three-checkpoint architecture in an introductory college AI-ethics textbook. Treat the architecture as a research-informed design hypothesis that should be evaluated through student work, instructor observation, accessibility testing, and revision.
+Confidence is moderate in the exact distribution, number, and wording of prompts across PHIL 123. Much of the evidence crosses age groups and disciplines, and no published study establishes one universally correct checkpoint count for an introductory college AI-ethics textbook. Treat each chapter's prompt sequence as a research-informed design hypothesis that should be evaluated through student work, instructor observation, accessibility testing, and revision.
 
 Do not infer that:
 
@@ -487,7 +487,7 @@ Do not infer that:
 Revise this guide when:
 
 - classroom evidence shows a recurring prompt failure;
-- a new interaction structure changes the three-checkpoint contract;
+- a new interaction structure changes the flexible-checkpoint contract;
 - the research basis materially changes;
 - a strategy identifier is added, removed, or redefined.
 

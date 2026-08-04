@@ -35,8 +35,8 @@ Keep public development URLs disabled. Set a 24-hour lifecycle deletion rule on 
 
 Cloudflare Worker secrets:
 
-- editor/auth gateway: existing GitHub OAuth/App/session values, `RELEASE_SNAPSHOT_READ_TOKEN`, and `RELEASE_DEPLOY_RECEIPT_TOKEN`;
-- textbook MCP: `MCP_CAPABILITY_SECRET` (at least 32 random bytes); keep `MCP_ALLOW_LEGACY_TOKEN=0`. Mint short-lived, per-agent capabilities with `node scripts/mcp/mint-agent-capability.mjs`; do not deploy a shared long-lived bearer token;
+- editor/auth gateway: existing GitHub OAuth/App/session values, `AGENT_CAPABILITY_SIGNING_SECRET`, `RELEASE_SNAPSHOT_READ_TOKEN`, and `RELEASE_DEPLOY_RECEIPT_TOKEN`. The auth Worker is the only capability issuer and persists approval/revocation state in `ai-ethics-editor-auth-state`;
+- textbook MCP: no signing secret and no shared access token. It forwards the original instructor-issued bearer to the private auth verifier. `TEXTBOOK_MCP_ACCESS_TOKEN` is only the per-process environment variable used to carry the short-lived device-flow result into one agent run;
 - Content API: `MEDIA_CALLBACK_SECRET` and `PREVIEW_TOKEN_SECRET`. `MEDIA_CALLBACK_SECRET` must match GitHub's `MEDIA_CALLBACK_TOKEN`; the names differ because one verifies and one signs. `PREVIEW_TOKEN_SECRET` is also set independently on the preview Worker and never sent to a browser. The release receipt credential terminates at the editor/auth gateway; the gateway derives the fixed service identity and never forwards the bearer token.
 
 GitHub Actions secrets:
@@ -64,14 +64,14 @@ Generate values locally, pass them directly to the secret commands, and do not p
 ## Deployment order
 
 1. Create/verify R2 buckets and lifecycle rules.
-2. Apply all D1 migrations remotely and run the drift audit. Confirm `0013_deployment_recovery_version.sql` is applied before deploying the Content API code that stages releases.
-3. Deploy the private Content API Worker and verify `/health` through a service binding.
-4. Deploy the protected preview Worker; verify invalid, expired, and replayed tokens fail and responses are uncached/noindexed.
-5. Set the shared media/release tokens, then deploy the editor/auth gateway.
-6. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected.
-   Register the hosted MCP with `TEXTBOOK_MCP_ACCESS_TOKEN`, install the repository Skills, and verify a Keychain-backed `npm run codex:textbook` session sees `save_live_revision` only when its receipt includes `content:live-save` and `maySaveLive: true`.
-7. Deploy the reader build containing `/admin/`; do not change the Chapter 7 authority record yet.
-8. Run browser login, Chapter 7 read/edit/checkpoint/diff/preview/validate/submit tests.
+2. Apply Content D1 migrations through `0020_public_runtime_feature_flags.sql`, provision the auth-state D1 database, and apply its complete migration chain. Run both drift audits before deploying code.
+3. Deploy the internal Public Projection Worker and verify it is service-binding-only and reads only `public_*` tables.
+4. Deploy the private Content API Worker and verify `/health` through the auth gateway service binding.
+5. Deploy the protected preview Worker; verify invalid, expired, and replayed tokens fail and responses are uncached/noindexed.
+6. Set the media/release/capability secrets, then deploy the editor/auth gateway and dedicated editor origin.
+7. Deploy the textbook MCP Worker and verify unauthenticated requests are rejected. Run `node scripts/mcp/device-flow.mjs` or `npm run codex:textbook`; approve the displayed one-time code in the instructor editor. Verify edit-only grants do not expose `commit_live`, and a separately approved 10-minute live-save grant does. Revoke the grant and verify the same bearer fails immediately.
+8. Deploy the reader build. Verify `/admin/` is a redirect only, the public reader origin cannot make credentialed mutations, and the chapter menu enters the dedicated editor through `/auth/start`.
+9. Run browser login, Chapter 7 read/edit/checkpoint/media/embed/person/history/restore/Save tests, then repeat the controlled canary on Chapter 5.
 9. Upload representative PNG/JPEG, animated GIF, WebP, MP3/WAV/M4A, MP4/WebM, PDF, and UTF-8 text fixtures through quarantine; verify exact private originals, public clean derivatives, callbacks, transcript equivalents/accessibility alternatives, and placement preview. Do not record timed-caption support unless a real caption track was supplied and tested.
 10. Insert and activate one YouTube, Vimeo, and X fixture; verify no provider request occurs before explicit activation. Verify Spotify consent and SoundCloud/Bluesky/link-card fallbacks.
 11. Run **Immutable content release** with `promote=false`; inspect the signed candidate, built asset digests, and canary preview.
@@ -93,6 +93,8 @@ npm run build
 npx wrangler deploy --dry-run
 npx wrangler deploy --dry-run --config workers/editor-auth/wrangler.jsonc
 npx wrangler deploy --dry-run --config workers/content-api/wrangler.jsonc
+npx wrangler deploy --dry-run --config workers/public-projection/wrangler.jsonc
+npx wrangler deploy --dry-run --config apps/instructor-editor/wrangler.jsonc
 npx wrangler deploy --dry-run --config workers/textbook-mcp/wrangler.jsonc
 npx wrangler deploy --dry-run --config workers/textbook-preview/wrangler.jsonc
 ```

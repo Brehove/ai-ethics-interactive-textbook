@@ -29,6 +29,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
   canonicalPath={meta.path}
   readingRecordPilot={meta.id === "ch07"}
   readingRecordTotal={visiblePrompts.length}
+  documentId={`chapter_${meta.id}`}
 >
   <ReaderShell
     slug={meta.slug}
@@ -42,7 +43,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
     next={next}
   >
     <div class="chapter-prose first-read">
-      <div class="chapter-body" data-live-chapter-body={meta.id === "ch07" ? "chapter_ch07" : undefined}>
+      <div class="chapter-body" data-public-projection={`chapter_${meta.id}`}>
         <Content />
       </div>
       <InlineConceptDiagrams diagrams={chapterDiagrams} />
@@ -58,7 +59,7 @@ const visiblePrompts = readingRecord.checkpoints.filter((checkpoint) => checkpoi
       chapterVersion={meta.websiteBaseline.canonicalMarkdownSha256.slice(0, 12)}
       prompts={visiblePrompts}
       activityPreview={meta.id === "ch07"}
-      liveEndpoint={meta.id === "ch07" ? "/api/live/chapters/chapter_ch07" : undefined}
+      documentId={`chapter_${meta.id}`}
     />
   </ReaderShell>
 </SiteLayout>

@@ -1,0 +1,59 @@
+name: Prepare D1 authority cutover
+
+on:
+  workflow_dispatch:
+    inputs:
+      document_ids:
+        description: Exact comma-separated Git-authoritative chapters to propose for D1 cutover
+        required: true
+        type: string
+        default: chapter_ch01,chapter_ch02,chapter_ch03,chapter_ch04,chapter_ch05,chapter_ch06,chapter_ch08,chapter_ch09,chapter_ch10,chapter_ch11,chapter_ch12,chapter_ch13,chapter_ch14,chapter_ch15,chapter_ch16,chapter_ch17,chapter_ch18
+      title:
+        description: Human-readable proposal title
+        required: true
+        type: string
+        default: Complete 18-chapter D1 authority cutover
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-authority-cutover-proposal
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The deploy-receipt bearer deliberately exists only in the protected
+    # production environment. Preparation is read-only, but it still crosses
+    # the authority boundary and therefore uses the same human environment gate.
+    environment: content-production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Create an immutable read-only cutover proposal
+        env:
+          RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
+          CUTOVER_DOCUMENT_IDS: ${{ inputs.document_ids }}
+          CUTOVER_TITLE: ${{ inputs.title }}
+        run: |
+          mkdir -p release-artifacts
+          node scripts/release/control-plane.mjs prepare-cutover \
+            --documents "$CUTOVER_DOCUMENT_IDS" \
+            --title "$CUTOVER_TITLE" \
+            --description 'Service-prepared, human-reviewed authority transition. Proposal content is byte-identical to the canonical seeded chapters.' \
+            --out release-artifacts/authority-cutover-proposal.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: authority-cutover-proposal-${{ github.run_id }}
+          path: release-artifacts/authority-cutover-proposal.json
+          if-no-files-found: error
+          retention-days: 30

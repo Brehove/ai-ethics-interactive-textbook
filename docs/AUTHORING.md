@@ -21,23 +21,23 @@ Do not edit generated `reading.json` or `reading.txt` independently. Regenerate 
 
 ## Browser editor
 
-The `/admin/` route is the structured Textbook Editor. Git remains code authority; the Content API and D1/R2 become routine content authority one chapter at a time. During the canary, all 18 chapters can be selected and inspected, but only Chapter 7 is writable. The server rejects draft creation for every other repository-authoritative chapter. A later chapter becomes writable only after its explicit D1 authority cutover.
+The public reader offers an instructor-only **Edit chapter** action that deep-links to the dedicated editor origin and preserves the reader URL and passage anchor for return. `/admin/` remains a compatibility entry point during rollout. Git remains code authority; the Content API and D1/R2 become routine content authority one chapter at a time. The server permits writes only after an explicit D1 authority cutover for that chapter.
 
 The editor signs the instructor in through the separate auth gateway, then reads and mutates typed chapter blocks through semantic operations. It never accepts raw HTML, CSS, SQL, iframe code, or arbitrary patches. Each write carries the canonical base revision, working-document version, and idempotency key. A stale base or working version fails with `409`; there is no last-write-wins path.
 
-The browser supports structured prose, Commit–Work–Reconcile checkpoint prompts (including side-panel visibility), provider-registry embeds, native media review/upload/placement, validation, semantic review, submission, and exact-snapshot human approve/reject. Approval does not publish. Direct Content API publication is deliberately disabled until deployment attestations, receipts, and expected-active compare-and-swap are persisted; production promotion runs only through the protected immutable GitHub/Cloudflare release workflow.
+The browser presents each chapter as one continuous, reader-identical document. It supports an arbitrary number of passage-anchored checkpoint prompts (including side-panel visibility), provider-registry embeds, native media review/upload/placement, frozen scholar-card projections, inline validation, semantic review, and version history. **Save** calls the guarded `commitLive` transaction once. A successful Save creates the immutable revision and public projection and confirms the actual public route; no separate Validate, Review, Submit, or Publish action is required for an instructor's routine chapter edit.
 
 The Preview button writes an immutable draft snapshot, issues a five-minute one-time token, and opens the separate preview origin. The preview has no authoring cookie or mutation credential, is uncached and noindexed, and verifies the stored bytes against the token-bound SHA-256 before rendering.
 
 ## Reading record prompts
 
-Before creating or revising student reflection checkpoints, read [`READING_RECORD_PROMPT_DESIGN.md`](./READING_RECORD_PROMPT_DESIGN.md). It is the controlling guide for the three-checkpoint sequence, research-informed strategy repertoire, passage anchoring, prompt planning record, and quality gate.
+Before creating or revising student reflection checkpoints, read [`READING_RECORD_PROMPT_DESIGN.md`](./READING_RECORD_PROMPT_DESIGN.md). It is the controlling guide for the recommended Commit–Work–Reconcile pattern, flexible checkpoint count, research-informed strategy repertoire, passage anchoring, prompt planning record, and quality gate.
 
 Do not add a prompt merely because a passage seems important. Each checkpoint must ask students to perform an identifiable philosophical reasoning operation at the point where the chapter has made that operation possible.
 
 ## Review
 
-Use the server semantic diff, protected one-time draft preview, and exact submitted snapshot identity as the editorial review surfaces. Reject unexplained changes to stable IDs, passage anchors, rights records, accessibility declarations, or output projections. Promotion occurs only after the signed candidate and protected deployment checks pass.
+Use version history, the server semantic diff, and the reader-identical canvas as the routine editorial review surfaces. Save rejects unexplained changes to stable IDs, passage anchors, rights records, accessibility declarations, or output projections inline. Code deployments and non-content infrastructure promotion still use signed candidates and protected deployment checks; routine D1-authoritative chapter edits do not.
 
 ## Conflicts
 

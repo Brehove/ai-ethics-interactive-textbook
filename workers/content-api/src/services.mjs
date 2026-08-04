@@ -94,16 +94,21 @@ export const MEDIA_UPLOAD_POLICY = Object.freeze({
 });
 export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'text.replace': { required: ['type', 'blockId', 'text'], optional: [] },
+  'chapter.replaceDocument': { required: ['type', 'document'], optional: [] },
   'chapter.replaceBody': { required: ['type', 'body'], optional: [] },
+  'chapter.importPlainText': { required: ['type', 'paragraphs'], optional: [] },
   'block.insert': { required: ['type', 'block', 'position'], optional: [] },
   'block.move': { required: ['type', 'blockId', 'position'], optional: [] },
   'block.remove': { required: ['type', 'blockId'], optional: ['replacementPassageId'] },
   'checkpoint.upsert': { required: ['type', 'checkpoint'], optional: [] },
   'checkpoint.replace': { required: ['type', 'checkpoint'], optional: [] },
-  'checkpoint.remove': { required: ['type'], optional: ['slot', 'checkpointId'] },
+  'checkpoint.remove': { required: ['type'], optional: ['slot', 'slotLabel', 'checkpointId'] },
   'embed.upsert': { required: ['type', 'embed'], optional: ['position'] },
   'media.place': { required: ['type', 'placement'], optional: ['position'] },
-  'media.remove': { required: ['type', 'figureId'], optional: [] }
+  'media.remove': { required: ['type', 'figureId'], optional: [] },
+  'personFeature.upsert': { required: ['type', 'feature', 'placement'], optional: [] },
+  'managedPlacement.move': { required: ['type', 'placementId', 'anchorPassageId', 'position'], optional: ['orderAtAnchor', 'displayPreset'] },
+  'managedPlacement.remove': { required: ['type', 'placementId'], optional: [] }
 });
 
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -232,8 +237,11 @@ const passageIds = (chapter) => new Set([
 ].filter(Boolean));
 
 const normalizeCheckpoint = async (chapter, input, existing = null) => {
-  rejectUnknown(input, ['checkpointId', 'legacyId', 'passageId', 'passageExcerptHash', 'slot', 'stage', 'strategy', 'title', 'trigger', 'prompt', 'guidance', 'responseStructure', 'minWords', 'maxWords', 'rationale', 'showInSidebar']);
-  if (typeof input.slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(input.slot)) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be a lowercase stable key of at most 80 characters');
+  rejectUnknown(input, ['checkpointId', 'legacyId', 'passageId', 'passageExcerptHash', 'displayOrder', 'slotLabel', 'slot', 'stage', 'strategy', 'title', 'trigger', 'prompt', 'guidance', 'responseStructure', 'minWords', 'maxWords', 'rationale', 'showInSidebar']);
+  const slotLabel = input.slotLabel ?? input.slot;
+  if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slotLabel must be a lowercase stable key of at most 80 characters');
+  const displayOrder = input.displayOrder ?? existing?.displayOrder ?? chapter.checkpoints?.length ?? 0;
+  if (!Number.isInteger(displayOrder) || displayOrder < 0) throw new ApiError(422, 'CHECKPOINT_ORDER_INVALID', 'Checkpoint displayOrder must be a nonnegative integer');
   if (!CHECKPOINT_STRATEGIES.includes(input.strategy)) throw new ApiError(422, 'CHECKPOINT_STRATEGY_INVALID', 'Checkpoint strategy is unsupported');
   const passageId = requireString(input.passageId, 'checkpoint.passageId', 200);
   if (!passageIds(chapter).has(passageId)) throw new ApiError(422, 'CHECKPOINT_ANCHOR_MISSING', 'Checkpoint passage anchor does not exist', { passageId });
@@ -242,14 +250,15 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   if (!Number.isInteger(input.minWords) || !Number.isInteger(input.maxWords) || input.minWords < 1 || input.maxWords > 1000 || input.minWords > input.maxWords) throw new ApiError(422, 'CHECKPOINT_RESPONSE_RANGE_INVALID', 'Checkpoint response word range is invalid');
   if (!existing && input.checkpointId !== undefined) throw new ApiError(422, 'CHECKPOINT_ID_SERVER_ASSIGNED', 'New checkpoint IDs are assigned by the server');
   if (existing && input.checkpointId !== undefined && input.checkpointId !== existing.checkpointId) throw new ApiError(422, 'CHECKPOINT_ID_IMMUTABLE', 'Checkpoint ID cannot be changed');
-  const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, slot: input.slot });
+  const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, passageId, displayOrder, slotLabel: slotLabel || null, title: input.title });
   return {
     checkpointId,
     ...(input.legacyId ? { legacyId: requireString(input.legacyId, 'checkpoint.legacyId', 200) } : {}),
     passageId,
     passageExcerptHash: requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64),
-    slot: input.slot,
-    stage: requireString(input.stage, 'checkpoint.stage', 120),
+    displayOrder,
+    ...(slotLabel ? { slotLabel } : {}),
+    ...(input.stage ? { stage: requireString(input.stage, 'checkpoint.stage', 120) } : {}),
     strategy: input.strategy,
     title: requireString(input.title, 'checkpoint.title', 200),
     trigger: requireString(input.trigger, 'checkpoint.trigger', 300),
@@ -441,6 +450,57 @@ const normalizeChapterBodyReplacement = async (chapter, input) => {
   }));
 };
 
+const importPlainTextChapter = async (chapter, input) => {
+  if (!Array.isArray(input) || input.length < 1 || input.length > 2000) throw new ApiError(422, 'CHAPTER_IMPORT_INVALID', 'paragraphs must contain 1 to 2000 non-empty strings');
+  const paragraphs = input.map((value, index) => safeText(value, `paragraphs.${index}`, 50000));
+  const originalBody = bodyBlocks(chapter);
+  const editable = originalBody.filter((block) => editableBodyTypes.has(block.type));
+  const importHash = await sha256(paragraphs);
+  const prose = [];
+  for (let index = 0; index < paragraphs.length; index += 1) {
+    const existing = editable[index];
+    if (existing) {
+      const passageId = existing.passageId || existing.anchorPassageId || await deterministicId('passage', { blockId: existing.blockId, importHash, index });
+      prose.push({ type: 'paragraph', blockId: existing.blockId, passageId, text: paragraphs[index] });
+    } else {
+      const blockId = await deterministicId('block', { chapterId: chapter.chapterId, importHash, index });
+      const passageId = await deterministicId('passage', { chapterId: chapter.chapterId, importHash, index });
+      prose.push({ type: 'paragraph', blockId, passageId, text: paragraphs[index] });
+    }
+  }
+
+  // Whole-chapter paste replaces prose, never managed media, embeds, diagrams,
+  // artifacts, or locked legacy fragments.
+  const buckets = Array.from({ length: prose.length + 1 }, () => []);
+  let editableSeen = 0;
+  for (const block of originalBody) {
+    if (editableBodyTypes.has(block.type)) { editableSeen += 1; continue; }
+    buckets[Math.min(editableSeen, prose.length)].push(structuredClone(block));
+  }
+  const rebuilt = [...buckets[0]];
+  for (let index = 0; index < prose.length; index += 1) rebuilt.push(prose[index], ...buckets[index + 1]);
+
+  const surviving = new Set(prose.map((block) => block.passageId));
+  const oldEditable = editable.map((block, index) => ({ index, passageId: block.passageId || block.anchorPassageId })).filter((item) => item.passageId);
+  const passageMap = new Map();
+  for (const item of oldEditable) {
+    if (surviving.has(item.passageId)) { passageMap.set(item.passageId, item.passageId); continue; }
+    passageMap.set(item.passageId, prose[Math.min(item.index, prose.length - 1)].passageId);
+  }
+  const mapPassage = (value) => value && (surviving.has(value) ? value : passageMap.get(value) || prose[0].passageId);
+
+  chapter.body = rebuilt.map((block) => block.anchorPassageId && block.type !== 'legacyMarkup'
+    ? { ...block, anchorPassageId: mapPassage(block.anchorPassageId) }
+    : block);
+  chapter.checkpoints = await Promise.all((chapter.checkpoints || []).map(async (checkpoint) => {
+    const passageId = mapPassage(checkpoint.passageId);
+    const target = prose.find((block) => block.passageId === passageId);
+    return { ...checkpoint, passageId, passageExcerptHash: await sha256(target.text) };
+  }));
+  chapter.annotations = (chapter.annotations || []).map((annotation) => ({ ...annotation, passageId: mapPassage(annotation.passageId) }));
+  chapter.managedPlacements = (chapter.managedPlacements || []).map((placement) => ({ ...placement, anchorPassageId: mapPassage(placement.anchorPassageId) }));
+};
+
 const PUBLIC_EMBED_HOSTS = Object.freeze({
   youtube: ['youtube.com', 'www.youtube.com', 'youtu.be'], vimeo: ['vimeo.com', 'www.vimeo.com', 'player.vimeo.com'],
   x: ['x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'], spotify: ['open.spotify.com'],
@@ -600,14 +660,25 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
   for (const field of schema.required) if (!own(operation, field)) throw new ApiError(400, 'INVALID_OPERATION', `${field} is required`);
   const chapter = structuredClone(sourceChapter);
   chapter.checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
+  chapter.managedPlacements = Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : [];
+  chapter.personFeatures = Array.isArray(chapter.personFeatures) ? chapter.personFeatures : [];
 
   if (operation.type === 'text.replace') {
     const { block } = findUniqueBlock(chapter, operation.blockId);
     if (block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be edited');
     if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type)) throw new ApiError(422, 'BLOCK_NOT_TEXT_EDITABLE', 'Block type does not support text.replace');
     block.text = safeText(operation.text, 'text', block.type === 'heading' ? 1000 : 50000);
+  } else if (operation.type === 'chapter.replaceDocument') {
+    if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a structured document');
+    if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
+    const replacement = structuredClone(operation.document);
+    const validation = validateChapter(replacement);
+    if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', validation);
+    return { chapter: replacement, contentHash: await sha256(replacement) };
   } else if (operation.type === 'chapter.replaceBody') {
     await normalizeChapterBodyReplacement(chapter, operation.body);
+  } else if (operation.type === 'chapter.importPlainText') {
+    await importPlainTextChapter(chapter, operation.paragraphs);
   } else if (operation.type === 'block.insert') {
     const index = placementIndex(chapter, operation.position);
     const block = await normalizeInsertedBlock(chapter, operation.block, operation.position);
@@ -641,18 +712,18 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (!operation.checkpoint || typeof operation.checkpoint !== 'object') throw new ApiError(400, 'INVALID_OPERATION', 'checkpoint payload is required');
     const index = chapter.checkpoints.findIndex((item) => operation.checkpoint.checkpointId
       ? item.checkpointId === operation.checkpoint.checkpointId
-      : item.slot === operation.checkpoint.slot);
-    if (operation.type === 'checkpoint.replace' && index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint slot does not exist');
-    if (chapter.checkpoints.some((item, candidateIndex) => candidateIndex !== index && item.slot === operation.checkpoint.slot)) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot already belongs to another checkpoint');
+      : operation.checkpoint.slot !== undefined && (item.slotLabel ?? item.slot) === operation.checkpoint.slot);
+    if (operation.type === 'checkpoint.replace' && index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
     const normalized = await normalizeCheckpoint(chapter, operation.checkpoint, index >= 0 ? chapter.checkpoints[index] : null);
     if (index >= 0) chapter.checkpoints[index] = normalized; else chapter.checkpoints.push(normalized);
   } else if (operation.type === 'checkpoint.remove') {
-    if (operation.slot !== undefined && (typeof operation.slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(operation.slot))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot must be a lowercase stable key of at most 80 characters');
+    const slotTarget = operation.slotLabel ?? operation.slot;
+    if (slotTarget !== undefined && (typeof slotTarget !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotTarget))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot label must be a lowercase stable key of at most 80 characters');
     if (operation.checkpointId !== undefined && (typeof operation.checkpointId !== 'string' || !operation.checkpointId.trim())) throw new ApiError(422, 'CHECKPOINT_ID_INVALID', 'checkpointId must be a non-empty stable ID');
-    if (operation.slot === undefined && operation.checkpointId === undefined) throw new ApiError(422, 'CHECKPOINT_TARGET_REQUIRED', 'checkpoint.remove requires slot or checkpointId');
-    const index = chapter.checkpoints.findIndex((item) => operation.checkpointId ? item.checkpointId === operation.checkpointId : item.slot === operation.slot);
+    if (slotTarget === undefined && operation.checkpointId === undefined) throw new ApiError(422, 'CHECKPOINT_TARGET_REQUIRED', 'checkpoint.remove requires slotLabel or checkpointId');
+    const index = chapter.checkpoints.findIndex((item) => operation.checkpointId ? item.checkpointId === operation.checkpointId : (item.slotLabel ?? item.slot) === slotTarget);
     if (index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
-    if (operation.slot !== undefined && operation.slot !== chapter.checkpoints[index].slot) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot does not match the selected checkpoint ID');
+    if (slotTarget !== undefined && slotTarget !== (chapter.checkpoints[index].slotLabel ?? chapter.checkpoints[index].slot)) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot label does not match the selected checkpoint ID');
     chapter.checkpoints.splice(index, 1);
   } else if (operation.type === 'embed.upsert') {
     const normalized = await normalizeEmbed(chapter, operation.embed);
@@ -667,6 +738,39 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const index = chapter.body.findIndex((item) => item.type === 'mediaFigure' && item.figureId === figureId);
     if (index < 0) throw new ApiError(404, 'MEDIA_PLACEMENT_NOT_FOUND', 'Media placement does not exist');
     chapter.body.splice(index, 1);
+  } else if (operation.type === 'personFeature.upsert') {
+    const feature = operation.feature;
+    const placement = operation.placement;
+    if (!feature || typeof feature !== 'object' || Array.isArray(feature) || !placement || typeof placement !== 'object' || Array.isArray(placement)) throw new ApiError(400, 'INVALID_OPERATION', 'feature and placement objects are required');
+    const requiredFeature = ['personFeatureId', 'placementId', 'personId', 'entityRevisionId', 'name', 'dates', 'role', 'teachingNote', 'biography', 'portrait'];
+    for (const field of requiredFeature) if (!feature[field] || (typeof feature[field] === 'string' && !feature[field].trim())) throw new ApiError(422, 'PERSON_FEATURE_INVALID', `feature.${field} is required`);
+    if (!Array.isArray(feature.primarySources)) throw new ApiError(422, 'PERSON_FEATURE_INVALID', 'feature.primarySources must be an array');
+    if (placement.kind !== 'personFeature' || placement.contentId !== feature.personFeatureId || placement.placementId !== feature.placementId || placement.displayPreset !== 'thinker-card') throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Person feature and placement identities must match');
+    if (!passageIds(chapter).has(placement.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Person feature anchor does not exist');
+    if (!['before', 'after'].includes(placement.position) || !Number.isInteger(placement.orderAtAnchor) || placement.orderAtAnchor < 0) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Person feature position is invalid');
+    if (!chapter.people?.some((relation) => relation.personId === feature.personId)) throw new ApiError(422, 'PERSON_RELATION_MISSING', 'Person feature requires an existing chapter-person relation');
+    if (!chapter.entityRevisions?.some((revision) => revision.entityRevisionId === feature.entityRevisionId && revision.personId === feature.personId)) throw new ApiError(422, 'ENTITY_REVISION_MISSING', 'Person feature requires a frozen entity revision for the same person');
+    const conflictingOrder = chapter.managedPlacements.find((item) => item.placementId !== placement.placementId && item.anchorPassageId === placement.anchorPassageId && item.position === placement.position && item.orderAtAnchor === placement.orderAtAnchor);
+    if (conflictingOrder) throw new ApiError(409, 'MANAGED_POSITION_CONFLICT', 'Another managed placement already uses this anchor order');
+    const featureIndex = chapter.personFeatures.findIndex((item) => item.personFeatureId === feature.personFeatureId || item.placementId === feature.placementId);
+    const placementIndexValue = chapter.managedPlacements.findIndex((item) => item.placementId === placement.placementId);
+    if (featureIndex >= 0) chapter.personFeatures[featureIndex] = structuredClone(feature); else chapter.personFeatures.push(structuredClone(feature));
+    if (placementIndexValue >= 0) chapter.managedPlacements[placementIndexValue] = structuredClone(placement); else chapter.managedPlacements.push(structuredClone(placement));
+  } else if (operation.type === 'managedPlacement.move') {
+    const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
+    if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
+    if (!passageIds(chapter).has(operation.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Managed placement anchor does not exist');
+    if (!['before', 'after'].includes(operation.position)) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Managed placement position is invalid');
+    const orderAtAnchor = operation.orderAtAnchor ?? 0;
+    if (!Number.isInteger(orderAtAnchor) || orderAtAnchor < 0) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'orderAtAnchor must be a nonnegative integer');
+    if (chapter.managedPlacements.some((item, itemIndex) => itemIndex !== index && item.anchorPassageId === operation.anchorPassageId && item.position === operation.position && item.orderAtAnchor === orderAtAnchor)) throw new ApiError(409, 'MANAGED_POSITION_CONFLICT', 'Another managed placement already uses this anchor order');
+    const displayPreset = operation.displayPreset ?? chapter.managedPlacements[index].displayPreset;
+    chapter.managedPlacements[index] = { ...chapter.managedPlacements[index], anchorPassageId: operation.anchorPassageId, position: operation.position, orderAtAnchor, displayPreset };
+  } else if (operation.type === 'managedPlacement.remove') {
+    const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
+    if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
+    const [removed] = chapter.managedPlacements.splice(index, 1);
+    if (removed.kind === 'personFeature') chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== removed.contentId && item.placementId !== removed.placementId);
   }
   return { chapter, contentHash: await sha256(chapter) };
 };
@@ -674,13 +778,13 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
-  const slots = checkpoints.map((item) => item.slot);
-  if (new Set(slots).size !== slots.length) errors.push({ code: 'CHECKPOINT_SLOT_DUPLICATE', path: 'checkpoints' });
-  if (slots.some((slot) => typeof slot !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slot))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: 'checkpoints' });
   const checkpointIds = checkpoints.map((item) => item.checkpointId);
   if (new Set(checkpointIds).size !== checkpointIds.length) errors.push({ code: 'CHECKPOINT_ID_DUPLICATE', path: 'checkpoints' });
   const anchors = passageIds(chapter);
   checkpoints.forEach((item, index) => {
+    const slotLabel = item.slotLabel ?? item.slot;
+    if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: `checkpoints.${index}.slotLabel` });
+    if (!Number.isInteger(item.displayOrder ?? index) || (item.displayOrder ?? index) < 0) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder` });
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });
     if (!/^[a-f0-9]{64}$/.test(item.passageExcerptHash || '')) errors.push({ code: 'CHECKPOINT_EXCERPT_HASH_INVALID', path: `checkpoints.${index}.passageExcerptHash` });
     if (typeof item.showInSidebar !== 'boolean') errors.push({ code: 'CHECKPOINT_SIDEBAR_INVALID', path: `checkpoints.${index}.showInSidebar` });
@@ -702,6 +806,17 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
       if (Boolean(block.caption) === Boolean(block.captionOmissionReason)) errors.push({ code: 'MEDIA_CAPTION_INVALID', path: `body.${index}` });
       if (!block.teachingUse || !['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) || !['start', 'center', 'end'].includes(block.align) || !['poster', 'firstFrame', 'omit'].includes(block.printPolicy) || (block.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(block.animationPolicy))) errors.push({ code: 'MEDIA_PRESENTATION_INVALID', path: `body.${index}` });
     }
+  });
+  const placements = Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : [];
+  const placementIds = new Set(); const placementPositions = new Set();
+  placements.forEach((placement, index) => {
+    if (!placement?.placementId || placementIds.has(placement.placementId)) errors.push({ code: 'MANAGED_PLACEMENT_ID_DUPLICATE', path: `managedPlacements.${index}.placementId` });
+    placementIds.add(placement?.placementId);
+    const positionKey = `${placement?.anchorPassageId}:${placement?.position}:${placement?.orderAtAnchor}`;
+    if (placementPositions.has(positionKey)) errors.push({ code: 'MANAGED_POSITION_CONFLICT', path: `managedPlacements.${index}.orderAtAnchor` });
+    placementPositions.add(positionKey);
+    if (!anchors.has(placement?.anchorPassageId)) errors.push({ code: 'MANAGED_ANCHOR_MISSING', path: `managedPlacements.${index}.anchorPassageId` });
+    if (!['before', 'after'].includes(placement?.position) || !Number.isInteger(placement?.orderAtAnchor) || placement.orderAtAnchor < 0) errors.push({ code: 'MANAGED_POSITION_INVALID', path: `managedPlacements.${index}` });
   });
   return { valid: errors.length === 0, errors };
 };
@@ -777,7 +892,7 @@ export const semanticDiffChapter = (baseChapter, workingChapter) => {
     }
   }
 
-  const checkpointKey = (item, index) => item?.checkpointId || (item?.slot ? `slot:${item.slot}` : `index:${index}`);
+  const checkpointKey = (item, index) => item?.checkpointId || (item?.slotLabel ? `slot:${item.slotLabel}` : item?.slot ? `slot:${item.slot}` : `index:${index}`);
   const baseCheckpoints = Array.isArray(baseChapter?.checkpoints) ? baseChapter.checkpoints : [];
   const workingCheckpoints = Array.isArray(workingChapter?.checkpoints) ? workingChapter.checkpoints : [];
   const baseCheckpointMap = new Map(baseCheckpoints.map((item, index) => [checkpointKey(item, index), item]));
@@ -787,7 +902,7 @@ export const semanticDiffChapter = (baseChapter, workingChapter) => {
   for (const id of checkpointIds) {
     const before = baseCheckpointMap.get(id);
     const after = workingCheckpointMap.get(id);
-    const summary = (item) => ({ checkpointId: item?.checkpointId || null, slot: item?.slot || null });
+    const summary = (item) => ({ checkpointId: item?.checkpointId || null, slotLabel: item?.slotLabel ?? item?.slot ?? null, displayOrder: item?.displayOrder ?? null });
     if (!before) checkpoints.added.push(summary(after));
     else if (!after) checkpoints.removed.push(summary(before));
     else {

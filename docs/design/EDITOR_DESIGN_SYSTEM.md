@@ -61,7 +61,7 @@ Additional visible copy is allowed only when a real workflow or accessibility re
 - `ChapterSelector`: book-order aware chapter picker.
 - `EditorNav`: six semantic workspaces with selected and focus states.
 - `StructuredChapterEditor`: sections, passage IDs, selection, block insertion.
-- `CheckpointInspector`: 0-3 draft checkpoints; Commit, Work, Reconcile publish slots.
+- `CheckpointInspector`: zero or more passage-anchored checkpoints; optional Commit, Work, Reconcile labels plus instructor-defined labels and ordering.
 - `MediaInsertMenu`: seven P0 media/embed choices.
 - `MediaInspector`: caption, alt text, transcript, rights, crop, poster, fallback.
 - `ChangeReview`: semantic before/after diff with explicit accept/reject.
@@ -83,7 +83,7 @@ Provider wordmarks are not required in the first build. Accessible text labels r
 
 - Every mutation belongs to an isolated change set and shows pending/saved/conflict state.
 - Selecting prose exposes its stable passage ID and available anchor actions.
-- Drafts may contain zero through three checkpoints; publication requires exactly Commit, Work, Reconcile in order.
+- Chapters may contain zero or more checkpoints. Publication validates stable IDs, anchors, ordering, accessibility, and prompt quality; it does not enforce a fixed count or unique stage label.
 - Preview shows inline and sidebar checkpoint placement before approval.
 - Media URL paste resolves to a typed provider definition or an instructor-authored link card; raw embed HTML is never accepted.
 - X loads only its safe fallback until the reader explicitly activates the live post.

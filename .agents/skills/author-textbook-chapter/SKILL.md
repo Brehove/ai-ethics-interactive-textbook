@@ -5,13 +5,13 @@ description: Draft, revise, save, or publish a PHIL 123 textbook chapter through
 
 # Author a chapter
 
-Read `references/mcp-workflow.md` before mutation. List and get the chapter, then list passages and preserve their IDs.
+Read `references/mcp-workflow.md` before mutation. Call `get_authoring_view`, then `get_passage` for every passage you will alter. Preserve stable passage IDs and treat managed placements as typed records, never chapter HTML.
 
-For one chapter, create or resume a chapter-scoped changeset. For a coordinated edit spanning chapters, call `create_changeset` once with every target. On multi-chapter drafts, pass the exact `documentId`, base revision, working version, changeset ID, and a fresh UUID idempotency key for every write and preview. Use only semantic tools; do not send raw HTML, CSS, SQL, or patch payloads.
+For one chapter, call `create_or_resume_changeset`. Pass the exact document ID, base revision, working version, changeset ID, and a fresh UUID idempotency key for every write and preview. Use `replace_passage_text` for narrow prose edits or `replace_chapter_document` for a whole-chapter import. Use only semantic tools; do not send raw HTML, CSS, SQL, or patch payloads.
 
-Validate and inspect the complete changeset diff. Then choose exactly one finish:
+Call `preview_changes`, inspect the result, then inspect `get_version_history`. Then choose exactly one finish:
 
-- If the user explicitly asked to save or publish the chapter immediately, confirm `textbook://capabilities` reports `maySaveLive: true`, and call `save_live_revision` with the exact current preconditions. Report the new immutable revision ID. Never infer live publication from a request to draft, propose, preview, or review.
-- Otherwise, submit for review. For multi-chapter submission, bind every target's current `documentId`, `baseRevisionId`, and `expectedVersion`; if any target is stale, stop and re-read rather than retrying blindly.
+- If the user explicitly asked to save or publish the chapter immediately, confirm `textbook://capabilities` reports `mayCommitLive: true` and the exact chapter is allowlisted, then call `commit_live` with the exact current preconditions. Report its immutable revision, content hash, projection hash, URL, and whether delivery is verified or pending. If pending, call `get_live_commit_status`; never retry with a new idempotency key.
+- Otherwise, leave the isolated draft in place and report its changeset, document, base revision, working version, and preview evidence. The current Unified contract does not use agent submission/approval as the normal chapter-save path.
 
-Live save is limited to one D1-authoritative chapter. It creates a public canonical revision and version-history entry, but it does not approve or promote a protected whole-site release. Agents never approve, reject, change authority, promote, or roll back.
+Live commit requires a separately issued, instructor-approved device-flow capability. It creates a public canonical revision and version-history entry, but it does not approve rights, change authority, deploy code/schema, or promote a protected whole-site release.

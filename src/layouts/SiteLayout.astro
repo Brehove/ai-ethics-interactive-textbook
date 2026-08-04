@@ -11,6 +11,7 @@ interface Props {
   canonicalPath?: string;
   noindex?: boolean;
   pageClass?: string;
+  documentId?: string;
 }
 
 const {
@@ -22,6 +23,7 @@ const {
   canonicalPath = Astro.url.pathname,
   noindex = false,
   pageClass = "",
+  documentId,
 } = Astro.props;
 const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
 ---
@@ -39,7 +41,26 @@ const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
   </head>
   <body class={pageClass}>
     <a class="skip-link" href="#main-content">Skip to main content</a>
-    <SiteHeader chapterNumber={chapterNumber} readingRecordPilot={readingRecordPilot} readingRecordTotal={readingRecordTotal} />
+    <SiteHeader chapterNumber={chapterNumber} readingRecordPilot={readingRecordPilot} readingRecordTotal={readingRecordTotal} documentId={documentId} canonicalPath={canonicalPath} />
     <slot />
+    <script>
+      const iframeFor = (provider: string, canonical: string) => {
+        try {
+          const url = new URL(canonical); let source = "";
+          if (provider === "youtube") { const id = url.hostname === "youtu.be" ? url.pathname.slice(1) : url.searchParams.get("v"); if (id && /^[A-Za-z0-9_-]+$/.test(id)) source = `https://www.youtube-nocookie.com/embed/${id}`; }
+          else if (provider === "vimeo") { const id = url.pathname.split("/").find((part) => /^\d+$/.test(part)); if (id) source = `https://player.vimeo.com/video/${id}?dnt=1`; }
+          else if (provider === "spotify" && /^\/(artist|album|track|show|episode)\/[A-Za-z0-9]+/.test(url.pathname)) source = `https://open.spotify.com/embed${url.pathname}`;
+          else if (provider === "x") { const id = url.pathname.match(/\/status\/([A-Za-z0-9_-]+)/)?.[1]; if (id) source = `https://platform.twitter.com/embed/Tweet.html?id=${encodeURIComponent(id)}&dnt=true`; }
+          else if (provider === "soundcloud") source = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url.toString())}`;
+          return source;
+        } catch { return ""; }
+      };
+      document.addEventListener("click", (event) => {
+        const button = (event.target as Element | null)?.closest<HTMLButtonElement>("[data-activate-embed]"); if (!button) return;
+        const source = iframeFor(button.dataset.activateEmbed ?? "", button.dataset.providerUrl ?? "");
+        if (!source) { button.textContent = "Use the source link above"; button.disabled = true; return; }
+        const iframe = document.createElement("iframe"); iframe.src = source; iframe.title = `Embedded ${button.dataset.activateEmbed ?? "media"}`; iframe.loading = "lazy"; iframe.referrerPolicy = "strict-origin-when-cross-origin"; iframe.allow = "fullscreen; encrypted-media; picture-in-picture"; iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-presentation allow-popups"); button.replaceWith(iframe);
+      });
+    </script>
   </body>
 </html>

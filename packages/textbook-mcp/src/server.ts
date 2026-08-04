@@ -1,12 +1,10 @@
-import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { createMcp } from "../../../workers/textbook-mcp/src/index.mjs";
+import { createMcp, verifyCapability } from "../../../workers/textbook-mcp/src/index.mjs";
 
 // This optional Node bridge deliberately reuses the deployed Worker's tool
 // registry. There is one set of semantic operation schemas, media tools, and
 // safety annotations rather than a second MCP implementation that can drift.
-export const SERVER_INSTRUCTIONS = `Use the textbook workflow in order: read a chapter and passages; create or resume a changeset; make semantic drafts; validate; diff; submit; approve; publish. Every mutation needs its current base revision, changeset, and idempotency key. Never send raw HTML, CSS, SQL, or database patches. Publish and rollback have real-world effects; obtain explicit confirmation.`;
+export const SERVER_INSTRUCTIONS = `Use the textbook workflow in order: read the authoring view and passages; create or resume a changeset; make semantic drafts; preview; inspect history; and commit live only after explicit user save or publish language. commit_live performs server-side validation. Every mutation needs its current base revision, changeset, and idempotency key. Never send raw HTML, CSS, SQL, or database patches.`;
 export const TOOL_SAFETY = Object.freeze({
   read: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   mutate: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
@@ -23,6 +21,7 @@ export type ContentApiClientOptions = { baseUrl: string; bearerToken: string; fe
 export class ContentApiClient {
   private readonly fetcher: typeof fetch;
   constructor(private readonly options: ContentApiClientOptions) { this.fetcher = options.fetch ?? fetch; }
+  get bearerToken() { return this.options.bearerToken; }
 
   async forward(request: Request) {
     const source = new URL(request.url);
@@ -45,22 +44,14 @@ export class ContentApiClient {
   }
 }
 
-export function createTextbookMcp(client: ContentApiClient, requestId = randomUUID()) {
-  return createMcp({ CONTENT_API: { fetch: (request: Request) => client.forward(request) } }, requestId);
+export type CapabilityVerifier = { verifyCapability(token: string, target: Record<string, unknown>): Promise<unknown> };
+export async function createTextbookMcp(client: ContentApiClient, verifier: CapabilityVerifier, requestId = randomUUID()) {
+  const identity = await verifyCapability({ AUTH_CAPABILITY: verifier }, client.bearerToken);
+  return createMcp({ CONTENT_API: { fetch: (request: Request) => client.forward(request) }, AUTH_CAPABILITY: verifier }, requestId, { identity, bearerToken: client.bearerToken });
 }
 
 export async function start() {
-  const baseUrl = process.env.CONTENT_API_URL;
-  const bearerToken = process.env.CONTENT_API_BEARER_TOKEN;
-  if (!baseUrl || !bearerToken) throw new Error("CONTENT_API_URL and CONTENT_API_BEARER_TOKEN are required; the URL must be an authenticated content gateway.");
-  const mcp = createTextbookMcp(new ContentApiClient({ baseUrl, bearerToken }));
-  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() });
-  await mcp.connect(transport);
-  const port = Number(process.env.PORT ?? 8788);
-  createServer(async (req, res) => {
-    if (req.url?.split("?")[0] !== "/mcp") { res.writeHead(404).end(); return; }
-    await transport.handleRequest(req, res);
-  }).listen(port);
+  throw new Error("Use the hosted MCP Worker. The Node bridge cannot safely reach the private AUTH_CAPABILITY verifier and will not bypass it with a shared secret or public verification URL.");
 }
 
 if (process.argv[1]?.endsWith("server.ts")) start();

@@ -1,19 +1,22 @@
 #!/usr/bin/env node
+// Compatibility CLI. It requests an instructor-approved bearer; it never signs one.
 import { randomUUID } from 'node:crypto';
-import { signAgentCapability } from '../../workers/textbook-mcp/src/index.mjs';
+import { waitForCapability } from './device-flow.mjs';
 
-const args = new Map();
-for (let index = 2; index < process.argv.length; index += 2) {
-  const flag = process.argv[index]; const value = process.argv[index + 1];
-  if (!flag?.startsWith('--') || value === undefined) throw new Error('Arguments must be --name value pairs');
-  args.set(flag.slice(2), value);
+const values = new Map(); const flags = new Set();
+for (let index = 2; index < process.argv.length; index += 1) {
+  const flag = process.argv[index]; if (!flag?.startsWith('--')) throw new Error(`Unexpected argument ${flag}`);
+  if (flag === '--allow-live-save') { flags.add(flag); continue; }
+  const value = process.argv[++index]; if (!value || value.startsWith('--')) throw new Error(`${flag} requires a value`);
+  const key = flag.slice(2); values.set(key, [...(values.get(key) || []), value]);
 }
-const actorId = args.get('actor-id'); const clientId = args.get('client-id'); const runId = args.get('run-id');
-const requestedScopes = (args.get('scopes') || '').split(/[ ,]+/).filter(Boolean);
-const minutes = Number(args.get('minutes') || '30');
-if (!actorId || !clientId || !runId || !requestedScopes.length || !Number.isInteger(minutes) || minutes < 1 || minutes > 60) throw new Error('Usage: --actor-id actor_agent_name --client-id client-name --run-id run_name --scopes content:read,content:write --minutes 30');
-const secret = process.env.MCP_CAPABILITY_SECRET;
-if (!secret) throw new Error('MCP_CAPABILITY_SECRET is required');
-const now = Math.floor(Date.now() / 1000);
-const token = await signAgentCapability({ iss: 'ai-ethics-editor', aud: 'ai-ethics-textbook-mcp', sub: actorId, actorType: 'agent', clientId, runId, scopes: requestedScopes, iat: now, exp: now + minutes * 60, jti: randomUUID() }, secret);
-process.stdout.write(`${token}\n`);
+const documents = values.get('document') || []; const operations = [...new Set(values.get('operation') || [])]; const liveSave = flags.has('--allow-live-save');
+if (!documents.length) throw new Error('Usage: --document chapter_ch07 --operation get_authoring_view [--operation commit_live --allow-live-save]');
+if (liveSave && !operations.includes('commit_live')) throw new Error('--allow-live-save requires --operation commit_live.');
+if (!liveSave && operations.includes('commit_live')) throw new Error('commit_live requires --allow-live-save.');
+if (!operations.length) throw new Error('At least one exact --operation is required.');
+const authOrigin = process.env.TEXTBOOK_AUTH_ORIGIN || 'https://auth.ethicsandai.your-digital-life.org';
+const runId = values.get('run-id')?.[0] || `run_agent_${randomUUID().replaceAll('-', '_')}`;
+const clientId = values.get('client-id')?.[0] || 'textbook-mcp-cli';
+const issued = await waitForCapability({ authOrigin, request: { clientId, runId, scopes: ['content:read', 'content:write', ...(liveSave ? ['content:live-save'] : [])], allowedDocumentIds: documents, allowedOperations: operations, lifetimeSeconds: liveSave ? 600 : 900 }, onRequested: ({ verificationUrl, userCode, expiresAt }) => { console.error(`Instructor approval required: ${verificationUrl}`); console.error(`Code: ${userCode} (expires ${expiresAt})`); } });
+process.stdout.write(`${issued.bearerToken}\n`);

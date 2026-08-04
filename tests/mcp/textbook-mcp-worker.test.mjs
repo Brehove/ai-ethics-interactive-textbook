@@ -1,189 +1,96 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import worker, { createMcp, signAgentCapability, verifyAgentCapability } from '../../workers/textbook-mcp/src/index.mjs';
+import worker, { createMcp, verifyCapability } from '../../workers/textbook-mcp/src/index.mjs';
 
-const capabilitySecret = 'test-capability-secret-at-least-32-bytes-long';
-const claims = (scopes = ['content:read', 'content:write', 'content:submit', 'media:read', 'media:upload']) => { const now = Math.floor(Date.now() / 1000); return { iss: 'ai-ethics-editor', aud: 'ai-ethics-textbook-mcp', sub: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', scopes, iat: now - 1, exp: now + 600, jti: 'test-jti' }; };
-const env = { MCP_CAPABILITY_SECRET: capabilitySecret, CONTENT_API: { fetch: async () => new Response(JSON.stringify({ chapters: [] }), { headers: { 'content-type': 'application/json' } }) } };
-
-test('protocol initializes, lists tools, and calls a read tool', async () => {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(env, 'run_test');
-  const client = new Client({ name: 'test-client', version: '1.0.0' });
-  await server.connect(serverTransport); await client.connect(clientTransport);
-  const tools = await client.listTools();
-  assert.equal(tools.tools.some(tool => tool.name === 'approve_changeset' || tool.name === 'publish_changeset'), false);
-  assert.equal(tools.tools.some(tool => tool.name === 'upload_media_base64' || tool.name === 'request_media_upload'), false);
-  assert.ok(tools.tools.some(tool => tool.name === 'replace_text'));
-  assert.ok(tools.tools.some(tool => tool.name === 'replace_chapter_body'));
-  assert.ok(tools.tools.some(tool => tool.name === 'create_changeset'));
-  assert.equal(tools.tools.every(tool => typeof tool.annotations?.idempotentHint === 'boolean'), true);
-  const response = await client.callTool({ name: 'list_chapters', arguments: {} });
-  assert.equal(response.isError, undefined);
-  assert.match(response.content[0].text, /chapters/);
-  await client.close(); await server.close();
-});
-
-test('MCP exposes document-targeted multi-chapter creation, mutation, diff, preview, and atomic submission', async () => {
-  const calls = [];
-  const routeEnv = { CONTENT_API: { fetch: async (request) => {
-    calls.push({ pathname: new URL(request.url).pathname, body: request.method === 'GET' ? null : await request.clone().json().catch(() => null) });
-    return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
-  } } };
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(routeEnv, 'run_multi'); const client = new Client({ name: 'multi-client', version: '1.0.0' });
-  await server.connect(serverTransport); await client.connect(clientTransport);
-  const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
-  await client.callTool({ name: 'create_changeset', arguments: { title: 'Two chapter repair', targets: ['chapter_ch07', 'chapter_ch08'], idempotencyKey: key } });
-  await client.callTool({ name: 'replace_text', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 2, idempotencyKey: key, operation: { type: 'text.replace', blockId: 'block_1', text: 'Revised.' } } });
-  await client.callTool({ name: 'diff_changeset', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08' } });
-  await client.callTool({ name: 'render_preview', arguments: { changeSetId: 'cs_multi', documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 3, idempotencyKey: key } });
-  await client.callTool({ name: 'submit_changeset', arguments: { changeSetId: 'cs_multi', documents: [{ documentId: 'chapter_ch07', baseRevisionId: 'revision_a', expectedVersion: 1 }, { documentId: 'chapter_ch08', baseRevisionId: 'revision_b', expectedVersion: 3 }], idempotencyKey: key } });
-  assert.equal(calls[0].pathname, '/v1/changesets'); assert.deepEqual(calls[0].body.targets, ['chapter_ch07', 'chapter_ch08']);
-  assert.equal(calls[1].pathname, '/v1/changesets/cs_multi:apply'); assert.equal(calls[1].body.documentId, 'chapter_ch08');
-  assert.equal(calls[2].pathname, '/v1/changesets/cs_multi:diff'); assert.deepEqual(calls[2].body, { documentId: 'chapter_ch08' });
-  assert.equal(calls[3].body.documentId, 'chapter_ch08'); assert.equal(calls[4].body.documents.length, 2); assert.equal(calls[4].body.baseRevisionId, undefined);
-  await client.close(); await server.close();
-});
-
-test('MCP accepts custom checkpoint keys and removal by stable checkpoint ID', async () => {
-  const calls = [];
-  const routeEnv = { CONTENT_API: { fetch: async (request) => {
-    calls.push({ pathname: new URL(request.url).pathname, body: await request.clone().json() });
-    return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
-  } } };
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(routeEnv, 'run_checkpoint'); const client = new Client({ name: 'checkpoint-client', version: '1.0.0' });
-  await server.connect(serverTransport); await client.connect(clientTransport);
-  const write = { changeSetId: 'cs_checkpoint', baseRevisionId: 'revision_1', expectedVersion: 1, idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886' };
-  await client.callTool({ name: 'upsert_checkpoint', arguments: { ...write, operation: { type: 'checkpoint.upsert', checkpoint: { passageId: 'passage_1', passageExcerptHash: 'a'.repeat(64), slot: 'checkpoint-fourth', stage: 'Extend', strategy: 'self-explanation', title: 'A fourth checkpoint', trigger: 'Pause again.', prompt: 'Explain the distinction.', guidance: 'Use the chapter language.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'Extend the reasoning sequence.', showInSidebar: true } } } });
-  await client.callTool({ name: 'remove_checkpoint', arguments: { ...write, expectedVersion: 2, operation: { type: 'checkpoint.remove', checkpointId: 'checkpoint_123' } } });
-  assert.equal(calls[0].body.operation.checkpoint.slot, 'checkpoint-fourth');
-  assert.deepEqual(calls[1].body.operation, { type: 'checkpoint.remove', checkpointId: 'checkpoint_123' });
-  await client.close(); await server.close();
-});
-
-test('raw authenticated media lane keeps binary data and upload tokens outside MCP tool context', async () => {
-  const calls = [];
-  const uploadEnv = { MCP_CAPABILITY_SECRET: capabilitySecret, CONTENT_API: { fetch: async (request) => {
-    const body = request.method === 'PUT' ? new Uint8Array(await request.arrayBuffer()) : await request.json();
-    calls.push({ pathname: new URL(request.url).pathname, method: request.method, headers: request.headers, body });
-    return new Response(JSON.stringify(request.method === 'PUT'
-      ? { ticketId: 'upload_12345678', jobId: 'mediajob_12345678', state: 'queued', sha256: 'a'.repeat(64) }
-      : { ticketId: 'upload_12345678', jobId: 'mediajob_12345678', upload: { token: 'one-time-token-123456', requiredHeaders: {} } }), { status: request.method === 'PUT' ? 202 : 201, headers: { 'content-type': 'application/json' } });
-  } } };
-  const authorization = `Bearer ${await signAgentCapability(claims(), capabilitySecret)}`;
-  const metadata = { reviewPackageId: 'reviewpkg_12345678', filename: 'clip.webm', mimeType: 'video/webm', bytes: 4, sha256: 'a'.repeat(64), idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886', transcriptEquivalent: { provided: true, language: 'en', text: 'Equivalent.' }, poster: { provided: true, alt: 'Poster.' } };
-  let response = await worker.fetch(new Request('https://mcp.example/media-upload/request', { method: 'POST', headers: { authorization, 'content-type': 'application/json' }, body: JSON.stringify(metadata) }), uploadEnv);
-  assert.equal(response.status, 201);
-  response = await worker.fetch(new Request('https://mcp.example/media-upload/upload_12345678', { method: 'PUT', headers: { authorization, 'content-type': 'video/webm', 'content-length': '4', 'x-content-sha256': 'a'.repeat(64), 'x-upload-token': 'one-time-token-123456' }, body: new Uint8Array([1, 2, 3, 4]) }), uploadEnv);
-  assert.equal(response.status, 202);
-  assert.equal(calls[0].pathname, '/v1/media:requestUpload');
-  assert.equal(calls[1].pathname, '/v1/media/uploads/upload_12345678');
-  assert.deepEqual([...calls[1].body], [1, 2, 3, 4]);
-  assert.equal(calls[1].headers.get('x-content-actor-type'), 'agent');
-  const helper = await readFile(new URL('../../.agents/skills/publish-textbook-media/scripts/upload-media.mjs', import.meta.url), 'utf8');
-  assert.match(helper, /readFile\(filePath\)/);
-  assert.doesNotMatch(helper, /contentBase64|base64/i);
-});
-
-test('worker rejects callers without the MCP bearer secret', async () => {
-  const response = await worker.fetch(new Request('https://mcp.example/mcp'), env);
-  assert.equal(response.status, 401);
-  assert.match(response.headers.get('www-authenticate'), /invalid_token/);
-});
-
-test('signed per-agent capabilities preserve identity, expire quickly, and hide out-of-scope tools', async () => {
-  const readClaims = claims(['content:read']); const token = await signAgentCapability(readClaims, capabilitySecret);
-  assert.deepEqual((await verifyAgentCapability(token, capabilitySecret)).scopes, ['content:read']);
-  await assert.rejects(() => verifyAgentCapability(token, 'wrong-secret-but-still-at-least-32-characters'));
-  const overlongToken = await signAgentCapability({ ...readClaims, exp: readClaims.iat + 7200 }, capabilitySecret);
-  await assert.rejects(() => verifyAgentCapability(overlongToken, capabilitySecret));
-  const identity = await verifyAgentCapability(token, capabilitySecret);
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(env, identity.runId, identity); const client = new Client({ name: 'scoped-client', version: '1.0.0' });
-  await server.connect(serverTransport); await client.connect(clientTransport);
-  const tools = (await client.listTools()).tools.map((tool) => tool.name);
-  assert.ok(tools.includes('get_chapter')); assert.ok(tools.includes('list_revisions')); assert.equal(tools.includes('replace_text'), false); assert.equal(tools.includes('submit_changeset'), false); assert.equal(tools.includes('save_live_revision'), false); assert.equal(tools.includes('create_media_review_package'), false);
-  const resources = await client.listResources(); assert.deepEqual(resources.resources.map((item) => item.uri).sort(), ['textbook://capabilities', 'textbook://chapters', 'textbook://schema']);
-  const receipt = await client.readResource({ uri: 'textbook://capabilities' }); assert.match(receipt.contents[0].text, /actor_agent_test/); assert.match(receipt.contents[0].text, /cannot/);
-  await client.close(); await server.close();
-});
-
-test('explicit live-save capability exposes the immediate publication tool and forwards exact preconditions', async () => {
-  const calls = [];
-  const routeEnv = { CONTENT_API: { fetch: async (request) => {
-    calls.push({ pathname: new URL(request.url).pathname, method: request.method, body: await request.clone().json() });
-    return new Response(JSON.stringify({ live: true, revisionId: 'revision_live' }), { status: 201, headers: { 'content-type': 'application/json' } });
-  } } };
-  const identity = await verifyAgentCapability(await signAgentCapability(claims(['content:read', 'content:write', 'content:live-save']), capabilitySecret), capabilitySecret);
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(routeEnv, identity.runId, identity); const client = new Client({ name: 'live-save-client', version: '1.0.0' });
-  await server.connect(serverTransport); await client.connect(clientTransport);
-  const tools = (await client.listTools()).tools.map((tool) => tool.name);
-  assert.ok(tools.includes('save_live_revision'));
-  const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
-  await client.callTool({ name: 'save_live_revision', arguments: { changeSetId: 'cs_live', baseRevisionId: 'revision_base', expectedVersion: 3, idempotencyKey: key } });
-  assert.deepEqual(calls[0], { pathname: '/v1/changesets/cs_live:saveLive', method: 'POST', body: { baseRevisionId: 'revision_base', expectedVersion: 3, idempotencyKey: key } });
-  const receipt = await client.readResource({ uri: 'textbook://capabilities' }); assert.match(receipt.contents[0].text, /"maySaveLive":true/);
-  await client.close(); await server.close();
-});
-
-test('media, provider, diff, paginated passage, and evidence tools call the frozen Content API routes with current payloads', async () => {
-  const calls = [];
-  const routeEnv = {
-    CONTENT_API: { fetch: async (request) => {
-      calls.push({ url: new URL(request.url), method: request.method, body: request.method === 'GET' ? null : await request.clone().json().catch(() => null) });
-      const pathname = new URL(request.url).pathname;
-      const data = pathname.endsWith('/dependencies')
-        ? { revisionId: 'revision_1', nodes: [{ id: 'passage_1' }, { id: 'checkpoint_1' }], edges: [{ source: 'checkpoint_1', target: 'passage_1', kind: 'anchoredTo' }], page: { nextCursor: null } }
-        : { ok: true, state: 'pending', id: 'reviewpkg_1234567890abcdef12345678' };
-      return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } });
-    } }
+const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
+const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'upload_media', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
+const claims = (overrides = {}) => ({ actorId: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', jti: 'grant_test_123', scopes: ['content:read', 'content:write', 'media:upload'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: editOperations, expiresAt: '2026-08-03T20:00:00.000Z', ...overrides });
+function makeEnv({ verified = claims(), api = async () => ({ ok: true }) } = {}) {
+  return {
+    AUTH_CAPABILITY: { verifyCapability: async (token, target) => { assert.equal(token, 'device-flow-test'); assert.equal(typeof target, 'object'); return typeof verified === 'function' ? verified() : verified; } },
+    CONTENT_API: { fetch: async (request) => new Response(JSON.stringify(await api(request)), { headers: { 'content-type': 'application/json' } }) }
   };
+}
+async function connected(env, identity = claims()) {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createMcp(routeEnv, 'run_routes');
-  const client = new Client({ name: 'route-test-client', version: '1.0.0' });
+  const server = createMcp(env, identity.runId, { identity, bearerToken: 'device-flow-test' });
+  const client = new Client({ name: 'mcp-contract-test', version: '1.0.0' });
   await server.connect(serverTransport); await client.connect(clientTransport);
+  return { client, server };
+}
 
-  const review = await client.callTool({ name: 'create_media_review_package', arguments: {
-    rights: { basis: 'owned', creator: 'Instructor', attribution: 'Instructor, original work' },
-    editorial: { teachingUse: 'Illustrates a course concept.', placementIntent: 'After passage one.' },
-    accessibility: { decorative: false, altText: 'A compact explanatory diagram.' },
-    idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886'
-  } });
-  assert.equal(review.isError, undefined);
-  await client.callTool({ name: 'search_media', arguments: { query: 'diagram', rightsStatus: 'cleared', limit: 10 } });
-  await client.callTool({ name: 'resolve_provider_url', arguments: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', expectedProvider: 'youtube' } });
-  await client.callTool({ name: 'diff_changeset', arguments: { changeSetId: 'cs_1' } });
-  await client.callTool({ name: 'list_passages', arguments: { chapterId: 'chapter_ch07', limit: 25, cursor: 50 } });
-  await client.callTool({ name: 'get_passage', arguments: { chapterId: 'chapter_ch07', passageId: 'passage_1' } });
-  await client.callTool({ name: 'get_passage_dependencies', arguments: { chapterId: 'chapter_ch07', passageId: 'passage_1', limit: 10, cursor: 20 } });
-  await client.callTool({ name: 'get_changeset', arguments: { changeSetId: 'cs_1' } });
-  await client.callTool({ name: 'get_release', arguments: { releaseId: 'release_1' } });
-  await client.callTool({ name: 'render_preview', arguments: { changeSetId: 'cs_1', baseRevisionId: 'revision_1', expectedVersion: 2, idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886', surface: 'print' } });
+test('central private verifier is required and validates bounded claims', async () => {
+  await assert.rejects(() => verifyCapability({}, 'device-flow-test'), /unavailable/);
+  await assert.rejects(() => verifyCapability({ AUTH_CAPABILITY: { verifyCapability: async () => ({ actorType: 'agent' }) } }, 'device-flow-test'), /invalid/);
+  const identity = await verifyCapability(makeEnv(), 'device-flow-test');
+  assert.equal(identity.jti, 'grant_test_123');
+  assert.deepEqual(identity.allowedDocumentIds, ['chapter_ch07']);
+});
 
-  assert.equal(calls[0].url.pathname, '/v1/media-review-packages');
-  assert.equal(calls[0].body.rights.basis, 'owned');
-  assert.equal(calls[1].url.pathname, '/v1/media');
-  assert.equal(calls[1].url.searchParams.get('rightsStatus'), 'cleared');
-  assert.equal(calls[2].url.pathname, '/v1/embeds:resolve');
-  assert.equal(calls[3].url.pathname, '/v1/changesets/cs_1:diff');
-  assert.equal(calls[4].url.pathname, '/v1/chapters/chapter_ch07/passages');
-  assert.equal(calls[4].url.searchParams.get('limit'), '25');
-  assert.equal(calls[4].url.searchParams.get('cursor'), '50');
-  assert.equal(calls[5].url.pathname, '/v1/chapters/chapter_ch07/passages/passage_1');
-  assert.equal(calls[6].url.pathname, '/v1/chapters/chapter_ch07/dependencies');
-  assert.equal(calls[6].url.searchParams.get('passageId'), 'passage_1');
-  assert.equal(calls[6].url.searchParams.get('limit'), '10');
-  assert.equal(calls[6].url.searchParams.get('cursor'), '20');
-  assert.equal(calls[7].url.pathname, '/v1/changesets/cs_1');
-  assert.equal(calls[8].url.pathname, '/v1/releases/release_1');
-  assert.equal(calls[9].url.pathname, '/v1/changesets/cs_1:renderPreview');
-  assert.equal(calls[9].body.surface, 'print');
-  assert.equal(calls.every((entry) => entry.method === 'GET' || entry.url.pathname === '/v1/media-review-packages' || entry.url.pathname === '/v1/embeds:resolve' || entry.url.pathname.endsWith(':diff') || entry.url.pathname.endsWith(':renderPreview')), true);
+test('MCP exposes the Unified authoring contract rather than raw or legacy write tools', async () => {
+  const env = makeEnv(); const { client, server } = await connected(env);
+  const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
+  for (const name of ['get_authoring_view', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
+  for (const name of ['save_live_revision', 'create_changeset', 'replace_text', 'approve_changeset', 'publish_changeset']) assert.equal(names.includes(name), false, name);
+  assert.equal(names.includes('commit_live'), false);
   await client.close(); await server.close();
+});
+
+test('tools use current Unified routes, batch semantic operations, and preserve the original bearer', async () => {
+  const calls = [];
+  const env = makeEnv({ api: async (request) => {
+    calls.push({ path: new URL(request.url).pathname, method: request.method, body: request.method === 'GET' ? null : await request.clone().json(), authorization: request.headers.get('authorization'), actorHeader: request.headers.get('x-content-actor-id') });
+    return { ok: true };
+  } });
+  const { client, server } = await connected(env);
+  await client.callTool({ name: 'get_authoring_view', arguments: { chapterId: 'chapter_ch07' } });
+  await client.callTool({ name: 'create_or_resume_changeset', arguments: { chapterId: 'chapter_ch07', title: 'Repair', resume: true, idempotencyKey: key } });
+  await client.callTool({ name: 'replace_chapter_document', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key, operation: { type: 'chapter.replaceDocument', document: { blocks: [] } } } });
+  const reorderedCheckpoint = { checkpointId: 'checkpoint_7', passageId: 'passage_7', displayOrder: 9, strategy: 'self-explanation', title: 'Reordered pause', trigger: 'Pause.', prompt: 'Explain.', guidance: 'Use the chapter.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'Reorder the prompt.', showInSidebar: true };
+  await client.callTool({ name: 'reorder_checkpoint', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 3, idempotencyKey: key, operation: { type: 'checkpoint.upsert', checkpoint: reorderedCheckpoint } } });
+  const feature = { personFeatureId: 'personfeature_aquinas', placementId: 'placement_aquinas', personId: 'person_aquinas', entityRevisionId: 'personrev_7', name: 'Thomas Aquinas', dates: '1225–1274', role: 'Primary source', teachingNote: 'Compare natural-law reasoning.', biography: 'A medieval philosopher and theologian.', primarySources: [], portrait: { mediaVersionId: 'mediaversion_aquinas', src: '/media/aquinas.webp', width: 400, height: 500, alt: 'Portrait of Thomas Aquinas.', credit: 'Public domain.', title: 'Thomas Aquinas', license: 'Public domain' } };
+  const placement = { placementId: 'placement_aquinas', kind: 'personFeature', contentId: 'personfeature_aquinas', anchorPassageId: 'passage_7', position: 'after', orderAtAnchor: 0, displayPreset: 'thinker-card' };
+  await client.callTool({ name: 'upsert_person_feature', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 4, idempotencyKey: key, operation: { type: 'personFeature.upsert', feature, placement } } });
+  await client.callTool({ name: 'get_live_commit_status', arguments: { chapterId: 'chapter_ch07', commitReceiptId: 'commit_7' } });
+  assert.equal(calls[0].path, '/v1/chapters/chapter_ch07/authoring-view');
+  assert.equal(calls[1].path, '/v1/chapters/chapter_ch07/changesets');
+  assert.equal(calls[1].body.documentIds, undefined);
+  assert.equal(calls[2].path, '/v1/changesets/changeset_7/operations:batch');
+  assert.equal(calls[2].body.operations[0].type, 'chapter.replaceDocument');
+  assert.equal(calls[3].body.operations[0].checkpoint.displayOrder, 9);
+  assert.equal(calls[4].body.operations[0].type, 'personFeature.upsert');
+  assert.equal(calls[5].path, '/v1/live-commits/commit_7');
+  assert.equal(calls.every((call) => call.authorization === 'Bearer device-flow-test'), true);
+  assert.equal(calls.every((call) => call.actorHeader === null), true);
+  await client.close(); await server.close();
+});
+
+test('checkpoint cardinality is arbitrary and repeated stages share an explicit display order', async () => {
+  const calls = []; const env = makeEnv({ api: async (request) => { calls.push(await request.clone().json()); return { ok: true }; } });
+  const { client, server } = await connected(env);
+  const checkpoint = { passageId: 'passage_7', displayOrder: 12, stage: 'Reconsider', strategy: 'self-explanation', title: 'Another pause', trigger: 'Pause.', prompt: 'Explain.', guidance: 'Use the chapter.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'A second prompt.', showInSidebar: true };
+  const response = await client.callTool({ name: 'upsert_checkpoint', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'checkpoint.upsert', checkpoint } } });
+  assert.equal(response.isError, undefined); assert.equal(calls[0].operations[0].checkpoint.displayOrder, 12);
+  await client.close(); await server.close();
+});
+
+test('commit_live is hidden without the exact scope and operation, and re-verifies before mutation', async () => {
+  const noLive = claims(); const { client: editClient, server: editServer } = await connected(makeEnv(), noLive);
+  assert.equal((await editClient.listTools()).tools.some((tool) => tool.name === 'commit_live'), false);
+  await editClient.close(); await editServer.close();
+  let verificationCount = 0;
+  const liveIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
+  const env = makeEnv({ verified: () => { verificationCount += 1; return verificationCount === 1 ? liveIdentity : claims(); } });
+  const initialIdentity = await verifyCapability(env, 'device-flow-test');
+  const { client, server } = await connected(env, initialIdentity);
+  const response = await client.callTool({ name: 'commit_live', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key } });
+  assert.equal(response.isError, true); assert.match(response.content[0].text, /does not grant commit_live/);
+  await client.close(); await server.close();
+});
+
+test('hosted worker rejects missing or unverifiable bearer and does not expose an internal verifier route', async () => {
+  const missing = await worker.fetch(new Request('https://mcp.example/mcp'), makeEnv()); assert.equal(missing.status, 401);
+  const noVerifier = await worker.fetch(new Request('https://mcp.example/internal/verify', { headers: { authorization: 'Bearer device-flow-test' } }), { CONTENT_API: { fetch() {} } }); assert.equal(noVerifier.status, 401);
 });

@@ -157,14 +157,22 @@ jobs:
           npx wrangler d1 migrations apply ai-ethics-content --local --config workers/content-api/wrangler.jsonc --persist-to "$migration_state"
 
       - name: Build the static reader
-        run: npm run build
+        run: npm run build && npm run build:instructor-editor
         env:
           ASTRO_TELEMETRY_DISABLED: "1"
+
+      - name: Install the pinned browser runtime
+        run: npx playwright install --with-deps chromium
+
+      - name: Exercise reader and continuous-editor browser gates
+        run: npm run test:browser && npm run test:visual && npm run test:a11y
 
       - name: Bundle every Cloudflare target without deploying
         run: |
           npx wrangler deploy --dry-run
           npx wrangler deploy --dry-run --config workers/editor-auth/wrangler.jsonc
           npx wrangler deploy --dry-run --config workers/content-api/wrangler.jsonc
+          npx wrangler deploy --dry-run --config workers/public-projection/wrangler.jsonc
+          npx wrangler deploy --dry-run --config apps/instructor-editor/wrangler.jsonc
           npx wrangler deploy --dry-run --config workers/textbook-preview/wrangler.jsonc
           npx wrangler deploy --dry-run --config workers/textbook-mcp/wrangler.jsonc

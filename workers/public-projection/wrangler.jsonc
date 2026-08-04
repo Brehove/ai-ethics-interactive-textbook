@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ai-ethics-public-projection",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    "RUNTIME_FLAGS_ENFORCED": "1"
+  },
+  "d1_databases": [
+    {
+      "binding": "PUBLIC_CONTENT_DB",
+      "database_name": "ai-ethics-content",
+      "database_id": "1f82c4fa-228b-4cf7-9b40-ff10eebeadfb"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PUBLIC_MEDIA",
+      "bucket_name": "ai-ethics-content-media"
+    }
+  ]
+}

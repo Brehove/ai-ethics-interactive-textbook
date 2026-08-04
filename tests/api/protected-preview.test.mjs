@@ -4,7 +4,8 @@ import contentWorker from '../../workers/content-api/src/index.mjs';
 import previewWorker from '../../workers/textbook-preview/src/index.mjs';
 import { sha256, stableStringify } from '../../workers/content-api/src/services.mjs';
 
-const headers = { 'content-type': 'application/json', 'x-content-gateway-verified': 'v1', 'x-content-actor-id': 'actor_preview_test', 'x-content-actor-type': 'agent', 'x-content-client-id': 'mcp', 'x-content-run-id': 'run-preview', 'x-content-scopes': 'content:read content:write' };
+const headers = { 'content-type': 'application/json', authorization: 'Bearer preview-test' };
+const capability = { verifyCapability: async () => ({ actorId: 'actor_preview_test', actorType: 'agent', clientId: 'mcp', runId: 'run-preview', scopes: ['content:read', 'content:write'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: ['render_preview'] }) };
 const chapter = { schemaVersion: 1, chapterId: 'chapter_ch07', title: 'Preview chapter', body: [{ type: 'heading', blockId: 'b1', passageId: 'p1', text: 'A heading', level: 2 }, { type: 'paragraph', blockId: 'b2', passageId: 'p2', text: 'Safe preview prose.' }], checkpoints: [] };
 
 const dbForIssue = () => ({
@@ -19,7 +20,7 @@ const dbForIssue = () => ({
 test('Content API issues an immutable five-minute one-time preview without requiring publishable checkpoint completeness', async () => {
   const CONTENT_DB = dbForIssue(); const objects = new Map();
   const CONTENT_SNAPSHOTS = { async head(key) { return objects.has(key) ? {} : null; }, async put(key, value) { objects.set(key, value); } };
-  const response = await contentWorker.fetch(new Request('https://content.example/v1/changesets/cs_preview:renderPreview', { method: 'POST', headers, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886', surface: 'mobile' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS, PREVIEW_TOKEN_SECRET: 'preview-secret-at-least-thirty-two-bytes', PREVIEW_ORIGIN: 'https://preview.example' });
+  const response = await contentWorker.fetch(new Request('https://content.example/v1/changesets/cs_preview:renderPreview', { method: 'POST', headers, body: JSON.stringify({ baseRevisionId: 'revision-base', expectedVersion: 2, idempotencyKey: '019fc57c-899f-7c32-b1bb-4ca8fc34b886', surface: 'mobile' }) }), { CONTENT_DB, CONTENT_SNAPSHOTS, AUTH_CAPABILITY: capability, PREVIEW_TOKEN_SECRET: 'preview-secret-at-least-thirty-two-bytes', PREVIEW_ORIGIN: 'https://preview.example' });
   assert.equal(response.status, 201); const body = await response.json();
   assert.equal(body.oneTime, true); assert.equal(body.surface, 'mobile'); assert.match(body.previewUrl, /^https:\/\/preview\.example\/preview\?token=v1\./); assert.equal(Date.parse(body.expiresAt) > Date.now(), true);
   assert.equal(objects.has(`previews/${body.snapshotHash}.json`), true);

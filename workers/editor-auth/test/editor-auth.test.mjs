@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { generateKeyPairSync, verify as verifySignature } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import {
@@ -14,6 +15,7 @@ import {
   verifyToken,
 } from "../src/crypto.mjs";
 import { createEditorAuthApp, dispatchMediaJobs } from "../src/index.mjs";
+import { cleanupExpiredOAuthStates, createOAuthState } from "../src/oauth-state.mjs";
 import { validateEditablePath } from "../src/policy.mjs";
 
 const NOW = 1_785_600_000;
@@ -24,6 +26,30 @@ const SESSION_SECRET = "test-only-session-secret-which-is-longer-than-thirty-two
 const TEST_CLIENT_SECRET = ["test", "only", "client", "secret"].join("-");
 const READER_ORIGIN = "https://reader.example.test";
 const AUTH_ORIGIN = "https://auth.example.test";
+
+class SqliteD1 {
+  constructor() { this.db = new DatabaseSync(":memory:"); }
+  prepare(sql) {
+    return { bind: (...values) => {
+      const statement = this.db.prepare(sql);
+      return {
+        first: async () => statement.get(...values) ?? null,
+        all: async () => ({ results: statement.all(...values) }),
+        run: async () => {
+          const result = statement.run(...values);
+          return { meta: { changes: Number(result.changes ?? 0) } };
+        },
+      };
+    } };
+  }
+  close() { this.db.close(); }
+}
+
+async function oauthStateDb() {
+  const db = new SqliteD1();
+  db.db.exec(await readFile(new URL("../migrations/0002_oauth_pkce_states.sql", import.meta.url), "utf8"));
+  return db;
+}
 
 test("runtime fetch adapters do not bind the Cloudflare global fetch function", async () => {
   const source = await readFile(new URL("../src/index.mjs", import.meta.url), "utf8");
@@ -153,11 +179,15 @@ test("callback rejects mismatched state before any GitHub request", async () => 
   assert.match(response.headers.get("Set-Cookie") ?? "", new RegExp(`${STATE_COOKIE}=;`));
 });
 
-test("callback keeps GitHub tokens server-side and creates a hardened session", async () => {
+test("callback keeps GitHub tokens server-side, consumes PKCE state, and creates a hardened session", async () => {
+  const db = await oauthStateDb();
+  const target = { chapterSlug: "aristotle-character-and-ai-assisted-life", mode: "edit", anchorId: "ch07-p0014" };
+  const oauth = await createOAuthState(target, runtimeEnv({ AUTH_STATE_DB: db }), NOW, 600, deterministicBytes);
   const state = await signToken({
     v: 1,
     kind: "state",
-    nonce: "state-nonce",
+    nonce: oauth.nonce,
+    target,
     iat: NOW - 10,
     exp: NOW + 300,
   }, SESSION_SECRET);
@@ -180,10 +210,10 @@ test("callback keeps GitHub tokens server-side and creates a hardened session", 
   callback.searchParams.set("state", state);
   const response = await app.fetch(new Request(callback, {
     headers: { Cookie: `${STATE_COOKIE}=${state}` },
-  }), runtimeEnv());
+  }), runtimeEnv({ AUTH_STATE_DB: db }));
 
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get("Location"), `${READER_ORIGIN}/admin/?editor_auth=ok`);
+  assert.equal(response.headers.get("Location"), `${READER_ORIGIN}/chapter/aristotle-character-and-ai-assisted-life/?mode=edit#ch07-p0014`);
   const cookies = response.headers.get("Set-Cookie") ?? "";
   assert.match(cookies, new RegExp(`${SESSION_COOKIE}=`));
   assert.match(cookies, /Secure/);
@@ -191,7 +221,87 @@ test("callback keeps GitHub tokens server-side and creates a hardened session", 
   assert.match(cookies, /SameSite=Strict/);
   assert.doesNotMatch(cookies, /server-only-user-token/);
   assert.equal(seen.length, 3);
+  assert.match(JSON.stringify(seen[0].init.body), /code_verifier/);
   assert.ok(seen.every(({ init }) => init.redirect === "manual"));
+  db.close();
+});
+
+test("start uses a code-pinned chapter target, PKCE, and skips GitHub for a valid session", async () => {
+  const db = await oauthStateDb();
+  const app = createEditorAuthApp({ now: () => NOW, randomBytes: deterministicBytes });
+  const start = `${AUTH_ORIGIN}/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&anchor=ch07-p0014`;
+  const response = await app.fetch(new Request(start), runtimeEnv({ AUTH_STATE_DB: db }));
+  assert.equal(response.status, 302);
+  const authorization = new URL(response.headers.get("Location"));
+  assert.equal(authorization.origin, "https://github.com");
+  assert.equal(authorization.searchParams.get("code_challenge_method"), "S256");
+  assert.match(authorization.searchParams.get("code_challenge") ?? "", /^[A-Za-z0-9_-]{43}$/);
+  const stored = await db.prepare("SELECT chapter_slug, mode, anchor_id, pkce_verifier FROM oauth_authorization_states").bind().first();
+  assert.deepEqual({ chapter: stored.chapter_slug, mode: stored.mode, anchor: stored.anchor_id }, { chapter: "aristotle-character-and-ai-assisted-life", mode: "edit", anchor: "ch07-p0014" });
+  assert.match(stored.pkce_verifier, /^[A-Za-z0-9._~-]{43,128}$/);
+  assert.match(response.headers.get("Set-Cookie") ?? "", new RegExp(`${STATE_COOKIE}=`));
+  assert.match(response.headers.get("Set-Cookie") ?? "", /SameSite=Lax/);
+  assert.doesNotMatch(response.headers.get("Set-Cookie") ?? "", /Domain=/i);
+
+  const { token } = await sessionFixture();
+  const fast = await app.fetch(new Request(start, { headers: { Cookie: `${SESSION_COOKIE}=${token}` } }), runtimeEnv({ AUTH_STATE_DB: db }));
+  assert.equal(fast.status, 302);
+  assert.equal(fast.headers.get("Location"), `${READER_ORIGIN}/chapter/aristotle-character-and-ai-assisted-life/?mode=edit#ch07-p0014`);
+  assert.equal((await db.prepare("SELECT count(*) AS count FROM oauth_authorization_states").bind().first()).count, 1);
+  db.close();
+});
+
+test("OAuth target rejects open redirects, traversal encodings, unknown chapters, and malformed anchors", async () => {
+  const db = await oauthStateDb();
+  const app = createEditorAuthApp({ now: () => NOW });
+  const rejected = [
+    "/auth/start?chapter=unknown&mode=edit",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=view",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life%2Fescape&mode=edit",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life%5Cescape&mode=edit",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&anchor=//attacker.example",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&returnTo=https://attacker.example",
+    "/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit&anchor=",
+  ];
+  for (const path of rejected) {
+    const response = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`), runtimeEnv({ AUTH_STATE_DB: db }));
+    assert.equal(response.status, 400, path);
+    assert.equal(response.headers.get("Location"), null, path);
+  }
+  db.close();
+});
+
+test("OAuth start fails closed when the dedicated state store is unavailable", async () => {
+  const app = createEditorAuthApp({ now: () => NOW });
+  const response = await app.fetch(new Request(`${AUTH_ORIGIN}/auth/start?chapter=aristotle-character-and-ai-assisted-life&mode=edit`), runtimeEnv());
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get("Location"), null);
+  assert.equal((await response.json()).error, "auth_state_unavailable");
+});
+
+test("scheduled OAuth cleanup removes expired server-side states", async () => {
+  const db = await oauthStateDb();
+  await createOAuthState({ chapterSlug: "aristotle-character-and-ai-assisted-life", mode: "edit" }, runtimeEnv({ AUTH_STATE_DB: db }), NOW, 60, deterministicBytes);
+  assert.equal(await cleanupExpiredOAuthStates(runtimeEnv({ AUTH_STATE_DB: db }), NOW + 61), 1);
+  assert.equal((await db.prepare("SELECT count(*) AS count FROM oauth_authorization_states").bind().first()).count, 0);
+  db.close();
+});
+
+test("callback rejects an expired or replayed one-time OAuth state without a GitHub exchange", async () => {
+  const db = await oauthStateDb();
+  const target = { chapterSlug: "aristotle-character-and-ai-assisted-life", mode: "edit" };
+  const oauth = await createOAuthState(target, runtimeEnv({ AUTH_STATE_DB: db }), NOW, 60, deterministicBytes);
+  const state = await signToken({ v: 1, kind: "state", nonce: oauth.nonce, target, iat: NOW, exp: NOW + 60 }, SESSION_SECRET);
+  let calls = 0;
+  const app = createEditorAuthApp({ now: () => NOW, fetchImpl: async () => { calls += 1; return jsonResponse({}); } });
+  const request = () => new Request(`${AUTH_ORIGIN}/auth/callback?code=valid-auth-code&state=${encodeURIComponent(state)}`, { headers: { Cookie: `${STATE_COOKIE}=${state}` } });
+  const first = await app.fetch(request(), runtimeEnv({ AUTH_STATE_DB: db }));
+  assert.equal(first.status, 502); // The state is valid and consumed before the intentionally failing GitHub stub.
+  const replay = await app.fetch(request(), runtimeEnv({ AUTH_STATE_DB: db }));
+  assert.equal(replay.status, 400);
+  assert.equal(calls, 1);
+  assert.match(replay.headers.get("Set-Cookie") ?? "", new RegExp(`${STATE_COOKIE}=;`));
+  db.close();
 });
 
 test("file read returns the two optimistic-concurrency SHAs", async () => {
@@ -473,6 +583,26 @@ test("content gateway rejects unauthenticated reads", async () => {
   }), runtimeEnv({ CONTENT_API: { fetch: async () => { calls += 1; return jsonResponse({}); } } }));
   assert.equal(response.status, 401);
   assert.equal(calls, 0);
+});
+
+test("managed-media image preview permits an omitted Origin only with a valid instructor session", async () => {
+  const { token } = await sessionFixture();
+  let forwarded;
+  const path = "/v1/media/media_aquinas/versions/version_aquinas_1/rights/rights_aquinas_1:preview";
+  const app = createEditorAuthApp({ now: () => NOW });
+  const env = runtimeEnv({ CONTENT_API: { fetch: async (request) => {
+    forwarded = request;
+    return new Response("image-bytes", { headers: { "content-type": "image/webp", "cache-control": "private, no-store", "x-content-sha256": "a".repeat(64) } });
+  } } });
+  const response = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`, { headers: { Cookie: `${SESSION_COOKIE}=${token}` } }), env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("access-control-allow-origin"), null);
+  assert.equal(forwarded.url, `https://content-api.internal${path}`);
+  assert.equal(forwarded.headers.get("x-content-actor-type"), "human");
+  assert.equal(await response.text(), "image-bytes");
+
+  const denied = await app.fetch(new Request(`${AUTH_ORIGIN}${path}`, { headers: { Origin: "https://attacker.example", Cookie: `${SESSION_COOKIE}=${token}` } }), env);
+  assert.equal(denied.status, 403);
 });
 
 test("media queue dispatches an immutable envelope without exposing the installation token", async () => {

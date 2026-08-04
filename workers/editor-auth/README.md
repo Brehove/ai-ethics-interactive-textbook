@@ -1,6 +1,6 @@
 # Repository-scoped editor authentication Worker
 
-This Worker is the server-side boundary between the static `/admin/` interface and GitHub. It is stateless: it stores no content, access tokens, drafts, or sessions in Cloudflare KV, D1, R2, Durable Objects, or browser storage. GitHub intentionally stores the branch, commit, and pull request created by an authenticated save.
+This Worker is the server-side boundary between the editor, GitHub, and agent capabilities. It stores no content, GitHub credential, browser session, or draft in Cloudflare. Its small D1 state database stores one-time OAuth nonce hashes and server-side PKCE verifiers, hashed device-verification secrets, non-secret capability claims, revocation state, and minimal audit data.
 
 The implementation is pinned in code to `Brehove/ai-ethics-interactive-textbook`, to the `main` base branch, and to existing UTF-8 text files under `content/`. It has no merge, delete, publish, or direct-to-main endpoint.
 
@@ -8,13 +8,13 @@ The implementation is pinned in code to `Brehove/ai-ethics-interactive-textbook`
 
 The admin bundle reads its service origin from `PUBLIC_EDITOR_AUTH_ORIGIN` and calls these endpoints with `credentials: "include"`:
 
-### `GET /auth/start`
+### `GET /auth/start?chapter=<known-slug>&mode=edit&anchor=<optional-safe-anchor>`
 
-Open as a top-level navigation. The Worker creates a short-lived signed state cookie and redirects to the GitHub App authorization page. The return location is fixed by `EDITOR_ADMIN_URL`; the browser cannot supply an arbitrary redirect.
+Open as a top-level navigation. `chapter` must be one of the generated 18-route manifest entries; `mode` must be `edit`; `anchor`, when present, must match `^[A-Za-z][A-Za-z0-9._:-]{0,127}$`. Every other query key, including `returnTo`, is rejected. The Worker creates a short-lived signed state, stores its nonce hash and PKCE verifier in its dedicated D1 database, and redirects to GitHub with an S256 challenge. A valid existing instructor session redirects immediately to the exact editor target without visiting GitHub.
 
 ### `GET /auth/callback`
 
-GitHub calls this endpoint. The Worker validates the state cookie, exchanges the one-time code server-side, verifies the numeric GitHub user allowlist, and confirms that the user/App combination can access the pinned repository. It then discards the GitHub user token, sets an HttpOnly session cookie, and redirects to the fixed admin URL. No GitHub credential is sent to the admin JavaScript.
+GitHub calls this endpoint. The Worker verifies the signed state and host-only state cookie, consumes the nonce exactly once with `DELETE ... RETURNING`, obtains the server-side PKCE verifier, and exchanges the one-time code server-side. It then verifies the numeric GitHub user allowlist and pinned repository access, discards the GitHub user token, sets an HttpOnly session cookie, and redirects only to `/chapter/<validated-slug>/?mode=edit#<validated-anchor>`. No GitHub credential is sent to editor JavaScript. Missing, expired, replayed, or unavailable state storage fails closed.
 
 ### `GET /api/session`
 
@@ -85,13 +85,24 @@ A changed base returns HTTP 409 with `error: "stale_base"` and `current_base_com
 
 Required headers: exact allowed `Origin` and `X-Editor-CSRF`. Clears the session cookie and returns HTTP 204.
 
+## Agent-capability device flow
+
+An MCP launcher creates a request with `POST /auth/agent-capability-requests`; this endpoint has no browser session requirement because it cannot grant any authority. The response contains a one-time device secret (returned once), a short user code, and the fixed verification URL. Requests expire after five minutes.
+
+The instructor approves a request through `POST /auth/agent-capability-requests/{requestId}` with an allowed origin, signed GitHub session, CSRF header, matching user code, and `approve: true`. The agent polls `POST /auth/agent-capability-requests/{requestId}:exchange` with its device secret. Exchange is one-time.
+
+Omitted scopes default to `content:read` and `content:write`, with a maximum 15-minute grant. `content:live-save` is never implicit: it requires `content:write`, exact chapter IDs, the `commit_live` operation, a maximum 10-minute grant, an explicit `confirmLiveSave: true`, and a GitHub login no more than five minutes old. The instructor can revoke a grant with `POST /auth/agent-capabilities/{jti}:revoke` using the same session and CSRF boundary.
+
+There is deliberately no HTTP token-verification route. Bound Workers use the private RPC entrypoint `AgentCapabilityVerifier.verifyCapability(token, target)`; it checks signature, expiry, persisted grant state, revocation, exact document, operation, and required scope.
+
 ## Configuration boundary
 
 The repository owner, repository name, and base branch are committed in both code and Wrangler configuration. A mismatch fails closed. Configure these deployment-specific values only after the GitHub App, auth hostname, and reader hostname exist:
 
-- `EDITOR_ALLOWED_ORIGINS`: comma-separated exact reader/admin origins; no wildcard.
+- `EDITOR_ALLOWED_ORIGINS`: comma-separated exact reader/editor origins; no wildcard.
 - `EDITOR_AUTH_BASE_URL`: the exact auth origin, with no path.
-- `EDITOR_ADMIN_URL`: the fixed reader admin URL, normally ending in `/admin/`.
+- `EDITOR_ADMIN_URL`: the exact editor origin (the path is ignored for OAuth returns during the `/admin` transition).
+- `EDITOR_CAPABILITY_VERIFICATION_URL`: the fixed editor page used for device-flow approval.
 - `EDITOR_ALLOWED_GITHUB_USER_IDS`: comma-separated numeric IDs, not mutable login names.
 - `GITHUB_APP_ID`
 - `GITHUB_APP_CLIENT_ID`
@@ -102,6 +113,7 @@ Set these as Cloudflare secrets; none belong in the repository:
 - `GITHUB_APP_CLIENT_SECRET`
 - `GITHUB_APP_PRIVATE_KEY`
 - `EDITOR_SESSION_SECRET`, generated from at least 32 random bytes.
+- `AGENT_CAPABILITY_SIGNING_SECRET`, generated independently from at least 32 random bytes.
 
 Using secrets for the deployment-specific non-secret IDs and origins is also acceptable and avoids a second uncommitted configuration channel. Local development may use an ignored `.dev.vars` file. Never commit that file.
 
