@@ -1696,7 +1696,7 @@ async function searchMedia(env, url) {
     v.source_sha256, v.source_bytes, v.detected_mime, v.immutable_address, v.created_at AS version_created_at,
     r.id AS rights_case_id, r.status AS rights_status,
     (SELECT o.role FROM media_version_objects o WHERE o.media_version_id = v.id AND o.role IN ('derivative', 'poster')
-      ORDER BY CASE WHEN v.detected_mime LIKE 'image/%' AND o.role = 'derivative' THEN 0 WHEN v.detected_mime NOT LIKE 'image/%' AND o.role = 'poster' THEN 0 ELSE 1 END, o.id LIMIT 1) AS preview_role
+      ORDER BY CASE WHEN o.role = 'derivative' THEN 0 ELSE 1 END, o.id LIMIT 1) AS preview_role
     FROM media_assets a JOIN media_asset_versions v ON v.id = (
       SELECT vx.id FROM media_asset_versions vx WHERE vx.media_id = a.id ORDER BY vx.created_at DESC, vx.id DESC LIMIT 1
     ) LEFT JOIN media_rights_cases r ON r.rowid = (
