@@ -38,7 +38,7 @@ const adapter = {
   retireVersion: async () => {},
   smokeTest: async ({ previewBaseUrl }) => {
     if (!dryRun() && !previewBaseUrl) throw new Error("Wrangler did not return the exact immutable version preview URL");
-    if (previewBaseUrl) await exec("node", ["scripts/release/smoke.mjs", "--base-url", previewBaseUrl, "--asset-digests", required("--asset-digests")], { cwd: root });
+    if (previewBaseUrl) await exec("node", ["scripts/release/smoke.mjs", "--base-url", previewBaseUrl, "--candidate", required("--candidate"), "--asset-digests", required("--asset-digests")], { cwd: root });
   },
 };
 

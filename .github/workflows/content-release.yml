@@ -99,7 +99,11 @@ jobs:
         run: node scripts/release/release-cli.mjs gates --candidate release-artifacts/candidate.json --out release-artifacts/build.json
       - name: Capture immutable built-asset digests
         run: |
-          (cd release-artifacts/dist && find . -type f ! -path './_headers' ! -path './_redirects' -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |') > release-artifacts/assets.sha256
+          # Hash only routes served byte-for-byte by the asset binding. The
+          # Site Worker intentionally redirects /admin and injects the active
+          # public projection into chapter HTML, so those dynamic responses
+          # are covered by route smoke tests rather than static-byte checks.
+          (cd release-artifacts/dist && find . -type f ! -path './_headers' ! -path './_redirects' ! -path './admin/index.html' ! -path './chapter/*/index.html' -print0 | sort -z | xargs -0 sha256sum | sed 's|  \./|  |') > release-artifacts/assets.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-candidate-${{ inputs.snapshot_hash }}
@@ -189,7 +193,7 @@ jobs:
           observed="$(node -e "console.log(require('./release-artifacts/post-promotion-version.json').cloudflareVersionId)")"
           expected="$(node -e "const c=require('./release-artifacts/candidate.json');const s=require('./release-artifacts/state.json.'+c.candidateId+'.json');console.log(s.candidates[c.candidateId].versionId)")"
           test "$observed" = "$expected"
-          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out release-artifacts/production-verification.json
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --candidate release-artifacts/candidate.json --out release-artifacts/production-verification.json
           node scripts/release/control-plane.mjs receipt --transaction release-artifacts/deployment-transaction.json --verification release-artifacts/production-verification.json --out release-artifacts/deployment-receipt.json
       - name: Activate only the exact D1 revisions now present in the active release
         id: authority

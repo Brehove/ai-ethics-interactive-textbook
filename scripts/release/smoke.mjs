@@ -3,11 +3,24 @@ import { readFile, writeFile } from "node:fs/promises";
 import { optionValue } from "./argv.mjs";
 import { extractMetaCsp } from "./csp.mjs";
 const args = process.argv.slice(2); const value = (name) => optionValue(args, name);
-const base = value("--base-url")?.replace(/\/$/, ""); const digestFile = value("--asset-digests");
+const base = value("--base-url")?.replace(/\/$/, ""); const digestFile = value("--asset-digests"); const candidateFile = value("--candidate");
 const ASSET_PROPAGATION_ATTEMPTS = 45;
 const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-if (!base) throw new Error("usage: smoke.mjs --base-url <preview> [--asset-digests <file>]");
-const requiredRoutes = ["/", "/chapter/aristotle-character-and-ai-assisted-life/"]; const routeResults = [];
+if (!base) throw new Error("usage: smoke.mjs --base-url <preview> [--candidate <file>] [--asset-digests <file>]");
+const requiredRoutes = ["/"];
+if (candidateFile) {
+  const candidate = JSON.parse(await readFile(candidateFile, "utf8"));
+  const chapters = candidate?.releaseSnapshot?.chapters;
+  if (!Array.isArray(chapters) || chapters.length !== 18) throw new Error("Release smoke requires the signed complete 18-chapter candidate.");
+  const slugs = chapters.map((chapter) => chapter?.slug);
+  if (slugs.some((slug) => typeof slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) || new Set(slugs).size !== 18) throw new Error("Release smoke candidate contains invalid or duplicate chapter slugs.");
+  requiredRoutes.push(...slugs.map((slug) => `/chapter/${slug}/`));
+} else {
+  // Rollback verification has no candidate artifact; keep one known dynamic
+  // chapter route in addition to the home-page smoke.
+  requiredRoutes.push("/chapter/aristotle-character-and-ai-assisted-life/");
+}
+const routeResults = [];
 for (const route of requiredRoutes) {
   const response = await fetch(`${base}${route}`, { headers: { "user-agent": "release-smoke/no-js" } });
   if (!response.ok) throw new Error(`Smoke route failed: ${route} (${response.status})`);
