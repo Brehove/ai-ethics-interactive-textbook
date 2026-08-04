@@ -74,14 +74,23 @@ export default {
       return response || new Response("Public media is unavailable", { status: 503, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }
     const route = chapterRoute(url.pathname);
-    if ((request.method === "GET" || request.method === "HEAD") && route && request.headers.get("x-textbook-delivery-probe") === "v1") {
+    const deliveryProbe = request.method === "GET" && route && request.headers.get("x-textbook-delivery-probe") === "v1";
+    const staticResponse = await env.ASSETS.fetch(request);
+    if (deliveryProbe) {
+      if (!staticResponse.ok || !staticResponse.headers.get("content-type")?.includes("text/html")) {
+        return new Response("Public chapter asset is unavailable", { status: 503, headers: { "cache-control": "no-store" } });
+      }
       const projection = await publicProjection(env, route.documentId);
       if (!projection) return new Response("Public projection is unavailable", { status: 503, headers: { "cache-control": "no-store" } });
+      try {
+        injectPublicProjection(await staticResponse.text(), route, projection);
+      } catch {
+        return new Response("Public chapter projection could not be rendered", { status: 503, headers: { "cache-control": "no-store" } });
+      }
       const headers = projectionHeaders(new Headers({ "cache-control": "no-store" }), projection);
       headers.set("cache-control", "no-store");
       return new Response(null, { status: 204, headers });
     }
-    const staticResponse = await env.ASSETS.fetch(request);
     if (request.method !== "GET" && request.method !== "HEAD") return staticResponse;
     if (!route || request.method === "HEAD" || !staticResponse.ok || !staticResponse.headers.get("content-type")?.includes("text/html")) return staticResponse;
     const projection = await publicProjection(env, route.documentId);
