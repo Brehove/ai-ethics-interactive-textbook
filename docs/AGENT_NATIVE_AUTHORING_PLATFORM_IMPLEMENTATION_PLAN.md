@@ -6,7 +6,7 @@
 - **Plan version:** 2.0
 - **Last updated:** 2026-08-04
 - **Target repository:** `Brehove/ai-ethics-interactive-textbook`
-- **Completion baseline:** `origin/main` at `3586277516e63c72d6c594314b005107a8633679`
+- **Completion baseline:** `origin/main` at `d9f450e4b842259db318c10e7584ae50d9c4d5f1`
 - **Confidence:** High; implementation, deployment, API/MCP conformance, D1 authority, public delivery, and signed-in browser behavior were verified against production
 
 > **Completion companion:** The implemented reader-identical editor, one-click live Save, shared scholar/media rendering, flexible checkpoints, and browser/agent publication are documented in [Unified Reader–Authoring Experience](./UNIFIED_READER_AUTHORING_IMPLEMENTATION_PLAN.md).
@@ -39,17 +39,18 @@ Cloudflare R2 usage-based billing is active. The operating target remains **$5/m
 - Instructor editor: `https://editor.ethicsandai.your-digital-life.org`
 - Protected preview: `https://preview.ethicsandai.your-digital-life.org`
 - Hosted MCP endpoint: `https://mcp.ethicsandai.your-digital-life.org`
-- Final reader release: `release_fbd24b22bd639ce4c290c701`, sequence 24, published `2026-08-04T11:41:15.373Z`
-- Manifest hash: `2caf61d57646a83dce2f5e142067999cbd27e40f7933b8661d880910a4ad080b`
+- Final reader release: `release_eaf83ab480c87235ddb35acc`, sequence 25, published `2026-08-04T17:28:07.864Z`
+- Manifest hash: `b12ec90898a8ae8b5adbbc16039197cd3bb819d4744ee68a4b66d7ff7e366b0e`
 - Candidate: `candidate_7456f60599709b8533a96d01`
 - Snapshot: `7456f60599709b8533a96d01b839a80e4383128f349054f59082494c0152c491`; revision `snapshotrev_5036da58740a703c334d9c79`
-- Reader Worker version: `2d911f91-31b6-4ee0-a1bb-deab3dd1d2c3`
-- Final Content API version: `40e3dc51-2a6f-4b10-a556-85ff89bf19ab`
-- Final instructor-editor version: `f9e9edc3-403e-489b-b8a4-a77796c60056`
-- Deployment receipt: `receipt_cbd8af771fd366872a25a9ec`; completed transaction `deployment_66deb1066a872b108151203f`
-- Protected release workflow: GitHub Actions run `30905539939` — success
-- Final stale-draft correction: PR 67, merged commit `3586277516e63c72d6c594314b005107a8633679`
-- Production browser verification: Chapter 7 loaded the exact canonical `revision_c6bb0561dc5598fa89d9f35d`, three checkpoints, and two rendered Wikimedia media placements; the retired verification checkpoint was absent. Chapter 5 rendered the Thomas Aquinas person feature in both reader and editor.
+- Reader Worker version: `7e8f8162-cf1f-4960-b252-f0794b1a0ee9` at 100% traffic
+- Final Content API version: `f7f73e58-2b3f-4961-a8b5-cccce840779f`
+- Final instructor-editor version: `29fc2a09-92d1-45eb-8555-497a61f9eae0`
+- Deployment receipt: `receipt_a6f67c6401eace78ec148d6a`; receipt hash `1dd96af27a09b5f330b7bdfd727260c43f1b553534ff62511182bc9bcf1d8547`; completed transaction `deployment_228ef47767a6764c4609ff78`
+- Protected release workflow: [GitHub Actions run 30933681192](https://github.com/Brehove/ai-ethics-interactive-textbook/actions/runs/30933681192) — success
+- Final implementation: PR 68, merged commit `f041b638db6206c4fec9aaa41fa13bc614913413`; the automated Codex review found no major issues at exact head `8d54e11696c7c71196b7837bd602ec7faf361f26`. Managed-card selection lifecycle corrections followed in PRs 70 and 71; final merged baseline `d9f450e4b842259db318c10e7584ae50d9c4d5f1` was redeployed and reverified with an empty application console.
+- Post-promotion audit: 18 authority records activated, 18 release documents verified, Chapter 7's two-revision live advance reconciled to `revision_c6bb0561dc5598fa89d9f35d`, and the release state was `valid: true`.
+- Production browser verification: Chapter 7 loaded the exact canonical `revision_c6bb0561dc5598fa89d9f35d`, three checkpoints, and two rendered Wikimedia media placements; selecting checkpoint and media cards produced no application console errors, and the retired verification checkpoint was absent. Chapter 5 rendered and selected the Thomas Aquinas person feature in both reader and editor with no application console errors.
 - Live MCP conformance: the final capability-scoped token exposed five exact tools—authoring view, history, media search, provider resolution, and live-commit status—and verified the existing restore/Save acceptance receipt against public delivery. Restore-as-draft and Save live had been performed with a separate narrowly scoped capability; the conformance run did not claim that the same five-tool token performed all seven distinct operations.
 
 ### 0.2 Instructor and agent outcomes now live

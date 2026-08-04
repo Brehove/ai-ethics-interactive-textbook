@@ -7,7 +7,7 @@
 - **Last updated:** 2026-08-04
 - **Target repository:** Brehove/ai-ethics-interactive-textbook
 - **Operating target:** At or below $5/month for Cloudflare infrastructure
-- **Completion baseline:** `origin/main` at `3586277516e63c72d6c594314b005107a8633679`
+- **Completion baseline:** `origin/main` at `d9f450e4b842259db318c10e7584ae50d9c4d5f1`
 - **Final production scope:** Chapters 1–18
 - **Confidence:** High; exact production revisions, public projections, editor parity, scholar/media rendering, reader-editor continuity, and browser/agent publication were verified
 
@@ -49,7 +49,7 @@ Production browser acceptance confirmed:
 - Chapter 7 opened at `revision_c6bb0561dc5598fa89d9f35d`, showed exactly three current checkpoint cards, two rendered Wikimedia media placements, working **Checkpoint**, **Media**, **Embed**, **Person / Scholar**, **History**, **Save**, and **Done** controls, and no stale production-verification checkpoint.
 - Chapter 5 showed the Thomas Aquinas person feature—including image, dates, description, and primary text—in both the public reader and signed-in editor.
 - **Done** returned from the editor to the matching public chapter and preserved the passage anchor.
-- The production browser emitted no console errors or warnings during final Chapter 5 editor verification.
+- The production browser emitted no application console errors during final Chapter 7 checkpoint/media selection and Chapter 5 Thomas Aquinas selection. The managed-card selection lifecycle correction is merged in PRs 70–71.
 - A stale browser idempotency key can no longer resume an old/submitted/approved draft: the server resumes only an open change set based on the exact current canonical revision, and the editor uses a fresh in-memory request key.
 
 ### Final service and release identity
@@ -57,12 +57,15 @@ Production browser acceptance confirmed:
 - Reader: `https://ethicsandai.your-digital-life.org`
 - Editor: `https://editor.ethicsandai.your-digital-life.org`
 - MCP: `https://mcp.ethicsandai.your-digital-life.org`
-- Release: `release_fbd24b22bd639ce4c290c701`
-- Reader Worker: `2d911f91-31b6-4ee0-a1bb-deab3dd1d2c3`
-- Content API: `40e3dc51-2a6f-4b10-a556-85ff89bf19ab`
-- Instructor editor: `f9e9edc3-403e-489b-b8a4-a77796c60056`
-- Release workflow: `30905539939`
-- Final application commit: `3586277516e63c72d6c594314b005107a8633679`
+- Release: `release_eaf83ab480c87235ddb35acc`, sequence 25
+- Candidate: `candidate_7456f60599709b8533a96d01`; manifest `b12ec90898a8ae8b5adbbc16039197cd3bb819d4744ee68a4b66d7ff7e366b0e`
+- Reader Worker: `7e8f8162-cf1f-4960-b252-f0794b1a0ee9` at 100% traffic
+- Content API: `f7f73e58-2b3f-4961-a8b5-cccce840779f`
+- Instructor editor: `29fc2a09-92d1-45eb-8555-497a61f9eae0`
+- Deployment receipt: `receipt_a6f67c6401eace78ec148d6a`; transaction `deployment_228ef47767a6764c4609ff78`
+- Release workflow: [30933681192](https://github.com/Brehove/ai-ethics-interactive-textbook/actions/runs/30933681192)
+- Final application commit: `d9f450e4b842259db318c10e7584ae50d9c4d5f1` (PR 68 implementation; PRs 70–71 managed-card lifecycle correction)
+- Release audit: all 18 authority records and all 18 release documents verified; state `valid: true`
 
 Cloudflare R2 usage billing remains enabled with the operating target at **$5/month**. The $4 early-warning and $5 target alerts, quarterly restore/rollback exercise, provider-health checks, and routine cost review are ongoing operations rather than implementation gates.
 
