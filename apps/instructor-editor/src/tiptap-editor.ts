@@ -23,11 +23,15 @@ const ManagedNode = Node.create({
   addAttributes() { return { placementId: { default: "" }, kind: { default: "managed" }, html: { default: "" }, sourceBlockId: { default: null } }; },
   parseHTML() { return [{ tag: "section[data-tiptap-managed]" }]; },
   renderHTML({ HTMLAttributes }) { return ["section", { ...HTMLAttributes, "data-tiptap-managed": "true", class: "managed-node" }]; },
-  addNodeView() { return ({ node, getPos, editor }) => {
+  addNodeView() { return ({ node }) => {
     const attrs = node.attrs as ManagedAttrs; const dom = document.createElement("section");
     dom.className = "managed-node"; dom.tabIndex = 0; dom.dataset.managedNode = ""; dom.dataset.managedId = attrs.placementId; dom.dataset.managedKind = attrs.kind;
     dom.setAttribute("aria-label", `${attrs.kind} managed content. Select to inspect.`); dom.innerHTML = `<span class="managed-node__label">${attrs.kind}</span>${attrs.html}`;
-    dom.addEventListener("click", (event) => { event.preventDefault(); editor.commands.setNodeSelection(getPos()); dom.dispatchEvent(new CustomEvent("instructor-managed-select", { bubbles: true, detail: { placementId: attrs.placementId, kind: attrs.kind } })); });
+    // Managed cards open a typed inspector; they are not an editable document
+    // selection. Keep ProseMirror from starting a mouse-down transaction that
+    // could settle after the inspector render replaces the editor document.
+    dom.addEventListener("mousedown", (event) => event.preventDefault());
+    dom.addEventListener("click", (event) => { event.preventDefault(); dom.dispatchEvent(new CustomEvent("instructor-managed-select", { bubbles: true, detail: { placementId: attrs.placementId, kind: attrs.kind } })); });
     return { dom };
   }; },
 });

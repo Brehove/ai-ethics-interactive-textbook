@@ -54,6 +54,8 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.match(editorModel, /chapter\.replaceDocument/);
   assert.match(tiptapEditor, /window\.setTimeout\(\(\) => onManagedSelect\(placementId\), 0\)/);
   assert.doesNotMatch(tiptapEditor, /=> onManagedSelect\(event\.detail\.placementId\)/);
+  assert.doesNotMatch(tiptapEditor, /setNodeSelection/);
+  assert.match(tiptapEditor, /addEventListener\("mousedown", \(event\) => event\.preventDefault\(\)\)/);
   assert.match(editorWorker, /cache-control", "no-store"/);
 });
 
