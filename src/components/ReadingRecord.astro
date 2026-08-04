@@ -207,9 +207,12 @@ const strategyPreview: Record<string, string> = {
 
 <script>
   interface PromptRecord {
-    id: string;
+    id?: string;
+    checkpointId?: string;
+    legacyId?: string;
     passageId: string;
-    stage: string;
+    stage?: string;
+    slotLabel?: string;
     title: string;
     trigger: string;
     prompt: string;
@@ -219,6 +222,10 @@ const strategyPreview: Record<string, string> = {
     minWords?: number;
     maxWords?: number;
     showInSidebar?: boolean;
+  }
+
+  interface InteractivePrompt extends PromptRecord {
+    id: string;
   }
 
   interface PreservedResponse {
@@ -249,11 +256,16 @@ const strategyPreview: Record<string, string> = {
 
     record.dataset.enhanced = "true";
 
-    const prompts = JSON.parse(record.dataset.prompts ?? "[]") as PromptRecord[];
+    const prompts = (JSON.parse(record.dataset.prompts ?? "[]") as PromptRecord[])
+      .map((item): InteractivePrompt | null => {
+        const id = item.legacyId ?? item.id ?? item.checkpointId;
+        return id ? { ...item, id } : null;
+      })
+      .filter((item): item is InteractivePrompt => item !== null);
     const activityPreview = record.dataset.activityPreview === "true";
     const responses = new Map<string, PreservedResponse>();
     const notes: ReadingNote[] = [];
-    let activePrompt: PromptRecord | null = null;
+    let activePrompt: InteractivePrompt | null = null;
     let returnControl: HTMLButtonElement | null = null;
 
     const promptPanel = record.querySelector<HTMLElement>("[data-record-prompt]");
@@ -349,7 +361,7 @@ const strategyPreview: Record<string, string> = {
       requestAnimationFrame(() => record.querySelector<HTMLButtonElement>("[data-context-close]")?.focus({ preventScroll: true }));
     };
 
-    const openRecord = (selected: PromptRecord, control: HTMLButtonElement) => {
+    const openRecord = (selected: InteractivePrompt, control: HTMLButtonElement) => {
       activePrompt = selected;
       returnControl = control;
       document.querySelectorAll<HTMLButtonElement>("[data-reading-record-trigger] button").forEach((button) => {
@@ -358,7 +370,7 @@ const strategyPreview: Record<string, string> = {
       recordEntryButton?.setAttribute("aria-expanded", "false");
       recordMap?.setAttribute("hidden", "");
       promptPanel?.removeAttribute("hidden");
-      if (stage) stage.textContent = selected.stage;
+      if (stage) stage.textContent = selected.stage ?? selected.slotLabel ?? "Reading checkpoint";
       if (title) title.textContent = selected.title;
       if (promptCopy) promptCopy.textContent = selected.prompt;
       if (guidance) guidance.textContent = selected.guidance;
@@ -406,33 +418,42 @@ const strategyPreview: Record<string, string> = {
       requestAnimationFrame(() => noteText?.focus({ preventScroll: true }));
     };
 
+    const selectorEscape = (value: string) => window.CSS?.escape ? window.CSS.escape(value) : value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+    const findPassage = (passageId: string) => {
+      const renderedId = passageId.replace(/^passage_/, "");
+      return document.getElementById(passageId)
+        ?? document.getElementById(renderedId)
+        ?? document.getElementById(renderedId.replaceAll("_", "-"))
+        ?? document.querySelector<HTMLElement>(`[data-passage-id="${selectorEscape(passageId)}"]`);
+    };
+
     prompts.forEach((item, index) => {
-      const passage = document.getElementById(item.passageId);
-      if (!passage || document.querySelector(`[data-reading-record-trigger="${item.id}"]`)) return;
-      const trigger = document.createElement("div");
-      trigger.className = "reading-record-trigger interactive-only";
+      if (document.querySelector(`[data-reading-record-trigger="${selectorEscape(item.id)}"]`)) return;
+      const projectedCheckpoint = item.checkpointId
+        ? document.querySelector<HTMLElement>(`[data-checkpoint-id="${selectorEscape(item.checkpointId)}"]`)
+        : null;
+      const passage = findPassage(item.passageId);
+      if (!projectedCheckpoint && !passage) return;
+      const trigger = projectedCheckpoint ?? document.createElement("aside");
+      trigger.classList.add("reading-record-trigger", "interactive-only");
       trigger.dataset.readingRecordTrigger = item.id;
       if (activityPreview) trigger.dataset.activityPreview = "true";
-      trigger.innerHTML = activityPreview ? `
+      trigger.innerHTML = `
         <span class="reading-record-trigger__number">${String(index + 1).padStart(2, "0")}</span>
-        <span class="reading-record-trigger__stage">Reading checkpoint ${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage)}</span>
-        <span class="reading-record-trigger__question">${escapeHtml(item.trigger)}</span>
+        <span class="reading-record-trigger__stage">Checkpoint ${String(index + 1).padStart(2, "0")} · Response required</span>
+        <strong class="reading-record-trigger__question">${escapeHtml(item.title)}</strong>
+        <span class="reading-record-trigger__prompt">${escapeHtml(item.prompt)}</span>
         <span class="reading-record-trigger__guidance">${escapeHtml(item.guidance)}</span>
         <button type="button" class="reading-record-trigger__button" aria-controls="context-panel" aria-expanded="false" aria-label="Respond to checkpoint ${index + 1}: ${escapeHtml(item.title)}">
-          Respond <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>
-        </button>
-        <span class="reading-record-trigger__connector" aria-hidden="true"></span>
-      ` : `
-        <span class="reading-record-trigger__number">${String(index + 1).padStart(2, "0")}</span>
-        <span class="reading-record-trigger__question">${escapeHtml(item.trigger)}</span>
-        <button type="button" class="reading-record-trigger__button" aria-controls="context-panel" aria-expanded="false" aria-label="Respond to checkpoint ${index + 1}: ${escapeHtml(item.title)}">
-          Respond <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>
+          <span data-trigger-button-label>Write your response</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>
         </button>
         <span class="reading-record-trigger__connector" aria-hidden="true"></span>
       `;
-      let insertionPoint: Element = passage;
-      while (insertionPoint.nextElementSibling?.matches("[data-reading-record-trigger]")) insertionPoint = insertionPoint.nextElementSibling;
-      insertionPoint.insertAdjacentElement("afterend", trigger);
+      if (!projectedCheckpoint && passage) {
+        let insertionPoint: Element = passage;
+        while (insertionPoint.nextElementSibling?.matches("[data-reading-record-trigger]")) insertionPoint = insertionPoint.nextElementSibling;
+        insertionPoint.insertAdjacentElement("afterend", trigger);
+      }
       const button = trigger.querySelector<HTMLButtonElement>("button");
       button?.addEventListener("click", () => openRecord(item, button));
 
@@ -448,7 +469,7 @@ const strategyPreview: Record<string, string> = {
     });
 
     record.querySelectorAll<HTMLElement>("[data-map-location]").forEach((location) => {
-      let previous = document.getElementById(location.dataset.mapLocation ?? "")?.previousElementSibling;
+      let previous = findPassage(location.dataset.mapLocation ?? "")?.previousElementSibling;
       while (previous && previous.tagName !== "H2") previous = previous.previousElementSibling;
       if (previous?.textContent?.trim()) location.textContent = `After “${previous.textContent.trim()}”`;
     });
@@ -472,7 +493,8 @@ const strategyPreview: Record<string, string> = {
         trigger?.toggleAttribute("data-complete", completed);
         const triggerButton = trigger?.querySelector<HTMLButtonElement>("button");
         if (triggerButton) {
-          triggerButton.firstChild!.textContent = completed ? "Review " : "Respond ";
+          const buttonLabel = triggerButton.querySelector<HTMLElement>("[data-trigger-button-label]");
+          if (buttonLabel) buttonLabel.textContent = completed ? "Review your response" : "Write your response";
           triggerButton.setAttribute("aria-label", `${completed ? "Review" : "Respond to"} checkpoint ${prompts.indexOf(item) + 1}: ${item.title}`);
         }
         const mapItem = record.querySelector<HTMLElement>(`[data-record-map-item="${item.id}"]`);
@@ -681,7 +703,7 @@ const strategyPreview: Record<string, string> = {
       const generatedAt = new Date();
       const items = prompts.map((item, index) => {
         const saved = responses.get(item.id);
-        return `<section><p class="stage">${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage)} · ${escapeHtml(item.passageId)}</p><h2>${escapeHtml(item.title)}</h2><p class="prompt">${escapeHtml(item.prompt)}</p>${saved ? `${saved.movement ? `<p class="movement">Judgment movement: <strong>${escapeHtml(saved.movement)}</strong></p>` : ""}<blockquote>${escapeHtml(saved.response).replaceAll("\n", "<br>")}</blockquote><p class="time">Preserved ${escapeHtml(new Date(saved.preservedAt).toLocaleString())}</p>` : `<p class="missing">No response preserved.</p>`}</section>`;
+        return `<section><p class="stage">${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.stage ?? item.slotLabel ?? "Reading checkpoint")} · ${escapeHtml(item.passageId)}</p><h2>${escapeHtml(item.title)}</h2><p class="prompt">${escapeHtml(item.prompt)}</p>${saved ? `${saved.movement ? `<p class="movement">Judgment movement: <strong>${escapeHtml(saved.movement)}</strong></p>` : ""}<blockquote>${escapeHtml(saved.response).replaceAll("\n", "<br>")}</blockquote><p class="time">Preserved ${escapeHtml(new Date(saved.preservedAt).toLocaleString())}</p>` : `<p class="missing">No response preserved.</p>`}</section>`;
       }).join("");
       const noteItems = notes.map((item, index) => `<section><p class="stage">Passage note ${index + 1}${item.passageId ? ` · ${escapeHtml(item.passageId)}` : ""}</p>${item.quote ? `<blockquote>${escapeHtml(item.quote).replaceAll("\n", "<br>")}</blockquote>` : ""}<p>${escapeHtml(item.note).replaceAll("\n", "<br>")}</p><p class="time">Added ${escapeHtml(new Date(item.createdAt).toLocaleString())}</p></section>`).join("");
       const notesSection = notes.length ? `<h2>Passage notes</h2>${noteItems}` : "";
@@ -899,75 +921,47 @@ const strategyPreview: Record<string, string> = {
   .reading-record--pilot .note-list blockquote { border-left-color: #6f8da4; }
   .note-list .note-meta { color: var(--rust-dark); font: 700 var(--record-tiny)/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
 
-  :global(.reading-record-trigger) { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; max-width: var(--content-width); align-items: center; gap: 0.65rem; margin: 0.2rem 0 1.35rem; border-block: 1px solid var(--line); padding: 0.65rem 0; }
-  :global(.reading-record-trigger__number) { color: var(--rust); font: 700 0.74rem/1 var(--sans); }
-  :global(.reading-record-trigger__question) { font-size: 0.88rem; font-style: italic; line-height: 1.35; }
-  :global(.reading-record-trigger__button) { position: relative; z-index: 2; display: inline-flex; min-height: 2rem; align-items: center; gap: 0.35rem; border: 0; background: var(--paper-light); color: #174f8a; padding: 0.35rem 0; font: 700 0.76rem/1.2 var(--sans); cursor: pointer; }
-  :global(.reading-record-trigger__button svg) { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
-  :global(.reading-record-trigger__connector) { position: absolute; z-index: 1; left: 100%; top: 50%; height: 0; border-top: 1px solid var(--rust); pointer-events: none; }
-  :global(.reading-record-trigger__connector::after) { content: ""; position: absolute; right: -5px; top: -5px; width: 8px; height: 8px; border: 2px solid var(--rust); transform: rotate(45deg); background: var(--paper-light); }
-  :global(.reading-record-trigger[data-complete]) { border-color: #8da596; }
-  :global(.reading-record-trigger[data-complete] .reading-record-trigger__number) { color: #315d48; }
-
-  :global(.reading-record-trigger[data-activity-preview]) {
-    grid-template-columns: 2.3rem minmax(0, 1fr);
-    gap: 0;
-    margin: 1.5rem 0 2rem;
-    border: 1px solid #a7926e;
-    border-left: 4px solid var(--rust);
-    background: #f1e7cd;
-    box-shadow: 0 8px 24px rgb(54 40 18 / 9%);
-    padding: 0;
-  }
-  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__number) {
-    grid-row: 1 / 5;
-    align-self: stretch;
+  :global(.chapter-checkpoint),
+  :global(.reading-record-trigger) {
+    --checkpoint-blue: #0d3b66;
+    --checkpoint-gold: #ffd166;
+    position: relative;
     display: grid;
-    place-items: center;
-    background: rgb(169 116 53 / 11%);
-    font-size: 0.78rem;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    max-width: var(--content-width);
+    gap: 0;
+    margin: 1.7rem 0 2.1rem;
+    border: 3px solid var(--checkpoint-blue);
+    border-left: 0.65rem solid var(--checkpoint-gold);
+    background: var(--checkpoint-blue);
+    color: #ffffff;
+    padding: 0;
+    isolation: isolate;
+    box-shadow: 0 10px 28px rgb(13 59 102 / 20%);
   }
-  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__stage) {
-    padding: 1rem 1.1rem 0;
-    color: var(--rust-dark);
-    font: 700 0.7rem/1.3 var(--sans);
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-  }
-  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__question) {
-    padding: 0.4rem 1.1rem 0;
-    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
-    font-style: normal;
-    line-height: 1.25;
-  }
-  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__guidance) {
-    padding: 0.55rem 1.1rem 1rem;
-    color: var(--ink-soft);
-    font-size: 0.84rem;
-    font-style: italic;
-    line-height: 1.4;
-  }
-  :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__button) {
-    grid-column: 2;
-    width: 100%;
-    min-height: 3rem;
-    justify-content: space-between;
-    background: var(--ink);
-    color: var(--paper-light);
-    padding: 0.75rem 1.1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  :global(.reading-record-trigger[data-activity-preview][data-complete]) { border-color: #6f8d7c; border-left-color: #315d48; background: #edf1eb; }
+  :global(.chapter-checkpoint:not(.reading-record-trigger)) { display: block; padding: 1.2rem 1.3rem; }
+  :global(.chapter-checkpoint:not(.reading-record-trigger)::before) { content: "Checkpoint · Response required"; display: block; margin-bottom: 0.65rem; color: var(--checkpoint-gold); font: 800 0.72rem/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+  :global(.chapter-checkpoint:not(.reading-record-trigger) > strong) { display: block; color: #fff; font-size: clamp(1.15rem, 1.8vw, 1.45rem); line-height: 1.2; }
+  :global(.chapter-checkpoint:not(.reading-record-trigger) > p) { color: #fff; }
+  :global(.chapter-prose .chapter-checkpoint.reading-record-trigger) { border: 3px solid var(--checkpoint-blue); border-left: 0.65rem solid var(--checkpoint-gold); background: var(--checkpoint-blue); color: #fff; padding: 0; }
+  :global(.reading-record-trigger[data-activity-preview]) { border: 3px solid var(--checkpoint-blue); border-left: 0.65rem solid var(--checkpoint-gold); background: var(--checkpoint-blue); color: #fff; }
+  :global(.reading-record-trigger__number) { grid-row: 1 / 6; display: grid; place-items: center; align-self: stretch; background: var(--checkpoint-gold); color: #082846; font: 800 0.82rem/1 var(--sans); }
+  :global(.reading-record-trigger__stage) { padding: 1.05rem 1.15rem 0; color: var(--checkpoint-gold); font: 800 0.72rem/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+  :global(.reading-record-trigger__question) { padding: 0.45rem 1.15rem 0; color: #fff; font-size: clamp(1.18rem, 1.9vw, 1.5rem); line-height: 1.2; }
+  :global(.reading-record-trigger__prompt) { padding: 0.65rem 1.15rem 0; color: #fff; font-size: clamp(1rem, 1.55vw, 1.15rem); line-height: 1.48; }
+  :global(.reading-record-trigger__guidance) { padding: 0.65rem 1.15rem 1.1rem; color: #e7f2fb; font-size: 0.9rem; font-style: italic; line-height: 1.45; }
+  :global(.reading-record-trigger__button) { position: relative; z-index: 2; grid-column: 2; display: inline-flex; width: 100%; min-height: 3.25rem; align-items: center; justify-content: space-between; gap: 0.75rem; border: 0; border-top: 2px solid rgb(255 255 255 / 48%); background: var(--checkpoint-gold); color: #082846; padding: 0.8rem 1.15rem; font: 800 0.8rem/1.2 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+  :global(.reading-record-trigger__button:hover) { background: #ffe39a; }
+  :global(.reading-record-trigger__button:focus-visible) { outline: 4px solid #fff; outline-offset: -7px; }
+  :global(.reading-record-trigger__button svg) { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+  :global(.reading-record-trigger__connector) { display: none; }
+  :global(.reading-record-trigger[data-complete]) { --checkpoint-blue: #164a3b; --checkpoint-gold: #b9f1d7; }
 
   :global(body[data-text-scale="large"]) .reading-record { --record-small: 0.84rem; --record-tiny: 0.8rem; }
   :global(body[data-text-scale="largest"]) .reading-record { --record-small: 0.9rem; --record-tiny: 0.86rem; }
 
   @media (max-width: 1180px) {
     .reading-record { padding-inline: 1.3rem; }
-    :global(.reading-record-trigger) { grid-template-columns: auto 1fr; }
-    :global(.reading-record-trigger__button) { grid-column: 2; justify-self: start; }
-    :global(.reading-record-trigger[data-activity-preview] .reading-record-trigger__button) { justify-self: stretch; }
   }
   @media (max-width: 900px) {
     .reading-record {
@@ -987,8 +981,7 @@ const strategyPreview: Record<string, string> = {
       box-shadow: 0 24px 80px rgb(0 0 0 / 52%);
     }
     :global(.reader-shell[data-context-mobile-open]) .reading-record { display: block; }
-    :global(.reading-record-trigger) { grid-template-columns: auto minmax(0, 1fr); }
-    :global(.reading-record-trigger[data-activity-preview]) { grid-template-columns: 2.1rem minmax(0, 1fr); }
+    :global(.reading-record-trigger) { grid-template-columns: 2.5rem minmax(0, 1fr); }
     :global(.reading-record-trigger__connector) { display: none; }
     .export-actions { grid-template-columns: 1fr; }
   }
