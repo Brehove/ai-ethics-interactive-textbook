@@ -1810,7 +1810,7 @@ Tasks:
 Exit criteria:
 
 - an instructor can revise prose, revise one checkpoint, move its anchor, and inspect the inline/sidebar result without Git;
-- the editor cannot create a fourth checkpoint or publish an incomplete set;
+- the editor can create, reorder, reanchor, and remove zero or many checkpoints; publication rejects an individually incomplete or invalid checkpoint but never imposes a chapter-level checkpoint count;
 - stable IDs cannot be casually edited or orphaned;
 - draft preview matches production styling at desktop/mobile/print;
 - one rejected or stale editor change set cannot contaminate another or the canonical head;
