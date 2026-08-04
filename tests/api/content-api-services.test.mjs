@@ -117,6 +117,9 @@ test('changeset read restores immutable submitted identity and recorded release 
   assert.equal(body.releaseDecision.comment, 'Reviewed exact snapshot.');
   assert.equal(body.documents[0].content.chapterId, 'chapter-07');
   assert.equal('content_text' in body.documents[0], false);
+  const approvalRead = CONTENT_DB.statements.find((item) => item.sql.includes('FROM approvals'));
+  assert.match(approvalRead.sql, /created_at AS decided_at/);
+  assert.match(approvalRead.sql, /ORDER BY created_at DESC/);
 });
 
 test('changeset diff endpoint returns a structured content-free comparison tied to both hashes', async () => {
