@@ -91,20 +91,26 @@ Codex connects through standard OAuth discovery at
 `/.well-known/oauth-authorization-server`. The authorization server supports
 dynamic registration of public loopback clients, authorization code with PKCE
 S256, 15-minute access tokens, rotating 30-day refresh tokens, and revocation.
-GitHub establishes the allowlisted instructor identity. The baseline grant
-contains ordinary chapter and media editing scopes but never
-`content:live-save`.
+GitHub establishes the allowlisted instructor identity. The baseline trusted
+grant contains chapter and media editing scopes plus `content:live-save` and
+the `commit_live` operation. The agent may use that operation only when the
+user's current request explicitly says to Save or publish. Each live commit is
+still validated, authority-checked, compare-and-swap guarded, idempotent,
+immutable, attributed, audited, and delivery-verified.
 
-When `request_live_save_authorization` is called, the private Worker RPC creates
-a five-minute approval request bound to one exact changeset, chapter, base
-revision, expected version, and idempotency key. GitHub is required again so
-the approval session is no more than five minutes old. Approval issues a
-two-minute, single-use `commit_live` capability. Any changed precondition,
-different OAuth actor, expiry, replay, or revoked parent grant fails closed.
+OAuth grants created before trusted publishing was enabled retain their
+original scopes during refresh. Revoke or reconnect the `ai-ethics-textbook`
+MCP once to receive the trusted grant; there is no per-change approval after
+that reconnect.
 
-The private service-binding entrypoint exposes `verifyCapability`,
-`requestLiveSaveAuthorization`, and `consumeLiveSaveAuthorization`; none has a
-public HTTP route.
+`request_live_save_authorization` remains as a compatibility route for older
+grants. It creates a five-minute approval request bound to one exact changeset,
+chapter, base revision, expected version, and idempotency key, and approval
+issues a two-minute single-use `commit_live` capability. The current textbook
+skills do not use that route.
+
+The private service-binding entrypoint exposes `verifyCapability` plus the two
+legacy Live Save authorization methods; none has a public HTTP route.
 
 ## Legacy agent-capability device flow
 

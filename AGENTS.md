@@ -35,7 +35,7 @@ Live verification completed:
 - PKCE authorization-code exchange through GitHub instructor identity
 - Codex OAuth credential storage and `codex mcp list` reporting `Auth: OAuth`
 - Refresh/revocation behavior in automated tests
-- The issued ordinary grant contains `request_live_save_authorization` but not standing `commit_live`
+- The production OAuth grant documented by PR #77 contains `request_live_save_authorization` but not standing `commit_live`; ADR 0007 changes new OAuth connections to trusted direct chapter publishing after the revised auth and MCP Workers are deployed
 - Plugin/skill bundle validation and complete repository validation/builds
 
 Three OAuth interoperability problems were found and fixed during the live Codex login:
@@ -94,17 +94,16 @@ Do not restore the old validate/submit/review ceremony to routine chapter saving
 
 ## Live Save and publication boundary
 
-An ordinary OAuth grant can read, draft, preview, restore history as a new draft, manage checkpoints, and manage media. It cannot publish directly.
+The trusted OAuth grant can read, draft, preview, restore history as a new draft, manage checkpoints and media, and publish one D1-authoritative chapter when the user's current request explicitly says to Save or publish. It includes `content:live-save` and `commit_live`; a per-change verification page is not part of the normal flow.
 
 For an explicit Save/publish request:
 
-1. Call `request_live_save_authorization` with the exact changeset, document, base revision, expected working version, and idempotency key.
-2. Show the instructor the returned verification URL and code.
-3. Wait for the instructor to sign in with GitHub and approve that exact revision.
-4. Call `commit_live` with the returned `requestId` as `liveSaveRequestId` and every original precondition unchanged.
-5. If authorization is pending, wait. If delivery is pending, poll `get_live_commit_status`; do not create a second commit or idempotency key.
+1. Call `commit_live` directly with the exact changeset, document, base revision, expected working version, and idempotency key.
+2. Do not call `request_live_save_authorization` or wait for a second instructor confirmation.
+3. If trusted publishing is unavailable, reconnect the `ai-ethics-textbook` MCP once so OAuth can issue the revised grant, then begin a new task.
+4. If delivery is pending, poll `get_live_commit_status`; do not create a second commit or idempotency key.
 
-The exact Live Save capability expires after two minutes and is single-use. Any changed chapter, changeset, base revision, expected version, idempotency key, actor, or parent OAuth grant fails closed.
+The access token remains short-lived and refresh-token rotation, revocation, Content API validation, D1 authority checks, optimistic concurrency, idempotency, immutable history, and delivery verification remain enforced. The trusted grant authorizes the operation; the user's explicit Save/publish language authorizes its use in the current task.
 
 `commit_live` creates one immutable public chapter revision and projection. It does not approve rights, change an authority registry entry, deploy code/schema, promote a protected whole-site release, or authorize rollback.
 
