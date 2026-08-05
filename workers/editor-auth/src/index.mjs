@@ -448,7 +448,8 @@ export function createEditorAuthApp(dependencies = {}) {
             const input = await readFormBody(request);
             if (!constantTimeEqual(input.get("csrf"), session.csrf)) throw new HttpError(403, "csrf_failed", "The OAuth approval could not be verified");
             const destination = await approveMcpOAuthAuthorizationRequest(input.get("request"), session, env, now, randomBytes);
-            return redirect(destination);
+            const safeDestination = escapeHtml(destination);
+            return html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="refresh" content="0; url=${safeDestination}"><title>Return to Codex</title><style>body{font:18px/1.55 system-ui,sans-serif;max-width:40rem;margin:4rem auto;padding:0 1.25rem;color:#102846;background:#fbf7ed}main{background:white;border:1px solid #ccd5df;padding:2rem;border-radius:1rem}h1{font:700 2.4rem/1.05 Georgia,serif}a{display:inline-block;border-radius:.6rem;background:#9b351d;color:white;padding:.9rem 1.2rem;font-weight:700;text-decoration:none}</style><main><p>AI Ethics Textbook</p><h1>Textbook access approved</h1><p>Returning you to Codex now. If Chrome blocks the automatic handoff, use the button below.</p><p><a href="${safeDestination}">Return to Codex</a></p></main></html>`);
           }
           if (request.method !== "GET") throw new HttpError(405, "method_not_allowed", "Use GET or POST for this endpoint");
           let requestId = url.searchParams.get("request");

@@ -99,12 +99,14 @@ test("Codex OAuth discovery, PKCE exchange, refresh rotation, and revocation wor
     assert.match(consentHtml, /Publishing remains separately confirmed/);
 
     const approved = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/authorize`, { method: "POST", headers: { Cookie: `${SESSION_COOKIE}=${cookie}`, "Content-Type": "application/x-www-form-urlencoded" }, body: form({ request: requestId, csrf: "csrf-token" }) }), runtime);
-    assert.equal(approved.status, 302);
-    const callback = new URL(approved.headers.get("Location"));
+    assert.equal(approved.status, 200);
+    const approvedHtml = await approved.text();
+    assert.match(approvedHtml, /Textbook access approved/);
+    const callback = new URL(approvedHtml.match(/href="([^"]+)"/)?.[1].replaceAll("&amp;", "&"));
     assert.equal(callback.origin, "http://127.0.0.1:43123"); assert.equal(callback.searchParams.get("state"), state);
     const retriedApproval = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/authorize`, { method: "POST", headers: { Cookie: `${SESSION_COOKIE}=${cookie}`, "Content-Type": "application/x-www-form-urlencoded" }, body: form({ request: requestId, csrf: "csrf-token" }) }), runtime);
-    assert.equal(retriedApproval.status, 302);
-    assert.equal(retriedApproval.headers.get("Location"), approved.headers.get("Location"));
+    assert.equal(retriedApproval.status, 200);
+    assert.equal(await retriedApproval.text(), approvedHtml);
 
     const exchanged = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/token`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form({ grant_type: "authorization_code", client_id: client.client_id, redirect_uri: REDIRECT_URI, resource: RESOURCE, code: callback.searchParams.get("code"), code_verifier: verifier }) }), runtime);
     assert.equal(exchanged.status, 200);
