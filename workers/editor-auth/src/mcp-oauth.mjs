@@ -141,14 +141,36 @@ export async function getMcpOAuthAuthorizationRequest(requestId, env, nowSeconds
 
 export async function approveMcpOAuthAuthorizationRequest(requestId, session, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
   const db = authDb(env); const row = await getMcpOAuthAuthorizationRequest(requestId, env, nowSeconds);
-  if (row.approved_by || row.code_hash) throw new HttpError(409, "invalid_request", "OAuth authorization request was already approved");
   const actorId = `actor_github_${String(session.sub).replace(/[^A-Za-z0-9_-]/g, "_")}`;
-  const code = `mcp_code_${randomBase64Url(32, randomBytes)}`; const at = iso(nowSeconds);
+  // The authorization code is deterministic for this exact request and actor.
+  // Some browsers can retry a form POST while following the loopback redirect;
+  // returning the same still-valid code makes that harmless without weakening
+  // PKCE, expiry, single-use exchange, or actor binding.
+  const code = `mcp_code_${await signToken({
+    v: 1,
+    kind: "oauth-code",
+    requestId: row.id,
+    sub: actorId,
+    iat: Math.floor(Date.parse(row.requested_at) / 1000),
+    exp: Math.floor(Date.parse(row.expires_at) / 1000),
+  }, signingSecret(env))}`;
+  const codeHash = await capabilityHash(code);
+  const redirectWithCode = () => {
+    const redirect = new URL(row.redirect_uri); redirect.searchParams.set("code", code); redirect.searchParams.set("state", row.state_value);
+    return redirect.toString();
+  };
+  if (row.approved_by || row.code_hash) {
+    if (row.approved_by !== actorId || row.code_hash !== codeHash) throw new HttpError(409, "invalid_request", "OAuth authorization request was already approved by a different actor");
+    return redirectWithCode();
+  }
+  const at = iso(nowSeconds);
   const result = await db.prepare("UPDATE mcp_oauth_authorization_requests SET approved_by = ?, approved_at = ?, code_hash = ?, code_issued_at = ? WHERE id = ? AND approved_by IS NULL")
-    .bind(actorId, at, await capabilityHash(code), at, requestId).run();
-  if (result?.meta?.changes === 0) throw new HttpError(409, "invalid_request", "OAuth authorization request changed");
-  const redirect = new URL(row.redirect_uri); redirect.searchParams.set("code", code); redirect.searchParams.set("state", row.state_value);
-  return redirect.toString();
+    .bind(actorId, at, codeHash, at, requestId).run();
+  if (result?.meta?.changes === 0) {
+    const current = await getMcpOAuthAuthorizationRequest(requestId, env, nowSeconds);
+    if (current.approved_by !== actorId || current.code_hash !== codeHash) throw new HttpError(409, "invalid_request", "OAuth authorization request changed");
+  }
+  return redirectWithCode();
 }
 
 async function issueGrant(row, env, nowSeconds, randomBytes) {
