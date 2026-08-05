@@ -72,14 +72,17 @@ codex mcp add ai-ethics-textbook \
 codex mcp login ai-ethics-textbook
 ```
 
-The ordinary OAuth grant can read, draft, preview, restore history as a new
-draft, manage checkpoints, and manage media. It cannot publish. When a user
-explicitly asks to Save or publish, the agent calls
-`request_live_save_authorization` with one exact changeset/chapter/revision/
-version/idempotency tuple. The instructor follows its URL, signs in to GitHub,
-enters the displayed code, and approves that exact revision. `commit_live`
-then consumes the two-minute, single-use capability; changing any bound value
-fails closed.
+The trusted OAuth grant can read, draft, preview, restore history as a new
+draft, manage checkpoints and media, and call `commit_live` directly. The
+grant includes the explicit `content:live-save` scope, and the MCP operation
+allowlist must also include `commit_live`; either missing permission fails
+closed. Agents may use that authority only when the user explicitly asks to
+Save or publish. No additional per-change confirmation, code entry, or
+single-use approval capability is required. Existing grants created before
+the live-save scope was introduced must authenticate again once to receive it.
+
+The legacy exact-revision approval route remains available for older clients,
+but it is not part of the supported trusted-agent workflow.
 
 Raw media bytes use the upload ticket returned by `upload_media`: a
 short-lived, hash-, MIME-, size-, actor-, and single-use-bound capability. The
