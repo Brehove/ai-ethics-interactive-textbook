@@ -16,9 +16,9 @@ Git is canonical for application code and for chapters whose authority registry 
 
 ## Current implementation state — 2026-08-05
 
-The agent-native OAuth/MCP publishing work is on branch `codex/native-oauth-textbook-plugin` in draft PR [#77](https://github.com/Brehove/ai-ethics-interactive-textbook/pull/77). It is stacked on the skill-prefix draft PR [#76](https://github.com/Brehove/ai-ethics-interactive-textbook/pull/76), so merge or retarget the stack deliberately.
+The skill-prefix foundation was merged into `main` through [PR #76](https://github.com/Brehove/ai-ethics-interactive-textbook/pull/76) at `c26cd19`. The agent-native OAuth/MCP publishing work was then rebased onto that result and merged through [PR #77](https://github.com/Brehove/ai-ethics-interactive-textbook/pull/77), ending at `a14fa76`. Both PRs passed the public-boundary audit, full Astro/editor/security build, and Cloudflare Workers build.
 
-Deployed commit: `368df4c`.
+The original production deployment was made from pre-rebase commit `368df4c`; its equivalent source is now represented on `main` through the rebased PR #77 commits.
 
 Production deployments from this branch:
 
@@ -186,4 +186,4 @@ Run `git diff --check` before committing. Use Wrangler dry runs for every affect
 - Record deployed Worker version IDs and smoke evidence, never tokens.
 - A successful code deployment is not a protected whole-site content release. Follow `docs/operations/production-deployment-checklist.md` for promotion, recovery, rollback, and release-state audit.
 
-Current draft PR #77 is not merged. Do not assume the deployed production code is present on `main` until the stacked PRs are deliberately merged.
+As of 2026-08-05, both PR #76 and PR #77 are merged and `main` contains the deployed OAuth/MCP implementation. Verify live GitHub and Cloudflare state rather than relying on this dated status after subsequent changes.
