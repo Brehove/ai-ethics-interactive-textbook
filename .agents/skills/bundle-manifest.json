@@ -16,7 +16,7 @@
     },
     {
       "path": "ai-ethics-manage-prompt-checkpoints/SKILL.md",
-      "sha256": "060fc306b6089da0eb612b522cc7b26d32d9bbf6a08e00166c98ffcb15366f74"
+      "sha256": "270e167063d0ba2cfc8cde657bb1bfbf4b071924c737c605205d7b1f0eaf8f95"
     },
     {
       "path": "ai-ethics-manage-prompt-checkpoints/agents/openai.yaml",
@@ -24,7 +24,7 @@
     },
     {
       "path": "ai-ethics-manage-prompt-checkpoints/references/checkpoint-rules.md",
-      "sha256": "f66f0ad6e78de22ebdff96bef6a3c6fef4c8c6c5134da9db817e410d2a891811"
+      "sha256": "68b1333ff001f956dda9b9f81fa953f6329da098a6ee19936c077d3b71b9e791"
     },
     {
       "path": "ai-ethics-publish-textbook-media/SKILL.md",

@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@ai-ethics/content-contract": "1.0.0" }
+  "dependencies": { "@ai-ethics/content-contract": "2.0.0" }
 }

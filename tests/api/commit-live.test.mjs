@@ -14,6 +14,7 @@ const gatewayHeaders = (scopes = 'content:read content:write') => ({
 });
 
 const chapter = () => ({
+  schemaVersion: 2,
   chapterId: 'chapter_ch07', slug: 'aristotle-character-and-ai-assisted-life', title: 'Aristotle', description: 'A chapter about character.',
   chapterVersion: 'revision-base', revisionId: 'revision-base', status: 'published', body: [
     { type: 'paragraph', blockId: 'block_one', passageId: 'passage_one', text: 'Initial prose.' }
@@ -100,7 +101,7 @@ test('authoring view is revision-bound and status polling promotes only a pendin
   });
   const view = await worker.fetch(new Request(`https://content.example/v1/chapters/${source.chapterId}/authoring-view`, { headers: gatewayHeaders() }), { CONTENT_DB: db });
   assert.equal(view.status, 200); const body = await view.json();
-  assert.equal(body.revisionId, 'revision-base'); assert.equal(body.renderer.rendererVersion, 'chapter-renderer-v1');
+  assert.equal(body.revisionId, 'revision-base'); assert.equal(body.renderer.rendererVersion, 'chapter-renderer-v2');
   let bindingDocumentId = null;
   const status = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_1', { headers: gatewayHeaders() }), {
     CONTENT_DB: db,

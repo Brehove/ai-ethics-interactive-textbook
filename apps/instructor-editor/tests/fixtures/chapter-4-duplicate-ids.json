@@ -1,0 +1,58 @@
+{
+  "original": {
+    "schemaVersion": 3,
+    "documentId": "chapter_ch04",
+    "chapterId": "chapter_ch04",
+    "changeSetId": "changeset_fixture",
+    "slug": "ai-as-an-interlocutor-in-philosophical-work",
+    "title": "AI as an Interlocutor in Philosophical Work",
+    "revisionId": "revision_fixture",
+    "baseRevisionId": "revision_fixture",
+    "expectedVersion": 1,
+    "body": [
+      {
+        "type": "paragraph",
+        "blockId": "block_paragraph_1_ch04-p0006",
+        "passageId": "passage_ch04-p0006",
+        "text": "These tools have entered philosophical practice because they can contribute material that deserves examination. PHIL 123 asks students to develop this ability."
+      },
+      { "type": "checkpointRef", "checkpointId": "checkpoint_opening-judgment" }
+    ],
+    "checkpoints": [{ "checkpointId": "checkpoint_opening-judgment", "passageId": "passage_ch04-p0006", "title": "Opening judgment", "trigger": "Pause.", "prompt": "What deserves examination?", "guidance": "Use the passage.", "strategy": "initial-judgment", "responseStructure": "prose", "minWords": 30, "maxWords": 120, "rationale": "Practice judgment.", "showInSidebar": true }],
+    "personFeatures": [],
+    "managedPlacements": []
+  },
+  "chapter": {
+    "schemaVersion": 3,
+    "documentId": "chapter_ch04",
+    "chapterId": "chapter_ch04",
+    "changeSetId": "changeset_fixture",
+    "slug": "ai-as-an-interlocutor-in-philosophical-work",
+    "title": "AI as an Interlocutor in Philosophical Work",
+    "revisionId": "revision_fixture",
+    "baseRevisionId": "revision_fixture",
+    "expectedVersion": 1,
+    "body": [
+      {
+        "type": "paragraph",
+        "blockId": "block_paragraph_1_ch04-p0006",
+        "passageId": "passage_ch04-p0006",
+        "text": "These tools have entered philosophical practice because they can contribute material that deserves examination."
+      },
+      {
+        "type": "paragraph",
+        "blockId": "block_paragraph_1_ch04-p0006",
+        "passageId": "passage_ch04-p0006",
+        "text": "PHIL 123 asks students to develop this ability."
+      },
+      { "type": "checkpointRef", "checkpointId": "checkpoint_opening-judgment" }
+    ],
+    "checkpoints": [{ "checkpointId": "checkpoint_opening-judgment", "passageId": "passage_ch04-p0006", "title": "Opening judgment", "trigger": "Pause.", "prompt": "What deserves examination?", "guidance": "Use the passage.", "strategy": "initial-judgment", "responseStructure": "prose", "minWords": 30, "maxWords": 120, "rationale": "Practice judgment.", "showInSidebar": true }],
+    "personFeatures": [],
+    "managedPlacements": []
+  },
+  "expectedProse": [
+    "These tools have entered philosophical practice because they can contribute material that deserves examination.",
+    "PHIL 123 asks students to develop this ability."
+  ]
+}

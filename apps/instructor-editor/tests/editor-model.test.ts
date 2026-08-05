@@ -1,8 +1,45 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, updateCheckpointDetails } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, assertUniqueEditorIdentities, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, normalizeEditorIdentities, removeCheckpoint, updateCheckpointDetails, upgradeEditorChapter } from "../src/editor-model";
 import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
+
+const chapter4RecoveryFixture = JSON.parse(readFileSync(new URL("./fixtures/chapter-4-duplicate-ids.json", import.meta.url), "utf8"));
+
+test("Chapter 4 recovery normalization preserves prose and the visible checkpoint boundary", () => {
+  const result = normalizeEditorIdentities(chapter4RecoveryFixture.chapter, chapter4RecoveryFixture.original);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.repairs.length, 2);
+  assert.equal(result.chapter.body[1].blockId, "block_paragraph_1_ch04-p0006");
+  assert.equal(result.chapter.body[1].passageId, "passage_ch04-p0006");
+  assert.notEqual(result.chapter.body[0].blockId, result.chapter.body[1].blockId);
+  assert.notEqual(result.chapter.body[0].passageId, result.chapter.body[1].passageId);
+  assert.equal(result.chapter.body[2].checkpointId, "checkpoint_opening-judgment");
+  assert.deepEqual(result.chapter.body.filter((node: { type: string }) => node.type === "paragraph").map((node: { text: string }) => node.text), chapter4RecoveryFixture.expectedProse);
+  assertUniqueEditorIdentities(result.chapter);
+  const repeated = normalizeEditorIdentities(result.chapter, chapter4RecoveryFixture.original);
+  assert.deepEqual(repeated.repairs, []);
+});
+
+test("noncontiguous duplicate stable IDs fail closed for repair review", () => {
+  const invalid = structuredClone(chapter4RecoveryFixture.chapter);
+  invalid.body.splice(1, 0, { type: "paragraph", blockId: "block_middle", passageId: "passage_middle", text: "Intervening prose." });
+  const result = normalizeEditorIdentities(invalid, chapter4RecoveryFixture.original);
+  assert.equal(result.errors.some((error) => error.code === "STABLE_ID_DUPLICATE_NONCONTIGUOUS"), true);
+});
+
+test("schema-v3 editor operations preserve one record and one ordered reference", () => {
+  const chapter = upgradeEditorChapter({ ...cloneChapter(DEMO_CHAPTER), schemaVersion: 2 });
+  assert.equal(chapter.schemaVersion, 3);
+  const firstCheckpoint = chapter.checkpoints[0];
+  assert.equal(chapter.body.filter((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId).length, 1);
+  removeCheckpoint(chapter, firstCheckpoint.checkpointId);
+  assert.equal(chapter.checkpoints.some((item) => item.checkpointId === firstCheckpoint.checkpointId), false);
+  assert.equal(chapter.body.some((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId), false);
+  const operation = chapterReplaceOperation(chapter);
+  assert.equal(operation.type, "chapter.replaceDocumentV3");
+});
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {
   const chapter = cloneChapter(DEMO_CHAPTER);

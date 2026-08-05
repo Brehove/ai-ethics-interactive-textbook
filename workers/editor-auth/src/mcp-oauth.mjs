@@ -8,7 +8,7 @@ const BASELINE_SCOPES = Object.freeze(["content:read", "content:write", "content
 const ALLOWED_SCOPES = new Set(BASELINE_SCOPES);
 const DOCUMENTS = Object.freeze(Array.from({ length: 18 }, (_, index) => `chapter_ch${String(index + 1).padStart(2, "0")}`));
 const READ_OPERATIONS = Object.freeze(["get_authoring_view", "get_passage", "get_version_history", "get_live_commit_status", "get_person", "search_persons", "search_media", "get_media_job", "get_media_asset"]);
-const WRITE_OPERATIONS = Object.freeze(["create_or_resume_changeset", "replace_passage_text", "replace_chapter_document", "upsert_checkpoint", "remove_checkpoint", "reorder_checkpoint", "place_media", "upsert_embed", "resolve_provider_url", "upsert_person_feature", "move_managed_placement", "remove_managed_placement", "preview_changes", "restore_revision_as_draft", "request_live_save_authorization"]);
+const WRITE_OPERATIONS = Object.freeze(["create_or_resume_changeset", "replace_passage_text", "replace_chapter_document", "split_block", "join_blocks", "move_block", "upsert_checkpoint", "move_checkpoint", "remove_checkpoint", "reorder_checkpoint", "place_media", "upsert_embed", "resolve_provider_url", "upsert_person_feature", "move_managed_placement", "remove_managed_placement", "preview_changes", "restore_revision_as_draft", "request_live_save_authorization"]);
 const LIVE_SAVE_OPERATIONS = Object.freeze(["commit_live"]);
 const MEDIA_UPLOAD_OPERATIONS = Object.freeze(["create_media_review_package", "upload_media"]);
 const CODE_VERIFIER = /^[A-Za-z0-9._~-]{43,128}$/;

@@ -1,4 +1,6 @@
-/** Small, dependency-free workflow rules shared by the Worker and tests. */
+/** Workflow rules shared by the Worker and tests. */
+import { migrateChapterV2ToV3 } from '@ai-ethics/chapter-renderer';
+export { migrateChapterV2ToV3 };
 
 export const stableStringify = (value) => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -95,19 +97,23 @@ export const MEDIA_UPLOAD_POLICY = Object.freeze({
 export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'text.replace': { required: ['type', 'blockId', 'text'], optional: [] },
   'chapter.replaceDocument': { required: ['type', 'document'], optional: [] },
+  'chapter.replaceDocumentV3': { required: ['type', 'document'], optional: [] },
   'chapter.replaceBody': { required: ['type', 'body'], optional: [] },
   'chapter.importPlainText': { required: ['type', 'paragraphs'], optional: [] },
   'block.insert': { required: ['type', 'block', 'position'], optional: [] },
+  'block.split': { required: ['type', 'blockId', 'offset'], optional: [] },
+  'block.join': { required: ['type', 'firstBlockId', 'secondBlockId'], optional: [] },
   'block.move': { required: ['type', 'blockId', 'position'], optional: [] },
   'block.remove': { required: ['type', 'blockId'], optional: ['replacementPassageId'] },
-  'checkpoint.upsert': { required: ['type', 'checkpoint'], optional: [] },
+  'checkpoint.upsert': { required: ['type', 'checkpoint'], optional: ['position'] },
+  'checkpoint.move': { required: ['type', 'checkpointId', 'position'], optional: ['passageId'] },
   'checkpoint.replace': { required: ['type', 'checkpoint'], optional: [] },
   'checkpoint.remove': { required: ['type'], optional: ['slot', 'slotLabel', 'checkpointId'] },
   'embed.upsert': { required: ['type', 'embed'], optional: ['position'] },
   'media.place': { required: ['type', 'placement'], optional: ['position'] },
   'media.remove': { required: ['type', 'figureId'], optional: [] },
-  'personFeature.upsert': { required: ['type', 'feature', 'placement'], optional: [] },
-  'managedPlacement.move': { required: ['type', 'placementId', 'anchorPassageId', 'position'], optional: ['orderAtAnchor', 'displayPreset'] },
+  'personFeature.upsert': { required: ['type', 'feature', 'placement'], optional: ['position'] },
+  'managedPlacement.move': { required: ['type', 'placementId', 'position'], optional: ['anchorPassageId', 'orderAtAnchor', 'displayPreset'] },
   'managedPlacement.remove': { required: ['type', 'placementId'], optional: [] }
 });
 
@@ -274,7 +280,8 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   const slotLabel = input.slotLabel ?? input.slot;
   if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slotLabel must be a lowercase stable key of at most 80 characters');
   const displayOrder = input.displayOrder ?? existing?.displayOrder ?? chapter.checkpoints?.length ?? 0;
-  if (!Number.isInteger(displayOrder) || displayOrder < 0) throw new ApiError(422, 'CHECKPOINT_ORDER_INVALID', 'Checkpoint displayOrder must be a nonnegative integer');
+  if (chapter.schemaVersion === 2 && (!Number.isInteger(displayOrder) || displayOrder < 0)) throw new ApiError(422, 'CHECKPOINT_ORDER_INVALID', 'Checkpoint displayOrder must be a nonnegative integer');
+  if (chapter.schemaVersion === 3 && input.displayOrder !== undefined) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'schema-v3 checkpoints use chapter flow for position; displayOrder is not accepted');
   if (!CHECKPOINT_STRATEGIES.includes(input.strategy)) throw new ApiError(422, 'CHECKPOINT_STRATEGY_INVALID', 'Checkpoint strategy is unsupported');
   const passageId = requireString(input.passageId, 'checkpoint.passageId', 200);
   if (!passageIds(chapter).has(passageId)) throw new ApiError(422, 'CHECKPOINT_ANCHOR_MISSING', 'Checkpoint passage anchor does not exist', { passageId });
@@ -284,13 +291,13 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   if (!existing && input.checkpointId !== undefined) throw new ApiError(422, 'CHECKPOINT_ID_SERVER_ASSIGNED', 'New checkpoint IDs are assigned by the server');
   if (existing && input.checkpointId !== undefined && input.checkpointId !== existing.checkpointId) throw new ApiError(422, 'CHECKPOINT_ID_IMMUTABLE', 'Checkpoint ID cannot be changed');
   requireString(input.passageExcerptHash, 'checkpoint.passageExcerptHash', 64);
-  const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, passageId, displayOrder, slotLabel: slotLabel || null, title: input.title });
+  const checkpointId = existing?.checkpointId || await deterministicId('checkpoint', { chapterId: chapter.chapterId, passageId, flowPosition: chapter.body?.length ?? 0, slotLabel: slotLabel || null, title: input.title });
   return {
     checkpointId,
     ...(input.legacyId ? { legacyId: requireString(input.legacyId, 'checkpoint.legacyId', 200) } : {}),
     passageId,
     passageExcerptHash: await checkpointExcerptHash(chapter, passageId),
-    displayOrder,
+    ...(chapter.schemaVersion === 2 ? { displayOrder } : {}),
     ...(slotLabel ? { slotLabel } : {}),
     ...(input.stage ? { stage: requireString(input.stage, 'checkpoint.stage', 120) } : {}),
     strategy: input.strategy,
@@ -317,14 +324,34 @@ const findUniqueBlock = (chapter, blockId) => {
   if (matches.length > 1) throw new ApiError(409, 'BLOCK_ID_DUPLICATE', 'Block identity is not unique');
   return matches[0];
 };
+const flowNodeId = (node) => node?.type === 'checkpointRef' ? node.checkpointId : node?.type === 'placementRef' ? node.placementId : node?.blockId;
+const findUniqueFlowNode = (chapter, nodeId) => {
+  requireString(nodeId, 'nodeId', 200);
+  const matches = bodyBlocks(chapter).map((node, index) => ({ node, index })).filter((item) => flowNodeId(item.node) === nodeId);
+  if (matches.length === 0) throw new ApiError(404, 'FLOW_NODE_NOT_FOUND', 'Flow node does not exist', { nodeId });
+  if (matches.length > 1) throw new ApiError(409, 'FLOW_NODE_ID_DUPLICATE', 'Flow node identity is not unique', { nodeId });
+  return matches[0];
+};
 const placementIndex = (chapter, position) => {
   if (!position || typeof position !== 'object' || Array.isArray(position)) throw new ApiError(422, 'POSITION_REQUIRED', 'A stable block position is required');
-  rejectUnknown(position, ['beforeBlockId', 'afterBlockId']);
-  const before = own(position, 'beforeBlockId');
-  const after = own(position, 'afterBlockId');
-  if (before === after) throw new ApiError(422, 'POSITION_INVALID', 'Specify exactly one of beforeBlockId or afterBlockId');
-  const anchor = findUniqueBlock(chapter, before ? position.beforeBlockId : position.afterBlockId);
-  return before ? anchor.index : anchor.index + 1;
+  rejectUnknown(position, ['beforeBlockId', 'afterBlockId', 'beforeNodeId', 'afterNodeId']);
+  const beforeKey = own(position, 'beforeNodeId') ? 'beforeNodeId' : own(position, 'beforeBlockId') ? 'beforeBlockId' : null;
+  const afterKey = own(position, 'afterNodeId') ? 'afterNodeId' : own(position, 'afterBlockId') ? 'afterBlockId' : null;
+  if (Boolean(beforeKey) === Boolean(afterKey)) throw new ApiError(422, 'POSITION_INVALID', 'Specify exactly one before or after flow-node identity');
+  const key = beforeKey || afterKey;
+  const anchor = key?.endsWith('BlockId') ? findUniqueBlock(chapter, position[key]) : findUniqueFlowNode(chapter, position[key]);
+  return beforeKey ? anchor.index : anchor.index + 1;
+};
+const nearestContextPassage = (chapter, index) => {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const node = chapter.body[cursor]; const passage = node?.passageId || node?.anchorPassageId;
+    if (passage) return passage;
+  }
+  for (let cursor = index + 1; cursor < chapter.body.length; cursor += 1) {
+    const node = chapter.body[cursor]; const passage = node?.passageId || node?.anchorPassageId;
+    if (passage) return passage;
+  }
+  return null;
 };
 const assertUniqueBodyIds = (chapter, candidate) => {
   const blocks = bodyBlocks(chapter);
@@ -700,10 +727,12 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be edited');
     if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type)) throw new ApiError(422, 'BLOCK_NOT_TEXT_EDITABLE', 'Block type does not support text.replace');
     block.text = safeText(operation.text, 'text', block.type === 'heading' ? 1000 : 50000);
-  } else if (operation.type === 'chapter.replaceDocument') {
-    if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', 'chapter.replaceDocument requires a structured document');
+  } else if (operation.type === 'chapter.replaceDocument' || operation.type === 'chapter.replaceDocumentV3') {
+    if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', `${operation.type} requires a structured document`);
     if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
     const replacement = structuredClone(operation.document);
+    const expectedSchemaVersion = operation.type === 'chapter.replaceDocumentV3' ? 3 : 2;
+    if (replacement.schemaVersion !== expectedSchemaVersion) throw new ApiError(422, 'CONTENT_SCHEMA_VERSION_MISMATCH', `${operation.type} requires schemaVersion ${expectedSchemaVersion}`, { path: 'schemaVersion' });
     const shapeValidation = validateChapter(replacement);
     if (!shapeValidation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', shapeValidation);
     await bindCheckpointExcerptHashes(replacement);
@@ -718,6 +747,37 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const index = placementIndex(chapter, operation.position);
     const block = await normalizeInsertedBlock(chapter, operation.block, operation.position);
     chapter.body.splice(index, 0, block);
+  } else if (operation.type === 'block.split') {
+    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'block.split requires schema-v3 ordered flow');
+    const { block, index } = findUniqueBlock(chapter, operation.blockId);
+    if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type) || typeof block.text !== 'string') throw new ApiError(422, 'BLOCK_SPLIT_UNSUPPORTED', 'Only textual prose blocks can be split');
+    if (!Number.isInteger(operation.offset) || operation.offset < 1 || operation.offset >= block.text.length) throw new ApiError(422, 'BLOCK_SPLIT_OFFSET_INVALID', 'Split offset must be inside the block text');
+    const leftText = block.text.slice(0, operation.offset).trimEnd();
+    const rightText = block.text.slice(operation.offset).trimStart();
+    if (!leftText || !rightText) throw new ApiError(422, 'BLOCK_SPLIT_EMPTY', 'Both split fragments must contain text');
+    const seed = { chapterId: chapter.chapterId, blockId: block.blockId, offset: operation.offset, rightText };
+    const rightBlockId = await deterministicId('block', seed);
+    const rightPassageId = await deterministicId('passage', seed);
+    const left = { ...block, text: leftText };
+    const right = block.type === 'heading'
+      ? { type: 'paragraph', blockId: rightBlockId, passageId: rightPassageId, text: rightText }
+      : { ...block, blockId: rightBlockId, passageId: rightPassageId, text: rightText };
+    if (right.type !== 'heading') delete right.sectionId;
+    assertUniqueBodyIds(chapter, right);
+    chapter.body.splice(index, 1, left, right);
+    await bindCheckpointExcerptHashes(chapter);
+    return { chapter, contentHash: await sha256(chapter), created: { blockId: rightBlockId, passageId: rightPassageId } };
+  } else if (operation.type === 'block.join') {
+    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'block.join requires schema-v3 ordered flow');
+    const first = findUniqueBlock(chapter, operation.firstBlockId);
+    const second = findUniqueBlock(chapter, operation.secondBlockId);
+    if (second.index !== first.index + 1) throw new ApiError(409, 'BLOCK_JOIN_CROSSES_FLOW_NODE', 'Blocks can be joined only when no checkpoint or placement reference lies between them');
+    if (!['paragraph', 'blockquote'].includes(first.block.type) || first.block.type !== second.block.type || typeof first.block.text !== 'string' || typeof second.block.text !== 'string') throw new ApiError(422, 'BLOCK_JOIN_UNSUPPORTED', 'Join requires adjacent prose blocks of the same supported type');
+    const retiredPassageId = second.block.passageId;
+    first.block.text = `${first.block.text.trimEnd()} ${second.block.text.trimStart()}`;
+    chapter.body.splice(second.index, 1);
+    if (retiredPassageId) chapter.tombstones = [...(chapter.tombstones || []), { id: retiredPassageId, reason: 'Joined into adjacent passage', retiredAt: chapter.updatedAt || '1970-01-01T00:00:00.000Z', replacementId: first.block.passageId }];
+    chapter.checkpoints = chapter.checkpoints.map((item) => item.passageId === retiredPassageId ? { ...item, passageId: first.block.passageId } : item);
   } else if (operation.type === 'block.move') {
     const moving = findUniqueBlock(chapter, operation.blockId);
     const anchorId = operation.position?.beforeBlockId || operation.position?.afterBlockId;
@@ -754,7 +814,28 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
       : operation.checkpoint.slot !== undefined && (item.slotLabel ?? item.slot) === operation.checkpoint.slot);
     if (operation.type === 'checkpoint.replace' && index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
     const normalized = await normalizeCheckpoint(chapter, operation.checkpoint, index >= 0 ? chapter.checkpoints[index] : null);
-    if (index >= 0) chapter.checkpoints[index] = normalized; else chapter.checkpoints.push(normalized);
+    if (index >= 0) chapter.checkpoints[index] = normalized;
+    else {
+      chapter.checkpoints.push(normalized);
+      if (chapter.schemaVersion === 3) {
+        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating a schema-v3 checkpoint requires an explicit flow position');
+        chapter.body.splice(placementIndex(chapter, operation.position), 0, { type: 'checkpointRef', checkpointId: normalized.checkpointId });
+      }
+    }
+  } else if (operation.type === 'checkpoint.move') {
+    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'checkpoint.move requires schema-v3 ordered flow');
+    const checkpointIndex = chapter.checkpoints.findIndex((item) => item.checkpointId === operation.checkpointId);
+    if (checkpointIndex < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
+    const reference = findUniqueFlowNode(chapter, operation.checkpointId);
+    if (reference.node.type !== 'checkpointRef') throw new ApiError(409, 'FLOW_NODE_TYPE_MISMATCH', 'checkpoint.move target is not a checkpoint reference');
+    const targetId = operation.position?.beforeNodeId || operation.position?.afterNodeId || operation.position?.beforeBlockId || operation.position?.afterBlockId;
+    if (targetId === operation.checkpointId) throw new ApiError(422, 'POSITION_INVALID', 'A checkpoint cannot be positioned relative to itself');
+    const [node] = chapter.body.splice(reference.index, 1);
+    const index = placementIndex(chapter, operation.position);
+    chapter.body.splice(index, 0, node);
+    const contextPassage = operation.passageId || nearestContextPassage(chapter, index);
+    if (!contextPassage || !passageIds(chapter).has(contextPassage)) throw new ApiError(422, 'CHECKPOINT_CONTEXT_MISSING', 'Checkpoint flow position must resolve to a context passage');
+    chapter.checkpoints[checkpointIndex] = { ...chapter.checkpoints[checkpointIndex], passageId: contextPassage, passageExcerptHash: await checkpointExcerptHash(chapter, contextPassage) };
   } else if (operation.type === 'checkpoint.remove') {
     const slotTarget = operation.slotLabel ?? operation.slot;
     if (slotTarget !== undefined && (typeof slotTarget !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotTarget))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slot label must be a lowercase stable key of at most 80 characters');
@@ -763,7 +844,8 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const index = chapter.checkpoints.findIndex((item) => operation.checkpointId ? item.checkpointId === operation.checkpointId : (item.slotLabel ?? item.slot) === slotTarget);
     if (index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
     if (slotTarget !== undefined && slotTarget !== (chapter.checkpoints[index].slotLabel ?? chapter.checkpoints[index].slot)) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot label does not match the selected checkpoint ID');
-    chapter.checkpoints.splice(index, 1);
+    const [removedCheckpoint] = chapter.checkpoints.splice(index, 1);
+    if (chapter.schemaVersion === 3) chapter.body = chapter.body.filter((node) => node.type !== 'checkpointRef' || node.checkpointId !== removedCheckpoint.checkpointId);
   } else if (operation.type === 'embed.upsert') {
     const normalized = await normalizeEmbed(chapter, operation.embed);
     if (normalized.existing) chapter.body[chapter.body.indexOf(normalized.existing)] = normalized.block;
@@ -786,18 +868,40 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (!Array.isArray(feature.primarySources)) throw new ApiError(422, 'PERSON_FEATURE_INVALID', 'feature.primarySources must be an array');
     if (placement.kind !== 'personFeature' || placement.contentId !== feature.personFeatureId || placement.placementId !== feature.placementId || placement.displayPreset !== 'thinker-card') throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Person feature and placement identities must match');
     if (!passageIds(chapter).has(placement.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Person feature anchor does not exist');
-    if (!['before', 'after'].includes(placement.position) || !Number.isInteger(placement.orderAtAnchor) || placement.orderAtAnchor < 0) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Person feature position is invalid');
+    if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement.position) || !Number.isInteger(placement.orderAtAnchor) || placement.orderAtAnchor < 0)) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Person feature position is invalid');
+    if (chapter.schemaVersion === 3 && (placement.position !== undefined || placement.orderAtAnchor !== undefined)) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'schema-v3 managed placements use chapter flow for position');
     if (!chapter.people?.some((relation) => relation.personId === feature.personId)) throw new ApiError(422, 'PERSON_RELATION_MISSING', 'Person feature requires an existing chapter-person relation');
     if (!chapter.entityRevisions?.some((revision) => revision.entityRevisionId === feature.entityRevisionId && revision.personId === feature.personId)) throw new ApiError(422, 'ENTITY_REVISION_MISSING', 'Person feature requires a frozen entity revision for the same person');
-    const conflictingOrder = chapter.managedPlacements.find((item) => item.placementId !== placement.placementId && item.anchorPassageId === placement.anchorPassageId && item.position === placement.position && item.orderAtAnchor === placement.orderAtAnchor);
+    const conflictingOrder = chapter.schemaVersion === 2 ? chapter.managedPlacements.find((item) => item.placementId !== placement.placementId && item.anchorPassageId === placement.anchorPassageId && item.position === placement.position && item.orderAtAnchor === placement.orderAtAnchor) : null;
     if (conflictingOrder) throw new ApiError(409, 'MANAGED_POSITION_CONFLICT', 'Another managed placement already uses this anchor order');
     const featureIndex = chapter.personFeatures.findIndex((item) => item.personFeatureId === feature.personFeatureId || item.placementId === feature.placementId);
     const placementIndexValue = chapter.managedPlacements.findIndex((item) => item.placementId === placement.placementId);
     if (featureIndex >= 0) chapter.personFeatures[featureIndex] = structuredClone(feature); else chapter.personFeatures.push(structuredClone(feature));
-    if (placementIndexValue >= 0) chapter.managedPlacements[placementIndexValue] = structuredClone(placement); else chapter.managedPlacements.push(structuredClone(placement));
+    if (placementIndexValue >= 0) chapter.managedPlacements[placementIndexValue] = structuredClone(placement);
+    else {
+      chapter.managedPlacements.push(structuredClone(placement));
+      if (chapter.schemaVersion === 3) {
+        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating a schema-v3 managed placement requires an explicit flow position');
+        chapter.body.splice(placementIndex(chapter, operation.position), 0, { type: 'placementRef', placementId: placement.placementId });
+      }
+    }
   } else if (operation.type === 'managedPlacement.move') {
     const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
     if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
+    if (chapter.schemaVersion === 3) {
+      const reference = findUniqueFlowNode(chapter, operation.placementId);
+      if (reference.node.type !== 'placementRef') throw new ApiError(409, 'FLOW_NODE_TYPE_MISMATCH', 'managedPlacement.move target is not a placement reference');
+      const targetId = operation.position?.beforeNodeId || operation.position?.afterNodeId || operation.position?.beforeBlockId || operation.position?.afterBlockId;
+      if (targetId === operation.placementId) throw new ApiError(422, 'POSITION_INVALID', 'A placement cannot be positioned relative to itself');
+      const [node] = chapter.body.splice(reference.index, 1);
+      const targetIndex = placementIndex(chapter, operation.position);
+      chapter.body.splice(targetIndex, 0, node);
+      const anchorPassageId = operation.anchorPassageId || nearestContextPassage(chapter, targetIndex);
+      if (!anchorPassageId || !passageIds(chapter).has(anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Managed placement flow position must resolve to a context passage');
+      chapter.managedPlacements[index] = { ...chapter.managedPlacements[index], anchorPassageId, ...(operation.displayPreset ? { displayPreset: operation.displayPreset } : {}) };
+      await bindCheckpointExcerptHashes(chapter);
+      return { chapter, contentHash: await sha256(chapter) };
+    }
     if (!passageIds(chapter).has(operation.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Managed placement anchor does not exist');
     if (!['before', 'after'].includes(operation.position)) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Managed placement position is invalid');
     const orderAtAnchor = operation.orderAtAnchor ?? 0;
@@ -809,6 +913,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
     if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
     const [removed] = chapter.managedPlacements.splice(index, 1);
+    if (chapter.schemaVersion === 3) chapter.body = chapter.body.filter((node) => node.type !== 'placementRef' || node.placementId !== removed.placementId);
     if (removed.kind === 'personFeature') chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== removed.contentId && item.placementId !== removed.placementId);
   }
   await bindCheckpointExcerptHashes(chapter);
@@ -817,6 +922,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
 
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
+  if (![2, 3].includes(chapter?.schemaVersion)) errors.push({ code: 'CONTENT_SCHEMA_VERSION_UNSUPPORTED', path: 'schemaVersion', message: 'schemaVersion must be 2 or 3' });
   if (!Array.isArray(chapter.checkpoints)) errors.push({ code: 'CHECKPOINT_COLLECTION_INVALID', path: 'checkpoints' });
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
   const checkpointIds = checkpoints.map((item) => item.checkpointId);
@@ -826,7 +932,8 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
     const slotLabel = item.slotLabel ?? item.slot;
     if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: `checkpoints.${index}.slotLabel` });
     if (item.stage !== undefined && (typeof item.stage !== 'string' || item.stage.trim().length < 1 || item.stage.trim().length > 120)) errors.push({ code: 'CHECKPOINT_STAGE_INVALID', path: `checkpoints.${index}.stage` });
-    if (!Number.isInteger(item.displayOrder ?? index) || (item.displayOrder ?? index) < 0) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder` });
+    if (chapter.schemaVersion === 2 && (!Number.isInteger(item.displayOrder) || item.displayOrder < 0)) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder`, message: 'schema-v2 checkpoints require a nonnegative displayOrder' });
+    if (chapter.schemaVersion === 3 && item.displayOrder !== undefined) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `checkpoints.${index}.displayOrder`, message: 'schema-v3 checkpoint position comes from chapter flow' });
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });
     if (!/^[a-f0-9]{64}$/.test(item.passageExcerptHash || '')) errors.push({ code: 'CHECKPOINT_EXCERPT_HASH_INVALID', path: `checkpoints.${index}.passageExcerptHash` });
     if (typeof item.showInSidebar !== 'boolean') errors.push({ code: 'CHECKPOINT_SIDEBAR_INVALID', path: `checkpoints.${index}.showInSidebar` });
@@ -834,7 +941,22 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
     if (!Number.isInteger(item.minWords) || !Number.isInteger(item.maxWords) || item.minWords < 1 || item.maxWords > 1000 || item.minWords > item.maxWords) errors.push({ code: 'CHECKPOINT_RESPONSE_RANGE_INVALID', path: `checkpoints.${index}` });
   });
   const ids = new Map();
+  const checkpointReferenceCounts = new Map(checkpoints.map((item) => [item.checkpointId, 0]));
+  const placements = Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : [];
+  const placementReferenceCounts = new Map(placements.map((item) => [item.placementId, 0]));
   bodyBlocks(chapter).forEach((block, index) => {
+    if (block?.type === 'checkpointRef') {
+      if (chapter.schemaVersion !== 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
+      if (!checkpointReferenceCounts.has(block.checkpointId)) errors.push({ code: 'CHECKPOINT_REFERENCE_MISSING', path: `body.${index}.checkpointId`, message: 'Checkpoint reference has no target record' });
+      else checkpointReferenceCounts.set(block.checkpointId, checkpointReferenceCounts.get(block.checkpointId) + 1);
+      return;
+    }
+    if (block?.type === 'placementRef') {
+      if (chapter.schemaVersion !== 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
+      if (!placementReferenceCounts.has(block.placementId)) errors.push({ code: 'PLACEMENT_REFERENCE_MISSING', path: `body.${index}.placementId`, message: 'Placement reference has no target record' });
+      else placementReferenceCounts.set(block.placementId, placementReferenceCounts.get(block.placementId) + 1);
+      return;
+    }
     for (const field of ['blockId', 'passageId', 'sectionId', 'figureId', 'embedId', 'linkId']) {
       if (!block?.[field]) continue;
       const key = `${field}:${block[field]}`;
@@ -849,17 +971,29 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
       if (!block.teachingUse || !['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) || !['start', 'center', 'end'].includes(block.align) || !['poster', 'firstFrame', 'omit'].includes(block.printPolicy) || (block.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(block.animationPolicy))) errors.push({ code: 'MEDIA_PRESENTATION_INVALID', path: `body.${index}` });
     }
   });
-  const placements = Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : [];
   const placementIds = new Set(); const placementPositions = new Set();
   placements.forEach((placement, index) => {
     if (!placement?.placementId || placementIds.has(placement.placementId)) errors.push({ code: 'MANAGED_PLACEMENT_ID_DUPLICATE', path: `managedPlacements.${index}.placementId` });
     placementIds.add(placement?.placementId);
-    const positionKey = `${placement?.anchorPassageId}:${placement?.position}:${placement?.orderAtAnchor}`;
-    if (placementPositions.has(positionKey)) errors.push({ code: 'MANAGED_POSITION_CONFLICT', path: `managedPlacements.${index}.orderAtAnchor` });
-    placementPositions.add(positionKey);
+    if (chapter.schemaVersion === 2) {
+      const positionKey = `${placement?.anchorPassageId}:${placement?.position}:${placement?.orderAtAnchor}`;
+      if (placementPositions.has(positionKey)) errors.push({ code: 'MANAGED_POSITION_CONFLICT', path: `managedPlacements.${index}.orderAtAnchor` });
+      placementPositions.add(positionKey);
+    }
     if (!anchors.has(placement?.anchorPassageId)) errors.push({ code: 'MANAGED_ANCHOR_MISSING', path: `managedPlacements.${index}.anchorPassageId` });
-    if (!['before', 'after'].includes(placement?.position) || !Number.isInteger(placement?.orderAtAnchor) || placement.orderAtAnchor < 0) errors.push({ code: 'MANAGED_POSITION_INVALID', path: `managedPlacements.${index}` });
+    if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement?.position) || !Number.isInteger(placement?.orderAtAnchor) || placement.orderAtAnchor < 0)) errors.push({ code: 'MANAGED_POSITION_INVALID', path: `managedPlacements.${index}` });
+    if (chapter.schemaVersion === 3 && (placement?.position !== undefined || placement?.orderAtAnchor !== undefined)) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `managedPlacements.${index}`, message: 'schema-v3 placement position comes from chapter flow' });
   });
+  if (chapter.schemaVersion === 3) {
+    for (const [checkpointId, count] of checkpointReferenceCounts) {
+      if (count === 0) errors.push({ code: 'CHECKPOINT_REFERENCE_ORPHAN', path: 'body', message: `Checkpoint ${checkpointId} is missing from chapter flow` });
+      if (count > 1) errors.push({ code: 'CHECKPOINT_REFERENCE_DUPLICATE', path: 'body', message: `Checkpoint ${checkpointId} appears more than once in chapter flow` });
+    }
+    for (const [placementId, count] of placementReferenceCounts) {
+      if (count === 0) errors.push({ code: 'PLACEMENT_REFERENCE_ORPHAN', path: 'body', message: `Placement ${placementId} is missing from chapter flow` });
+      if (count > 1) errors.push({ code: 'PLACEMENT_REFERENCE_DUPLICATE', path: 'body', message: `Placement ${placementId} appears more than once in chapter flow` });
+    }
+  }
   return { valid: errors.length === 0, errors };
 };
 

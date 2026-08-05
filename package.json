@@ -44,6 +44,7 @@
     "content:import-report": "tsx scripts/content/import-git.mts",
     "content:export-snapshot": "tsx scripts/content/export-snapshot.mts",
     "content:seed-sql": "tsx scripts/content/seed-d1.mts",
+    "content:migrate-flow-v3": "tsx scripts/content/ordered-flow-v3.mts",
     "validate": "npm run audit:public && npm run content:check && npm run validate:content && npm run check && npm test",
     "deploy:reader": "wrangler deploy",
     "deploy:editor": "npm run build:instructor-editor && wrangler deploy --config apps/instructor-editor/wrangler.jsonc",

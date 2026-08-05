@@ -43,3 +43,11 @@ test("public projection receives only a minimal audited runtime-flag mirror", as
   assert.match(sql, /DROP TRIGGER runtime_feature_flag_audit_insert/);
   assert.doesNotMatch(sql.split("CREATE TABLE public_runtime_feature_flags")[1].split(");")[0], /config_json|reason|changed_by/);
 });
+
+test("ordered-flow rollout flags start fail-closed without rewriting revisions", async () => {
+  const sql = await migration("0021_ordered_flow_feature_flags.sql");
+  assert.match(sql, /'editor_identity_normalization', 0, '\["chapter_ch07"\]'/);
+  assert.match(sql, /'ordered_managed_references_v3', 0, '\["chapter_ch07"\]'/);
+  assert.match(sql, /'legacy_anchor_projection_adapter', 1/);
+  assert.doesNotMatch(sql, /UPDATE\s+(?:document_revisions|documents|working_documents)/i);
+});

@@ -17,6 +17,34 @@ export interface CommitLiveRequest {
   operations: Array<Record<string, unknown>>;
 }
 
+export type FlowPosition =
+  | { beforeNodeId: string; afterNodeId?: never }
+  | { afterNodeId: string; beforeNodeId?: never };
+
+export type OrderedFlowOperation =
+  | { type: "block.split"; blockId: string; offset: number }
+  | { type: "block.join"; firstBlockId: string; secondBlockId: string }
+  | { type: "block.move"; blockId: string; position: FlowPosition }
+  | { type: "checkpoint.move"; checkpointId: string; position: FlowPosition; passageId?: string }
+  | { type: "managedPlacement.move"; placementId: string; position: FlowPosition; anchorPassageId?: string }
+  | { type: "chapter.replaceDocumentV3"; document: Record<string, unknown> };
+
+export interface OperationBatchRequest {
+  documentId: string;
+  baseRevisionId: string;
+  expectedVersion: number;
+  idempotencyKey: string;
+  operations: Array<OrderedFlowOperation | Record<string, unknown>>;
+}
+
+export interface OperationBatchResult {
+  documentId: string;
+  version: number;
+  contentHash: string;
+  chapter?: Record<string, unknown>;
+  created?: { blockId?: string; passageId?: string; checkpointId?: string; placementId?: string };
+}
+
 export interface CommitLiveResult {
   commitReceiptId: string;
   changeSetId: string;
@@ -54,7 +82,7 @@ export interface AuthoringClient {
   getChangeset(changeSetId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
   submitChangeset(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   approveChangeset(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
-  applyOperationBatch(changeSetId: string, request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  applyOperationBatch(changeSetId: string, request: OperationBatchRequest, signal?: AbortSignal): Promise<OperationBatchResult>;
   searchMedia(query?: { q?: string; kind?: "image" | "audio" | "video" | "document"; rightsStatus?: "reviewRequired" | "cleared" | "blocked"; sha256?: string; limit?: number; cursor?: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
   createMediaReviewPackage(request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   decideMediaReviewPackage(reviewPackageId: string, request: { declarationHash: string; decision: "cleared" | "blocked"; comment: string; idempotencyKey: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;

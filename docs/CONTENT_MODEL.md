@@ -1,5 +1,7 @@
 # Public Content Model
 
+The versioned authority registry decides whether a chapter's accepted prose is canonical in Git or in the Content API's immutable D1/R2 revision plane. The repository remains the release, renderer, schema, migration-fixture, and public-site source. A chapter is writable in exactly one authority at a time, and the public reader consumes only a frozen validated release projection.
+
 The repository is the website's content source of truth. A chapter is not a database row and does not depend on a private filesystem path. Each of the eighteen chapters is a materialized directory under `content/chapters/`:
 
 ```text
@@ -55,7 +57,13 @@ Start by saying what you think someone should do.
 
 These IDs are the durable join points for annotations, judgment prompts, deep links, future class activities, and streaming audio segments. Editors should move the marker with its section or passage. They should delete the marker when deleting that entire block. The synchronization tool allocates new IDs above the chapter's current maximum; it does not renumber surviving blocks.
 
-Identity comments are website authoring metadata used to anchor annotations, figures, and reading-layer interactions. Preserve them through ordinary chapter revisions.
+Identity comments are website authoring metadata used to anchor annotations, figures, and reading-layer interactions. Preserve them through ordinary chapter revisions. Stable identity describes a passage; it does not determine the exact position of a checkpoint or separately stored managed record.
+
+## Ordered flow in schema v3
+
+After D1 cutover and v3 upgrade, canonical chapter JSON uses `body` as one ordered flow. Ordinary blocks appear directly. Checkpoint and separately stored managed records appear through `{ "type": "checkpointRef", "checkpointId": "…" }` and `{ "type": "placementRef", "placementId": "…" }` nodes. Each inline record has exactly one reference. Inline and sidebar sequence comes from this same array.
+
+Checkpoint `passageId` and managed-placement `anchorPassageId` retain contextual meaning for deep links, dependency inspection, and excerpt hashes. Schema v3 forbids checkpoint `displayOrder` and placement `position`/`orderAtAnchor`; those legacy fields are derived only by a temporary v2 export adapter. See [ADR 0007](./architecture/adr/0007-ordered-chapter-flow.md).
 
 ## Loading content in Astro
 
@@ -74,18 +82,11 @@ getAdjacentChapters(slug)
 
 `getChapter()` returns `{ meta, entry, Content, headings, annotations, sourceLinks, world, rights, reading, previous, next }`. `Content` is the rendered Astro component. `ChapterSummary` guarantees `title`, `subtitle`, `description`, `order`, `part`, `path`, `wordCount`, and `readingMinutes`.
 
-## GitHub and admin editing
+## Git and instructor-editor authority
 
-GitHub remains canonical even when a protected admin editor is added. The safe bidirectional flow is:
+Before cutover, Git Markdown and reviewed sidecars are canonical and editor writes are refused. After an explicit authority cutover, accepted revisions are immutable Content API records; Git chapter prose becomes migration evidence rather than a competing write path. Every browser or agent mutation carries an exact base revision, working version, and idempotency key. A stale mutation stops with a conflict rather than overwriting newer work.
 
-1. The editor fetches the current Markdown and its Git commit SHA.
-2. The instructor edits the same canonical file the repository exposes.
-3. The editor submits a commit or pull request through the GitHub API, using the fetched SHA as an optimistic concurrency check.
-4. A conflicting repository edit stops the save and requires an explicit merge; the editor never silently overwrites newer Markdown.
-5. CI regenerates or checks reading artifacts, validates content and rights, audits the public boundary, and builds the site.
-6. Cloudflare deploys only after the repository change passes those gates.
-
-That is bidirectional editing without a second content store. A local or GitHub edit appears in the admin surface after refresh; an admin edit is a normal Git commit. Draft state should remain in the browser or in a Git branch, not in a database. Student-facing reflection state is never part of this content model.
+Draft authoring state may exist in an isolated server changeset and a session-scoped browser recovery copy. A successful instructor Save creates one immutable revision and matching public projection. It does not mutate historical JSON in place. Student checkpoint responses remain page-memory-only and are never part of either authority plane.
 
 ## Migration decisions
 

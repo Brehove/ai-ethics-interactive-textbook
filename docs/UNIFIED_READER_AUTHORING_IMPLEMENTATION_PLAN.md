@@ -1,5 +1,7 @@
 # Unified Reader–Authoring Experience
 
+> Ordering update (August 5, 2026): [ADR 0007](./architecture/adr/0007-ordered-chapter-flow.md) supersedes every schema-v2 assumption in this plan that derives checkpoint or managed-placement position from passage anchors, `displayOrder`, `position`, or `orderAtAnchor`. Schema v3 uses explicit `checkpointRef` and `placementRef` nodes in `chapter.body`; passage identifiers retain contextual and deep-link meaning only. Historical v2 descriptions below remain migration context, not current write guidance.
+
 ## Detailed implementation plan
 
 - **Status:** Implemented, deployed, and production-verified across all 18 chapters

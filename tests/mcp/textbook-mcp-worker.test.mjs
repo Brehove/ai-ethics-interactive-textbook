@@ -74,8 +74,7 @@ test('tools use current Unified routes, batch semantic operations, and preserve 
   await client.callTool({ name: 'create_or_resume_changeset', arguments: { chapterId: 'chapter_ch07', title: 'Repair', resume: true, idempotencyKey: key } });
   await client.callTool({ name: 'replace_passage_text', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'text.replace', blockId: 'block_7', text: 'Revised passage.' } } });
   await client.callTool({ name: 'replace_chapter_document', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key, operation: { type: 'chapter.replaceDocument', document: { blocks: [] } } } });
-  const reorderedCheckpoint = { checkpointId: 'checkpoint_7', passageId: 'passage_7', displayOrder: 9, strategy: 'self-explanation', title: 'Reordered pause', trigger: 'Pause.', prompt: 'Explain.', guidance: 'Use the chapter.', responseStructure: 'prose', minWords: 30, maxWords: 250, rationale: 'Reorder the prompt.', showInSidebar: true };
-  await client.callTool({ name: 'reorder_checkpoint', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 3, idempotencyKey: key, operation: { type: 'checkpoint.upsert', checkpoint: reorderedCheckpoint } } });
+  await client.callTool({ name: 'reorder_checkpoint', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 3, idempotencyKey: key, operation: { type: 'checkpoint.move', checkpointId: 'checkpoint_7', position: { afterNodeId: 'block_7' } } } });
   const feature = { personFeatureId: 'personfeature_aquinas', placementId: 'placement_aquinas', personId: 'person_aquinas', entityRevisionId: 'personrev_7', name: 'Thomas Aquinas', dates: '1225–1274', role: 'Primary source', teachingNote: 'Compare natural-law reasoning.', biography: 'A medieval philosopher and theologian.', primarySources: [], portrait: { mediaVersionId: 'mediaversion_aquinas', src: '/media/aquinas.webp', width: 400, height: 500, alt: 'Portrait of Thomas Aquinas.', credit: 'Public domain.', title: 'Thomas Aquinas', license: 'Public domain' } };
   const placement = { placementId: 'placement_aquinas', kind: 'personFeature', contentId: 'personfeature_aquinas', anchorPassageId: 'passage_7', position: 'after', orderAtAnchor: 0, displayPreset: 'thinker-card' };
   await client.callTool({ name: 'upsert_person_feature', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 4, idempotencyKey: key, operation: { type: 'personFeature.upsert', feature, placement } } });
@@ -86,7 +85,7 @@ test('tools use current Unified routes, batch semantic operations, and preserve 
   assert.equal(calls[2].path, '/v1/changesets/changeset_7/operations:batch');
   assert.deepEqual(calls[2].body.operations[0], { type: 'text.replace', blockId: 'block_7', text: 'Revised passage.' });
   assert.equal(calls[3].body.operations[0].type, 'chapter.replaceDocument');
-  assert.equal(calls[4].body.operations[0].checkpoint.displayOrder, 9);
+  assert.deepEqual(calls[4].body.operations[0], { type: 'checkpoint.move', checkpointId: 'checkpoint_7', position: { afterNodeId: 'block_7' } });
   assert.equal(calls[5].body.operations[0].type, 'personFeature.upsert');
   assert.equal(calls[6].path, '/v1/live-commits/commit_7');
   assert.equal(calls.every((call) => call.authorization === 'Bearer device-flow-test'), true);
