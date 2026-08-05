@@ -1,5 +1,5 @@
 ---
-name: publish-textbook-media
+name: ai-ethics-publish-textbook-media
 description: Add or review accessible PHIL 123 textbook media through the content MCP server. Use when requesting or finalizing a media asset, resolving an approved embed, or preparing a media-bearing chapter submission.
 ---
 

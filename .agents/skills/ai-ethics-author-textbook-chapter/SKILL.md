@@ -1,5 +1,5 @@
 ---
-name: author-textbook-chapter
+name: ai-ethics-author-textbook-chapter
 description: Draft, revise, save, or publish a PHIL 123 textbook chapter through the agent-native content MCP server. Use when adding or revising anchored prose, chapter structure, sources, or reading-record content, including an explicitly requested immediate live save.
 ---
 

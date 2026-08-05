@@ -1,7 +1,7 @@
 interface:
-  display_name: "Publish Textbook Media"
+  display_name: "AI Ethics — Publish Textbook Media"
   short_description: "Prepare accessible media for release"
-  default_prompt: "Use $publish-textbook-media to prepare accessible textbook media and follow my requested finish."
+  default_prompt: "Use $ai-ethics-publish-textbook-media to prepare accessible textbook media and follow my requested finish."
 dependencies:
   tools:
     - type: "mcp"

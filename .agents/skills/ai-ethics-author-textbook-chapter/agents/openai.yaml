@@ -1,7 +1,7 @@
 interface:
-  display_name: "Author Textbook Chapter"
+  display_name: "AI Ethics — Author Textbook Chapter"
   short_description: "Draft anchored chapter changes safely"
-  default_prompt: "Use $author-textbook-chapter to revise a chapter and follow my requested finish: review submission or immediate live save."
+  default_prompt: "Use $ai-ethics-author-textbook-chapter to revise a chapter and follow my requested finish: review submission or immediate live save."
 dependencies:
   tools:
     - type: "mcp"
