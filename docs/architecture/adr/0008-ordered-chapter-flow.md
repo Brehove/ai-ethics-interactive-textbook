@@ -28,7 +28,7 @@ type PlacementReferenceNode = {
 };
 ```
 
-Checkpoint and managed-placement records remain typed canonical records. Each inline record has exactly one matching reference, and each reference resolves to exactly one record of the expected type. Reference order in `body` is the only inline-order authority.
+Checkpoint and separately stored person-feature placement records remain typed canonical records. Each inline record has exactly one matching reference, and each reference resolves to exactly one record of the expected type. Reference order in `body` is the only inline-order authority. Media, embeds, diagrams, and artifacts already are typed body blocks; schema v3 does not create a second placement record for them. Adding another separately stored placement kind later requires its frozen-content map and reader projection to land in the same contract revision.
 
 In schema v3:
 
@@ -46,7 +46,7 @@ The server derives the nearest contextual passage after a move unless the caller
 - Split: the left fragment retains the original block and passage identities; the right fragment receives new server-derived identities. Existing reference nodes remain after the new right fragment because they already occupy that location in flow.
 - Join: only adjacent compatible prose blocks may join. A reference between them prevents the join. The first block retains its identities; the retired passage receives a tombstone pointing to the survivor.
 - Move: moving a block or reference changes the flow array directly.
-- Create: creating an inline checkpoint or separately managed placement creates its record and one reference atomically at an explicit flow position.
+- Create: creating an inline checkpoint or separately stored person feature creates its record and one reference atomically at an explicit flow position.
 - Remove: removing an inline checkpoint or placement removes its record and reference in one guarded operation.
 - Whole-document replacement: `chapter.replaceDocumentV3` validates complete one-to-one reference coverage before any revision, projection, head, authority, or receipt write.
 

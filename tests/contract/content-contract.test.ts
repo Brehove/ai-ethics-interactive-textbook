@@ -19,6 +19,13 @@ test("schema v3 makes reference order authoritative and rejects v2-v3 hybrids", 
   assert.equal(PublishableChapterBundleSchema.safeParse({ ...v3, checkpoints: [{ ...record, displayOrder: 0 }] }).success, false);
   assert.equal(PublishableChapterBundleSchema.safeParse({ ...base, status: "approved", body: [...base.body, { type: "checkpointRef", checkpointId: "checkpoint_v3" }], checkpoints: [checkpoint("reflect", "v3")] }).success, false);
 });
+test("schema v3 reserves placement references for separately stored person features", () => {
+  const chapter = personFeatureChapter();
+  const { position: _position, orderAtAnchor: _orderAtAnchor, ...placement } = chapter.managedPlacements[0];
+  const v3 = { ...chapter, schemaVersion: 3 as const, status: "approved" as const, body: [...chapter.body, { type: "placementRef" as const, placementId: placement.placementId }], checkpoints: [], managedPlacements: [placement] };
+  assert.equal(PublishableChapterBundleSchema.safeParse(v3).success, true);
+  assert.equal(PublishableChapterBundleSchema.safeParse({ ...v3, managedPlacements: [{ ...placement, kind: "media", contentId: "media_01", displayPreset: "reading" }] }).success, false);
+});
 test("checkpoint side-panel and word-bound controls are validated", () => { assert.equal(DraftChapterBundleSchema.safeParse({ ...base, status: "draft", checkpoints: [{ ...checkpoint("commit", "1"), minWords: 300, maxWords: 250 }] }).success, false); assert.equal(DraftChapterBundleSchema.safeParse({ ...base, status: "draft", checkpoints: [{ ...checkpoint("commit", "1"), showInSidebar: false }] }).success, true); });
 test("optional checkpoint labels are nonempty and no longer than 120 characters", () => { assert.equal(DraftChapterBundleSchema.safeParse({ ...base, status: "draft", checkpoints: [{ ...checkpoint("commit", "1"), stage: "" }] }).success, false); assert.equal(DraftChapterBundleSchema.safeParse({ ...base, status: "draft", checkpoints: [{ ...checkpoint("commit", "1"), stage: "x".repeat(121) }] }).success, false); assert.equal(DraftChapterBundleSchema.safeParse({ ...base, status: "draft", checkpoints: [{ ...checkpoint("commit", "1"), stage: undefined }] }).success, true); });
 test("person features require frozen person revisions, a relation, and one managed placement", () => {

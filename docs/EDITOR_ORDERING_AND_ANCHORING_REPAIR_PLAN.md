@@ -234,7 +234,7 @@ Schema v3 removes `PromptCheckpoint.displayOrder` and the positional meaning of 
 
 ### Other managed content
 
-Media figures and embeds that already exist as body nodes should remain body nodes. Separately stored person features and any other records currently projected through `managedPlacements` should gain `placementRef` nodes. This removes the same bounce risk from scholar cards without duplicating their biography, media, or rights records inside prose.
+Media figures, embeds, diagrams, and artifacts that already exist as body nodes remain body nodes. Separately stored person features gain `placementRef` nodes. Schema v3 restricts `managedPlacements` to person features; another separately stored placement kind must not enter the contract until it has a typed frozen-content map and complete reader projection. This removes the same bounce risk from scholar cards without duplicating their biography, media, or rights records inside prose.
 
 ## Phase 0 — Freeze evidence and add the regression fixture
 

@@ -61,9 +61,9 @@ Identity comments are website authoring metadata used to anchor annotations, fig
 
 ## Ordered flow in schema v3
 
-After D1 cutover and v3 upgrade, canonical chapter JSON uses `body` as one ordered flow. Ordinary blocks appear directly. Checkpoint and separately stored managed records appear through `{ "type": "checkpointRef", "checkpointId": "…" }` and `{ "type": "placementRef", "placementId": "…" }` nodes. Each inline record has exactly one reference. Inline and sidebar sequence comes from this same array.
+After D1 cutover and v3 upgrade, canonical chapter JSON uses `body` as one ordered flow. Ordinary blocks—including media, embeds, diagrams, and artifacts—appear directly. Checkpoints and separately stored person features appear through `{ "type": "checkpointRef", "checkpointId": "…" }` and `{ "type": "placementRef", "placementId": "…" }` nodes. Each inline record has exactly one reference. Inline and sidebar sequence comes from this same array. Schema v3 deliberately restricts `placementRef` to person-feature records until another managed kind has both a typed frozen-content map and a complete reader renderer.
 
-Checkpoint `passageId` and managed-placement `anchorPassageId` retain contextual meaning for deep links, dependency inspection, and excerpt hashes. Schema v3 forbids checkpoint `displayOrder` and placement `position`/`orderAtAnchor`; those legacy fields are derived only by a temporary v2 export adapter. See [ADR 0007](./architecture/adr/0007-ordered-chapter-flow.md).
+Checkpoint `passageId` and person-placement `anchorPassageId` retain contextual meaning for deep links, dependency inspection, and excerpt hashes. Schema v3 forbids checkpoint `displayOrder` and placement `position`/`orderAtAnchor`; those legacy fields are derived only by a temporary v2 export adapter. See [ADR 0008](./architecture/adr/0008-ordered-chapter-flow.md).
 
 ## Loading content in Astro
 

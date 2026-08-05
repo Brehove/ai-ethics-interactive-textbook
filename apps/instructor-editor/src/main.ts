@@ -5,6 +5,7 @@ import {
   addPersonFeature,
   blockPassage,
   checkpointAnchorBlock,
+  checkpointCreateOperation,
   checkpointExcerpt,
   chapterFromAuthoringView,
   chapterReplaceOperation,
@@ -18,8 +19,8 @@ import {
   removeCheckpoint,
   removeManagedPlacement,
   replaceProsePreservingManagedFlow,
+  personFeatureCreateOperation,
   updateCheckpointDetails,
-  upgradeEditorChapter,
   type ChapterDocument,
 } from "./editor-model";
 import { managedNodeSequence, mountTiptap, serializeBody } from "./tiptap-editor";
@@ -52,7 +53,7 @@ const apiOrigin = configuredApiOrigin ?? testApiOrigin ?? (localHostname ? undef
 const publicOrigin = (import.meta.env.VITE_PUBLIC_READER_ORIGIN as string | undefined) ?? "https://ethicsandai.your-digital-life.org";
 const authOrigin = (import.meta.env.VITE_AUTH_ORIGIN as string | undefined) ?? "https://auth.ethicsandai.your-digital-life.org";
 const returnUrl = `${publicOrigin}/chapter/${requestedSlug}/`;
-let chapter = upgradeEditorChapter({ ...cloneChapter(DEMO_CHAPTER), schemaVersion: 2 });
+let chapter = cloneChapter(DEMO_CHAPTER);
 let baseChapter = cloneChapter(chapter);
 let selectedPassage = nearestPassage(chapter, requestedAnchor);
 let inspector: Inspector = { kind: "chapter" };
@@ -392,10 +393,10 @@ async function loadChapter() {
     const session = await dataSource.getSession();
     csrfToken = session.csrf_token;
     const view = await dataSource.getAuthoringView(requestedDocument);
-    chapter = hydrateManagedMediaPreviews(upgradeEditorChapter(chapterFromAuthoringView(view, chapter)));
+    chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView(view, chapter));
     baseChapter = cloneChapter(chapter);
     const changeSet = await dataSource.createOrResumeChangeset(requestedDocument, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetRequestKey });
-    if (changeSet.chapter) chapter = hydrateManagedMediaPreviews(upgradeEditorChapter(chapterFromAuthoringView({ ...view, chapter: changeSet.chapter, changeSetId: changeSet.id, baseRevisionId: changeSet.baseRevisionId, expectedVersion: changeSet.version }, chapter)));
+    if (changeSet.chapter) chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView({ ...view, chapter: changeSet.chapter, changeSetId: changeSet.id, baseRevisionId: changeSet.baseRevisionId, expectedVersion: changeSet.version }, chapter));
     else { chapter.changeSetId = changeSet.id; chapter.baseRevisionId = changeSet.baseRevisionId ?? chapter.revisionId; chapter.expectedVersion = changeSet.version ?? 1; }
     selectedPassage = nearestPassage(chapter, requestedAnchor);
     activeRecoveryKey = recoveryKey();
@@ -403,7 +404,7 @@ async function loadChapter() {
     if (recovery) {
       const parsed = JSON.parse(recovery) as { chapter?: ChapterDocument; pendingCommitKey?: string | null; visualDocument?: Record<string, unknown> | null };
       if (parsed.chapter && window.confirm("A newer local instructor recovery draft is available. Restore it?")) {
-        let restored = upgradeEditorChapter({ ...parsed.chapter, schemaVersion: parsed.chapter.schemaVersion ?? 2 });
+        let restored = cloneChapter({ ...parsed.chapter, schemaVersion: parsed.chapter.schemaVersion ?? 2 });
         if (parsed.visualDocument) restored.body = serializeBody(parsed.visualDocument, restored.body);
         const normalized = normalizeEditorIdentities(restored, baseChapter);
         chapter = normalized.chapter;
@@ -594,7 +595,8 @@ function bindForms() {
     const anchor = selectedBlock();
     if (dataSource && anchor) {
       const passageText = checkpointExcerpt(anchor);
-      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: nextCheckpointOrder(chapter, selectedPassage), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
+      const checkpoint = { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), ...(chapter.schemaVersion === 2 ? { displayOrder: nextCheckpointOrder(chapter, selectedPassage) } : {}), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." };
+      await applyDraftOperations([checkpointCreateOperation(chapter, checkpoint, anchor.blockId)]);
     } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
     activeDialog = null; setState("dirty"); render();
   };
@@ -610,13 +612,15 @@ function bindForms() {
       if (curated) {
         const placementId = newId("placement"); const personFeatureId = newId("personfeature");
         const feature = { ...structuredClone(curated), entityRevision: undefined, sourceDocumentId: undefined, personFeatureId, placementId } as ChapterDocument["personFeatures"][number];
-        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length, displayPreset: "thinker-card" as const };
+        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length } : {}), displayPreset: "thinker-card" as const };
         next = { feature, placement };
       } else next = addPersonFeature(chapter, String(source.personFeatureId), selectedPassage);
       if (dataSource) {
         chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== next.feature.personFeatureId);
         chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== next.placement.placementId);
-        await applyDraftOperations([{ type: "personFeature.upsert", feature: next.feature, placement: next.placement }]);
+        const anchor = selectedBlock();
+        if (!anchor) throw new Error("Select a passage before adding a person feature.");
+        await applyDraftOperations([personFeatureCreateOperation(chapter, next.feature, next.placement, anchor.blockId)]);
       }
       activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error("Unable to add the person feature.", error); setState("attention"); }
@@ -749,14 +753,14 @@ async function ensureOpenChangeset() {
   if (!dataSource || chapter.changeSetId) return;
   const session = await dataSource.createOrResumeChangeset(chapter.documentId, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetRequestKey });
   chapter.changeSetId = session.id; chapter.baseRevisionId = session.baseRevisionId ?? chapter.revisionId; chapter.expectedVersion = session.version ?? 1;
-  if (session.chapter) chapter = upgradeEditorChapter(chapterFromAuthoringView({ chapter: session.chapter, documentId: chapter.documentId, changeSetId: session.id, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion }, chapter));
+  if (session.chapter) chapter = chapterFromAuthoringView({ chapter: session.chapter, documentId: chapter.documentId, changeSetId: session.id, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion }, chapter);
 }
 
 async function applyDraftOperations(operations: Array<Record<string, unknown>>) {
   if (!dataSource) throw new Error("The content API is required for typed draft operations.");
   await ensureOpenChangeset();
   const result = await dataSource.applyOperationBatch(chapter.changeSetId, { documentId: chapter.documentId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion, idempotencyKey: crypto.randomUUID(), operations });
-  chapter = hydrateManagedMediaPreviews(upgradeEditorChapter(chapterFromAuthoringView({ chapter: result.chapter, documentId: chapter.documentId, changeSetId: chapter.changeSetId, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: result.version }, chapter)));
+  chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView({ chapter: result.chapter, documentId: chapter.documentId, changeSetId: chapter.changeSetId, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: result.version }, chapter));
   selectedPassage = nearestPassage(chapter, selectedPassage);
 }
 

@@ -104,10 +104,8 @@ export const ManagedPlacementV2Schema = z.object({
   if (value.kind === "personFeature" && value.displayPreset !== "thinker-card") ctx.addIssue({ code: "custom", path: ["displayPreset"], message: "Person features require the thinker-card preset" });
 });
 export const ManagedPlacementV3Schema = z.object({
-  placementId: id("placement"), kind: z.enum(["personFeature", "media", "embed", "diagram", "artifact"]), contentId: z.string().min(1), anchorPassageId: id("passage"), displayPreset: z.enum(["thinker-card", "narrow", "reading", "wide", "bleed", "compact"]),
-}).strict().superRefine((value, ctx) => {
-  if (value.kind === "personFeature" && value.displayPreset !== "thinker-card") ctx.addIssue({ code: "custom", path: ["displayPreset"], message: "Person features require the thinker-card preset" });
-});
+  placementId: id("placement"), kind: z.literal("personFeature"), contentId: id("personfeature"), anchorPassageId: id("passage"), displayPreset: z.literal("thinker-card"),
+}).strict();
 export const ManagedPlacementSchema = z.union([ManagedPlacementV2Schema, ManagedPlacementV3Schema]);
 export type ManagedPlacement = z.infer<typeof ManagedPlacementSchema>;
 const ChapterCommonShape = {

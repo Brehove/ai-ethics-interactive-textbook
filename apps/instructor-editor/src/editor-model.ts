@@ -92,6 +92,23 @@ export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, 
   }
   return checkpoint;
 }
+export function checkpointCreateOperation(chapter: ChapterDocument, checkpoint: Record<string, unknown>, afterNodeId: string) {
+  const payload = structuredClone(checkpoint);
+  if (chapter.schemaVersion === 3) {
+    delete payload.displayOrder;
+    return { type: "checkpoint.upsert", checkpoint: payload, position: { afterNodeId } };
+  }
+  return { type: "checkpoint.upsert", checkpoint: payload };
+}
+export function personFeatureCreateOperation(chapter: ChapterDocument, feature: Record<string, unknown>, placement: Record<string, unknown>, afterNodeId: string) {
+  const canonicalPlacement = structuredClone(placement);
+  if (chapter.schemaVersion === 3) {
+    delete canonicalPlacement.position;
+    delete canonicalPlacement.orderAtAnchor;
+    return { type: "personFeature.upsert", feature, placement: canonicalPlacement, position: { afterNodeId } };
+  }
+  return { type: "personFeature.upsert", feature, placement: canonicalPlacement };
+}
 export function replaceProsePreservingManagedFlow(chapter: ChapterDocument, paragraphs: string[]) {
   const isEditableProse = (node: ChapterFlowNode): node is ProseBlock => !isFlowReference(node) && ["paragraph", "heading", "blockquote", "list", "callout"].includes(node.type);
   const editable = chapter.body.filter(isEditableProse);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, assertUniqueEditorIdentities, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, normalizeEditorIdentities, removeCheckpoint, replaceProsePreservingManagedFlow, updateCheckpointDetails, upgradeEditorChapter } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, assertUniqueEditorIdentities, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointCreateOperation, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, normalizeEditorIdentities, personFeatureCreateOperation, removeCheckpoint, replaceProsePreservingManagedFlow, updateCheckpointDetails, upgradeEditorChapter } from "../src/editor-model";
 import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 const chapter4RecoveryFixture = JSON.parse(readFileSync(new URL("./fixtures/chapter-4-duplicate-ids.json", import.meta.url), "utf8"));
@@ -39,6 +39,19 @@ test("schema-v3 editor operations preserve one record and one ordered reference"
   assert.equal(chapter.body.some((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId), false);
   const operation = chapterReplaceOperation(chapter);
   assert.equal(operation.type, "chapter.replaceDocumentV3");
+});
+
+test("schema-specific create operations separate legacy order from v3 flow position", () => {
+  const v2 = cloneChapter(DEMO_CHAPTER);
+  const checkpoint = { passageId: "passage_habituation", displayOrder: 2, title: "New" };
+  assert.deepEqual(checkpointCreateOperation(v2, checkpoint, "block_habituation"), { type: "checkpoint.upsert", checkpoint });
+  const feature = { personFeatureId: "personfeature_new", placementId: "placement_new" };
+  const placement = { placementId: "placement_new", kind: "personFeature", contentId: "personfeature_new", anchorPassageId: "passage_habituation", position: "after", orderAtAnchor: 1, displayPreset: "thinker-card" };
+  assert.deepEqual(personFeatureCreateOperation(v2, feature, placement, "block_habituation"), { type: "personFeature.upsert", feature, placement });
+
+  const v3 = upgradeEditorChapter(v2);
+  assert.deepEqual(checkpointCreateOperation(v3, checkpoint, "block_habituation"), { type: "checkpoint.upsert", checkpoint: { passageId: "passage_habituation", title: "New" }, position: { afterNodeId: "block_habituation" } });
+  assert.deepEqual(personFeatureCreateOperation(v3, feature, placement, "block_habituation"), { type: "personFeature.upsert", feature, placement: { placementId: "placement_new", kind: "personFeature", contentId: "personfeature_new", anchorPassageId: "passage_habituation", displayPreset: "thinker-card" }, position: { afterNodeId: "block_habituation" } });
 });
 
 test("local whole-chapter replacement preserves ordered managed references", () => {
