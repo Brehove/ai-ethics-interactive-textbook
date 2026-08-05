@@ -20,6 +20,15 @@ test("static scholar fallback is inside the replaceable public projection bounda
   assert.match(chapterPage, /<template data-public-projection-end=\{`chapter_\$\{meta\.id\}`\}><\/template>/);
 });
 
+test("adjacent visual and thinker cards share a compact responsive row", async () => {
+  const inlineArtifacts = await readFile(new URL("../../src/components/InlineArtifacts.astro", import.meta.url), "utf8");
+  assert.match(inlineArtifacts, /dataset\.inlineCardPair = "true"/);
+  assert.match(inlineArtifacts, /\.chapter-person, \[data-inline-scholar-card\]\[data-inline-placed\]/);
+  assert.match(inlineArtifacts, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(inlineArtifacts, /@media \(max-width: 700px\)[\s\S]*grid-template-columns: 1fr/);
+  assert.match(inlineArtifacts, /object-position: center 28%/);
+});
+
 test("the public admin route is redirect-only and the dedicated editor is the sole writer", async () => {
   const [adminPage, editorMain, editorModel, tiptapEditor, editorWorker] = await Promise.all([
     readFile(new URL("../../src/pages/admin/index.astro", import.meta.url), "utf8"),
