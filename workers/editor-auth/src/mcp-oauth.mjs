@@ -4,11 +4,12 @@ import { HttpError } from "./policy.mjs";
 
 const CLIENT_ID = "codex-ai-ethics-textbook";
 const RESOURCE = "https://mcp.ethicsandai.your-digital-life.org/mcp";
-const BASELINE_SCOPES = Object.freeze(["content:read", "content:write", "media:read", "media:upload"]);
+const BASELINE_SCOPES = Object.freeze(["content:read", "content:write", "content:live-save", "media:read", "media:upload"]);
 const ALLOWED_SCOPES = new Set(BASELINE_SCOPES);
 const DOCUMENTS = Object.freeze(Array.from({ length: 18 }, (_, index) => `chapter_ch${String(index + 1).padStart(2, "0")}`));
 const READ_OPERATIONS = Object.freeze(["get_authoring_view", "get_passage", "get_version_history", "get_live_commit_status", "get_person", "search_persons", "search_media", "get_media_job", "get_media_asset"]);
 const WRITE_OPERATIONS = Object.freeze(["create_or_resume_changeset", "replace_passage_text", "replace_chapter_document", "upsert_checkpoint", "remove_checkpoint", "reorder_checkpoint", "place_media", "upsert_embed", "resolve_provider_url", "upsert_person_feature", "move_managed_placement", "remove_managed_placement", "preview_changes", "restore_revision_as_draft", "request_live_save_authorization"]);
+const LIVE_SAVE_OPERATIONS = Object.freeze(["commit_live"]);
 const MEDIA_UPLOAD_OPERATIONS = Object.freeze(["create_media_review_package", "upload_media"]);
 const CODE_VERIFIER = /^[A-Za-z0-9._~-]{43,128}$/;
 const CODE_CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
@@ -55,11 +56,13 @@ const validState = (value) => {
 const scopesFrom = (value) => {
   const scopes = [...new Set(String(value || BASELINE_SCOPES.join(" ")).split(/\s+/).filter(Boolean))].sort();
   if (!scopes.length || scopes.some((scope) => !ALLOWED_SCOPES.has(scope)) || !scopes.includes("content:read")) throw new HttpError(400, "invalid_scope", "Requested OAuth scopes are invalid");
+  if (scopes.includes("content:live-save") && !scopes.includes("content:write")) throw new HttpError(400, "invalid_scope", "Live Save requires chapter write access");
   return scopes;
 };
 const operationsFor = (scopes) => [...new Set([
   ...(scopes.includes("content:read") ? READ_OPERATIONS : []),
   ...(scopes.includes("content:write") ? WRITE_OPERATIONS : []),
+  ...(scopes.includes("content:live-save") ? LIVE_SAVE_OPERATIONS : []),
   ...(scopes.includes("media:upload") ? MEDIA_UPLOAD_OPERATIONS : []),
 ])].sort();
 

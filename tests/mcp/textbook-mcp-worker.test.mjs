@@ -116,6 +116,24 @@ test('ordinary OAuth can request exact Live Save approval and cannot publish whi
   await client.close(); await server.close();
 });
 
+test('trusted OAuth publishes directly without a per-save approval request', async () => {
+  let body;
+  let consumed = false;
+  const trustedIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
+  const env = makeEnv({
+    verified: trustedIdentity,
+    consumeLiveSave: async () => { consumed = true; throw new Error('per-save approval must not be used'); },
+    api: async (request) => { body = await request.json(); assert.equal(request.headers.get('authorization'), 'Bearer device-flow-test'); return { deliveryStatus: 'verified' }; },
+  });
+  const { client, server } = await connected(env, trustedIdentity);
+  const target = { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key };
+  const response = await client.callTool({ name: 'commit_live', arguments: target });
+  assert.equal(response.isError, undefined);
+  assert.deepEqual(body.operations, []);
+  assert.equal(consumed, false);
+  await client.close(); await server.close();
+});
+
 test('approved commit_live consumes the exact authorization and sends an explicit empty operation array', async () => {
   let body;
   const liveIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
@@ -136,11 +154,13 @@ test('approved commit_live consumes the exact authorization and sends an explici
 test('hosted worker rejects missing or unverifiable bearer and does not expose an internal verifier route', async () => {
   const missing = await worker.fetch(new Request('https://mcp.example/mcp'), makeEnv()); assert.equal(missing.status, 401);
   assert.match(missing.headers.get('www-authenticate'), /oauth-protected-resource/);
+  assert.match(missing.headers.get('www-authenticate'), /content:live-save/);
   const metadata = await worker.fetch(new Request('https://mcp.example/.well-known/oauth-protected-resource'), makeEnv());
   assert.equal(metadata.status, 200);
   const metadataBody = await metadata.json();
   assert.equal(metadataBody.resource, 'https://mcp.ethicsandai.your-digital-life.org/mcp');
   assert.deepEqual(metadataBody.authorization_servers, ['https://auth.ethicsandai.your-digital-life.org']);
+  assert.equal(metadataBody.scopes_supported.includes('content:live-save'), true);
   const noVerifier = await worker.fetch(new Request('https://mcp.example/internal/verify', { headers: { authorization: 'Bearer device-flow-test' } }), { CONTENT_API: { fetch() {} } }); assert.equal(noVerifier.status, 401);
 });
 

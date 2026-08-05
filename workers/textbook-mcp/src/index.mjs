@@ -121,9 +121,16 @@ export function createMcp(env, requestId, context) {
     if (typeof env.AUTH_CAPABILITY?.requestLiveSaveAuthorization !== 'function') throw new Error('Live Save authorization is unavailable');
     return asResult(await env.AUTH_CAPABILITY.requestLiveSaveAuthorization(context.bearerToken, target));
   });
-  server.registerTool('commit_live', { title: 'Save and publish chapter', description: 'After the instructor approves request_live_save_authorization, validate, version, project, and publish that exact D1-authoritative chapter revision.', inputSchema: { liveSaveRequestId: id, ...write, operations: z.array(z.record(z.unknown())).max(100).optional() }, annotations: commitsLive }, async ({ liveSaveRequestId, changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey, operations }) => {
-    if (typeof env.AUTH_CAPABILITY?.consumeLiveSaveAuthorization !== 'function') throw new Error('Live Save authorization is unavailable');
+  server.registerTool('commit_live', { title: 'Save and publish chapter', description: 'Validate, version, project, and publish one exact D1-authoritative chapter revision. A trusted OAuth grant publishes directly after explicit user save or publish language; legacy grants require a Live Save request ID.', inputSchema: { liveSaveRequestId: id.optional(), ...write, operations: z.array(z.record(z.unknown())).max(100).optional() }, annotations: commitsLive }, async ({ liveSaveRequestId, changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey, operations }) => {
     const target = { changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey };
+    const trustedLiveSave = context.identity.scopes.includes('content:live-save') && context.identity.allowedOperations.includes('commit_live');
+    if (trustedLiveSave) {
+      const liveIdentity = await verifyCapability(env, context.bearerToken, { documentId, operation: 'commit_live', scope: 'content:live-save' });
+      const liveCall = createApi(env, requestId, { bearerToken: context.bearerToken, identity: liveIdentity });
+      return asResult(await liveCall(`/v1/changesets/${encodeURIComponent(changeSetId)}:commitLive`, { method: 'POST', operation: 'commit_live', documentId, mutation: true, body: { documentId, baseRevisionId, expectedVersion, idempotencyKey, operations: operations ?? [] } }));
+    }
+    if (!liveSaveRequestId) throw new Error('Trusted chapter publishing is not enabled for this OAuth grant. Reconnect the ai-ethics-textbook MCP, or provide a legacy Live Save request ID.');
+    if (typeof env.AUTH_CAPABILITY?.consumeLiveSaveAuthorization !== 'function') throw new Error('Live Save authorization is unavailable');
     const authorization = await env.AUTH_CAPABILITY.consumeLiveSaveAuthorization(context.bearerToken, liveSaveRequestId, target);
     if (authorization?.pending === true) return asResult({ state: 'authorization_pending', requestId: liveSaveRequestId });
     if (typeof authorization?.accessToken !== 'string') throw new Error('Live Save authorization did not issue a capability');
@@ -137,12 +144,15 @@ export function createMcp(env, requestId, context) {
   server.registerTool('search_persons', { title: 'Search curated people', description: 'Find curated person records for a typed person-feature placement.', inputSchema: { query: z.string().min(1).max(200), limit: z.number().int().min(1).max(50).optional() }, annotations: readOnly }, async ({ query, limit = 20 }) => asResult(await call(`/v1/persons?q=${encodeURIComponent(query)}&limit=${limit}`, { operation: 'search_persons' })));
   server.registerTool('get_person', { title: 'Get curated person', description: 'Read a person and its current immutable projection before feature placement.', inputSchema: { personId: id }, annotations: readOnly }, async ({ personId }) => asResult(await call(`/v1/persons/${encodeURIComponent(personId)}`, { operation: 'get_person' })));
   for (const [name, tool] of Object.entries(server._registeredTools)) {
-    // `commit_live` stays visible to an ordinary OAuth connection, but its
-    // handler can only run after the exact, separately-approved step-up above.
+    // `commit_live` stays visible to an older OAuth connection so it can report
+    // that a one-time reconnect is required or consume a legacy approval.
     if (name === 'commit_live') continue;
     if (!operationScopes[name] || !operationScopes[name].every((scope) => context.identity.scopes.includes(scope)) || !context.identity.allowedOperations.includes(name)) tool.disable();
   }
-  server.registerResource('Agent capability receipt', 'textbook://capabilities', { title: 'Agent capability receipt', description: 'Authenticated capability and its enforced boundaries.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ actorId: context.identity.actorId, clientId: context.identity.clientId, runId: context.identity.runId, jti: context.identity.jti, scopes: context.identity.scopes, allowedDocumentIds: context.identity.allowedDocumentIds, allowedOperations: context.identity.allowedOperations, mayCommitLive: context.identity.scopes.includes('content:live-save') && context.identity.allowedOperations.includes('commit_live'), liveSaveRequiresExactInstructorConfirmation: true, cannot: ['approve rights', 'change authority', 'deploy code or schema', 'hard-delete history', 'write D1 or R2 directly'] }) }] }));
+  server.registerResource('Agent capability receipt', 'textbook://capabilities', { title: 'Agent capability receipt', description: 'Authenticated capability and its enforced boundaries.', mimeType: 'application/json' }, async (uri) => {
+    const mayCommitLive = context.identity.scopes.includes('content:live-save') && context.identity.allowedOperations.includes('commit_live');
+    return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ actorId: context.identity.actorId, clientId: context.identity.clientId, runId: context.identity.runId, jti: context.identity.jti, scopes: context.identity.scopes, allowedDocumentIds: context.identity.allowedDocumentIds, allowedOperations: context.identity.allowedOperations, mayCommitLive, liveSaveMode: mayCommitLive ? 'trusted-oauth' : 'per-save-approval', liveSaveRequiresExactInstructorConfirmation: !mayCommitLive, requiresExplicitUserPublicationRequest: true, cannot: ['approve rights', 'change authority', 'deploy code or schema', 'hard-delete history', 'write D1 or R2 directly'] }) }] };
+  });
   return server;
 }
 
@@ -172,7 +182,7 @@ export async function handleDirectMediaUpload(request, env, context) {
 export default { async fetch(request, env) {
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/.well-known/oauth-protected-resource' || url.pathname === '/.well-known/oauth-protected-resource/mcp')) {
-    return directJson({ resource: MCP_RESOURCE, authorization_servers: [AUTHORIZATION_SERVER], scopes_supported: ['content:read', 'content:write', 'media:read', 'media:upload'], resource_documentation: 'https://ethicsandai.your-digital-life.org/' });
+    return directJson({ resource: MCP_RESOURCE, authorization_servers: [AUTHORIZATION_SERVER], scopes_supported: ['content:read', 'content:write', 'content:live-save', 'media:read', 'media:upload'], resource_documentation: 'https://ethicsandai.your-digital-life.org/' });
   }
   if (request.method === 'PUT' && /^\/media-upload\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(url.pathname)) return handleDirectMediaUpload(request, env, null);
   const token = request.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
@@ -182,5 +192,5 @@ export default { async fetch(request, env) {
     if (url.pathname.startsWith('/media-upload/')) return handleDirectMediaUpload(request, env, context);
     if (url.pathname !== '/mcp') return new Response('Not found', { status: 404 });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined }); const server = createMcp(env, identity.runId, context); await server.connect(transport); return transport.handleRequest(request);
-  } catch { return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': `Bearer resource_metadata="${MCP_RESOURCE_METADATA}", scope="content:read", error="invalid_token"`, 'cache-control': 'no-store' } }); }
+  } catch { return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': `Bearer resource_metadata="${MCP_RESOURCE_METADATA}", scope="content:read content:write content:live-save media:read media:upload", error="invalid_token"`, 'cache-control': 'no-store' } }); }
 } };

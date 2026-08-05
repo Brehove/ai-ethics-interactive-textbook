@@ -80,6 +80,7 @@ test("Codex OAuth discovery, PKCE exchange, refresh rotation, and revocation wor
     const metadataBody = await metadata.json();
     assert.equal(metadataBody.token_endpoint, `${AUTH_ORIGIN}/oauth/token`);
     assert.equal(metadataBody.registration_endpoint, `${AUTH_ORIGIN}/oauth/register`);
+    assert.equal(metadataBody.scopes_supported.includes("content:live-save"), true);
     const registered = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -91,12 +92,13 @@ test("Codex OAuth discovery, PKCE exchange, refresh rotation, and revocation wor
 
     const verifier = "v".repeat(64); const challenge = await pkceChallenge(verifier); const state = "state_123456789";
     const authorize = new URL(`${AUTH_ORIGIN}/oauth/authorize`);
-    for (const [key, value] of Object.entries({ client_id: client.client_id, response_type: "code", redirect_uri: REDIRECT_URI, resource: RESOURCE, state, code_challenge: challenge, code_challenge_method: "S256", scope: "content:read content:write media:read media:upload" })) authorize.searchParams.set(key, value);
+    for (const [key, value] of Object.entries({ client_id: client.client_id, response_type: "code", redirect_uri: REDIRECT_URI, resource: RESOURCE, state, code_challenge: challenge, code_challenge_method: "S256", scope: "content:read content:write content:live-save media:read media:upload" })) authorize.searchParams.set(key, value);
     const consent = await app.fetch(new Request(authorize, { headers: { Cookie: `${SESSION_COOKIE}=${cookie}` } }), runtime);
     assert.equal(consent.status, 200);
     const consentHtml = await consent.text(); const requestId = consentHtml.match(/name="request" value="([^"]+)"/)?.[1];
     assert.match(requestId, /^oauthreq_/);
-    assert.match(consentHtml, /Publishing remains separately confirmed/);
+    assert.match(consentHtml, /trusted chapter editing and publishing access/);
+    assert.match(consentHtml, /only when you explicitly ask it to save or publish/);
 
     const approved = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/authorize`, { method: "POST", headers: { Cookie: `${SESSION_COOKIE}=${cookie}`, "Content-Type": "application/x-www-form-urlencoded" }, body: form({ request: requestId, csrf: "csrf-token" }) }), runtime);
     assert.equal(approved.status, 200);
@@ -112,7 +114,11 @@ test("Codex OAuth discovery, PKCE exchange, refresh rotation, and revocation wor
     assert.equal(exchanged.status, 200);
     const first = await exchanged.json(); assert.equal(first.token_type, "Bearer"); assert.ok(first.refresh_token);
     const identity = await createCapabilityVerifier(runtime, { now: () => NOW + 1 }).verifyCapability(first.access_token, { documentId: "chapter_ch07", operation: "upsert_checkpoint", scope: "content:write" });
-    assert.equal(identity.actorId, "actor_github_123456"); assert.equal(identity.allowedOperations.includes("commit_live"), false);
+    assert.equal(identity.actorId, "actor_github_123456");
+    assert.equal(identity.scopes.includes("content:live-save"), true);
+    assert.equal(identity.allowedOperations.includes("commit_live"), true);
+    const liveIdentity = await createCapabilityVerifier(runtime, { now: () => NOW + 1 }).verifyCapability(first.access_token, { documentId: "chapter_ch07", operation: "commit_live", scope: "content:live-save" });
+    assert.equal(liveIdentity.actorId, "actor_github_123456");
 
     const refreshed = await app.fetch(new Request(`${AUTH_ORIGIN}/oauth/token`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form({ grant_type: "refresh_token", client_id: client.client_id, resource: RESOURCE, refresh_token: first.refresh_token }) }), runtime);
     assert.equal(refreshed.status, 200); const second = await refreshed.json(); assert.notEqual(second.refresh_token, first.refresh_token);
@@ -124,7 +130,7 @@ test("Codex OAuth discovery, PKCE exchange, refresh rotation, and revocation wor
   } finally { db.close(); }
 });
 
-test("OAuth rejects non-loopback redirects, missing PKCE, and standing live-save scope", async () => {
+test("OAuth rejects non-loopback redirects, missing PKCE, invalid Live Save combinations, and unknown scopes", async () => {
   const db = await testDb();
   try {
     const runtime = env(db); const app = createEditorAuthApp({ now: () => NOW, randomBytes: randomFactory() }); const cookie = await session();
@@ -132,6 +138,7 @@ test("OAuth rejects non-loopback redirects, missing PKCE, and standing live-save
       { redirect_uri: "https://attacker.example/callback" },
       { code_challenge: "missing" },
       { scope: "content:read content:live-save" },
+      { scope: "content:read content:admin" },
     ]) {
       const authorize = new URL(`${AUTH_ORIGIN}/oauth/authorize`);
       const values = { client_id: CLIENT_ID, response_type: "code", redirect_uri: REDIRECT_URI, resource: RESOURCE, state: "state_123456789", code_challenge: await pkceChallenge("v".repeat(64)), code_challenge_method: "S256", scope: "content:read", ...overrides };
