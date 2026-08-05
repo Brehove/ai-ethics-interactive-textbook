@@ -608,6 +608,49 @@ test('upload requests require a persisted review package and substantive transcr
   assert.equal(validateUploadRequest({ ...imageUpload, filename: 'notes.txt', mimeType: 'text/plain', bytes: 128 }).maxBytes, 5 * 1024 * 1024);
 });
 
+test('a bounded one-time upload ticket accepts exact raw bytes without exporting the OAuth bearer', async () => {
+  const bytes = new TextEncoder().encode('bounded image bytes');
+  const contentHash = await sha256Bytes(bytes.buffer);
+  const uploadToken = 'u'.repeat(64);
+  const tokenHash = await sha256(uploadToken);
+  let stored;
+  let queued;
+  const ticket = {
+    id: 'upload_ticket_7', media_job_id: 'mediajob_7', job_state: 'awaiting_upload', state: 'issued',
+    issued_by: 'actor_agent_7', expires_at: '2100-01-01T00:00:00.000Z', upload_token_hash: tokenHash,
+    content_type: 'image/png', content_hash: contentHash, declared_bytes: bytes.byteLength, max_bytes: 1024,
+    object_key: 'quarantine/upload_ticket_7/case.png', filename: 'case.png', storage_reservation_bytes: 1024,
+    month_key: '2026-08', request_json: JSON.stringify({ reviews: { rightsReviewId: 'rights_7', editorialReviewId: 'editorial_7', accessibilityReviewId: 'accessibility_7' }, transcriptEquivalent: null, poster: null }),
+  };
+  const CONTENT_DB = fakeDb((sql) => sql.includes('FROM upload_tickets t') ? ticket : null);
+  const bindings = {
+    CONTENT_DB,
+    CONTENT_MEDIA: {},
+    UPLOAD_QUARANTINE: { head: async () => null, put: async (key, value) => { stored = { key, value: new Uint8Array(value) }; } },
+    MEDIA_JOB_ENVELOPES: { head: async () => null, put: async () => {} },
+    MEDIA_JOBS: { send: async (message) => { queued = message; } },
+  };
+  const response = await worker.fetch(new Request('https://content.example/v1/media/uploads/upload_ticket_7', {
+    method: 'PUT',
+    headers: { 'content-type': 'image/png', 'content-length': String(bytes.byteLength), 'x-content-sha256': contentHash, 'x-upload-token': uploadToken },
+    body: bytes,
+  }), bindings);
+  assert.equal(response.status, 202);
+  assert.equal((await response.json()).jobId, 'mediajob_7');
+  assert.equal(stored.key, ticket.object_key);
+  assert.deepEqual(stored.value, bytes);
+  assert.equal(queued.jobId, 'mediajob_7');
+  assert.equal(CONTENT_DB.statements.some((statement) => statement.sql.includes('agent_capability')), false);
+
+  const wrong = await worker.fetch(new Request('https://content.example/v1/media/uploads/upload_ticket_7', {
+    method: 'PUT',
+    headers: { 'content-type': 'image/png', 'content-length': String(bytes.byteLength), 'x-content-sha256': contentHash, 'x-upload-token': 'wrong-token-value-that-is-long-enough' },
+    body: bytes,
+  }), bindings);
+  assert.equal(wrong.status, 401);
+  assert.equal((await wrong.json()).error.code, 'UPLOAD_TOKEN_INVALID');
+});
+
 test('release assets stream only approved DB-referenced immutable bytes with exact integrity', async () => {
   const raw = new TextEncoder().encode('immutable derivative');
   const assetHash = await sha256Bytes(raw.buffer);

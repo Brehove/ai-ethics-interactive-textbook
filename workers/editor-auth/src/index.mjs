@@ -30,7 +30,9 @@ import {
 } from "./policy.mjs";
 import {
   approveAgentCapabilityRequest,
+  consumeBoundLiveSaveRequest,
   createAgentCapabilityRequest,
+  createBoundLiveSaveRequest,
   exchangeAgentCapabilityRequest,
   getAgentCapabilityRequest,
   revokeAgentCapability,
@@ -44,6 +46,16 @@ import {
   editorTargetUrl,
   validateOAuthTarget,
 } from "./oauth-state.mjs";
+import {
+  approveMcpOAuthAuthorizationRequest,
+  authorizationServerMetadata,
+  createMcpOAuthAuthorizationRequest,
+  exchangeMcpOAuthCode,
+  getMcpOAuthAuthorizationRequest,
+  registerMcpOAuthClient,
+  refreshMcpOAuthGrant,
+  revokeMcpOAuthToken,
+} from "./mcp-oauth.mjs";
 
 const encoder = new TextEncoder();
 
@@ -80,6 +92,15 @@ function json(payload, status = 200, { origin, headers: additions } = {}) {
 function empty(status = 204, { origin, headers: additions } = {}) {
   return new Response(null, { status, headers: secureHeaders(origin, additions) });
 }
+
+function html(payload, status = 200) {
+  const headers = secureHeaders();
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  headers.set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'");
+  return new Response(payload, { status, headers });
+}
+
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 function redirect(location, { cookies = [] } = {}) {
   const headers = secureHeaders(undefined, { Location: location });
@@ -160,10 +181,16 @@ const CAPABILITY_REVOKE_PATH = /^\/auth\/agent-capabilities\/(cap_[A-Za-z0-9_-]{
  * not reachable over this Worker's HTTP surface; the production RPC entrypoint
  * in worker.mjs delegates to this factory.
  */
-export function createCapabilityVerifier(env, { now = () => Math.floor(Date.now() / 1000) } = {}) {
+export function createCapabilityVerifier(env, { now = () => Math.floor(Date.now() / 1000), randomBytes } = {}) {
   return Object.freeze({
     verifyCapability(token, target = {}) {
       return verifyIssuedAgentCapability(token, target, env, now());
+    },
+    requestLiveSaveAuthorization(token, target) {
+      return createBoundLiveSaveRequest(token, target, env, now(), randomBytes);
+    },
+    consumeLiveSaveAuthorization(token, requestId, target) {
+      return consumeBoundLiveSaveRequest(token, requestId, target, env, now(), randomBytes);
     },
   });
 }
@@ -217,6 +244,14 @@ async function readJsonBody(request) {
   } catch {
     throw new HttpError(400, "invalid_json", "The request body is not valid JSON");
   }
+}
+
+async function readFormBody(request) {
+  const contentType = request.headers.get("Content-Type")?.toLowerCase() ?? "";
+  if (!contentType.startsWith("application/x-www-form-urlencoded")) throw new HttpError(415, "invalid_request", "The request must use form encoding");
+  const raw = await request.text();
+  if (encoder.encode(raw).byteLength > 16384) throw new HttpError(413, "request_too_large", "The OAuth request is too large");
+  return new URLSearchParams(raw);
 }
 
 function validateOAuthCode(value) {
@@ -379,6 +414,66 @@ export function createEditorAuthApp(dependencies = {}) {
 
         const config = getRuntimeConfig(env);
 
+        if (url.pathname === "/.well-known/oauth-authorization-server" && request.method === "GET") {
+          return json(authorizationServerMetadata(config.authBaseUrl));
+        }
+
+        if (url.pathname === "/oauth/token") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          const input = await readFormBody(request);
+          const grantType = input.get("grant_type");
+          const result = grantType === "authorization_code"
+            ? await exchangeMcpOAuthCode(input, env, now, randomBytes)
+            : grantType === "refresh_token"
+              ? await refreshMcpOAuthGrant(input, env, now, randomBytes)
+              : (() => { throw new HttpError(400, "unsupported_grant_type", "OAuth grant type is unsupported"); })();
+          return json(result, 200, { headers: { Pragma: "no-cache" } });
+        }
+
+        if (url.pathname === "/oauth/register") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          return json(await registerMcpOAuthClient(await readJsonBody(request), env, now, randomBytes), 201);
+        }
+
+        if (url.pathname === "/oauth/revoke") {
+          if (request.method !== "POST") throw new HttpError(405, "method_not_allowed", "Use POST for this endpoint");
+          const input = await readFormBody(request);
+          await revokeMcpOAuthToken(input.get("token"), env, now);
+          return empty(200);
+        }
+
+        if (url.pathname === "/oauth/authorize") {
+          if (request.method === "POST") {
+            const session = await requireSession(request, config, now);
+            const input = await readFormBody(request);
+            if (!constantTimeEqual(input.get("csrf"), session.csrf)) throw new HttpError(403, "csrf_failed", "The OAuth approval could not be verified");
+            const destination = await approveMcpOAuthAuthorizationRequest(input.get("request"), session, env, now, randomBytes);
+            return redirect(destination);
+          }
+          if (request.method !== "GET") throw new HttpError(405, "method_not_allowed", "Use GET or POST for this endpoint");
+          let requestId = url.searchParams.get("request");
+          if (!requestId) {
+            ({ requestId } = await createMcpOAuthAuthorizationRequest(url, env, now, randomBytes));
+            const session = await optionalSession(request, config, now);
+            if (!session) {
+              const signIn = new URL("/auth/start", config.authBaseUrl);
+              signIn.searchParams.set("mode", "mcp-oauth");
+              signIn.searchParams.set("request", requestId);
+              return redirect(signIn.toString());
+            }
+          }
+          const session = await optionalSession(request, config, now);
+          if (!session) {
+            const signIn = new URL("/auth/start", config.authBaseUrl);
+            signIn.searchParams.set("mode", "mcp-oauth");
+            signIn.searchParams.set("request", requestId);
+            return redirect(signIn.toString());
+          }
+          const oauthRequest = await getMcpOAuthAuthorizationRequest(requestId, env, now);
+          const scopes = JSON.parse(oauthRequest.scopes_json);
+          return html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Authorize AI Ethics Textbook</title><style>body{font:18px/1.55 system-ui,sans-serif;max-width:44rem;margin:4rem auto;padding:0 1.25rem;color:#102846;background:#fbf7ed}main{background:white;border:1px solid #ccd5df;padding:2rem;border-radius:1rem}h1{font:700 2.4rem/1.05 Georgia,serif}li{margin:.4rem 0}button{border:0;border-radius:.6rem;background:#9b351d;color:white;padding:.9rem 1.2rem;font:700 1rem system-ui;cursor:pointer}</style><main><p>AI Ethics Textbook</p><h1>Connect Codex to your textbook</h1><p>Signed in as <strong>${escapeHtml(session.login)}</strong>. Codex is requesting ordinary chapter editing access. Publishing remains separately confirmed for each chapter.</p><ul>${scopes.map((scope) => `<li><code>${escapeHtml(scope)}</code></li>`).join("")}</ul><form method="post" action="/oauth/authorize"><input type="hidden" name="request" value="${escapeHtml(requestId)}"><input type="hidden" name="csrf" value="${escapeHtml(session.csrf)}"><button type="submit">Allow textbook editing</button></form></main></html>`);
+        }
+
         if (request.method === "OPTIONS" && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/v1/") || url.pathname === "/auth/logout" || url.pathname.startsWith("/auth/agent-capability-requests/") || url.pathname === "/auth/agent-capability-requests" || url.pathname.startsWith("/auth/agent-capabilities/"))) {
           origin = requireAllowedOrigin(request, config);
           return empty(204, {
@@ -400,7 +495,7 @@ export function createEditorAuthApp(dependencies = {}) {
           const existingSession = await optionalSession(request, config, now);
           // Agent Live Save approval is a deliberate step-up action. Always go
           // through GitHub again so the resulting session has a fresh stepUpAt.
-          if (existingSession && target.mode !== "agent-access") return redirect(editorTargetUrl(config.editorOrigin, target));
+          if (existingSession && target.mode !== "agent-access") return redirect(editorTargetUrl(config.editorOrigin, target, config.authBaseUrl));
           const clientId = env.GITHUB_APP_CLIENT_ID;
           if (typeof clientId !== "string" || !clientId.trim()) throw new Error("GITHUB_APP_CLIENT_ID is not configured");
           const oauth = await createOAuthState(target, env, now, config.stateTtl, randomBytes);
@@ -456,7 +551,7 @@ export function createEditorAuthApp(dependencies = {}) {
             stepUpAt: now,
             exp: now + config.sessionTtl,
           }, config.sessionSecret));
-          return redirect(editorTargetUrl(config.editorOrigin, consumed.target), {
+          return redirect(editorTargetUrl(config.editorOrigin, consumed.target, config.authBaseUrl), {
             cookies: [
               cookie(SESSION_COOKIE, session, { maxAge: config.sessionTtl, sameSite: "Strict" }),
               clearCookie(STATE_COOKIE, "Lax"),

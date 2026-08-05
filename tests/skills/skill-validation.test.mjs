@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -41,4 +41,19 @@ for (const name of ["ai-ethics-author-textbook-chapter", "ai-ethics-manage-promp
 test("skill bundle manifest covers the exact repository files and hashes", () => {
   const result = spawnSync(process.execPath, ["scripts/skills/check-bundle.mjs"], { encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
+});
+
+test("Codex plugin packages byte-identical copies of all four repository skills", () => {
+  const source = resolve(".agents/skills");
+  const packaged = resolve("plugins/ai-ethics-textbook/skills");
+  const files = (directory) => readdirSync(directory).flatMap((name) => {
+    const path = join(directory, name);
+    return statSync(path).isDirectory() ? files(path) : [path];
+  });
+  const sourceFiles = files(source).filter((path) => !path.endsWith("bundle-manifest.json"));
+  assert.deepEqual(sourceFiles.map((path) => path.slice(source.length + 1)).sort(), files(packaged).map((path) => path.slice(packaged.length + 1)).sort());
+  for (const sourcePath of sourceFiles) {
+    const relative = sourcePath.slice(source.length + 1);
+    assert.equal(readFileSync(join(packaged, relative), "utf8"), readFileSync(sourcePath, "utf8"), `${relative} drifted in the plugin`);
+  }
 });

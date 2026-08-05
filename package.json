@@ -14,7 +14,6 @@
     "build": "astro build && node scripts/finalize-offline-downloads.mjs",
     "build:instructor-editor": "npm --workspace @ai-ethics/instructor-editor run build",
     "preview": "astro preview",
-    "codex:textbook": "node scripts/mcp/run-codex-with-capability.mjs -- codex",
     "content:check": "node scripts/generate-reading.mjs --all --check",
     "content:generate": "node scripts/generate-reading.mjs --all --write",
     "wikimedia:refresh": "node scripts/sync-wikimedia.mjs --write",

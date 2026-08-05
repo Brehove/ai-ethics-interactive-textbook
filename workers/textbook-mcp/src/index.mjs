@@ -36,11 +36,14 @@ const mediaReviewPackage = z.object({
   idempotencyKey: uuid
 }).strict();
 const asResult = (data) => ({ content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data });
+const MCP_RESOURCE = 'https://mcp.ethicsandai.your-digital-life.org';
+const MCP_RESOURCE_METADATA = `${MCP_RESOURCE}/.well-known/oauth-protected-resource`;
+const AUTHORIZATION_SERVER = 'https://auth.ethicsandai.your-digital-life.org';
 
 const operationScopes = Object.freeze({
   get_authoring_view: ['content:read'], get_passage: ['content:read'], get_version_history: ['content:read'], get_live_commit_status: ['content:read'], get_person: ['content:read'], search_persons: ['content:read'], search_media: ['media:read'], get_media_job: ['media:read'], get_media_asset: ['media:read'],
   create_or_resume_changeset: ['content:write'], replace_passage_text: ['content:write'], replace_chapter_document: ['content:write'], upsert_checkpoint: ['content:write'], remove_checkpoint: ['content:write'], reorder_checkpoint: ['content:write'], place_media: ['content:write'], upsert_embed: ['content:write'], resolve_provider_url: ['content:write'], upsert_person_feature: ['content:write'], move_managed_placement: ['content:write'], remove_managed_placement: ['content:write'], preview_changes: ['content:write'], restore_revision_as_draft: ['content:write'], create_media_review_package: ['media:upload'], upload_media: ['media:upload'],
-  commit_live: ['content:live-save']
+  request_live_save_authorization: ['content:write'], commit_live: ['content:live-save']
 });
 
 function normaliseCapability(value) {
@@ -108,16 +111,37 @@ export function createMcp(env, requestId, context) {
   operationTool(server, call, 'upsert_person_feature', 'Upsert person feature', 'Place a frozen curated-person feature and its explicit managed placement; raw biography HTML is never accepted.', z.object({ type: z.literal('personFeature.upsert'), feature: personFeatureProjection, placement: managedPlacement }).strict());
   operationTool(server, call, 'move_managed_placement', 'Move managed placement', 'Move a typed media, embed, or person feature without serializing it into prose.', z.object({ type: z.literal('managedPlacement.move'), placementId: id, anchorPassageId: id, position: z.enum(['before', 'after']), orderAtAnchor: z.number().int().min(0), displayPreset: z.enum(['thinker-card', 'narrow', 'reading', 'wide', 'bleed', 'compact']).optional() }).strict());
   operationTool(server, call, 'remove_managed_placement', 'Remove managed placement', 'Remove one managed media, embed, or person feature placement.', z.object({ type: z.literal('managedPlacement.remove'), placementId: id }).strict(), { ...mutates, destructiveHint: true });
-  server.registerTool('upload_media', { title: 'Request media upload', description: 'Request an authenticated raw-binary upload ticket. File bytes and one-time upload tokens never enter MCP tool context.', inputSchema: uploadRequest, annotations: mutates }, async (body) => asResult(await call('/v1/media:requestUpload', { method: 'POST', operation: 'upload_media', mutation: true, body })));
+  server.registerTool('upload_media', { title: 'Request media upload', description: 'Request a short-lived, hash- and size-bound, single-use raw-binary upload ticket. Use its public upload URL and one-time token with the bundled local helper; no standing OAuth bearer is exported.', inputSchema: uploadRequest, annotations: mutates }, async (body) => {
+    const ticket = await call('/v1/media:requestUpload', { method: 'POST', operation: 'upload_media', mutation: true, body });
+    return asResult({ ...ticket, upload: { ...ticket.upload, url: `${MCP_RESOURCE}/media-upload/${encodeURIComponent(ticket.ticketId)}` } });
+  });
   server.registerTool('preview_changes', { title: 'Preview changes', description: 'Create a one-time, read-only snapshot preview of the chapter draft.', inputSchema: { ...write, surface: z.enum(['web', 'mobile', 'print', 'offline']).optional() }, annotations: mutates }, async ({ changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey, surface }) => asResult(await call(`/v1/changesets/${encodeURIComponent(changeSetId)}:renderPreview`, { method: 'POST', operation: 'preview_changes', documentId, mutation: true, body: { documentId, baseRevisionId, expectedVersion, idempotencyKey, ...(surface ? { surface } : {}) } })));
-  server.registerTool('commit_live', { title: 'Commit live chapter', description: 'Validate, version, project, and publish one D1-authoritative chapter. Use only with explicit user save/publish intent and an explicit live-save capability.', inputSchema: { ...write, operations: z.array(z.record(z.unknown())).max(100).optional() }, annotations: commitsLive }, async ({ changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey, operations }) => asResult(await call(`/v1/changesets/${encodeURIComponent(changeSetId)}:commitLive`, { method: 'POST', operation: 'commit_live', documentId, mutation: true, body: { documentId, baseRevisionId, expectedVersion, idempotencyKey, operations: operations ?? [] } })));
+  server.registerTool('request_live_save_authorization', { title: 'Request Live Save authorization', description: 'Create a short-lived instructor approval request bound to this exact chapter, changeset, base revision, expected version, and idempotency key. It does not publish.', inputSchema: write, annotations: mutates }, async (target) => {
+    if (typeof env.AUTH_CAPABILITY?.requestLiveSaveAuthorization !== 'function') throw new Error('Live Save authorization is unavailable');
+    return asResult(await env.AUTH_CAPABILITY.requestLiveSaveAuthorization(context.bearerToken, target));
+  });
+  server.registerTool('commit_live', { title: 'Save and publish chapter', description: 'After the instructor approves request_live_save_authorization, validate, version, project, and publish that exact D1-authoritative chapter revision.', inputSchema: { liveSaveRequestId: id, ...write, operations: z.array(z.record(z.unknown())).max(100).optional() }, annotations: commitsLive }, async ({ liveSaveRequestId, changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey, operations }) => {
+    if (typeof env.AUTH_CAPABILITY?.consumeLiveSaveAuthorization !== 'function') throw new Error('Live Save authorization is unavailable');
+    const target = { changeSetId, documentId, baseRevisionId, expectedVersion, idempotencyKey };
+    const authorization = await env.AUTH_CAPABILITY.consumeLiveSaveAuthorization(context.bearerToken, liveSaveRequestId, target);
+    if (authorization?.pending === true) return asResult({ state: 'authorization_pending', requestId: liveSaveRequestId });
+    if (typeof authorization?.accessToken !== 'string') throw new Error('Live Save authorization did not issue a capability');
+    const liveIdentity = await verifyCapability(env, authorization.accessToken, { documentId, operation: 'commit_live', scope: 'content:live-save' });
+    const liveCall = createApi(env, requestId, { bearerToken: authorization.accessToken, identity: liveIdentity });
+    return asResult(await liveCall(`/v1/changesets/${encodeURIComponent(changeSetId)}:commitLive`, { method: 'POST', operation: 'commit_live', documentId, mutation: true, body: { documentId, baseRevisionId, expectedVersion, idempotencyKey, operations: operations ?? [] } }));
+  });
   server.registerTool('get_live_commit_status', { title: 'Get live commit status', description: 'Recheck the public delivery identity for a prior live commit. A pending receipt does not create another revision.', inputSchema: { chapterId: id, commitReceiptId: id }, annotations: readOnly }, async ({ chapterId, commitReceiptId }) => asResult(await call(`/v1/live-commits/${encodeURIComponent(commitReceiptId)}`, { operation: 'get_live_commit_status', documentId: chapterId })));
   server.registerTool('get_version_history', { title: 'Get version history', description: 'Read paginated immutable revision history and provenance.', inputSchema: { chapterId: id, limit: z.number().int().min(1).max(100).optional(), cursor: z.number().int().min(0).max(10000).optional() }, annotations: readOnly }, async ({ chapterId, limit = 20, cursor = 0 }) => asResult(await call(`/v1/chapters/${encodeURIComponent(chapterId)}/revisions?limit=${limit}&cursor=${cursor}`, { operation: 'get_version_history', documentId: chapterId })));
   server.registerTool('restore_revision_as_draft', { title: 'Restore revision as draft', description: 'Seed a new isolated draft from immutable history; it never overwrites the current chapter.', inputSchema: { chapterId: id, revisionId: id, title: z.string().min(1).max(200), idempotencyKey: uuid }, annotations: mutates }, async ({ chapterId, revisionId, title, idempotencyKey }) => asResult(await call(`/v1/chapters/${encodeURIComponent(chapterId)}/revisions/${encodeURIComponent(revisionId)}:restoreAsDraft`, { method: 'POST', operation: 'restore_revision_as_draft', documentId: chapterId, mutation: true, body: { title, idempotencyKey } })));
   server.registerTool('search_persons', { title: 'Search curated people', description: 'Find curated person records for a typed person-feature placement.', inputSchema: { query: z.string().min(1).max(200), limit: z.number().int().min(1).max(50).optional() }, annotations: readOnly }, async ({ query, limit = 20 }) => asResult(await call(`/v1/persons?q=${encodeURIComponent(query)}&limit=${limit}`, { operation: 'search_persons' })));
   server.registerTool('get_person', { title: 'Get curated person', description: 'Read a person and its current immutable projection before feature placement.', inputSchema: { personId: id }, annotations: readOnly }, async ({ personId }) => asResult(await call(`/v1/persons/${encodeURIComponent(personId)}`, { operation: 'get_person' })));
-  for (const [name, tool] of Object.entries(server._registeredTools)) if (!operationScopes[name] || !operationScopes[name].every((scope) => context.identity.scopes.includes(scope)) || !context.identity.allowedOperations.includes(name)) tool.disable();
-  server.registerResource('Agent capability receipt', 'textbook://capabilities', { title: 'Agent capability receipt', description: 'Authenticated capability and its enforced boundaries.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ actorId: context.identity.actorId, clientId: context.identity.clientId, runId: context.identity.runId, jti: context.identity.jti, scopes: context.identity.scopes, allowedDocumentIds: context.identity.allowedDocumentIds, allowedOperations: context.identity.allowedOperations, mayCommitLive: context.identity.scopes.includes('content:live-save') && context.identity.allowedOperations.includes('commit_live'), cannot: ['approve rights', 'change authority', 'deploy code or schema', 'hard-delete history', 'write D1 or R2 directly'] }) }] }));
+  for (const [name, tool] of Object.entries(server._registeredTools)) {
+    // `commit_live` stays visible to an ordinary OAuth connection, but its
+    // handler can only run after the exact, separately-approved step-up above.
+    if (name === 'commit_live') continue;
+    if (!operationScopes[name] || !operationScopes[name].every((scope) => context.identity.scopes.includes(scope)) || !context.identity.allowedOperations.includes(name)) tool.disable();
+  }
+  server.registerResource('Agent capability receipt', 'textbook://capabilities', { title: 'Agent capability receipt', description: 'Authenticated capability and its enforced boundaries.', mimeType: 'application/json' }, async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ actorId: context.identity.actorId, clientId: context.identity.clientId, runId: context.identity.runId, jti: context.identity.jti, scopes: context.identity.scopes, allowedDocumentIds: context.identity.allowedDocumentIds, allowedOperations: context.identity.allowedOperations, mayCommitLive: context.identity.scopes.includes('content:live-save') && context.identity.allowedOperations.includes('commit_live'), liveSaveRequiresExactInstructorConfirmation: true, cannot: ['approve rights', 'change authority', 'deploy code or schema', 'hard-delete history', 'write D1 or R2 directly'] }) }] }));
   return server;
 }
 
@@ -138,19 +162,24 @@ export async function handleDirectMediaUpload(request, env, context) {
     const mimeType = request.headers.get('content-type')?.split(';')[0].trim().toLowerCase(); const digest = request.headers.get('x-content-sha256'); const token = request.headers.get('x-upload-token'); const declared = Number(request.headers.get('content-length'));
     if (!uploadRequest.shape.mimeType.safeParse(mimeType).success || !hash.safeParse(digest).success || typeof token !== 'string' || token.length < 16 || !Number.isInteger(declared) || declared < 1 || declared > 25 * 1024 * 1024) return directError(422, 'UPLOAD_HEADERS_INVALID', 'Upload headers are invalid');
     const bytes = new Uint8Array(await request.arrayBuffer()); if (bytes.byteLength !== declared) return directError(413, 'SIZE_MISMATCH', 'Content-Length does not match uploaded bytes');
-    const identity = await verifyCapability(env, context.bearerToken, { operation: 'upload_media' }); authorise(identity, 'upload_media');
-    const response = await env.CONTENT_API.fetch(new Request(`https://content-api.internal/v1/media/uploads/${encodeURIComponent(match[1])}`, { method: 'PUT', headers: { authorization: `Bearer ${context.bearerToken}`, 'content-type': mimeType, 'content-length': String(bytes.byteLength), 'x-content-sha256': digest, 'x-upload-token': token }, body: bytes }));
+    if (context?.bearerToken) { const identity = await verifyCapability(env, context.bearerToken, { operation: 'upload_media' }); authorise(identity, 'upload_media'); }
+    const response = await env.CONTENT_API.fetch(new Request(`https://content-api.internal/v1/media/uploads/${encodeURIComponent(match[1])}`, { method: 'PUT', headers: { ...(context?.bearerToken ? { authorization: `Bearer ${context.bearerToken}` } : {}), 'content-type': mimeType, 'content-length': String(bytes.byteLength), 'x-content-sha256': digest, 'x-upload-token': token }, body: bytes }));
     const body = await response.json(); if (!response.ok) return directError(response.status, body.error?.code || 'UPLOAD_FAILED', body.error?.message || 'Upload failed'); return directJson(body, 202);
   } catch (error) { return directError(502, 'CAPABILITY_OR_CONTENT_API_ERROR', error instanceof Error ? error.message : 'Request failed'); }
 }
 
 export default { async fetch(request, env) {
-  const url = new URL(request.url); const token = request.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
+  const url = new URL(request.url);
+  if (request.method === 'GET' && (url.pathname === '/.well-known/oauth-protected-resource' || url.pathname === '/.well-known/oauth-protected-resource/mcp')) {
+    return directJson({ resource: MCP_RESOURCE, authorization_servers: [AUTHORIZATION_SERVER], scopes_supported: ['content:read', 'content:write', 'media:read', 'media:upload'], resource_documentation: 'https://ethicsandai.your-digital-life.org/' });
+  }
+  if (request.method === 'PUT' && /^\/media-upload\/[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(url.pathname)) return handleDirectMediaUpload(request, env, null);
+  const token = request.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1];
   try {
     const identity = await verifyCapability(env, token);
     const context = { bearerToken: token, identity };
     if (url.pathname.startsWith('/media-upload/')) return handleDirectMediaUpload(request, env, context);
     if (url.pathname !== '/mcp') return new Response('Not found', { status: 404 });
     const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined }); const server = createMcp(env, identity.runId, context); await server.connect(transport); return transport.handleRequest(request);
-  } catch { return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': 'Bearer realm="ai-ethics-textbook-mcp", error="invalid_token"' } }); }
+  } catch { return new Response('Unauthorized', { status: 401, headers: { 'www-authenticate': `Bearer resource_metadata="${MCP_RESOURCE_METADATA}", scope="content:read", error="invalid_token"`, 'cache-control': 'no-store' } }); }
 } };

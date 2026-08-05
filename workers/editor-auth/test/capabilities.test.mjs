@@ -5,14 +5,24 @@ import test from "node:test";
 
 import {
   approveAgentCapabilityRequest,
+  consumeBoundLiveSaveRequest,
   createAgentCapabilityRequest,
+  createBoundLiveSaveRequest,
   exchangeAgentCapabilityRequest,
+  getAgentCapabilityRequest,
   revokeAgentCapability,
   verifyIssuedAgentCapability,
 } from "../src/capabilities.mjs";
 import { signToken } from "../src/crypto.mjs";
 import { createEditorAuthApp, createCapabilityVerifier } from "../src/index.mjs";
 import { SESSION_COOKIE } from "../src/constants.mjs";
+import {
+  approveMcpOAuthAuthorizationRequest,
+  createMcpOAuthAuthorizationRequest,
+  exchangeMcpOAuthCode,
+  mcpOAuthConstants,
+} from "../src/mcp-oauth.mjs";
+import { pkceChallenge } from "../src/oauth-state.mjs";
 
 const NOW = 1_785_600_000;
 const AUTH_ORIGIN = "https://auth.example.test";
@@ -60,6 +70,8 @@ class SqliteD1 {
 async function testDb() {
   const db = new SqliteD1();
   db.db.exec(await readFile(new URL("../migrations/0001_auth_state.sql", import.meta.url), "utf8"));
+  db.db.exec(await readFile(new URL("../migrations/0002_oauth_pkce_states.sql", import.meta.url), "utf8"));
+  db.db.exec(await readFile(new URL("../migrations/0003_mcp_oauth.sql", import.meta.url), "utf8"));
   return db;
 }
 
@@ -144,9 +156,61 @@ test("live Save requires exact chapter + commit_live, explicit confirmation, and
     );
     await approveAgentCapabilityRequest(requested.requestId, { approve: true, confirmLiveSave: true, userCode: requested.userCode }, instructor(), runtime, NOW);
     const exchanged = await exchangeAgentCapabilityRequest(requested.requestId, requested.deviceSecret, runtime, NOW, randomBytes);
-    assert.equal(exchanged.expiresAt, new Date((NOW + 600) * 1000).toISOString());
+    assert.equal(exchanged.expiresAt, new Date((NOW + 120) * 1000).toISOString());
     await verifyIssuedAgentCapability(exchanged.accessToken, { documentId: "chapter_ch07", operation: "commit_live", scope: "content:live-save" }, runtime, NOW + 1);
     await assert.rejects(() => verifyIssuedAgentCapability(exchanged.accessToken, { documentId: "chapter_ch07", operation: "chapter.replace_document", scope: "content:write" }, runtime, NOW + 1), { code: "capability_operation_forbidden" });
+  } finally { db.close(); }
+});
+
+test("OAuth editing can request and consume one exact instructor-approved Live Save", async () => {
+  const db = await testDb();
+  try {
+    const runtime = env(db);
+    const randomBytes = randomFactory();
+    const verifier = "v".repeat(64);
+    const authorizeUrl = new URL(`${AUTH_ORIGIN}/oauth/authorize`);
+    authorizeUrl.searchParams.set("client_id", mcpOAuthConstants.clientId);
+    authorizeUrl.searchParams.set("response_type", "code");
+    authorizeUrl.searchParams.set("redirect_uri", "http://127.0.0.1:48123/callback");
+    authorizeUrl.searchParams.set("resource", mcpOAuthConstants.resource);
+    authorizeUrl.searchParams.set("state", "state-12345678");
+    authorizeUrl.searchParams.set("scope", mcpOAuthConstants.scopes.join(" "));
+    authorizeUrl.searchParams.set("code_challenge", await pkceChallenge(verifier));
+    authorizeUrl.searchParams.set("code_challenge_method", "S256");
+    const oauthRequest = await createMcpOAuthAuthorizationRequest(authorizeUrl, runtime, NOW, randomBytes);
+    const redirect = await approveMcpOAuthAuthorizationRequest(oauthRequest.requestId, instructor(), runtime, NOW, randomBytes);
+    const exchange = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: mcpOAuthConstants.clientId,
+      code: new URL(redirect).searchParams.get("code"),
+      code_verifier: verifier,
+      redirect_uri: "http://127.0.0.1:48123/callback",
+      resource: mcpOAuthConstants.resource,
+    });
+    const oauth = await exchangeMcpOAuthCode(exchange, runtime, NOW, randomBytes);
+    const target = {
+      changeSetId: "changeset_ch07_1",
+      documentId: "chapter_ch07",
+      baseRevisionId: "revision_ch07_4",
+      expectedVersion: 5,
+      idempotencyKey: "123e4567-e89b-42d3-a456-426614174000",
+    };
+    const requested = await createBoundLiveSaveRequest(oauth.access_token, target, runtime, NOW + 1, randomBytes);
+    assert.match(requested.verificationUrl, /^https:\/\/auth\.example\.test\/auth\/start\?/);
+    assert.deepEqual(requested.target, target);
+    assert.deepEqual(await consumeBoundLiveSaveRequest(oauth.access_token, requested.requestId, target, runtime, NOW + 2, randomBytes), { pending: true });
+    const stored = await getAgentCapabilityRequest(requested.requestId, runtime, NOW + 2);
+    assert.deepEqual(stored.target, target);
+    await approveAgentCapabilityRequest(requested.requestId, { approve: true, confirmLiveSave: true, userCode: requested.userCode }, instructor({ stepUpAt: NOW + 2 }), runtime, NOW + 2);
+    await assert.rejects(
+      () => consumeBoundLiveSaveRequest(oauth.access_token, requested.requestId, { ...target, expectedVersion: 6 }, runtime, NOW + 3, randomBytes),
+      { code: "live_save_authorization_invalid" },
+    );
+    const issued = await consumeBoundLiveSaveRequest(oauth.access_token, requested.requestId, target, runtime, NOW + 3, randomBytes);
+    assert.equal(issued.pending, false);
+    const identity = await verifyIssuedAgentCapability(issued.accessToken, { documentId: target.documentId, operation: "commit_live", scope: "content:live-save" }, runtime, NOW + 4);
+    assert.equal(identity.actorId, "actor_github_123456");
+    await assert.rejects(() => consumeBoundLiveSaveRequest(oauth.access_token, requested.requestId, target, runtime, NOW + 4, randomBytes), { code: "capability_request_inactive" });
   } finally { db.close(); }
 });
 

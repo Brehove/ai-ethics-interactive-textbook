@@ -1,0 +1,11 @@
+interface:
+  display_name: "AI Ethics — Author Textbook Chapter"
+  short_description: "Draft anchored chapter changes safely"
+  default_prompt: "Use $ai-ethics-author-textbook-chapter to revise a chapter and follow my requested finish: review submission or immediate live save."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "ai-ethics-textbook"
+      description: "PHIL 123 content changeset workflow"
+      transport: "streamable_http"
+      url: "https://mcp.ethicsandai.your-digital-life.org/mcp"

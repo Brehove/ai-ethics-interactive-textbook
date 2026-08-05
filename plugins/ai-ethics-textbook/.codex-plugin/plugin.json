@@ -1,0 +1,29 @@
+{
+  "name": "ai-ethics-textbook",
+  "version": "1.0.0",
+  "description": "Agent-native PHIL 123 textbook authoring, media, checkpoints, version history, and instructor-confirmed Live Save.",
+  "author": {
+    "name": "Joel Gladd",
+    "url": "https://github.com/Brehove"
+  },
+  "homepage": "https://ethicsandai.your-digital-life.org/",
+  "repository": "https://github.com/Brehove/ai-ethics-interactive-textbook",
+  "keywords": ["ai-ethics", "textbook", "authoring", "oer", "mcp"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AI Ethics Textbook",
+    "shortDescription": "Author and publish PHIL 123 chapters",
+    "longDescription": "Connect Codex to the AI Ethics textbook through GitHub-authenticated OAuth. Draft chapters, manage checkpoints and media, inspect immutable history, and publish an exact revision after instructor confirmation.",
+    "developerName": "Joel Gladd",
+    "category": "Education",
+    "capabilities": ["Chapter authoring", "Prompt checkpoints", "Accessible media", "Version history", "Confirmed Live Save"],
+    "websiteURL": "https://ethicsandai.your-digital-life.org/",
+    "defaultPrompt": [
+      "Revise an AI Ethics textbook chapter.",
+      "Add a prompt checkpoint and preview it.",
+      "Add accessible media and save the chapter."
+    ],
+    "brandColor": "#9B351D"
+  },
+  "mcpServers": "./.mcp.json"
+}
