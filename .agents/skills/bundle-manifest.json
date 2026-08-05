@@ -3,55 +3,55 @@
   "bundleVersion": "1.0.0",
   "files": [
     {
-      "path": "author-textbook-chapter/SKILL.md",
-      "sha256": "1b15400056de9fe2e55a032466efd08bc34c377ad43f0801e2775028ebfb1693"
+      "path": "ai-ethics-author-textbook-chapter/SKILL.md",
+      "sha256": "c3cf0e8be0a0511de4b459c64b333d5097a3ba759c69cca5d5a223ca0b1de1d1"
     },
     {
-      "path": "author-textbook-chapter/agents/openai.yaml",
-      "sha256": "2073ec394535280c42ba059fbbee8b9aea6e85064304ad67ce76cfdb9ccfb77b"
+      "path": "ai-ethics-author-textbook-chapter/agents/openai.yaml",
+      "sha256": "dfe06bd64b9558c92ccb81f04b699e04e7aeab128ef18e095e12c4f26ba776f1"
     },
     {
-      "path": "author-textbook-chapter/references/mcp-workflow.md",
+      "path": "ai-ethics-author-textbook-chapter/references/mcp-workflow.md",
       "sha256": "0f304e80d9ef06c2b991e1d853ea5011c0af75ef53e7d66cdd0ca73fbfb562c5"
     },
     {
-      "path": "manage-prompt-checkpoints/SKILL.md",
-      "sha256": "95d0a06369066a4d514e94b3aea847281c9988d437c028450d011d55cd0c6a96"
+      "path": "ai-ethics-manage-prompt-checkpoints/SKILL.md",
+      "sha256": "159a3998700eb4c0bdd3e4637a2f0968ef13adc9f21d17f811af26aae43dd8c4"
     },
     {
-      "path": "manage-prompt-checkpoints/agents/openai.yaml",
-      "sha256": "32b17d6df61ca0a35fbe0a3e406ee6e31eef36cda8981805f9c939754fc5be4c"
+      "path": "ai-ethics-manage-prompt-checkpoints/agents/openai.yaml",
+      "sha256": "4d1b8d9c8083cf918dd2a706640ab9bcaa769e190c5b736ecfa6c61149b17a82"
     },
     {
-      "path": "manage-prompt-checkpoints/references/checkpoint-rules.md",
+      "path": "ai-ethics-manage-prompt-checkpoints/references/checkpoint-rules.md",
       "sha256": "772ed09167a4c465c2a8adb00b49f19ea6584ed3ff4afa343b906e6bc3777f9d"
     },
     {
-      "path": "publish-textbook-media/SKILL.md",
-      "sha256": "b813baaafc5b00b9df8d85d6e506ecdfe868d407c3e2d930b86e1578c9af4f84"
+      "path": "ai-ethics-publish-textbook-media/SKILL.md",
+      "sha256": "7697f99ebc24d7b563f41d199eb58c6f8708f72f4c59b1f829226729a9f3c864"
     },
     {
-      "path": "publish-textbook-media/agents/openai.yaml",
-      "sha256": "f82edcb37baf16f8fded609f0df2e0e810a0c4cb6f45c01fcfc19e817eefa317"
+      "path": "ai-ethics-publish-textbook-media/agents/openai.yaml",
+      "sha256": "20794d24ac38fd6f0c5ed118d073b007f7d508c635b165c153e94c36e208a2de"
     },
     {
-      "path": "publish-textbook-media/references/media-workflow.md",
+      "path": "ai-ethics-publish-textbook-media/references/media-workflow.md",
       "sha256": "945f0ac309dd86cf4ec051eb953840709c9b3f5ee9ab017d03cddc782a823dca"
     },
     {
-      "path": "publish-textbook-media/scripts/upload-media.mjs",
+      "path": "ai-ethics-publish-textbook-media/scripts/upload-media.mjs",
       "sha256": "6acab78ff5d5be429041697035877c9de25d93faead86bafe14e22fa82126aa5"
     },
     {
-      "path": "release-steward/SKILL.md",
-      "sha256": "7d64fae3f25da2a73770668df8361fc1a732b786c82da2d351fba75a6994d7cc"
+      "path": "ai-ethics-release-steward/SKILL.md",
+      "sha256": "07962398523f166f51dd7e643408865c9040693c4f4ddd208e8290d451cddaaa"
     },
     {
-      "path": "release-steward/agents/openai.yaml",
-      "sha256": "b8edb8098860d4d1e3d9662dba8c1d25e12acd03d4920bf2043ac4d41293ab20"
+      "path": "ai-ethics-release-steward/agents/openai.yaml",
+      "sha256": "e1d1a7d040a1a402e9ce38572fc0311e487ca143a739d20a74e4a7010ba34a97"
     },
     {
-      "path": "release-steward/references/handoff.md",
+      "path": "ai-ethics-release-steward/references/handoff.md",
       "sha256": "3ea37f1e58fe2ff0a3469f88374a011f51d4eb6cba13342c6ddd2fdfb4508bb8"
     }
   ]

@@ -1,5 +1,5 @@
 ---
-name: release-steward
+name: ai-ethics-release-steward
 description: Inspect PHIL 123 chapter live-save evidence and protected release evidence, then prepare a precise human handoff without approving, changing authority, deploying code, or changing production state.
 ---
 

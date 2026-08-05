@@ -1616,16 +1616,16 @@ The verifier and revocation store fail closed. Every agent mutation performs an 
 
 Update the repository Skills:
 
-- [.agents/skills/author-textbook-chapter/SKILL.md](../.agents/skills/author-textbook-chapter/SKILL.md)
+- [.agents/skills/ai-ethics-author-textbook-chapter/SKILL.md](../.agents/skills/ai-ethics-author-textbook-chapter/SKILL.md)
   - use authoring-view and semantic chapter operations;
   - support whole-chapter import;
   - call commit_live only after explicit publish/save language.
-- [.agents/skills/manage-prompt-checkpoints/SKILL.md](../.agents/skills/manage-prompt-checkpoints/SKILL.md)
+- [.agents/skills/ai-ethics-manage-prompt-checkpoints/SKILL.md](../.agents/skills/ai-ethics-manage-prompt-checkpoints/SKILL.md)
   - remove three-checkpoint assumptions;
   - support any number, repeated stages, movement, and sidebar controls.
-- [.agents/skills/publish-textbook-media/SKILL.md](../.agents/skills/publish-textbook-media/SKILL.md)
+- [.agents/skills/ai-ethics-publish-textbook-media/SKILL.md](../.agents/skills/ai-ethics-publish-textbook-media/SKILL.md)
   - upload, process, caption, credit, place, preview, and optionally commit live.
-- [.agents/skills/release-steward/SKILL.md](../.agents/skills/release-steward/SKILL.md)
+- [.agents/skills/ai-ethics-release-steward/SKILL.md](../.agents/skills/ai-ethics-release-steward/SKILL.md)
   - distinguish chapter live Save from protected code/authority release.
 
 Add examples for:

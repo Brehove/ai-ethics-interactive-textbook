@@ -1,7 +1,7 @@
 interface:
-  display_name: "Manage Prompt Checkpoints"
+  display_name: "AI Ethics — Manage Prompt Checkpoints"
   short_description: "Safely revise reading record prompts"
-  default_prompt: "Use $manage-prompt-checkpoints to revise prompt checkpoints and follow my requested finish."
+  default_prompt: "Use $ai-ethics-manage-prompt-checkpoints to revise prompt checkpoints and follow my requested finish."
 dependencies:
   tools:
     - type: "mcp"

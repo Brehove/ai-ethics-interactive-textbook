@@ -28,7 +28,7 @@ function validatePortableSkill(name) {
   assert.equal(existsSync(join(directory, "agents", "openai.yaml")), true, "Skill requires agents/openai.yaml");
 }
 
-for (const name of ["author-textbook-chapter", "manage-prompt-checkpoints", "publish-textbook-media", "release-steward"]) {
+for (const name of ["ai-ethics-author-textbook-chapter", "ai-ethics-manage-prompt-checkpoints", "ai-ethics-publish-textbook-media", "ai-ethics-release-steward"]) {
   test(`${name} skill validates`, () => {
     if (existsSync(validator)) {
       const result = spawnSync("python3", [validator, resolve(".agents/skills", name)], { encoding: "utf8" });

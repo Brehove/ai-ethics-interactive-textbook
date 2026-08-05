@@ -1,5 +1,5 @@
 ---
-name: manage-prompt-checkpoints
+name: ai-ethics-manage-prompt-checkpoints
 description: Create, revise, or remove PHIL 123 reading-record prompt checkpoints through the content MCP server. Use when a chapter needs any number of checkpoints or when a checkpoint's passage anchor, internal key, prompt, strategy, guidance, or word-response design must change safely.
 ---
 
