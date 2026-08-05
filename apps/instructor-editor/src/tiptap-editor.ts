@@ -2,9 +2,9 @@ import { Editor, Extension, Node } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { Plugin } from "@tiptap/pm/state";
 import { renderOrderedNode } from "@ai-ethics/chapter-renderer";
-import { blockPassage, newId, type ChapterBlock, type ChapterDocument, type ProseBlock } from "./editor-model";
+import { blockPassage, isFlowReference, newId, type ChapterBlock, type ChapterDocument, type ChapterFlowNode, type ProseBlock } from "./editor-model";
 
-type ManagedAttrs = { placementId: string; kind: string; html: string; sourceBlockId?: string };
+type ManagedAttrs = { placementId: string; kind: string; html: string; sourceBlockId?: string; referenceType?: "checkpointRef" | "placementRef" };
 export type LegacyCuratedArtifact = {
   artifactId: string; chapterId: string; anchorPassageId: string; title: string; alt: string; caption: string;
   teachingUse: string; artifactType: string; src: string; width: number; height: number; sourceUrl: string;
@@ -20,7 +20,7 @@ export function renderLegacyCuratedArtifact(artifact: LegacyCuratedArtifact) {
 
 const ManagedNode = Node.create({
   name: "managedNode", group: "block", atom: true, selectable: true, draggable: false,
-  addAttributes() { return { placementId: { default: "" }, kind: { default: "managed" }, html: { default: "" }, sourceBlockId: { default: null } }; },
+  addAttributes() { return { placementId: { default: "" }, kind: { default: "managed" }, html: { default: "" }, sourceBlockId: { default: null }, referenceType: { default: null } }; },
   parseHTML() { return [{ tag: "section[data-tiptap-managed]" }]; },
   renderHTML({ HTMLAttributes }) { return ["section", { ...HTMLAttributes, "data-tiptap-managed": "true", class: "managed-node" }]; },
   addNodeView() { return ({ node }) => {
@@ -42,7 +42,7 @@ const ProtectedManagedNodes = Extension.create({
     const managedIds = (doc: { descendants: (callback: (node: { type: { name: string }; attrs: Record<string, unknown> }) => void) => void }) => {
       const ids: string[] = [];
       doc.descendants((node) => { if (node.type.name === "managedNode") ids.push(String(node.attrs.placementId)); });
-      return ids.sort().join("\u0000");
+      return ids.join("\u0000");
     };
     return [new Plugin({ filterTransaction(transaction, state) {
       if (!transaction.docChanged || transaction.getMeta("allowManagedMutation") === true) return true;
@@ -53,7 +53,37 @@ const ProtectedManagedNodes = Extension.create({
 
 const StableIds = Extension.create({
   name: "stableIds",
-  addGlobalAttributes() { return [{ types: ["paragraph", "heading", "blockquote"], attributes: { blockId: { default: null, parseHTML: (element: HTMLElement) => element.getAttribute("data-block-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.blockId ? { "data-block-id": attributes.blockId } : {} }, passageId: { default: null, parseHTML: (element: HTMLElement) => element.getAttribute("data-passage-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.passageId ? { "data-passage-id": attributes.passageId } : {} } } }]; },
+  addGlobalAttributes() { return [{ types: ["paragraph", "heading", "blockquote", "bulletList", "orderedList"], attributes: {
+    blockId: { default: null, keepOnSplit: false, parseHTML: (element: HTMLElement) => element.getAttribute("data-block-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.blockId ? { "data-block-id": attributes.blockId } : {} },
+    passageId: { default: null, keepOnSplit: false, parseHTML: (element: HTMLElement) => element.getAttribute("data-passage-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.passageId ? { "data-passage-id": attributes.passageId } : {} },
+    sectionId: { default: null, keepOnSplit: false, parseHTML: (element: HTMLElement) => element.getAttribute("data-section-id"), renderHTML: (attributes: Record<string, string | null>) => attributes.sectionId ? { "data-section-id": attributes.sectionId } : {} },
+  } }]; },
+  addProseMirrorPlugins() {
+    const editable = new Set(["paragraph", "heading", "blockquote", "bulletList", "orderedList"]);
+    return [new Plugin({ appendTransaction(transactions, _oldState, state) {
+      if (!transactions.some((transaction) => transaction.docChanged) || transactions.some((transaction) => transaction.getMeta("stableIdsNormalized") === true)) return null;
+      const seen = { blockId: new Set<string>(), passageId: new Set<string>(), sectionId: new Set<string>() };
+      const transaction = state.tr;
+      let changed = false;
+      state.doc.descendants((node, position) => {
+        if (!editable.has(node.type.name)) return;
+        // Paragraphs nested inside blockquotes and list items are structural
+        // Tiptap wrappers; their parent owns the stable chapter identity.
+        const parent = state.doc.resolve(position).parent;
+        if (node.type.name === "paragraph" && ["blockquote", "listItem"].includes(parent.type.name)) return;
+        const attrs = { ...node.attrs };
+        let nodeChanged = false;
+        for (const [field, prefix] of [["blockId", "block"], ["passageId", "passage"], ["sectionId", "section"]] as const) {
+          if (field === "sectionId" && node.type.name !== "heading") { if (attrs[field]) { attrs[field] = null; changed = true; nodeChanged = true; } continue; }
+          const current = typeof attrs[field] === "string" && attrs[field] ? attrs[field] : null;
+          if (!current || seen[field].has(current)) { attrs[field] = newId(prefix); changed = true; nodeChanged = true; }
+          seen[field].add(String(attrs[field]));
+        }
+        if (nodeChanged) transaction.setNodeMarkup(position, undefined, attrs, node.marks);
+      });
+      return changed ? transaction.setMeta("stableIdsNormalized", true).setMeta("addToHistory", false) : null;
+    } })];
+  },
 });
 
 type InlineMark = { type: "bold" | "italic" | "underline" | "link"; attrs?: { href: string } };
@@ -120,16 +150,27 @@ export function inlineMarkdown(content: Record<string, unknown>[] = []): string 
 
 const isProse = (block: ChapterBlock): block is ProseBlock => ["paragraph", "heading", "blockquote", "list", "callout"].includes(block.type);
 function proseNode(block: ProseBlock) {
-  const attrs = { blockId: block.blockId, passageId: blockPassage(block) || null };
+  const attrs = { blockId: block.blockId, passageId: blockPassage(block) || null, sectionId: block.sectionId ?? null };
   if (block.type === "heading") return { type: "heading", attrs: { ...attrs, level: Number(block.level ?? 2) }, content: inlineContent(block.text) };
-  if (block.type === "blockquote") return { type: "blockquote", attrs, content: [{ type: "paragraph", attrs, content: inlineContent(block.text) }] };
-  if (block.type === "list") return { type: block.ordered ? "orderedList" : "bulletList", content: (block.items ?? []).map((item) => ({ type: "listItem", content: [{ type: "paragraph", attrs, content: inlineContent(item) }] })) };
+  if (block.type === "blockquote") return { type: "blockquote", attrs, content: [{ type: "paragraph", content: inlineContent(block.text) }] };
+  if (block.type === "list") return { type: block.ordered ? "orderedList" : "bulletList", attrs, content: (block.items ?? []).map((item) => ({ type: "listItem", content: [{ type: "paragraph", content: inlineContent(item) }] })) };
   return { type: "paragraph", attrs, content: inlineContent(block.text) };
 }
 
 export function managedNodeSequence(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
-  const checkpoints = position === "after" ? chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder, index, sequence: 0 })).filter((node) => node.item.passageId === passageId) : [];
-  const placements = chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor, index, sequence: 1 })).filter((node) => node.item.anchorPassageId === passageId && node.item.position === position);
+  if (chapter.schemaVersion === 3) return chapter.body.flatMap((node, index) => {
+    if (node.type === "checkpointRef") {
+      const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === node.checkpointId);
+      return item ? [{ kind: "checkpoint" as const, item, order: index, index, sequence: 0 }] : [];
+    }
+    if (node.type === "placementRef") {
+      const item = chapter.managedPlacements.find((placement) => placement.placementId === node.placementId);
+      return item ? [{ kind: "placement" as const, item, order: index, index, sequence: 1 }] : [];
+    }
+    return [];
+  });
+  const checkpoints = position === "after" ? chapter.checkpoints.map((item, index) => ({ kind: "checkpoint" as const, item, order: item.displayOrder ?? index, index, sequence: 0 })).filter((node) => node.item.passageId === passageId) : [];
+  const placements = chapter.managedPlacements.map((item, index) => ({ kind: "placement" as const, item, order: item.orderAtAnchor ?? index, index, sequence: 1 })).filter((node) => node.item.anchorPassageId === passageId && (node.item.position ?? "after") === position);
   return [...checkpoints, ...placements].sort((a, b) => {
     const orderDifference = a.order - b.order;
     if (orderDifference) return orderDifference;
@@ -153,6 +194,23 @@ function managedNodes(chapter: ChapterDocument, passageId: string, position: "be
 }
 
 export function editorDocumentContent(chapter: ChapterDocument, legacyArtifacts: readonly LegacyCuratedArtifact[] = [], publicOrigin = "https://ethicsandai.your-digital-life.org") {
+  if (chapter.schemaVersion === 3) return chapter.body.map((node) => {
+    if (node.type === "checkpointRef") {
+      const checkpoint = chapter.checkpoints.find((item) => item.checkpointId === node.checkpointId);
+      if (!checkpoint) throw new Error(`Checkpoint reference ${node.checkpointId} is unresolved.`);
+      return { type: "managedNode", attrs: { placementId: node.checkpointId, kind: "Checkpoint", referenceType: "checkpointRef", html: renderOrderedNode({ kind: "checkpoint", value: checkpoint }, { context: "editor" }) } };
+    }
+    if (node.type === "placementRef") {
+      const placement = chapter.managedPlacements.find((item) => item.placementId === node.placementId);
+      if (!placement) throw new Error(`Placement reference ${node.placementId} is unresolved.`);
+      const feature = placement.kind === "personFeature" ? chapter.personFeatures.find((item) => item.personFeatureId === placement.contentId) : undefined;
+      const managed = (chapter.managedContent as Record<string, Record<string, unknown>> | undefined)?.[placement.contentId];
+      const projected = feature ? { kind: "personFeature" as const, value: { ...feature, ...placement } } : { kind: "block" as const, value: managed ?? { type: placement.kind === "media" ? "mediaFigure" : "externalEmbed", blockId: placement.placementId, title: "Managed content preview", caption: "Typed placement preview" } };
+      return { type: "managedNode", attrs: { placementId: node.placementId, kind: placement.kind === "personFeature" ? "Person feature" : "Managed placement", referenceType: "placementRef", html: renderOrderedNode(projected, { context: "editor", publicOrigin }) } };
+    }
+    if (!isProse(node)) return { type: "managedNode", attrs: { placementId: node.blockId, sourceBlockId: node.blockId, kind: node.type === "mediaFigure" ? "Media" : node.type === "legacyMarkup" ? "Locked legacy content" : "Embed", html: renderOrderedNode({ kind: "block", value: node }, { context: "editor", publicOrigin }) } };
+    return proseNode(node);
+  });
   const content: Record<string, unknown>[] = [];
   const ownedPassages = new Set(chapter.body.map((block) => block.passageId).filter(Boolean));
   const emittedBefore = new Set<string>();
@@ -219,19 +277,26 @@ export function mountTiptap(element: HTMLElement, chapter: ChapterDocument, onCh
   return editor;
 }
 
-export function serializeBody(json: Record<string, unknown>, previous: ChapterBlock[]): ChapterBlock[] {
-  const previousById = new Map(previous.map((block) => [block.blockId, block])); const result: ChapterBlock[] = [];
+export function serializeBody(json: Record<string, unknown>, previous: ChapterFlowNode[]): ChapterFlowNode[] {
+  const previousById = new Map(previous.filter((node): node is ChapterBlock => !isFlowReference(node)).map((block) => [block.blockId, block])); const result: ChapterFlowNode[] = [];
   const visit = (node: Record<string, unknown>) => {
     const content = Array.isArray(node.content) ? node.content as Record<string, unknown>[] : [];
-    if (node.type === "managedNode") { const sourceBlockId = String(((node.attrs ?? {}) as Record<string, unknown>).sourceBlockId ?? ""); const preserved = previousById.get(sourceBlockId); if (preserved) result.push(structuredClone(preserved)); return; }
+    if (node.type === "managedNode") {
+      const attrs = (node.attrs ?? {}) as Record<string, unknown>;
+      const placementId = String(attrs.placementId ?? "");
+      if (attrs.referenceType === "checkpointRef") result.push({ type: "checkpointRef", checkpointId: placementId });
+      else if (attrs.referenceType === "placementRef") result.push({ type: "placementRef", placementId });
+      else { const sourceBlockId = String(attrs.sourceBlockId ?? ""); const preserved = previousById.get(sourceBlockId); if (preserved) result.push(structuredClone(preserved)); }
+      return;
+    }
     if (node.type === "paragraph" || node.type === "heading" || node.type === "blockquote") {
       const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const previousBlock = previousById.get(blockId); const passageId = String(attrs.passageId ?? previousBlock?.passageId ?? newId("passage")); const text = node.type === "blockquote" ? content.map((paragraph) => inlineMarkdown(inlineChildren(paragraph))).join("\n\n") : inlineMarkdown(content);
-      if (node.type === "heading") result.push({ type: "heading", blockId, sectionId: previousBlock?.sectionId ?? newId("section"), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text });
+      if (node.type === "heading") result.push({ type: "heading", blockId, sectionId: String(attrs.sectionId ?? previousBlock?.sectionId ?? newId("section")), anchorPassageId: passageId, level: Number(attrs.level ?? 2), text });
       else if (node.type === "paragraph" && previousBlock?.type === "callout") result.push({ ...previousBlock, passageId, text });
       else result.push({ type: node.type as "paragraph" | "blockquote", blockId, passageId, text });
       return;
     }
-    if (node.type === "bulletList" || node.type === "orderedList") { const firstParagraph = content[0]?.content as Record<string, unknown>[] | undefined; const attrs = (firstParagraph?.[0]?.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? newId("passage")); result.push({ type: "list", blockId, passageId, ordered: node.type === "orderedList", items: content.map((item) => inlineMarkdown(inlineChildren(((item.content as Record<string, unknown>[] | undefined)?.[0] ?? {})))) }); return;
+    if (node.type === "bulletList" || node.type === "orderedList") { const attrs = (node.attrs ?? {}) as Record<string, unknown>; const blockId = String(attrs.blockId ?? newId("block")); const passageId = String(attrs.passageId ?? newId("passage")); result.push({ type: "list", blockId, passageId, ordered: node.type === "orderedList", items: content.map((item) => inlineMarkdown(inlineChildren(((item.content as Record<string, unknown>[] | undefined)?.[0] ?? {})))) }); return;
     }
     content.forEach(visit);
   };

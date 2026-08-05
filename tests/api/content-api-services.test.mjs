@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
 import worker, { rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
+import { migrateChapterV2ToV3 } from '../../packages/chapter-renderer/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
   const response = await worker.fetch(new Request('https://content.example/health'), {});
@@ -779,6 +780,7 @@ test('authority cutover migration rejects D1 authority ahead of an exact active 
 });
 
 const baseChapter = () => ({
+  schemaVersion: 2,
   chapterId: 'chapter-07',
   body: [
     { type: 'paragraph', blockId: 'b-commit', passageId: 'p-commit', text: 'Commit passage.' },
@@ -870,6 +872,58 @@ test('checkpoint validation rejects unstable anchors and caller-selected IDs whi
   const clientId = checkpoint('commit', 'p-commit');
   clientId.checkpointId = 'client-selected';
   await assert.rejects(applySemanticOperation(baseChapter(), { type: 'checkpoint.upsert', checkpoint: clientId }), (error) => error instanceof ApiError && error.code === 'CHECKPOINT_ID_SERVER_ASSIGNED');
+});
+
+test('schema-v3 semantic operations preserve references through split, move, join, and removal', async () => {
+  const source = migrateChapterV2ToV3(baseChapter());
+  const createdCheckpoint = checkpoint('flow', 'p-work');
+  delete createdCheckpoint.displayOrder;
+  let result = await applySemanticOperation(source, { type: 'checkpoint.upsert', checkpoint: createdCheckpoint, position: { afterNodeId: 'b-work' } });
+  const checkpointId = result.chapter.checkpoints[0].checkpointId;
+  assert.deepEqual(result.chapter.body.map((node) => node.blockId || node.checkpointId), ['b-commit', 'b-work', checkpointId, 'b-reconcile']);
+  result = await applySemanticOperation(result.chapter, { type: 'block.split', blockId: 'b-work', offset: 4 });
+  assert.equal(result.chapter.body.findIndex((node) => node.checkpointId === checkpointId), 3);
+  assert.equal(result.chapter.body[1].blockId, 'b-work');
+  assert.match(result.created.blockId, /^block_/);
+  assert.match(result.created.passageId, /^passage_/);
+  result = await applySemanticOperation(result.chapter, { type: 'checkpoint.move', checkpointId, position: { afterNodeId: 'b-reconcile' } });
+  assert.equal(result.chapter.body.at(-1).checkpointId, checkpointId);
+  assert.equal(result.chapter.checkpoints[0].passageId, 'p-reconcile');
+  result = await applySemanticOperation(result.chapter, { type: 'checkpoint.remove', checkpointId });
+  assert.equal(result.chapter.checkpoints.length, 0);
+  assert.equal(result.chapter.body.some((node) => node.type === 'checkpointRef'), false);
+
+  const blockedJoin = migrateChapterV2ToV3(baseChapter());
+  const blockedPayload = checkpoint('between', 'p-commit');
+  delete blockedPayload.displayOrder;
+  const withBoundary = await applySemanticOperation(blockedJoin, { type: 'checkpoint.upsert', checkpoint: blockedPayload, position: { afterNodeId: 'b-commit' } });
+  await assert.rejects(
+    applySemanticOperation(withBoundary.chapter, { type: 'block.join', firstBlockId: 'b-commit', secondBlockId: 'b-work' }),
+    (error) => error instanceof ApiError && error.code === 'BLOCK_JOIN_CROSSES_FLOW_NODE',
+  );
+});
+
+test('schema-v3 split and join results are deterministic for the same immutable input', async () => {
+  const source = migrateChapterV2ToV3(baseChapter());
+  const splitOperation = { type: 'block.split', blockId: 'b-work', offset: 4 };
+  const firstSplit = await applySemanticOperation(structuredClone(source), splitOperation);
+  const secondSplit = await applySemanticOperation(structuredClone(source), splitOperation);
+  assert.deepEqual(firstSplit, secondSplit);
+  const firstJoin = await applySemanticOperation(structuredClone(source), { type: 'block.join', firstBlockId: 'b-commit', secondBlockId: 'b-work' });
+  const secondJoin = await applySemanticOperation(structuredClone(source), { type: 'block.join', firstBlockId: 'b-commit', secondBlockId: 'b-work' });
+  assert.deepEqual(firstJoin, secondJoin);
+  assert.deepEqual(validateChapter(firstJoin.chapter, { publishable: true }), { valid: true, errors: [] });
+});
+
+test('schema-v3 validation rejects missing, duplicate, orphaned, and hybrid references', () => {
+  const source = migrateChapterV2ToV3(baseChapter());
+  const orphanRecord = { ...checkpoint('orphan', 'p-work'), checkpointId: 'checkpoint_orphan' };
+  delete orphanRecord.displayOrder;
+  assert.equal(validateChapter({ ...source, checkpoints: [orphanRecord] }).errors.some((error) => error.code === 'CHECKPOINT_REFERENCE_ORPHAN'), true);
+  assert.equal(validateChapter({ ...source, body: [...source.body, { type: 'checkpointRef', checkpointId: 'checkpoint_missing' }] }).errors.some((error) => error.code === 'CHECKPOINT_REFERENCE_MISSING'), true);
+  const referenced = { ...source, checkpoints: [orphanRecord], body: [...source.body, { type: 'checkpointRef', checkpointId: orphanRecord.checkpointId }] };
+  assert.equal(validateChapter({ ...referenced, body: [...referenced.body, { type: 'checkpointRef', checkpointId: orphanRecord.checkpointId }] }).errors.some((error) => error.code === 'CHECKPOINT_REFERENCE_DUPLICATE'), true);
+  assert.equal(validateChapter({ ...referenced, checkpoints: [{ ...orphanRecord, displayOrder: 0 }] }).errors.some((error) => error.code === 'LEGACY_POSITION_FORBIDDEN'), true);
 });
 
 test('chapter replacement rejects empty or oversized optional checkpoint labels', () => {

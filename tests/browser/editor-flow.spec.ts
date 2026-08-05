@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { installMockAuthoringApi } from "./support/harness";
 
 const editor = "http://127.0.0.1:4173/chapter/what-are-you-becoming-aristotle-character-and-ai-assisted-life";
 
@@ -47,4 +48,46 @@ test("media library presents a Pressbooks-style upload entry without exposing a 
   await expect(page.getByRole("heading", { name: "Upload new media" })).toBeVisible();
   await expect(page.getByLabel("Rights basis")).toBeVisible();
   await expect(page.getByRole("button", { name: "Review and upload" })).toBeVisible();
+});
+
+test("failed save preserves the editor mount, visible order, undo history, and recovery copy", async ({ page }) => {
+  const api = await installMockAuthoringApi(page, { commitStatus: 422 });
+  await page.goto(`${editor}?testApiOrigin=http://127.0.0.1:4173`);
+  await expect(page.getByText("Browser checkpoint", { exact: true })).toBeVisible();
+  const document = page.locator("[data-document]");
+  await document.evaluate((node) => { node.setAttribute("data-mount-proof", "original"); });
+  const second = page.locator('[data-document] p[data-passage-id="passage_browser_second"]');
+  await second.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" Added before save.");
+  await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
+  const checkpointBefore = await page.locator('[data-checkpoint-id="checkpoint_browser"]').evaluate((node) => node.previousElementSibling?.getAttribute("data-passage-id"));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Save needs attention", { exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Two paragraphs share passage_browser_second.");
+  await expect(page.getByRole("alert")).toContainText("body.2.passageId");
+  await expect(document).toHaveAttribute("data-mount-proof", "original");
+  const checkpointAfter = await page.locator('[data-checkpoint-id="checkpoint_browser"]').evaluate((node) => node.previousElementSibling?.getAttribute("data-passage-id"));
+  expect(checkpointAfter).toBe(checkpointBefore);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).some((key) => key.startsWith("ai-ethics-instructor-recovery/chapter_ch07/")))).toBe(true);
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(second).not.toContainText("Added before save.");
+  expect(api.calls().filter((call) => call.path.endsWith(":commitLive"))).toHaveLength(1);
+});
+
+test("verified save clears the exact recovery key without remounting the editor", async ({ page }) => {
+  await installMockAuthoringApi(page);
+  await page.goto(`${editor}?testApiOrigin=http://127.0.0.1:4173`);
+  await expect(page.getByText("Browser checkpoint", { exact: true })).toBeVisible();
+  const document = page.locator("[data-document]");
+  await document.evaluate((node) => { node.setAttribute("data-mount-proof", "verified"); });
+  const second = page.locator('[data-document] p[data-passage-id="passage_browser_second"]');
+  await second.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" Saved addition.");
+  await expect.poll(() => page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("ai-ethics-instructor-recovery/chapter_ch07/")).length)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await expect(document).toHaveAttribute("data-mount-proof", "verified");
+  expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("ai-ethics-instructor-recovery/chapter_ch07/")).length)).toBe(0);
 });

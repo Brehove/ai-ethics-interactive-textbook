@@ -1783,6 +1783,8 @@ async function getPerson(env, personId) {
 }
 
 async function applyTrustedSemanticOperation(env, sourceChapter, operation) {
+  const writesV3 = sourceChapter?.schemaVersion === 3 || operation?.type === 'chapter.replaceDocumentV3';
+  if (writesV3) await enforceRuntimeFlag(env, 'ordered_managed_references_v3', sourceChapter.chapterId || sourceChapter.documentId);
   if (operation?.type !== 'personFeature.upsert') {
     const result = await applySemanticOperation(stripTransientMediaPreviewFields(sourceChapter), operation);
     const chapter = await rebindProjectedMediaCheckpointHashes(env, result.chapter);

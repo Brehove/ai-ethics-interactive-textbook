@@ -26,7 +26,7 @@ The downloaded record is submitted through Canvas as evidence of engaged reading
 
 1. **Checkpoint count is an instructor judgment, not a schema limit.** A chapter may contain zero, one, or many checkpoints. Keep interruptions scarce enough that the chapter remains a reading experience; add each checkpoint only when its anchored passage enables a distinct, worthwhile reasoning move.
 2. **The original response is preserved.** A committed response cannot be silently overwritten. Later checkpoints provide space to qualify or revise earlier thinking.
-3. **Prompts are passage-anchored.** Each checkpoint appears after a stable passage whose intellectual work makes the prompt timely.
+3. **Prompts have contextual passages and explicit positions.** Each checkpoint names the stable passage whose intellectual work makes the prompt timely, while its `checkpointRef` position in ordered chapter flow determines where it appears. Context never overrides visible flow order.
 4. **Prompts are disciplinary.** Students should practice philosophical interpretation, argumentation, judgment, objection, or conceptual analysis rather than generic self-expression.
 5. **Prompts are constructive.** A student must produce an explanation, inference, distinction, question, case, or judgment that the text did not simply state verbatim.
 6. **Prompts are open but constrained.** More than one defensible answer should be possible, but the task and criteria for a serious response must be clear.
@@ -246,7 +246,8 @@ Every checkpoint plan must specify the following fields.
 | Field | Function | Requirement |
 | --- | --- | --- |
 | `id` | Stable identity | Chapter-scoped, descriptive, and unchanged after publication unless the checkpoint is intentionally replaced |
-| `passageId` | Reading anchor | Existing stable passage ID after which the trigger appears |
+| `passageId` | Intellectual context | Existing stable passage ID whose work makes the checkpoint timely; it does not determine inline position in schema v3 |
+| `flowPosition` | Visible placement | Explicit position of the checkpoint reference before or after an existing flow node |
 | `stage` | Position in the sequence | `Opening judgment`, chapter-specific hinge label, or `Exit judgment` |
 | `strategy` | Intellectual operation | One primary identifier from the repertoire |
 | `title` | Panel heading | Short imperative or task description |

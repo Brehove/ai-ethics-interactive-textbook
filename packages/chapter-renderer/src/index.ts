@@ -20,11 +20,15 @@ export interface RenderedChapterProjection {
   html: string;
   prompts: Array<Record<string, unknown>>;
   orderedNodes: OrderedChapterNode[];
+  projectionProvenance: "v2-anchor-adapter" | "v3-flow";
 }
 
 export const CHAPTER_RENDERER_STYLES: string;
 export const CHAPTER_RENDERER_STYLE_VERSION: string;
+export class ChapterFlowError extends Error { code: string; path: string; }
 export function projectOrderedChapter(chapter: Record<string, unknown>, options?: ProjectionOptions): OrderedChapterNode[];
+export function migrateChapterV2ToV3(chapter: Record<string, unknown>, options?: ProjectionOptions): Record<string, unknown>;
+export function exportChapterV3AsV2(chapter: Record<string, unknown>): Record<string, unknown>;
 export function renderOrderedNode(node: OrderedChapterNode, options?: ProjectionOptions): string;
 export function renderChapterProjection(chapter: Record<string, unknown>, options?: ProjectionOptions): RenderedChapterProjection;
 export function normalizeRenderedHtml(html: string): string;

@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 
-export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v1";
+export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v2";
 export const CHAPTER_RENDERER_STYLES = `
 .chapter-managed{margin:2rem 0}
 .chapter-checkpoint{border-left:4px solid var(--reader-accent,#8b341f);padding:1rem 1.2rem;background:var(--reader-panel,#f5f0e6)}
@@ -66,7 +66,16 @@ const featureFromRelation = (relation, person, anchorPassageId, displayOrder) =>
   ...(person || {}),
 });
 
-export function projectOrderedChapter(chapter, options = {}) {
+export class ChapterFlowError extends Error {
+  constructor(code, message, path = "body") {
+    super(message);
+    this.name = "ChapterFlowError";
+    this.code = code;
+    this.path = path;
+  }
+}
+
+const projectV2OrderedChapter = (chapter, options = {}) => {
   const blocks = Array.isArray(chapter?.body) ? chapter.body : [];
   const checkpoints = Array.isArray(chapter?.checkpoints) ? chapter.checkpoints : [];
   const managed = Array.isArray(chapter?.managedPlacements) ? chapter.managedPlacements : [];
@@ -148,6 +157,127 @@ export function projectOrderedChapter(chapter, options = {}) {
     }
   }
   return ordered;
+};
+
+const flowPassageId = (block) => block?.passageId || block?.anchorPassageId || null;
+const nearestFlowPassage = (body, index) => {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    if (body[cursor]?.type === "checkpointRef" || body[cursor]?.type === "placementRef") continue;
+    const passage = flowPassageId(body[cursor]);
+    if (passage) return passage;
+  }
+  for (let cursor = index + 1; cursor < body.length; cursor += 1) {
+    if (body[cursor]?.type === "checkpointRef" || body[cursor]?.type === "placementRef") continue;
+    const passage = flowPassageId(body[cursor]);
+    if (passage) return passage;
+  }
+  return null;
+};
+
+const projectV3OrderedChapter = (chapter, options = {}) => {
+  const body = Array.isArray(chapter?.body) ? chapter.body : [];
+  const checkpoints = new Map((Array.isArray(chapter?.checkpoints) ? chapter.checkpoints : []).map((value) => [value.checkpointId, value]));
+  const placements = new Map((Array.isArray(chapter?.managedPlacements) ? chapter.managedPlacements : []).map((value) => [value.placementId, value]));
+  const frozenFeatures = new Map((Array.isArray(chapter?.personFeatures) ? chapter.personFeatures : []).map((value) => [value.personFeatureId || value.placementId, value]));
+  const seenCheckpoints = new Set();
+  const seenPlacements = new Set();
+  const ordered = [];
+
+  body.forEach((node, index) => {
+    if (node?.type === "checkpointRef") {
+      const checkpoint = checkpoints.get(node.checkpointId);
+      if (!checkpoint) throw new ChapterFlowError("CHECKPOINT_REFERENCE_MISSING", `Checkpoint reference ${node.checkpointId || "(missing)"} has no checkpoint record.`, `body.${index}.checkpointId`);
+      if (seenCheckpoints.has(node.checkpointId)) throw new ChapterFlowError("CHECKPOINT_REFERENCE_DUPLICATE", `Checkpoint ${node.checkpointId} appears more than once in chapter flow.`, `body.${index}.checkpointId`);
+      seenCheckpoints.add(node.checkpointId);
+      ordered.push({ kind: "checkpoint", value: checkpoint });
+      return;
+    }
+    if (node?.type === "placementRef") {
+      const placement = placements.get(node.placementId);
+      if (!placement) throw new ChapterFlowError("PLACEMENT_REFERENCE_MISSING", `Placement reference ${node.placementId || "(missing)"} has no placement record.`, `body.${index}.placementId`);
+      if (seenPlacements.has(node.placementId)) throw new ChapterFlowError("PLACEMENT_REFERENCE_DUPLICATE", `Placement ${node.placementId} appears more than once in chapter flow.`, `body.${index}.placementId`);
+      seenPlacements.add(node.placementId);
+      if (placement.kind !== "personFeature") throw new ChapterFlowError("PLACEMENT_REFERENCE_TYPE_MISMATCH", `Placement ${node.placementId} is not a separately projected managed record.`, `managedPlacements.${node.placementId}.kind`);
+      const frozen = frozenFeatures.get(placement.contentId);
+      if (!frozen) throw new ChapterFlowError("PLACEMENT_CONTENT_MISSING", `Placement ${node.placementId} has no frozen person feature.`, `managedPlacements.${node.placementId}.contentId`);
+      const person = options.persons?.[frozen.personId] || {};
+      ordered.push({ kind: "personFeature", value: { ...person, ...frozen, ...placement } });
+      return;
+    }
+    ordered.push({ kind: "block", value: node });
+  });
+
+  for (const checkpointId of checkpoints.keys()) if (!seenCheckpoints.has(checkpointId)) throw new ChapterFlowError("CHECKPOINT_REFERENCE_ORPHAN", `Checkpoint ${checkpointId} is not present in chapter flow.`, "checkpoints");
+  for (const placementId of placements.keys()) if (!seenPlacements.has(placementId)) throw new ChapterFlowError("PLACEMENT_REFERENCE_ORPHAN", `Placement ${placementId} is not present in chapter flow.`, "managedPlacements");
+  return ordered;
+};
+
+export function projectOrderedChapter(chapter, options = {}) {
+  if (chapter?.schemaVersion === 2) return projectV2OrderedChapter(chapter, options);
+  if (chapter?.schemaVersion === 3) return projectV3OrderedChapter(chapter, options);
+  throw new ChapterFlowError("CONTENT_SCHEMA_VERSION_UNSUPPORTED", "Chapter schemaVersion must explicitly be 2 or 3.", "schemaVersion");
+}
+
+/** Deterministically materialize the legacy anchor projection as schema-v3 flow. */
+export function migrateChapterV2ToV3(chapter, options = {}) {
+  if (chapter?.schemaVersion === 3) return structuredClone(chapter);
+  if (chapter?.schemaVersion !== 2) throw new ChapterFlowError("CONTENT_SCHEMA_VERSION_UNSUPPORTED", "Only schema-v2 chapters can be migrated to schema v3.", "schemaVersion");
+  const ordered = projectV2OrderedChapter(chapter, options);
+  const migrated = structuredClone(chapter);
+  migrated.schemaVersion = 3;
+  migrated.body = ordered.map((node) => {
+    if (node.kind === "checkpoint") return { type: "checkpointRef", checkpointId: node.value.checkpointId };
+    if (node.kind === "personFeature") return { type: "placementRef", placementId: node.value.placementId };
+    return structuredClone(node.value);
+  });
+  migrated.checkpoints = (migrated.checkpoints || []).map(({ displayOrder: _displayOrder, ...checkpoint }) => checkpoint);
+  migrated.managedPlacements = (migrated.managedPlacements || []).map(({ position: _position, orderAtAnchor: _orderAtAnchor, ...placement }) => placement);
+  // Validate the complete one-record/one-reference invariant before returning.
+  projectV3OrderedChapter(migrated, options);
+  return migrated;
+}
+
+/** Temporary compatibility export for consumers that still require v2 anchors. */
+export function exportChapterV3AsV2(chapter) {
+  if (chapter?.schemaVersion === 2) return structuredClone(chapter);
+  if (chapter?.schemaVersion !== 3) throw new ChapterFlowError("CONTENT_SCHEMA_VERSION_UNSUPPORTED", "Only schema-v3 chapters can be exported through the legacy adapter.", "schemaVersion");
+  projectV3OrderedChapter(chapter);
+  const legacy = structuredClone(chapter);
+  const checkpoints = new Map((legacy.checkpoints || []).map((value) => [value.checkpointId, value]));
+  const placements = new Map((legacy.managedPlacements || []).map((value) => [value.placementId, value]));
+  const anchorOrders = new Map();
+  const body = [];
+  legacy.body.forEach((node, index) => {
+    if (node.type === "checkpointRef") {
+      const checkpoint = checkpoints.get(node.checkpointId);
+      const passage = checkpoint.passageId || nearestFlowPassage(legacy.body, index);
+      const key = `${passage}:after`;
+      const order = anchorOrders.get(key) || 0;
+      checkpoint.displayOrder = order;
+      anchorOrders.set(key, order + 1);
+      return;
+    }
+    if (node.type === "placementRef") {
+      const placement = placements.get(node.placementId);
+      const contextual = placement.anchorPassageId;
+      const previous = nearestFlowPassage(legacy.body.slice(0, index + 1), index);
+      let next = null;
+      for (let cursor = index + 1; cursor < legacy.body.length; cursor += 1) {
+        if (!["checkpointRef", "placementRef"].includes(legacy.body[cursor]?.type)) { next = flowPassageId(legacy.body[cursor]); if (next) break; }
+      }
+      const position = contextual && contextual === next && contextual !== previous ? "before" : "after";
+      const anchorPassageId = contextual || previous || next;
+      const key = `${anchorPassageId}:${position}`;
+      const orderAtAnchor = anchorOrders.get(key) || 0;
+      Object.assign(placement, { anchorPassageId, position, orderAtAnchor });
+      anchorOrders.set(key, orderAtAnchor + 1);
+      return;
+    }
+    body.push(node);
+  });
+  legacy.schemaVersion = 2;
+  legacy.body = body;
+  return legacy;
 }
 
 const decodeLegacy = (block) => {
@@ -229,6 +359,7 @@ export function renderChapterProjection(chapter, options = {}) {
     html: orderedNodes.map((node) => renderOrderedNode(node, options)).join("\n"),
     prompts: orderedNodes.filter((node) => node.kind === "checkpoint" && node.value.showInSidebar !== false).map((node) => ({ ...node.value })),
     orderedNodes,
+    projectionProvenance: chapter?.schemaVersion === 3 ? "v3-flow" : "v2-anchor-adapter",
   };
 }
 

@@ -6,7 +6,7 @@ import { sha256, stableStringify } from '../../workers/content-api/src/services.
 
 const headers = { 'content-type': 'application/json', authorization: 'Bearer preview-test' };
 const capability = { verifyCapability: async () => ({ actorId: 'actor_preview_test', actorType: 'agent', clientId: 'mcp', runId: 'run-preview', scopes: ['content:read', 'content:write'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: ['render_preview'] }) };
-const chapter = { schemaVersion: 1, chapterId: 'chapter_ch07', title: 'Preview chapter', body: [{ type: 'heading', blockId: 'b1', passageId: 'p1', text: 'A heading', level: 2 }, { type: 'paragraph', blockId: 'b2', passageId: 'p2', text: 'Safe preview prose.' }], checkpoints: [] };
+const chapter = { schemaVersion: 2, chapterId: 'chapter_ch07', title: 'Preview chapter', body: [{ type: 'heading', blockId: 'b1', passageId: 'p1', text: 'A heading', level: 2 }, { type: 'paragraph', blockId: 'b2', passageId: 'p2', text: 'Safe preview prose.' }], checkpoints: [] };
 
 const dbForIssue = () => ({
   batches: [],

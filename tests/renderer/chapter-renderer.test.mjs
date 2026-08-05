@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ChapterFlowError,
+  exportChapterV3AsV2,
+  migrateChapterV2ToV3,
   normalizeRenderedHtml,
   projectOrderedChapter,
   projectionIdentity,
@@ -9,6 +12,7 @@ import {
 } from "../../packages/chapter-renderer/src/index.mjs";
 
 const chapter = {
+  schemaVersion: 2,
   revisionId: "revision_demo",
   chapterVersion: "7",
   title: "Demo",
@@ -40,6 +44,50 @@ test("reader and editor projection share identical canonical markup", () => {
   assert.match(reader.html, /checkpoint_first/);
   assert.match(reader.html, /https:\/\/ethicsandai\.your-digital-life\.org\/media\/aristotle\.webp/);
   assert.match(reader.html, /Nicomachean Ethics/);
+});
+
+test("schema-v2 migration materializes one authoritative flow with normalized DOM parity", () => {
+  const v2 = structuredClone(chapter);
+  const v3 = migrateChapterV2ToV3(v2);
+  assert.equal(v3.schemaVersion, 3);
+  assert.deepEqual(v3.body.map((node) => node.type), ["paragraph", "placementRef", "checkpointRef", "checkpointRef", "paragraph"]);
+  assert.equal(v3.checkpoints.every((item) => item.displayOrder === undefined), true);
+  assert.equal(v3.managedPlacements.every((item) => item.position === undefined && item.orderAtAnchor === undefined), true);
+  assert.equal(normalizeRenderedHtml(renderChapterProjection(v2).html), normalizeRenderedHtml(renderChapterProjection(v3).html));
+  assert.deepEqual(renderChapterProjection(v3).prompts.map((item) => item.checkpointId), ["checkpoint_first", "checkpoint_second"]);
+  assert.equal(renderChapterProjection(v2).projectionProvenance, "v2-anchor-adapter");
+  assert.equal(renderChapterProjection(v3).projectionProvenance, "v3-flow");
+  assert.deepEqual(migrateChapterV2ToV3(v3), v3);
+});
+
+test("schema-v3 flow rejects duplicate, orphaned, and unresolved references", () => {
+  const migrated = migrateChapterV2ToV3(chapter);
+  const checkpointRef = migrated.body.find((node) => node.type === "checkpointRef");
+  assert.ok(checkpointRef);
+  assert.throws(
+    () => projectOrderedChapter({ ...migrated, body: [...migrated.body, checkpointRef] }),
+    (error) => error instanceof ChapterFlowError && error.code === "CHECKPOINT_REFERENCE_DUPLICATE",
+  );
+  assert.throws(
+    () => projectOrderedChapter({ ...migrated, body: migrated.body.filter((node) => node !== checkpointRef) }),
+    (error) => error instanceof ChapterFlowError && error.code === "CHECKPOINT_REFERENCE_ORPHAN",
+  );
+  assert.throws(
+    () => projectOrderedChapter({ ...migrated, body: [...migrated.body, { type: "checkpointRef", checkpointId: "checkpoint_missing" }] }),
+    (error) => error instanceof ChapterFlowError && error.code === "CHECKPOINT_REFERENCE_MISSING",
+  );
+  assert.throws(
+    () => projectOrderedChapter({ ...chapter, schemaVersion: 3 }),
+    (error) => error instanceof ChapterFlowError && error.code === "CHECKPOINT_REFERENCE_ORPHAN",
+  );
+});
+
+test("legacy export derives anchor positions without introducing a second v3 ordering source", () => {
+  const v3 = migrateChapterV2ToV3(chapter);
+  const exported = exportChapterV3AsV2(v3);
+  assert.equal(exported.schemaVersion, 2);
+  assert.equal(exported.body.some((node) => node.type === "checkpointRef" || node.type === "placementRef"), false);
+  assert.equal(normalizeRenderedHtml(renderChapterProjection(exported).html), normalizeRenderedHtml(renderChapterProjection(v3).html));
 });
 
 test("checkpoint ID deterministically breaks shared anchor and display-order ties", () => {
@@ -129,7 +177,7 @@ test("managed placements honor before and after positions", () => {
 });
 
 test("provider embeds remain fallback-first without iframe or script requests", () => {
-  const projection = renderChapterProjection({ title: "Embed", body: [{ type: "externalEmbed", blockId: "block_embed", canonicalUrl: "https://www.youtube.com/watch?v=abc", identity: { provider: "youtube" }, fallback: { title: "Video", summary: "Description", linkLabel: "Watch" } }], checkpoints: [] });
+  const projection = renderChapterProjection({ schemaVersion: 2, title: "Embed", body: [{ type: "externalEmbed", blockId: "block_embed", canonicalUrl: "https://www.youtube.com/watch?v=abc", identity: { provider: "youtube" }, fallback: { title: "Video", summary: "Description", linkLabel: "Watch" } }], checkpoints: [] });
   assert.doesNotMatch(projection.html, /<(?:iframe|script)\b/i);
   assert.match(projection.html, /data-activate-embed="youtube"/);
   assert.match(projection.html, />Watch</);
@@ -141,13 +189,13 @@ test("author decorations normalize away and identities are key-order stable", as
 });
 
 test("locked legacy markup strips active content", () => {
-  const projection = renderChapterProjection({ title: "Legacy", body: [{ type: "legacyMarkup", blockId: "block_legacy", sanitizedHtml: '<p onclick="bad()">Safe</p><script>bad()</script>' }], checkpoints: [] });
+  const projection = renderChapterProjection({ schemaVersion: 2, title: "Legacy", body: [{ type: "legacyMarkup", blockId: "block_legacy", sanitizedHtml: '<p onclick="bad()">Safe</p><script>bad()</script>' }], checkpoints: [] });
   assert.match(projection.html, />Safe</);
   assert.doesNotMatch(projection.html, /onclick|script/i);
 });
 
 test("renders the editor's safe underline syntax without exposing raw markup", () => {
-  const projection = renderChapterProjection({ title: "Inline", body: [{ type: "paragraph", blockId: "block_inline", passageId: "passage_inline", text: "A ++visible underline++ beside *emphasis*." }], checkpoints: [] });
+  const projection = renderChapterProjection({ schemaVersion: 2, title: "Inline", body: [{ type: "paragraph", blockId: "block_inline", passageId: "passage_inline", text: "A ++visible underline++ beside *emphasis*." }], checkpoints: [] });
   assert.match(projection.html, /<u>visible underline<\/u>/);
   assert.match(projection.html, /<em>emphasis<\/em>/);
 });

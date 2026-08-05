@@ -11,6 +11,59 @@ export type PublicResponseEvidence = {
   headers: Record<string, string | undefined>;
 };
 
+export type MockAuthoringApiOptions = {
+  commitStatus?: number;
+  commitError?: { code: string; message: string; details?: unknown };
+};
+
+const mockChapter = {
+  schemaVersion: 2,
+  chapterId: "chapter_ch07",
+  slug: "aristotle-character-and-ai-assisted-life",
+  title: "Aristotle, Character, and the AI-Assisted Life",
+  revisionId: "revision_browser_base",
+  chapterVersion: "revision_browser_base",
+  status: "published",
+  body: [
+    { type: "paragraph", blockId: "block_browser_opening", passageId: "passage_browser_opening", text: "A visible browser-test passage." },
+    { type: "paragraph", blockId: "block_browser_second", passageId: "passage_browser_second", text: "A second passage before the checkpoint." },
+  ],
+  checkpoints: [{ checkpointId: "checkpoint_browser", passageId: "passage_browser_second", passageExcerptHash: "a".repeat(64), displayOrder: 0, title: "Browser checkpoint", trigger: "Pause.", prompt: "Make a judgment.", guidance: "Use the passage.", strategy: "initial-judgment", responseStructure: "prose", minWords: 30, maxWords: 120, showInSidebar: true, rationale: "Test stable flow." }],
+  personFeatures: [],
+  managedPlacements: [],
+};
+
+/** Localhost-only production-shaped Content API seam for editor save/recovery tests. */
+export async function installMockAuthoringApi(page: Page, options: MockAuthoringApiOptions = {}) {
+  const calls: Array<{ path: string; method: string; body?: unknown }> = [];
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const method = request.method();
+    const body = method === "GET" ? undefined : request.postDataJSON();
+    const respond = (status: number, payload: unknown) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(payload) });
+    if (url.pathname === "/api/session") {
+      calls.push({ path: url.pathname, method });
+      return respond(200, { csrf_token: "csrf_browser", expires_at: Date.now() + 60_000 });
+    }
+    if (url.pathname.endsWith("/authoring-view")) {
+      calls.push({ path: url.pathname, method });
+      return respond(200, { documentId: "chapter_ch07", revisionId: "revision_browser_base", chapter: mockChapter });
+    }
+    if (url.pathname.endsWith("/changesets") && method === "POST") {
+      calls.push({ path: url.pathname, method, body });
+      return respond(201, { id: "changeset_browser", state: "open", resumed: true, baseRevisionId: "revision_browser_base", version: 1, chapter: mockChapter });
+    }
+    if (url.pathname.endsWith(":commitLive") && method === "POST") {
+      calls.push({ path: url.pathname, method, body });
+      if ((options.commitStatus ?? 201) >= 400) return respond(options.commitStatus ?? 422, { error: options.commitError ?? { code: "VALIDATION_FAILED", message: "Replacement chapter is structurally invalid", details: { errors: [{ code: "STABLE_ID_DUPLICATE", path: "body.2.passageId", message: "Two paragraphs share passage_browser_second." }] } } });
+      return respond(201, { commitReceiptId: "commit_browser", changeSetId: "changeset_browser", documentId: "chapter_ch07", revisionId: "revision_browser_saved", contentHash: "b".repeat(64), projectionId: "projection_browser", projectionHash: "c".repeat(64), publicUrl: "https://reader.example/chapter/aristotle-character-and-ai-assisted-life/", deliveryStatus: "verified", statusUrl: "/v1/live-commits/commit_browser", statusExpiresAt: "2099-01-01T00:00:00Z", committed: true, live: true, noOp: false });
+    }
+    await route.continue();
+  });
+  return { calls: () => [...calls], dispose: () => page.unroute("**/*") };
+}
+
 const projectionHeaders = [
   "x-content-revision",
   "x-content-projection",

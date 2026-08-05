@@ -46,7 +46,8 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.match(editorMain, /chapter\.importPlainText/);
   assert.match(editorMain, /Structured source/);
   assert.match(editorMain, /Checkpoint/);
-  assert.match(editorMain, /Anchor passage/);
+  assert.match(editorMain, /Context passage/);
+  assert.match(editorMain, /Position in chapter flow/);
   assert.match(editorMain, /data-shift-checkpoint/);
   assert.match(editorModel, /moveCheckpoint/);
   assert.match(editorMain, /Media/);
@@ -61,6 +62,7 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.doesNotMatch(editorMain, /instructor-changeset-key/);
   assert.doesNotMatch(editorMain, /Legacy admin|future editor-engine adapter/);
   assert.match(editorModel, /chapter\.replaceDocument/);
+  assert.doesNotMatch(editorMain, /upgradeEditorChapter/);
   assert.match(tiptapEditor, /window\.setTimeout\(\(\) => onManagedSelect\(placementId\), 0\)/);
   assert.doesNotMatch(tiptapEditor, /=> onManagedSelect\(event\.detail\.placementId\)/);
   assert.doesNotMatch(tiptapEditor, /setNodeSelection/);

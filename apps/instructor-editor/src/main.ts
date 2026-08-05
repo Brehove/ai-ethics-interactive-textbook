@@ -5,18 +5,25 @@ import {
   addPersonFeature,
   blockPassage,
   checkpointAnchorBlock,
+  checkpointCreateOperation,
   checkpointExcerpt,
   chapterFromAuthoringView,
   chapterReplaceOperation,
   cloneChapter,
+  assertUniqueEditorIdentities,
   moveCheckpoint,
   newId,
+  normalizeEditorIdentities,
   nextCheckpointOrder,
   nearestPassage,
+  removeCheckpoint,
+  removeManagedPlacement,
+  replaceProsePreservingManagedFlow,
+  personFeatureCreateOperation,
   updateCheckpointDetails,
   type ChapterDocument,
 } from "./editor-model";
-import { managedNodeSequence, mountTiptap } from "./tiptap-editor";
+import { managedNodeSequence, mountTiptap, serializeBody } from "./tiptap-editor";
 import { legacyCuratedArtifacts } from "./generated-legacy-artifacts";
 import { CHAPTER_ROUTE_BY_SLUG } from "./chapter-route-manifest";
 import "./styles.css";
@@ -37,11 +44,17 @@ const requestedRoute = CHAPTER_ROUTE_BY_SLUG.get(requestedSlug);
 const requestedDocument = requestedRoute?.documentId ?? params.get("document") ?? DEMO_CHAPTER.documentId;
 const requestedAnchor = (window.location.hash ? window.location.hash.slice(1) : params.get("anchor")) ?? "";
 const configuredApiOrigin = import.meta.env.VITE_CONTENT_API_ORIGIN as string | undefined;
-const apiOrigin = configuredApiOrigin ?? (["localhost", "127.0.0.1"].includes(window.location.hostname) ? undefined : "https://auth.ethicsandai.your-digital-life.org");
+const localHostname = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const requestedTestApiOrigin = localHostname ? params.get("testApiOrigin") : null;
+const testApiOrigin = requestedTestApiOrigin && ["localhost", "127.0.0.1"].includes(new URL(requestedTestApiOrigin, window.location.origin).hostname)
+  ? new URL(requestedTestApiOrigin, window.location.origin).origin
+  : undefined;
+const apiOrigin = configuredApiOrigin ?? testApiOrigin ?? (localHostname ? undefined : "https://auth.ethicsandai.your-digital-life.org");
 const publicOrigin = (import.meta.env.VITE_PUBLIC_READER_ORIGIN as string | undefined) ?? "https://ethicsandai.your-digital-life.org";
 const authOrigin = (import.meta.env.VITE_AUTH_ORIGIN as string | undefined) ?? "https://auth.ethicsandai.your-digital-life.org";
 const returnUrl = `${publicOrigin}/chapter/${requestedSlug}/`;
 let chapter = cloneChapter(DEMO_CHAPTER);
+let baseChapter = cloneChapter(chapter);
 let selectedPassage = nearestPassage(chapter, requestedAnchor);
 let inspector: Inspector = { kind: "chapter" };
 let saveState: SaveState = "clean";
@@ -57,6 +70,10 @@ let changeSetRequestKey = crypto.randomUUID();
 let mediaItems: Array<Record<string, unknown>> = [];
 let personItems: Array<Record<string, unknown>> = [];
 let mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" };
+let saveError = "";
+let saveErrorPath = "";
+let identityRepairCount = 0;
+let activeRecoveryKey = "";
 
 const MEDIA_MIME_LIMITS = new Map<string, number>([
   ["image/png", 15 * 1024 * 1024], ["image/jpeg", 15 * 1024 * 1024], ["image/gif", 25 * 1024 * 1024], ["image/webp", 15 * 1024 * 1024],
@@ -230,15 +247,63 @@ function recoveryKey() {
   return `ai-ethics-instructor-recovery/${chapter.documentId}/${chapter.revisionId}`;
 }
 
+function recoveryPayload() {
+  return {
+    schemaVersion: 1,
+    recoveryKey: activeRecoveryKey || recoveryKey(),
+    savedAt: new Date().toISOString(),
+    documentId: chapter.documentId,
+    baseRevisionId: chapter.baseRevisionId,
+    changeSetId: chapter.changeSetId,
+    expectedVersion: chapter.expectedVersion,
+    pendingCommitKey,
+    chapter,
+    visualDocument: tiptapEditor?.getJSON() ?? null,
+  };
+}
+
 function saveRecovery() {
   if (!["dirty", "attention", "saving", "pending"].includes(saveState)) return;
-  sessionStorage.setItem(recoveryKey(), JSON.stringify({ savedAt: Date.now(), chapter, pendingCommitKey }));
+  activeRecoveryKey ||= recoveryKey();
+  sessionStorage.setItem(activeRecoveryKey, JSON.stringify(recoveryPayload()));
+}
+
+function updateSaveChrome() {
+  const label = app.querySelector<HTMLElement>(".save-state");
+  if (label) { label.textContent = stateLabel(); label.className = `save-state save-state--${saveState}`; }
+  const saveButton = app.querySelector<HTMLButtonElement>("[data-save]");
+  if (saveButton) saveButton.disabled = saveState === "saving";
+  const detail = app.querySelector<HTMLElement>("[data-save-error]");
+  if (detail) {
+    detail.textContent = saveError ? `${saveError}${saveErrorPath ? ` (${saveErrorPath})` : ""}` : "";
+    detail.hidden = !saveError;
+  }
 }
 
 function setState(next: SaveState) {
   saveState = next;
   saveRecovery();
-  render();
+  updateSaveChrome();
+}
+
+function setAttention(error: unknown, fallback = "The chapter could not be saved.") {
+  const details = error instanceof AuthoringApiError ? error.details as { errors?: Array<{ code?: string; path?: string; message?: string }> } | undefined : (error as { details?: { errors?: Array<{ code?: string; path?: string; message?: string }> } } | undefined)?.details;
+  const first = details?.errors?.[0];
+  saveError = first?.message || (error instanceof Error ? error.message : fallback);
+  saveErrorPath = first?.path || "";
+  setState("attention");
+}
+
+function exportRecoveryCopy() {
+  saveRecovery();
+  const payload = JSON.stringify(recoveryPayload(), null, 2);
+  const blob = new Blob([payload], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${chapter.slug}-recovery-${new Date().toISOString().replaceAll(":", "-")}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function stateLabel() {
@@ -298,7 +363,7 @@ async function loadMediaLibrary() {
 }
 
 function selectedBlock() {
-  return checkpointAnchorBlock(chapter, selectedPassage) ?? chapter.body.find((block) => Boolean(block.blockId));
+  return checkpointAnchorBlock(chapter, selectedPassage) ?? chapter.body.find((block) => "blockId" in block && Boolean(block.blockId));
 }
 
 function safeTitle(value: unknown) {
@@ -329,17 +394,25 @@ async function loadChapter() {
     csrfToken = session.csrf_token;
     const view = await dataSource.getAuthoringView(requestedDocument);
     chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView(view, chapter));
+    baseChapter = cloneChapter(chapter);
     const changeSet = await dataSource.createOrResumeChangeset(requestedDocument, { title: `Edit ${chapter.title}`, description: "Continuous instructor authoring session", resume: true, idempotencyKey: changeSetRequestKey });
     if (changeSet.chapter) chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView({ ...view, chapter: changeSet.chapter, changeSetId: changeSet.id, baseRevisionId: changeSet.baseRevisionId, expectedVersion: changeSet.version }, chapter));
     else { chapter.changeSetId = changeSet.id; chapter.baseRevisionId = changeSet.baseRevisionId ?? chapter.revisionId; chapter.expectedVersion = changeSet.version ?? 1; }
     selectedPassage = nearestPassage(chapter, requestedAnchor);
-    const recovery = sessionStorage.getItem(recoveryKey());
+    activeRecoveryKey = recoveryKey();
+    const recovery = sessionStorage.getItem(activeRecoveryKey);
     if (recovery) {
-      const parsed = JSON.parse(recovery) as { chapter?: ChapterDocument; pendingCommitKey?: string | null };
+      const parsed = JSON.parse(recovery) as { chapter?: ChapterDocument; pendingCommitKey?: string | null; visualDocument?: Record<string, unknown> | null };
       if (parsed.chapter && window.confirm("A newer local instructor recovery draft is available. Restore it?")) {
-        chapter = parsed.chapter;
+        let restored = cloneChapter({ ...parsed.chapter, schemaVersion: parsed.chapter.schemaVersion ?? 2 });
+        if (parsed.visualDocument) restored.body = serializeBody(parsed.visualDocument, restored.body);
+        const normalized = normalizeEditorIdentities(restored, baseChapter);
+        chapter = normalized.chapter;
+        identityRepairCount = normalized.repairs.length;
         pendingCommitKey = parsed.pendingCommitKey ?? null;
-        setState("dirty");
+        if (normalized.errors.length) setAttention({ details: { errors: normalized.errors } }, "The recovery draft needs identity review.");
+        else setState("dirty");
+        render();
         return;
       }
     }
@@ -348,7 +421,8 @@ async function loadChapter() {
       const start = new URL("/auth/start", authOrigin); start.searchParams.set("chapter", requestedSlug); start.searchParams.set("mode", "edit"); if (requestedAnchor) start.searchParams.set("anchor", requestedAnchor); window.location.assign(start.toString()); return;
     }
     console.error("Unable to load the canonical authoring view.", error);
-    setState("attention");
+    setAttention(error, "Unable to load the canonical authoring view.");
+    render();
     return;
   }
   render();
@@ -364,7 +438,7 @@ function inspectorHtml() {
     if (!item) return "";
     const anchorSequence = managedNodeSequence(chapter, item.passageId);
     const itemPosition = Math.max(0, anchorSequence.findIndex((node) => node.kind === "checkpoint" && node.item.checkpointId === item.checkpointId));
-    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>When should this appear?<input name="trigger" value="${escapeAttribute(String(item.trigger ?? ""))}" required></label><label>Strategy<select name="strategy" required>${checkpointStrategyOptions(String(item.strategy ?? "self-explanation"))}</select></label><label>Response format<select name="responseStructure"><option value="prose" ${item.responseStructure === "prose" ? "selected" : ""}>Written response</option><option value="movement-plus-prose" ${item.responseStructure === "movement-plus-prose" ? "selected" : ""}>Movement plus written response</option></select></label><div class="inspector-grid"><label>Minimum words<input name="minWords" type="number" min="1" max="1000" value="${Number(item.minWords ?? 1)}" required></label><label>Maximum words<input name="maxWords" type="number" min="1" max="1000" value="${Number(item.maxWords ?? 150)}" required></label></div><label class="checkbox-row"><input name="showInSidebar" type="checkbox" ${item.showInSidebar !== false ? "checked" : ""}> Show in the reading side panel</label><label>Teaching rationale<textarea name="rationale" rows="3" required>${escapeText(String(item.rationale ?? ""))}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Anchor passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Order at passage<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The anchor and order control where this card appears inline and in the reading-record sequence.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
+    return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>When should this appear?<input name="trigger" value="${escapeAttribute(String(item.trigger ?? ""))}" required></label><label>Strategy<select name="strategy" required>${checkpointStrategyOptions(String(item.strategy ?? "self-explanation"))}</select></label><label>Response format<select name="responseStructure"><option value="prose" ${item.responseStructure === "prose" ? "selected" : ""}>Written response</option><option value="movement-plus-prose" ${item.responseStructure === "movement-plus-prose" ? "selected" : ""}>Movement plus written response</option></select></label><div class="inspector-grid"><label>Minimum words<input name="minWords" type="number" min="1" max="1000" value="${Number(item.minWords ?? 1)}" required></label><label>Maximum words<input name="maxWords" type="number" min="1" max="1000" value="${Number(item.maxWords ?? 150)}" required></label></div><label class="checkbox-row"><input name="showInSidebar" type="checkbox" ${item.showInSidebar !== false ? "checked" : ""}> Show in the reading side panel</label><label>Teaching rationale<textarea name="rationale" rows="3" required>${escapeText(String(item.rationale ?? ""))}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Context passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Position in chapter flow<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The document flow controls visible position. The context passage keeps deep links, excerpt drift checks, and agent references stable.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
   if (!placement) return "";
@@ -388,19 +462,52 @@ function dialogHtml() {
   return `<dialog open data-dialog><form data-leave-form><header><h2>Unsaved changes</h2><button type="button" data-close aria-label="Close">×</button></header><p>Save and return publishes this chapter. Discard removes the local recovery draft.</p><footer><button type="button" data-close>Continue editing</button><button class="danger" type="button" data-discard>Discard</button><button class="primary" type="submit">Save and return</button></footer></form></dialog>`;
 }
 
+async function applyCheckpointInspector(formElement: HTMLFormElement, shift = 0) {
+  if (!inspector || inspector.kind !== "checkpoint") return;
+  const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
+  if (!item) return;
+  const form = new FormData(formElement);
+  const minWords = Number(form.get("minWords")); const maxWords = Number(form.get("maxWords"));
+  const maxWordsInput = formElement.elements.namedItem("maxWords") as HTMLInputElement | null;
+  maxWordsInput?.setCustomValidity(minWords > maxWords ? "Maximum words must be at least the minimum words." : "");
+  if (!formElement.reportValidity()) return;
+  const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
+  const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
+  const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
+  updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
+  moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
+  selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention"); render();
+}
+
+function bindInspectorEvents() {
+  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyCheckpointInspector(event.currentTarget).catch((error) => { console.error("Unable to update checkpoint.", error); setAttention(error); }); });
+  app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-inspector-form]"); if (form) void applyCheckpointInspector(form, Number(button.dataset.shiftCheckpoint ?? 0)).catch((error) => { console.error("Unable to reorder checkpoint.", error); setAttention(error); }); }));
+  app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { removeCheckpoint(chapter, String(button.dataset.removeCheckpoint)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
+  app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { removeManagedPlacement(chapter, String(button.dataset.removePlacement)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
+  app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); render(); } });
+}
+
+function renderInspector() {
+  const inspectorNode = app.querySelector<HTMLElement>(".inspector");
+  if (!inspectorNode) return;
+  inspectorNode.innerHTML = inspectorHtml();
+  bindInspectorEvents();
+}
+
 function render() {
   // Destroy while the old editor DOM is still attached. Destroying after
   // replacing app.innerHTML can let stale ProseMirror state overwrite a newly
   // imported server chapter.
   tiptapEditor?.destroy();
   tiptapEditor = null;
-  app.innerHTML = `<header class="author-bar"><a class="author-bar__mark" href="${publicOrigin}/">AI Ethics Textbook</a><div class="author-bar__chapter"><span>Editing</span><strong>${escapeText(chapter.title)}</strong></div><div class="author-bar__actions"><button data-done>Done</button><span class="save-state save-state--${saveState}" aria-live="polite">${stateLabel()}</span><button class="primary" data-save ${saveState === "saving" ? "disabled" : ""}>Save</button><button data-history aria-expanded="${historyOpen}">History</button><button data-more aria-expanded="${moreOpen}">More</button></div>${moreOpen ? `<menu class="more-menu"><button data-replace>Replace chapter</button><button data-source>Structured source</button></menu>` : ""}</header><main class="editor-layout"><section class="editor-canvas"><div class="format-toolbar" role="toolbar" aria-label="Chapter formatting"><select data-format aria-label="Paragraph style"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select><button data-command="bold" aria-label="Bold"><strong>B</strong></button><button data-command="italic" aria-label="Italic"><em>I</em></button><button data-command="underline" aria-label="Underline"><u>U</u></button><button data-command="toggleBulletList">Bulleted list</button><button data-command="toggleOrderedList">Numbered list</button><button data-link>Link</button><span class="toolbar-divider"></span><button data-dialog="checkpoint">Checkpoint</button><button data-dialog="media">Media</button><button data-dialog="embed">Embed</button><button data-dialog="person">Person / Scholar</button><span class="toolbar-divider"></span><button data-command="undo" aria-label="Undo">Undo</button><button data-command="redo" aria-label="Redo">Redo</button></div><div id="editor-document" data-document></div></section><aside class="inspector" aria-label="Contextual inspector">${inspectorHtml()}</aside></main>${historyOpen ? `<aside class="history-drawer" aria-label="Revision history"><header><h2>Revision history</h2><button data-history>Close</button></header><p>${dataSource ? "Immutable revisions from the authoring API. Restore creates a new draft and never rewrites history." : "Local scaffold history; configure the content API to load immutable revisions."}</p><ol><li><strong>${chapter.revisionId}</strong><span>Current base revision</span></li>${historyItems.map((item) => `<li><strong>${escapeText(String(item.revisionId ?? item.id ?? "Revision"))}</strong><span>${escapeText(String(item.createdAt ?? item.created_at ?? "Immutable revision"))}</span>${item.current ? "" : `<button type="button" data-restore-revision="${escapeAttribute(String(item.revisionId ?? item.id ?? ""))}">Restore as draft</button>`}</li>`).join("")}${lastSavedAt ? `<li><strong>Saved</strong><span>${lastSavedAt}</span></li>` : ""}</ol></aside>` : ""}${dialogHtml()}`;
+  app.innerHTML = `<header class="author-bar"><a class="author-bar__mark" href="${publicOrigin}/">AI Ethics Textbook</a><div class="author-bar__chapter"><span>Editing</span><strong>${escapeText(chapter.title)}</strong></div><div class="author-bar__actions"><button data-done>Done</button><span class="save-state save-state--${saveState}" aria-live="polite">${stateLabel()}</span><p class="save-error-detail" data-save-error role="alert" ${saveError ? "" : "hidden"}>${escapeText(saveError)}${saveErrorPath ? ` (${escapeText(saveErrorPath)})` : ""}</p><button class="primary" data-save ${saveState === "saving" ? "disabled" : ""}>Save</button><button data-history aria-expanded="${historyOpen}">History</button><button data-more aria-expanded="${moreOpen}">More</button></div>${moreOpen ? `<menu class="more-menu"><button data-export-recovery>Export recovery copy</button><button data-replace>Replace chapter</button><button data-source>Structured source</button></menu>` : ""}</header>${identityRepairCount ? `<section class="identity-repair-summary" role="status"><strong>Recovery repair ready for review.</strong> ${identityRepairCount} duplicate stable-ID field${identityRepairCount === 1 ? "" : "s"} received a fresh identity. Review checkpoint placement before Save.</section>` : ""}<main class="editor-layout"><section class="editor-canvas"><div class="format-toolbar" role="toolbar" aria-label="Chapter formatting"><select data-format aria-label="Paragraph style"><option value="p">Paragraph</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select><button data-command="bold" aria-label="Bold"><strong>B</strong></button><button data-command="italic" aria-label="Italic"><em>I</em></button><button data-command="underline" aria-label="Underline"><u>U</u></button><button data-command="toggleBulletList">Bulleted list</button><button data-command="toggleOrderedList">Numbered list</button><button data-link>Link</button><span class="toolbar-divider"></span><button data-dialog="checkpoint">Checkpoint</button><button data-dialog="media">Media</button><button data-dialog="embed">Embed</button><button data-dialog="person">Person / Scholar</button><span class="toolbar-divider"></span><button data-command="undo" aria-label="Undo">Undo</button><button data-command="redo" aria-label="Redo">Redo</button></div><div id="editor-document" data-document></div></section><aside class="inspector" aria-label="Contextual inspector">${inspectorHtml()}</aside></main>${historyOpen ? `<aside class="history-drawer" aria-label="Revision history"><header><h2>Revision history</h2><button data-history>Close</button></header><p>${dataSource ? "Immutable revisions from the authoring API. Restore creates a new draft and never rewrites history." : "Local scaffold history; configure the content API to load immutable revisions."}</p><ol><li><strong>${chapter.revisionId}</strong><span>Current base revision</span></li>${historyItems.map((item) => `<li><strong>${escapeText(String(item.revisionId ?? item.id ?? "Revision"))}</strong><span>${escapeText(String(item.createdAt ?? item.created_at ?? "Immutable revision"))}</span>${item.current ? "" : `<button type="button" data-restore-revision="${escapeAttribute(String(item.revisionId ?? item.id ?? ""))}">Restore as draft</button>`}</li>`).join("")}${lastSavedAt ? `<li><strong>Saved</strong><span>${lastSavedAt}</span></li>` : ""}</ol></aside>` : ""}${dialogHtml()}`;
   bindEvents();
 }
 
 function bindEvents() {
   const documentNode = app.querySelector<HTMLElement>("[data-document]");
-  if (documentNode) tiptapEditor = mountTiptap(documentNode, chapter, (body) => { chapter.body = body; selectedPassage = nearestPassage(chapter, selectedPassage); if (saveState !== "saving") { saveState = "dirty"; saveRecovery(); const label = app.querySelector<HTMLElement>(".save-state"); if (label) { label.textContent = stateLabel(); label.className = "save-state save-state--dirty"; } } }, (placementId) => { inspector = placementId.startsWith("checkpoint_") ? { kind: "checkpoint", id: placementId } : { kind: "managed", id: placementId }; render(); }, (passageId) => { selectedPassage = nearestPassage(chapter, passageId); inspector = { kind: "chapter" }; const anchor = app.querySelector<HTMLElement>(".inspector__empty dd:last-child"); if (anchor) anchor.textContent = selectedPassage; }, legacyCuratedArtifacts.filter((item) => item.chapterId === requestedDocument));
+  if (documentNode) tiptapEditor = mountTiptap(documentNode, chapter, (body) => { chapter.body = body; selectedPassage = nearestPassage(chapter, selectedPassage); if (saveState !== "saving") { saveState = "dirty"; saveRecovery(); const label = app.querySelector<HTMLElement>(".save-state"); if (label) { label.textContent = stateLabel(); label.className = "save-state save-state--dirty"; } } }, (placementId) => { inspector = placementId.startsWith("checkpoint_") ? { kind: "checkpoint", id: placementId } : { kind: "managed", id: placementId }; renderInspector(); }, (passageId) => { selectedPassage = nearestPassage(chapter, passageId); inspector = { kind: "chapter" }; const anchor = app.querySelector<HTMLElement>(".inspector__empty dd:last-child"); if (anchor) anchor.textContent = selectedPassage; }, legacyCuratedArtifacts.filter((item) => item.chapterId === requestedDocument));
+  bindInspectorEvents();
   app.querySelectorAll<HTMLButtonElement>("[data-command]").forEach((button) => button.addEventListener("click", () => {
     const command = button.dataset.command ?? "";
     const commands = tiptapEditor?.chain().focus();
@@ -436,6 +543,7 @@ function bindEvents() {
   app.querySelector<HTMLButtonElement>("[data-done]")?.addEventListener("click", done);
   app.querySelector<HTMLButtonElement>("[data-history]")?.addEventListener("click", async () => { historyOpen = !historyOpen; render(); if (historyOpen && dataSource) { try { const result = await dataSource.getHistory(chapter.documentId); historyItems = Array.isArray(result.revisions) ? result.revisions as Array<Record<string, unknown>> : Array.isArray(result.items) ? result.items as Array<Record<string, unknown>> : []; render(); } catch { historyItems = []; render(); } } });
   app.querySelector<HTMLButtonElement>("[data-more]")?.addEventListener("click", () => { moreOpen = !moreOpen; render(); });
+  app.querySelector<HTMLButtonElement>("[data-export-recovery]")?.addEventListener("click", exportRecoveryCopy);
   app.querySelector<HTMLButtonElement>("[data-replace]")?.addEventListener("click", () => { activeDialog = "replace"; moreOpen = false; render(); });
   app.querySelector<HTMLButtonElement>("[data-source]")?.addEventListener("click", () => { activeDialog = "source"; moreOpen = false; render(); });
   app.querySelectorAll<HTMLButtonElement>("button[data-dialog]").forEach((button) => button.addEventListener("click", async () => {
@@ -461,7 +569,7 @@ function bindEvents() {
     if (!dataSource || !window.confirm("Restore this revision as a new draft? The live chapter will not change until you click Save.")) return;
     try {
       const result = await dataSource.restoreAsDraft(chapter.documentId, String(button.dataset.restoreRevision), { title: `Restore ${chapter.title}`, description: "Instructor history restore", idempotencyKey: crypto.randomUUID() });
-      chapter = chapterFromAuthoringView({ ...result, chapter: result.chapter ?? result.document }, chapter); historyOpen = false; setState("dirty");
+      chapter = chapterFromAuthoringView({ ...result, chapter: result.chapter ?? result.document }, chapter); historyOpen = false; setState("dirty"); render();
     } catch (error) { console.error(error); setState("attention"); }
   }));
   app.querySelectorAll<HTMLButtonElement>("[data-close]").forEach((button) => button.addEventListener("click", () => { activeDialog = null; render(); }));
@@ -487,9 +595,10 @@ function bindForms() {
     const anchor = selectedBlock();
     if (dataSource && anchor) {
       const passageText = checkpointExcerpt(anchor);
-      await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: nextCheckpointOrder(chapter, selectedPassage), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
+      const checkpoint = { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), ...(chapter.schemaVersion === 2 ? { displayOrder: nextCheckpointOrder(chapter, selectedPassage) } : {}), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." };
+      await applyDraftOperations([checkpointCreateOperation(chapter, checkpoint, anchor.blockId)]);
     } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
-    activeDialog = null; setState("dirty");
+    activeDialog = null; setState("dirty"); render();
   };
   app.querySelector<HTMLButtonElement>("[data-add-checkpoint]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-checkpoint-form]"); if (form) void addCheckpointFromForm(form); });
   app.querySelector<HTMLFormElement>("[data-checkpoint-form]")?.addEventListener("submit", (event) => {
@@ -503,15 +612,17 @@ function bindForms() {
       if (curated) {
         const placementId = newId("placement"); const personFeatureId = newId("personfeature");
         const feature = { ...structuredClone(curated), entityRevision: undefined, sourceDocumentId: undefined, personFeatureId, placementId } as ChapterDocument["personFeatures"][number];
-        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length, displayPreset: "thinker-card" as const };
+        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length } : {}), displayPreset: "thinker-card" as const };
         next = { feature, placement };
       } else next = addPersonFeature(chapter, String(source.personFeatureId), selectedPassage);
       if (dataSource) {
         chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== next.feature.personFeatureId);
         chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== next.placement.placementId);
-        await applyDraftOperations([{ type: "personFeature.upsert", feature: next.feature, placement: next.placement }]);
+        const anchor = selectedBlock();
+        if (!anchor) throw new Error("Select a passage before adding a person feature.");
+        await applyDraftOperations([personFeatureCreateOperation(chapter, next.feature, next.placement, anchor.blockId)]);
       }
-      activeDialog = null; setState("dirty");
+      activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error("Unable to add the person feature.", error); setState("attention"); }
   });
   app.querySelector<HTMLFormElement>("[data-media-upload-form]")?.addEventListener("submit", async (event) => {
@@ -600,7 +711,7 @@ function bindForms() {
     if (!item || !anchor || !dataSource) { setState("attention"); return; }
     const placement = { mediaId: String(item.id), mediaVersionId: String(item.media_version_id), rightsCaseId: String(item.rights_case_id), anchorPassageId: selectedPassage, decorative: false, alt: String(values.get("alt") ?? "").trim(), caption: String(values.get("caption") ?? "").trim(), teachingUse: String(values.get("teachingUse") ?? "").trim(), displayPreset: String(values.get("displayPreset") ?? "reading"), align: "center", animationPolicy: "clickToPlay", printPolicy: "poster", downloadable: false };
     if (!placement.alt || !placement.caption || !placement.teachingUse) { setState("attention"); return; }
-    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty");
+    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty"); render();
   });
   app.querySelector<HTMLFormElement>("[data-embed-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault(); const values = new FormData(event.currentTarget); const url = String(values.get("url") ?? "").trim(); const title = String(values.get("title") ?? "").trim(); const teachingUse = String(values.get("teachingUse") ?? "").trim(); const anchor = selectedBlock();
@@ -608,19 +719,18 @@ function bindForms() {
     try {
       const resolved = await dataSource.resolveEmbed({ url }); const proposal = resolved.proposal as Record<string, unknown>; const accessedAt = new Date().toISOString().slice(0, 10);
       const embed = proposal.kind === "externalEmbed" ? { kind: "externalEmbed", identity: proposal.identity, canonicalUrl: proposal.canonicalUrl, caption: title, teachingUse, displayPreset: "reading", theme: "auto", fallback: { title, summary: teachingUse, linkLabel: "Open source", accessedAt }, adapterVersion: proposal.adapterVersion } : { kind: "richLink", canonicalUrl: proposal.canonicalUrl ?? url, title, summary: teachingUse, teachingUse, linkLabel: "Open source", accessedAt };
-      await applyDraftOperations([{ type: "embed.upsert", embed, position: { afterBlockId: anchor.blockId } }]); activeDialog = null; setState("dirty");
+      await applyDraftOperations([{ type: "embed.upsert", embed, position: { afterBlockId: anchor.blockId } }]); activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error(error); setState("attention"); }
   });
   const applyReplacement = async (form: HTMLFormElement) => {
     const paragraphs = String(new FormData(form).get("body") ?? "").split(/\n{2,}/).map((text) => text.trim()).filter(Boolean);
     if (!paragraphs.length) { setState("attention"); return; }
     if (dataSource) {
-      try { await applyDraftOperations([{ type: "chapter.importPlainText", paragraphs }]); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); }
+      try { await applyDraftOperations([{ type: "chapter.importPlainText", paragraphs }]); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); render(); }
       catch (error) { console.error("Unable to import the chapter.", error); setState("attention"); }
       return;
     }
-    const editable = chapter.body.filter((block) => ["paragraph", "heading", "blockquote", "list", "callout"].includes(block.type));
-    chapter.body = paragraphs.map((text, index) => ({ type: "paragraph", blockId: editable[index]?.blockId ?? newId("block"), passageId: blockPassage(editable[index] ?? { type: "paragraph", blockId: "" }) || newId("passage"), text })); selectedPassage = blockPassage(chapter.body[0]); activeDialog = null; setState("dirty");
+    replaceProsePreservingManagedFlow(chapter, paragraphs); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); render();
   };
   const applySource = async (form: HTMLFormElement) => {
     try {
@@ -629,35 +739,14 @@ function bindForms() {
       parsed.documentId = chapter.documentId; parsed.chapterId = chapter.chapterId; parsed.slug = chapter.slug; parsed.changeSetId = chapter.changeSetId; parsed.revisionId = chapter.revisionId; parsed.baseRevisionId = chapter.baseRevisionId; parsed.expectedVersion = chapter.expectedVersion;
       if (dataSource) await applyDraftOperations([chapterReplaceOperation(parsed)]);
       else chapter = parsed;
-      activeDialog = null; setState("dirty");
+      activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error("Unable to apply structured source.", error); setState("attention"); }
   };
   app.querySelector<HTMLButtonElement>("[data-apply-replacement]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-replace-form]"); if (form) void applyReplacement(form); });
   app.querySelector<HTMLButtonElement>("[data-apply-source]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-source-form]"); if (form) void applySource(form); });
   app.querySelector<HTMLFormElement>("[data-replace-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyReplacement(event.currentTarget); });
   app.querySelector<HTMLFormElement>("[data-leave-form]")?.addEventListener("submit", async (event) => { event.preventDefault(); if (await save()) window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
-  app.querySelector<HTMLButtonElement>("[data-discard]")?.addEventListener("click", () => { sessionStorage.removeItem(recoveryKey()); window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
-  const applyCheckpointInspector = async (formElement: HTMLFormElement, shift = 0) => {
-    if (!inspector || inspector.kind !== "checkpoint") return;
-    const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
-    if (!item) return;
-    const form = new FormData(formElement);
-    const minWords = Number(form.get("minWords")); const maxWords = Number(form.get("maxWords"));
-    const maxWordsInput = formElement.elements.namedItem("maxWords") as HTMLInputElement | null;
-    maxWordsInput?.setCustomValidity(minWords > maxWords ? "Maximum words must be at least the minimum words." : "");
-    if (!formElement.reportValidity()) return;
-    const requestedPassage = nearestPassage(chapter, String(form.get("passageId") ?? item.passageId));
-    const passageText = checkpointExcerpt(checkpointAnchorBlock(chapter, requestedPassage));
-    const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
-    updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
-    moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
-    selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention");
-  };
-  app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyCheckpointInspector(event.currentTarget).catch((error) => { console.error("Unable to update checkpoint.", error); setState("attention"); }); });
-  app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-inspector-form]"); if (form) void applyCheckpointInspector(form, Number(button.dataset.shiftCheckpoint ?? 0)).catch((error) => { console.error("Unable to reorder checkpoint.", error); setState("attention"); }); }));
-  app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { chapter.checkpoints = chapter.checkpoints.filter((item) => item.checkpointId !== button.dataset.removeCheckpoint); inspector = { kind: "chapter" }; setState("dirty"); }));
-  app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== button.dataset.removePlacement); inspector = { kind: "chapter" }; setState("dirty"); }));
-  app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); } });
+  app.querySelector<HTMLButtonElement>("[data-discard]")?.addEventListener("click", () => { sessionStorage.removeItem(activeRecoveryKey || recoveryKey()); window.location.assign(`${returnUrl}#${publicAnchor(selectedPassage)}`); });
 }
 
 async function ensureOpenChangeset() {
@@ -673,7 +762,6 @@ async function applyDraftOperations(operations: Array<Record<string, unknown>>) 
   const result = await dataSource.applyOperationBatch(chapter.changeSetId, { documentId: chapter.documentId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion, idempotencyKey: crypto.randomUUID(), operations });
   chapter = hydrateManagedMediaPreviews(chapterFromAuthoringView({ chapter: result.chapter, documentId: chapter.documentId, changeSetId: chapter.changeSetId, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: result.version }, chapter));
   selectedPassage = nearestPassage(chapter, selectedPassage);
-  render();
 }
 
 async function waitForDelivery(result: CommitLiveResult) {
@@ -690,7 +778,11 @@ async function waitForDelivery(result: CommitLiveResult) {
 async function save(): Promise<boolean> {
   if (saveState === "saving") return false;
   const invalid = chapter.checkpoints.some((item) => !item.title.trim() || !item.prompt.trim());
-  if (invalid) { setState("attention"); return false; }
+  if (invalid) { setAttention(new Error("Every checkpoint needs a title and prompt.")); return false; }
+  try { assertUniqueEditorIdentities(chapter); }
+  catch (error) { setAttention(error); return false; }
+  saveError = ""; saveErrorPath = "";
+  const savedRecoveryKey = activeRecoveryKey || recoveryKey();
   setState("saving");
   try {
     let result: CommitLiveResult;
@@ -704,18 +796,23 @@ async function save(): Promise<boolean> {
       result = { commitReceiptId: `commit_local_${Date.now()}`, changeSetId: chapter.changeSetId, documentId: chapter.documentId, revisionId: `revision_local_${Date.now()}`, contentHash: "local", projectionId: "projection_local", projectionHash: "local", publicUrl: `${publicOrigin}/chapter/${chapter.slug}/`, deliveryStatus: "verified", statusUrl: "", statusExpiresAt: "", committed: true, live: true, noOp: false };
     }
     chapter.revisionId = result.revisionId; chapter.baseRevisionId = result.revisionId; chapter.expectedVersion += 1;
-    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date()); sessionStorage.removeItem(recoveryKey()); pendingCommitKey = null; changeSetRequestKey = crypto.randomUUID(); chapter.changeSetId = ""; chapter.expectedVersion = 1; setState("saved");
+    lastSavedAt = new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date());
     // Public delivery verification is an integrity check, not another author
     // workflow step. Save is complete once the atomic live commit succeeds.
-    void waitForDelivery(result).then((verified) => {
-      if (!verified) console.warn("The chapter was saved, but public delivery confirmation did not arrive before the status window ended.");
-    });
+    if (!(await waitForDelivery(result))) {
+      saveError = "The revision was accepted, but public delivery has not been verified. The recovery copy is being retained.";
+      setState("pending");
+      return true;
+    }
+    sessionStorage.removeItem(savedRecoveryKey);
+    activeRecoveryKey = "";
+    pendingCommitKey = null; changeSetRequestKey = crypto.randomUUID(); chapter.changeSetId = ""; chapter.expectedVersion = 1; baseChapter = cloneChapter(chapter); identityRepairCount = 0; setState("saved");
     return true;
   } catch (error) {
-    console.error(error);
+    if (!(error instanceof AuthoringApiError) || ![409, 422].includes(error.status)) console.error(error);
     if (error instanceof AuthoringApiError && error.status === 401) {
       saveRecovery(); const start = new URL("/auth/start", authOrigin); start.searchParams.set("chapter", requestedSlug); start.searchParams.set("mode", "edit"); if (selectedPassage) start.searchParams.set("anchor", selectedPassage); window.location.assign(start.toString());
-    } else setState("attention");
+    } else setAttention(error);
     return false;
   }
 }
