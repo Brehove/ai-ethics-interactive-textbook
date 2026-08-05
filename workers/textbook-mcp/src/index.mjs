@@ -36,8 +36,9 @@ const mediaReviewPackage = z.object({
   idempotencyKey: uuid
 }).strict();
 const asResult = (data) => ({ content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data });
-const MCP_RESOURCE = 'https://mcp.ethicsandai.your-digital-life.org';
-const MCP_RESOURCE_METADATA = `${MCP_RESOURCE}/.well-known/oauth-protected-resource`;
+const MCP_ORIGIN = 'https://mcp.ethicsandai.your-digital-life.org';
+const MCP_RESOURCE = `${MCP_ORIGIN}/mcp`;
+const MCP_RESOURCE_METADATA = `${MCP_ORIGIN}/.well-known/oauth-protected-resource`;
 const AUTHORIZATION_SERVER = 'https://auth.ethicsandai.your-digital-life.org';
 
 const operationScopes = Object.freeze({

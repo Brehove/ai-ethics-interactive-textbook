@@ -138,7 +138,9 @@ test('hosted worker rejects missing or unverifiable bearer and does not expose a
   assert.match(missing.headers.get('www-authenticate'), /oauth-protected-resource/);
   const metadata = await worker.fetch(new Request('https://mcp.example/.well-known/oauth-protected-resource'), makeEnv());
   assert.equal(metadata.status, 200);
-  assert.deepEqual((await metadata.json()).authorization_servers, ['https://auth.ethicsandai.your-digital-life.org']);
+  const metadataBody = await metadata.json();
+  assert.equal(metadataBody.resource, 'https://mcp.ethicsandai.your-digital-life.org/mcp');
+  assert.deepEqual(metadataBody.authorization_servers, ['https://auth.ethicsandai.your-digital-life.org']);
   const noVerifier = await worker.fetch(new Request('https://mcp.example/internal/verify', { headers: { authorization: 'Bearer device-flow-test' } }), { CONTENT_API: { fetch() {} } }); assert.equal(noVerifier.status, 401);
 });
 

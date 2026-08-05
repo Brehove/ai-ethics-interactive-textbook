@@ -11,7 +11,7 @@ import { pkceChallenge } from "../src/oauth-state.mjs";
 const NOW = 1_785_600_000;
 const AUTH_ORIGIN = "https://auth.example.test";
 const EDITOR_ORIGIN = "https://editor.example.test";
-const RESOURCE = "https://mcp.ethicsandai.your-digital-life.org";
+const RESOURCE = "https://mcp.ethicsandai.your-digital-life.org/mcp";
 const CLIENT_ID = "codex-ai-ethics-textbook";
 const REDIRECT_URI = "http://127.0.0.1:43123/callback/ai-ethics-textbook";
 const SESSION_SECRET = "test-only-session-secret-which-is-longer-than-thirty-two-bytes";
