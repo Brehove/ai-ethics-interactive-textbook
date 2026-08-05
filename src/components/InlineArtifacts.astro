@@ -31,11 +31,34 @@ const { artifacts } = Astro.props;
 )}
 
 <script>
+  const sharedPassage = (artifact: HTMLElement, thinker: HTMLElement): boolean => {
+    if (thinker.classList.contains("chapter-person")) return true;
+    const artifactPassages = new Set(artifact.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean));
+    return thinker.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean)
+      .some((id) => artifactPassages.has(id)) ?? false;
+  };
+
+  const pairWithAdjacentThinker = (artifact: HTMLElement): void => {
+    if (artifact.closest("[data-inline-card-pair]")) return;
+    const selector = ".chapter-person, [data-inline-scholar-card][data-inline-placed]";
+    const previous = artifact.previousElementSibling;
+    const next = artifact.nextElementSibling;
+    const thinker = next?.matches(selector) ? next : previous?.matches(selector) ? previous : null;
+    if (!(thinker instanceof HTMLElement) || !sharedPassage(artifact, thinker)) return;
+
+    const pair = document.createElement("div");
+    pair.className = "inline-card-pair";
+    pair.dataset.inlineCardPair = "true";
+    artifact.before(pair);
+    pair.append(artifact, thinker);
+  };
+
   const placeInlineArtifacts = (): void => {
     document.querySelectorAll<HTMLElement>("[data-inline-artifact-gallery]").forEach((gallery) => {
       const prose = gallery.closest<HTMLElement>(".chapter-prose");
       if (!prose) return;
-      gallery.querySelectorAll<HTMLElement>("[data-inline-artifact]").forEach((figure) => {
+      const figures = [...gallery.querySelectorAll<HTMLElement>("[data-inline-artifact]")];
+      figures.forEach((figure) => {
         const target = figure.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean)
           .map((id) => prose.querySelector<HTMLElement>(`#${CSS.escape(id)}`)).find(Boolean);
         if (!target) return;
@@ -46,6 +69,7 @@ const { artifacts } = Astro.props;
         figure.dataset.inlinePlaced = "true";
         insertionPoint.insertAdjacentElement("afterend", figure);
       });
+      figures.filter((figure) => figure.dataset.inlinePlaced === "true").forEach(pairWithAdjacentThinker);
       if (gallery.childElementCount === 0) gallery.remove();
     });
   };
@@ -77,14 +101,115 @@ const { artifacts } = Astro.props;
   .artifact-note p { margin: 0 0 0.7rem; }
   .artifact-note a { color: var(--rust-dark); font-weight: 700; overflow-wrap: anywhere; }
   .print-artifact-credit { display: none; }
+
+  :global(.chapter-person) {
+    display: grid;
+    grid-template-columns: minmax(12rem, 34%) 1fr;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    margin: 2rem 0;
+    border-left: 4px solid var(--rust);
+    background: var(--wash-strong);
+    padding: clamp(1rem, 3vw, 2rem);
+    break-inside: avoid;
+  }
+  :global(.chapter-person__portrait img) { display: block; width: 100%; height: auto; }
+  :global(.chapter-person__label) {
+    margin: 0;
+    color: var(--rust-dark);
+    font: 700 0.64rem/1.35 var(--sans);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  :global(.chapter-person__credit) { color: var(--ink-soft); font: 0.62rem/1.4 var(--sans); }
+
+  :global(.inline-card-pair) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: clamp(0.9rem, 2vw, 1.25rem);
+    margin: 2.4rem 0 3rem;
+  }
+  :global(.inline-card-pair > .inline-artifact),
+  :global(.inline-card-pair > .chapter-person),
+  :global(.inline-card-pair > .inline-scholar-card) {
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+  }
+  :global(.inline-card-pair > .inline-artifact) { grid-template-columns: 1fr; }
+  :global(.inline-card-pair > .inline-artifact .artifact-image-link) {
+    min-height: 20rem;
+    max-height: 20rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0.75rem;
+  }
+  :global(.inline-card-pair > .inline-artifact .artifact-image-link img) { max-height: 18.5rem; }
+  :global(.inline-card-pair > .inline-artifact figcaption) { align-self: start; padding: 1.15rem; }
+  :global(.inline-card-pair > .inline-artifact h3) { font-size: clamp(1.35rem, 2.5vw, 1.7rem); }
+
+  :global(.inline-card-pair > .chapter-person),
+  :global(.inline-card-pair > .inline-scholar-card) {
+    grid-template-columns: 1fr;
+    gap: 0;
+    overflow: hidden;
+    border-block: 1px solid var(--line-dark);
+    border-left: 4px solid var(--rust);
+    background: var(--wash-strong);
+    padding: 0;
+    box-shadow: none;
+  }
+  :global(.inline-card-pair .chapter-person__portrait),
+  :global(.inline-card-pair .inline-scholar-card__portrait) {
+    min-width: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    padding: 0.75rem;
+  }
+  :global(.inline-card-pair .chapter-person__portrait img),
+  :global(.inline-card-pair .inline-scholar-card__portrait .person-portrait img) {
+    width: 100%;
+    height: 18.5rem;
+    min-height: 0;
+    max-height: 18.5rem;
+    border: 0;
+    object-fit: cover;
+    object-position: center 28%;
+  }
+  :global(.inline-card-pair .chapter-person__body),
+  :global(.inline-card-pair .inline-scholar-card__record) { align-self: start; padding: 1.15rem; }
+  :global(.inline-card-pair .chapter-person h3),
+  :global(.inline-card-pair .inline-scholar-card h3) {
+    margin: 0.35rem 0 0.7rem;
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+  :global(.inline-card-pair .chapter-person__body p) { margin: 0.55rem 0; font-size: 0.9rem; line-height: 1.5; }
+
   @media (max-width: 700px) {
     .inline-artifact { grid-template-columns: 1fr; }
     .artifact-image-link { min-height: 0; border-right: 0; border-bottom: 1px solid var(--line); }
     .artifact-image-link img { max-height: 28rem; }
+    :global(.chapter-person) { grid-template-columns: 1fr; }
+    :global(.inline-card-pair) { grid-template-columns: 1fr; }
+    :global(.inline-card-pair > .inline-artifact .artifact-image-link) { min-height: 0; max-height: none; }
+    :global(.inline-card-pair > .inline-artifact .artifact-image-link img) { max-height: 28rem; }
+    :global(.inline-card-pair .chapter-person__portrait img),
+    :global(.inline-card-pair .inline-scholar-card__portrait .person-portrait img) {
+      height: auto;
+      max-height: 24rem;
+      object-fit: contain;
+    }
   }
   @media print {
+    :global(.inline-card-pair) { display: block; }
     .inline-artifact { display: block; background: transparent; }
     .artifact-image-link { min-height: 0; border: 0; }
+    :global(.chapter-person) { display: block; background: transparent; }
+    :global(.inline-card-pair > .chapter-person),
+    :global(.inline-card-pair > .inline-scholar-card) { margin: 1.5rem 0; }
     details { display: none; }
     .print-artifact-credit { display: block; font: 0.58rem/1.4 var(--sans); overflow-wrap: anywhere; }
   }
