@@ -1,11 +1,13 @@
 import { constantTimeEqual, randomBase64Url, signToken, verifyToken } from "./crypto.mjs";
 import { HttpError } from "./policy.mjs";
+import { verifyMcpOAuthAccessToken } from "./mcp-oauth.mjs";
 
 const encoder = new TextEncoder();
 const ALLOWED_SCOPES = new Set(["content:read", "content:write", "content:submit", "content:live-save", "media:read", "media:upload"]);
 const DOCUMENT = /^chapter_ch(?:0[1-9]|1[0-8])$/;
 const OPERATION = /^[a-z][a-z0-9_.:-]{0,79}$/;
 const CLIENT = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const stable = (value) => {
   if (Array.isArray(value)) return value.map(stable);
@@ -34,6 +36,18 @@ const uniqueSorted = (values, predicate, name, max = 50) => {
   return [...new Set(values)].sort();
 };
 const audit = (env, event, subject, actor, detail, at) => env.AUTH_STATE_DB.prepare("INSERT INTO agent_capability_audit (event_kind, subject_id, actor_id, detail_json, created_at) VALUES (?, ?, ?, ?, ?)").bind(event, subject, actor || null, JSON.stringify(detail || {}), at);
+const exactLiveSaveTarget = (input) => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "live_save_request_invalid", "Live Save target is required");
+  const target = {
+    changeSetId: typeof input.changeSetId === "string" && OPERATION.test(input.changeSetId) ? input.changeSetId : null,
+    documentId: typeof input.documentId === "string" && DOCUMENT.test(input.documentId) ? input.documentId : null,
+    baseRevisionId: typeof input.baseRevisionId === "string" && OPERATION.test(input.baseRevisionId) ? input.baseRevisionId : null,
+    expectedVersion: Number.isInteger(input.expectedVersion) && input.expectedVersion > 0 ? input.expectedVersion : null,
+    idempotencyKey: typeof input.idempotencyKey === "string" && UUID.test(input.idempotencyKey) ? input.idempotencyKey : null,
+  };
+  if (Object.values(target).some((value) => value === null)) throw new HttpError(422, "live_save_request_invalid", "Live Save target is invalid");
+  return Object.freeze(target);
+};
 
 export async function createAgentCapabilityRequest(input, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
   const db = authDb(env);
@@ -72,7 +86,7 @@ export async function createAgentCapabilityRequest(input, env, nowSeconds = Math
 export async function getAgentCapabilityRequest(requestId, env, nowSeconds = Math.floor(Date.now() / 1000)) {
   const db = authDb(env);
   const row = await db.prepare(`SELECT id, client_id, run_id, scopes_json, allowed_document_ids_json,
-    allowed_operations_json, requested_lifetime_seconds, state, requested_at, expires_at
+    allowed_operations_json, requested_lifetime_seconds, state, requested_at, expires_at, target_json
     FROM agent_capability_requests WHERE id = ?`).bind(requestId).first();
   if (!row) throw new HttpError(404, "capability_request_not_found", "Capability request was not found");
   const expired = Date.parse(row.expires_at) <= nowSeconds * 1000;
@@ -88,6 +102,7 @@ export async function getAgentCapabilityRequest(requestId, env, nowSeconds = Mat
     requestedAt: row.requested_at,
     expiresAt: row.expires_at,
     liveSave: parseJson(row.scopes_json).includes("content:live-save"),
+    ...(row.target_json ? { target: parseJson(row.target_json, null) } : {}),
   });
 }
 
@@ -111,17 +126,12 @@ export async function approveAgentCapabilityRequest(requestId, input, session, e
   return { requestId, approved: true, liveSave };
 }
 
-export async function exchangeAgentCapabilityRequest(requestId, deviceSecret, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
+async function issueAgentCapabilityRow(row, env, nowSeconds, randomBytes, actorIdOverride = undefined) {
   const db = authDb(env); const at = iso(nowSeconds);
-  if (typeof deviceSecret !== "string" || !deviceSecret) throw new HttpError(401, "device_secret_invalid", "Device secret is required");
-  const row = await db.prepare("SELECT * FROM agent_capability_requests WHERE id = ? AND device_secret_hash = ?").bind(requestId, await capabilityHash(deviceSecret)).first();
-  if (!row) throw new HttpError(401, "device_secret_invalid", "Device secret is invalid");
-  if (Date.parse(row.expires_at) <= nowSeconds * 1000) throw new HttpError(410, "capability_request_expired", "Capability request expired");
-  if (row.state === "pending") return { pending: true, retryAfter: 2 };
-  if (row.state !== "approved") throw new HttpError(409, "capability_request_inactive", "Capability request cannot be exchanged");
+  const requestId = row.id;
   const scopes = parseJson(row.scopes_json); const documents = parseJson(row.allowed_document_ids_json); const operations = parseJson(row.allowed_operations_json);
-  const lifetime = Math.min(row.requested_lifetime_seconds, scopes.includes("content:live-save") ? 600 : 900);
-  const jti = `cap_${randomBase64Url(18, randomBytes)}`; const actorId = `actor_agent_${row.client_id.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+  const lifetime = Math.min(row.requested_lifetime_seconds, scopes.includes("content:live-save") ? 120 : 900);
+  const jti = `cap_${randomBase64Url(18, randomBytes)}`; const actorId = actorIdOverride || `actor_agent_${row.client_id.replace(/[^A-Za-z0-9_-]/g, "_")}`;
   const claims = { v: 1, kind: "agent-capability", iss: "ai-ethics-editor-auth", aud: "ai-ethics-textbook-mcp", sub: actorId, actorType: "agent", clientId: row.client_id, runId: row.run_id, scopes, allowedDocumentIds: documents, allowedOperations: operations, iat: nowSeconds, exp: nowSeconds + lifetime, jti };
   const claimsHash = await capabilityHash(claims); const token = await signToken(claims, signingSecret(env));
   const grant = db.prepare(`INSERT INTO agent_capability_grants (jti, actor_id, client_id, run_id, claims_hash, scopes_json, allowed_document_ids_json, allowed_operations_json, issued_at, expires_at, issuance_request_id)
@@ -139,6 +149,43 @@ export async function exchangeAgentCapabilityRequest(requestId, deviceSecret, en
   return { pending: false, accessToken: token, tokenType: "Bearer", expiresAt: iso(claims.exp), jti, claims: { ...claims, kind: undefined, v: undefined } };
 }
 
+export async function exchangeAgentCapabilityRequest(requestId, deviceSecret, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
+  const db = authDb(env);
+  if (typeof deviceSecret !== "string" || !deviceSecret) throw new HttpError(401, "device_secret_invalid", "Device secret is required");
+  const row = await db.prepare("SELECT * FROM agent_capability_requests WHERE id = ? AND device_secret_hash = ?").bind(requestId, await capabilityHash(deviceSecret)).first();
+  if (!row) throw new HttpError(401, "device_secret_invalid", "Device secret is invalid");
+  if (Date.parse(row.expires_at) <= nowSeconds * 1000) throw new HttpError(410, "capability_request_expired", "Capability request expired");
+  if (row.state === "pending") return { pending: true, retryAfter: 2 };
+  if (row.state !== "approved") throw new HttpError(409, "capability_request_inactive", "Capability request cannot be exchanged");
+  return issueAgentCapabilityRow(row, env, nowSeconds, randomBytes);
+}
+
+export async function createBoundLiveSaveRequest(parentToken, input, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
+  const target = exactLiveSaveTarget(input);
+  const identity = await verifyIssuedAgentCapability(parentToken, { documentId: target.documentId, operation: "request_live_save_authorization", scope: "content:write" }, env, nowSeconds);
+  if (!identity.oauth) throw new HttpError(403, "oauth_required", "Live Save step-up requires a Codex OAuth session");
+  const created = await createAgentCapabilityRequest({ clientId: identity.clientId, runId: identity.runId, scopes: ["content:read", "content:write", "content:live-save"], allowedDocumentIds: [target.documentId], allowedOperations: ["commit_live"], lifetimeSeconds: 120 }, env, nowSeconds, randomBytes);
+  await authDb(env).prepare("UPDATE agent_capability_requests SET parent_oauth_jti = ?, target_json = ? WHERE id = ?")
+    .bind(identity.jti, JSON.stringify(stable(target)), created.requestId).run();
+  const verification = new URL("/auth/start", env.EDITOR_AUTH_BASE_URL || "https://auth.ethicsandai.your-digital-life.org");
+  verification.searchParams.set("mode", "agent-access");
+  verification.searchParams.set("request", created.requestId);
+  return { requestId: created.requestId, userCode: created.userCode, verificationUrl: verification.toString(), expiresAt: created.expiresAt, target };
+}
+
+export async function consumeBoundLiveSaveRequest(parentToken, requestId, input, env, nowSeconds = Math.floor(Date.now() / 1000), randomBytes) {
+  const target = exactLiveSaveTarget(input);
+  const identity = await verifyIssuedAgentCapability(parentToken, { documentId: target.documentId, operation: "request_live_save_authorization", scope: "content:write" }, env, nowSeconds);
+  if (!identity.oauth) throw new HttpError(403, "oauth_required", "Live Save step-up requires a Codex OAuth session");
+  const row = await authDb(env).prepare("SELECT * FROM agent_capability_requests WHERE id = ? AND parent_oauth_jti = ?").bind(requestId, identity.jti).first();
+  if (!row || row.target_json !== JSON.stringify(stable(target))) throw new HttpError(403, "live_save_authorization_invalid", "Live Save authorization does not match this exact commit");
+  if (Date.parse(row.expires_at) <= nowSeconds * 1000) throw new HttpError(410, "capability_request_expired", "Live Save authorization expired");
+  if (row.state === "pending") return { pending: true };
+  if (row.approved_by !== identity.actorId) throw new HttpError(403, "live_save_authorization_invalid", "Live Save approval belongs to a different instructor");
+  if (row.state !== "approved") throw new HttpError(409, "capability_request_inactive", "Live Save authorization cannot be consumed");
+  return issueAgentCapabilityRow(row, env, nowSeconds, randomBytes, identity.actorId);
+}
+
 export async function revokeAgentCapability(jti, reason, session, env, nowSeconds = Math.floor(Date.now() / 1000)) {
   const db = authDb(env); const at = iso(nowSeconds); const actorId = `actor_github_${String(session.sub).replace(/[^A-Za-z0-9_-]/g, "_")}`;
   const row = await db.prepare("SELECT * FROM agent_capability_grants WHERE jti = ?").bind(jti).first();
@@ -153,6 +200,8 @@ export async function revokeAgentCapability(jti, reason, session, env, nowSecond
 }
 
 export async function verifyIssuedAgentCapability(token, target, env, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const oauth = await verifyMcpOAuthAccessToken(token, target, env, nowSeconds);
+  if (oauth) return oauth;
   const db = authDb(env); const claims = await verifyToken(token, signingSecret(env), { kind: "agent-capability", now: nowSeconds });
   if (!claims || claims.aud !== "ai-ethics-textbook-mcp" || claims.actorType !== "agent" || typeof claims.jti !== "string") throw new HttpError(401, "invalid_capability", "Capability is invalid or expired");
   const row = await db.prepare("SELECT * FROM agent_capability_grants WHERE jti = ?").bind(claims.jti).first();

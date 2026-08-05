@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ai-ethics-textbook": {
+      "type": "http",
+      "url": "https://mcp.ethicsandai.your-digital-life.org/mcp"
+    }
+  }
+}

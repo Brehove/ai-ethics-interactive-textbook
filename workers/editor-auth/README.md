@@ -85,13 +85,34 @@ A changed base returns HTTP 409 with `error: "stale_base"` and `current_base_com
 
 Required headers: exact allowed `Origin` and `X-Editor-CSRF`. Clears the session cookie and returns HTTP 204.
 
-## Agent-capability device flow
+## Codex MCP OAuth
+
+Codex connects through standard OAuth discovery at
+`/.well-known/oauth-authorization-server`. The authorization server supports
+dynamic registration of public loopback clients, authorization code with PKCE
+S256, 15-minute access tokens, rotating 30-day refresh tokens, and revocation.
+GitHub establishes the allowlisted instructor identity. The baseline grant
+contains ordinary chapter and media editing scopes but never
+`content:live-save`.
+
+When `request_live_save_authorization` is called, the private Worker RPC creates
+a five-minute approval request bound to one exact changeset, chapter, base
+revision, expected version, and idempotency key. GitHub is required again so
+the approval session is no more than five minutes old. Approval issues a
+two-minute, single-use `commit_live` capability. Any changed precondition,
+different OAuth actor, expiry, replay, or revoked parent grant fails closed.
+
+The private service-binding entrypoint exposes `verifyCapability`,
+`requestLiveSaveAuthorization`, and `consumeLiveSaveAuthorization`; none has a
+public HTTP route.
+
+## Legacy agent-capability device flow
 
 An MCP launcher creates a request with `POST /auth/agent-capability-requests`; this endpoint has no browser session requirement because it cannot grant any authority. The response contains a one-time device secret (returned once), a short user code, and the fixed verification URL. Requests expire after five minutes.
 
 The instructor approves a request through `POST /auth/agent-capability-requests/{requestId}` with an allowed origin, signed GitHub session, CSRF header, matching user code, and `approve: true`. The agent polls `POST /auth/agent-capability-requests/{requestId}:exchange` with its device secret. Exchange is one-time.
 
-Omitted scopes default to `content:read` and `content:write`, with a maximum 15-minute grant. `content:live-save` is never implicit: it requires `content:write`, exact chapter IDs, the `commit_live` operation, a maximum 10-minute grant, an explicit `confirmLiveSave: true`, and a GitHub login no more than five minutes old. The instructor can revoke a grant with `POST /auth/agent-capabilities/{jti}:revoke` using the same session and CSRF boundary.
+Omitted scopes default to `content:read` and `content:write`, with a maximum 15-minute grant. This route remains for compatibility and conformance tests; the supported Codex workflow uses native OAuth. `content:live-save` is never implicit: it requires `content:write`, exact chapter IDs, the `commit_live` operation, an explicit `confirmLiveSave: true`, and a GitHub login no more than five minutes old. Issued Live Save capabilities are capped at two minutes. The instructor can revoke a grant with `POST /auth/agent-capabilities/{jti}:revoke` using the same session and CSRF boundary.
 
 There is deliberately no HTTP token-verification route. Bound Workers use the private RPC entrypoint `AgentCapabilityVerifier.verifyCapability(token, target)`; it checks signature, expiry, persisted grant state, revocation, exact document, operation, and required scope.
 

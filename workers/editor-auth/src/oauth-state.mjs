@@ -41,6 +41,12 @@ export function validateOAuthTarget(url, routeBySlug) {
     }
     return Object.freeze({ requestId: request[0], mode: "agent-access" });
   }
+  if (mode.length === 1 && mode[0] === "mcp-oauth") {
+    if (request.length !== 1 || chapter.length || anchor.length || !/^oauthreq_[A-Za-z0-9_-]{8,}$/.test(request[0])) {
+      throw new HttpError(400, "invalid_oauth_target", "The MCP OAuth target is invalid");
+    }
+    return Object.freeze({ requestId: request[0], mode: "mcp-oauth" });
+  }
   if (chapter.length !== 1 || mode.length !== 1 || anchor.length > 1 || request.length) {
     throw new HttpError(400, "invalid_oauth_target", "The editor return target is invalid");
   }
@@ -56,11 +62,16 @@ export function validateOAuthTarget(url, routeBySlug) {
   return Object.freeze({ chapterSlug: slug, mode: "edit", ...(anchorId ? { anchorId } : {}) });
 }
 
-export function editorTargetUrl(editorOrigin, target) {
+export function editorTargetUrl(editorOrigin, target, authOrigin = editorOrigin) {
   if (target.mode === "agent-access") {
     const destination = new URL("/agent-access", editorOrigin);
     destination.searchParams.set("request", target.requestId);
     destination.searchParams.set("authenticated", "1");
+    return destination.href;
+  }
+  if (target.mode === "mcp-oauth") {
+    const destination = new URL("/oauth/authorize", authOrigin);
+    destination.searchParams.set("request", target.requestId);
     return destination.href;
   }
   const destination = new URL(`/chapter/${target.chapterSlug}/`, editorOrigin);
@@ -114,7 +125,7 @@ export async function consumeOAuthState(state, env, nowSeconds) {
     ) {
       throw new HttpError(400, "state_expired", "The GitHub login state expired");
     }
-    const returnedTarget = target.mode === "agent-access"
+    const returnedTarget = target.mode === "agent-access" || target.mode === "mcp-oauth"
       ? { requestId: row.chapter_slug, mode: target.mode }
       : { chapterSlug: row.chapter_slug, mode: row.mode, ...(row.anchor_id ? { anchorId: row.anchor_id } : {}) };
     return Object.freeze({

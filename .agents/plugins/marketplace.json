@@ -1,0 +1,20 @@
+{
+  "name": "ai-ethics-textbook",
+  "interface": {
+    "displayName": "AI Ethics Textbook"
+  },
+  "plugins": [
+    {
+      "name": "ai-ethics-textbook",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ai-ethics-textbook"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Education"
+    }
+  ]
+}

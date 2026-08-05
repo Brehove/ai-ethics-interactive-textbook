@@ -5,11 +5,15 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import worker, { createMcp, verifyCapability } from '../../workers/textbook-mcp/src/index.mjs';
 
 const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
-const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
+const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person', 'request_live_save_authorization'];
 const claims = (overrides = {}) => ({ actorId: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', jti: 'grant_test_123', scopes: ['content:read', 'content:write', 'media:read', 'media:upload'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: editOperations, expiresAt: '2026-08-03T20:00:00.000Z', ...overrides });
-function makeEnv({ verified = claims(), api = async () => ({ ok: true }) } = {}) {
+function makeEnv({ verified = claims(), api = async () => ({ ok: true }), requestLiveSave = async (_token, target) => ({ requestId: 'capreq_live_7', verificationUrl: 'https://auth.example/approve', userCode: 'ABC12345', target }), consumeLiveSave = async () => ({ pending: true }) } = {}) {
   return {
-    AUTH_CAPABILITY: { verifyCapability: async (token, target) => { assert.equal(token, 'device-flow-test'); assert.equal(typeof target, 'object'); return typeof verified === 'function' ? verified() : verified; } },
+    AUTH_CAPABILITY: {
+      verifyCapability: async (token, target) => { assert.ok(['device-flow-test', 'live-save-test'].includes(token)); assert.equal(typeof target, 'object'); return typeof verified === 'function' ? verified(token, target) : verified; },
+      requestLiveSaveAuthorization: requestLiveSave,
+      consumeLiveSaveAuthorization: consumeLiveSave,
+    },
     CONTENT_API: { fetch: async (request) => new Response(JSON.stringify(await api(request)), { headers: { 'content-type': 'application/json' } }) }
   };
 }
@@ -34,7 +38,8 @@ test('MCP exposes the Unified authoring contract rather than raw or legacy write
   const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
   for (const name of ['get_authoring_view', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
   for (const name of ['save_live_revision', 'create_changeset', 'replace_text', 'approve_changeset', 'publish_changeset']) assert.equal(names.includes(name), false, name);
-  assert.equal(names.includes('commit_live'), false);
+  assert.equal(names.includes('request_live_save_authorization'), true);
+  assert.equal(names.includes('commit_live'), true);
   await client.close(); await server.close();
 });
 
@@ -98,31 +103,61 @@ test('checkpoint cardinality is arbitrary and repeated stages share an explicit 
   await client.close(); await server.close();
 });
 
-test('commit_live is hidden without the exact scope and operation, and re-verifies before mutation', async () => {
-  const noLive = claims(); const { client: editClient, server: editServer } = await connected(makeEnv(), noLive);
-  assert.equal((await editClient.listTools()).tools.some((tool) => tool.name === 'commit_live'), false);
-  await editClient.close(); await editServer.close();
-  let verificationCount = 0;
-  const liveIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
-  const env = makeEnv({ verified: () => { verificationCount += 1; return verificationCount === 1 ? liveIdentity : claims(); } });
-  const initialIdentity = await verifyCapability(env, 'device-flow-test');
-  const { client, server } = await connected(env, initialIdentity);
-  const response = await client.callTool({ name: 'commit_live', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key } });
-  assert.equal(response.isError, true); assert.match(response.content[0].text, /does not grant commit_live/);
+test('ordinary OAuth can request exact Live Save approval and cannot publish while it is pending', async () => {
+  let requestedTarget;
+  const env = makeEnv({ requestLiveSave: async (token, target) => { assert.equal(token, 'device-flow-test'); requestedTarget = target; return { requestId: 'capreq_live_7', verificationUrl: 'https://auth.example/approve', userCode: 'ABC12345', target }; } });
+  const { client, server } = await connected(env);
+  const target = { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key };
+  const requested = await client.callTool({ name: 'request_live_save_authorization', arguments: target });
+  assert.equal(requested.structuredContent.requestId, 'capreq_live_7');
+  assert.deepEqual(requestedTarget, target);
+  const pending = await client.callTool({ name: 'commit_live', arguments: { liveSaveRequestId: 'capreq_live_7', ...target } });
+  assert.equal(pending.structuredContent.state, 'authorization_pending');
   await client.close(); await server.close();
 });
 
-test('commit_live sends an explicit empty operation array for an already-edited changeset', async () => {
+test('approved commit_live consumes the exact authorization and sends an explicit empty operation array', async () => {
   let body;
   const liveIdentity = claims({ scopes: ['content:read', 'content:write', 'content:live-save'], allowedOperations: [...editOperations, 'commit_live'] });
-  const env = makeEnv({ verified: liveIdentity, api: async (request) => { body = await request.json(); return { deliveryStatus: 'verified' }; } });
-  const { client, server } = await connected(env, liveIdentity);
-  const response = await client.callTool({ name: 'commit_live', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key } });
+  let consumed;
+  const env = makeEnv({
+    verified: (token) => token === 'live-save-test' ? liveIdentity : claims(),
+    consumeLiveSave: async (token, requestId, target) => { consumed = { token, requestId, target }; return { pending: false, accessToken: 'live-save-test' }; },
+    api: async (request) => { body = await request.json(); assert.equal(request.headers.get('authorization'), 'Bearer live-save-test'); return { deliveryStatus: 'verified' }; },
+  });
+  const { client, server } = await connected(env);
+  const target = { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 2, idempotencyKey: key };
+  const response = await client.callTool({ name: 'commit_live', arguments: { liveSaveRequestId: 'capreq_live_7', ...target } });
   assert.equal(response.isError, undefined); assert.deepEqual(body.operations, []);
+  assert.deepEqual(consumed, { token: 'device-flow-test', requestId: 'capreq_live_7', target });
   await client.close(); await server.close();
 });
 
 test('hosted worker rejects missing or unverifiable bearer and does not expose an internal verifier route', async () => {
   const missing = await worker.fetch(new Request('https://mcp.example/mcp'), makeEnv()); assert.equal(missing.status, 401);
+  assert.match(missing.headers.get('www-authenticate'), /oauth-protected-resource/);
+  const metadata = await worker.fetch(new Request('https://mcp.example/.well-known/oauth-protected-resource'), makeEnv());
+  assert.equal(metadata.status, 200);
+  assert.deepEqual((await metadata.json()).authorization_servers, ['https://auth.ethicsandai.your-digital-life.org']);
   const noVerifier = await worker.fetch(new Request('https://mcp.example/internal/verify', { headers: { authorization: 'Bearer device-flow-test' } }), { CONTENT_API: { fetch() {} } }); assert.equal(noVerifier.status, 401);
+});
+
+test('bounded media upload forwards exact bytes with only the one-time ticket token', async () => {
+  const bytes = new TextEncoder().encode('gif-bytes');
+  const digest = 'a'.repeat(64);
+  const uploadToken = 'u'.repeat(64);
+  let forwarded;
+  const env = { CONTENT_API: { fetch: async (request) => {
+    forwarded = request;
+    return new Response(JSON.stringify({ ticketId: 'upload_7', jobId: 'mediajob_7', state: 'queued', sha256: digest }), { status: 202, headers: { 'content-type': 'application/json' } });
+  } } };
+  const response = await worker.fetch(new Request('https://mcp.ethicsandai.your-digital-life.org/media-upload/upload_7', {
+    method: 'PUT',
+    headers: { 'content-type': 'image/gif', 'content-length': String(bytes.byteLength), 'x-content-sha256': digest, 'x-upload-token': uploadToken },
+    body: bytes,
+  }), env);
+  assert.equal(response.status, 202);
+  assert.equal(forwarded.headers.get('authorization'), null);
+  assert.equal(forwarded.headers.get('x-upload-token'), uploadToken);
+  assert.equal(await forwarded.text(), 'gif-bytes');
 });

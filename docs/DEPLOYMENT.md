@@ -39,12 +39,12 @@ The auth Worker requires the non-secret runtime values listed in `workers/editor
 - `RELEASE_SNAPSHOT_READ_TOKEN`
 - `RELEASE_DEPLOY_RECEIPT_TOKEN`
 
-Before the first auth deployment, apply both migrations in the dedicated
+Before the auth deployment, apply all migrations in the dedicated
 `ai-ethics-editor-auth-state` database. Migration `0002_oauth_pkce_states.sql`
-stores only short-lived OAuth nonce hashes, server-side PKCE verifiers,
-validated chapter targets, and expiry; the hourly Worker trigger removes
-expired rows. It is not the content database and must never be bound to the
-reader or editor static host.
+stores short-lived GitHub OAuth state. Migration `0003_mcp_oauth.sql` adds
+public PKCE client registration, refreshable MCP grants, and exact Live Save
+authorization bindings. This database is not the content database and must
+never be bound to the reader or editor static host.
 
 Deploy it with:
 
@@ -56,21 +56,35 @@ The private GitHub App is `ai-ethics-editor-brehove`. It is installed only on `B
 
 ## Codex MCP and Skills
 
-Register the hosted MCP once:
+The versioned Codex plugin lives at `plugins/ai-ethics-textbook/`. It packages
+the hosted MCP connection and the four AI Ethics Skills as one installable
+unit. Install it from the repository marketplace in the Codex desktop app,
+then select **Authenticate** for `ai-ethics-textbook`. Codex discovers the
+authorization server, dynamically registers a public loopback client, uses
+PKCE, opens GitHub sign-in, and stores/refreshes its OAuth grant. No access-token
+environment variable or local signing secret is part of the supported flow.
+
+For an MCP-only development registration, add the server and authenticate it:
 
 ```bash
 codex mcp add ai-ethics-textbook \
-  --url https://mcp.ethicsandai.your-digital-life.org/mcp \
-  --bearer-token-env-var TEXTBOOK_MCP_ACCESS_TOKEN
+  --url https://mcp.ethicsandai.your-digital-life.org/mcp
+codex mcp login ai-ethics-textbook
 ```
 
-Install the four directories under `.agents/skills/` into the user's Codex skills directory. The MCP uses short-lived, per-run capabilities; no shared bearer token belongs in Codex configuration. On macOS, store the Worker-matching signing secret in the login Keychain under service `ai-ethics-textbook-mcp-capability`, then start a Codex CLI session with:
+The ordinary OAuth grant can read, draft, preview, restore history as a new
+draft, manage checkpoints, and manage media. It cannot publish. When a user
+explicitly asks to Save or publish, the agent calls
+`request_live_save_authorization` with one exact changeset/chapter/revision/
+version/idempotency tuple. The instructor follows its URL, signs in to GitHub,
+enters the displayed code, and approves that exact revision. `commit_live`
+then consumes the two-minute, single-use capability; changing any bound value
+fails closed.
 
-```bash
-npm run codex:textbook
-```
-
-The wrapper reads the signing secret without printing it, mints a 55-minute capability for a unique run, removes the signing secret from the child environment, and passes only the scoped bearer token to Codex. Start a new wrapped session to refresh an expired capability. The `content:live-save` scope exposes `save_live_revision`; the Skills may call it only when the user explicitly asks to save or publish immediately. It cannot approve, reject, change authority, promote a protected whole-site release, or roll back.
+Raw media bytes use the upload ticket returned by `upload_media`: a
+short-lived, hash-, MIME-, size-, actor-, and single-use-bound capability. The
+bundled media helper streams the local file with that one-time token and never
+receives the standing OAuth bearer.
 
 ## Publication boundary
 

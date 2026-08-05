@@ -1596,7 +1596,7 @@ async function requestMediaUpload(request, env, identity) {
       env.CONTENT_DB.prepare('UPDATE media_budget_monthly SET reserved_bytes = reserved_bytes + ?, updated_at = ? WHERE month_key = ?').bind(upload.bytes, createdAt, monthKey),
       env.CONTENT_DB.prepare(`INSERT INTO upload_tickets
         (id, object_key, content_type, content_hash, max_bytes, state, issued_by, expires_at, created_at, filename, declared_bytes, upload_token_hash, month_key, storage_reservation_bytes, job_id, request_json, review_package_id)
-        VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(ticketId, objectKey, upload.mimeType, upload.sha256, upload.maxBytes, identity.actorId, expiresAt, createdAt, upload.filename, upload.bytes, tokenHash, monthKey, upload.storageReservationBytes, jobId, JSON.stringify({ transcriptEquivalent: upload.transcriptEquivalent || null, poster: upload.poster || null, reviews: { reviewPackageId: reviewPackage.id, rightsReviewId: reviewPackage.rights_review_id, editorialReviewId: reviewPackage.editorial_review_id, accessibilityReviewId: reviewPackage.accessibility_review_id } }), reviewPackage.id),
+        VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(ticketId, objectKey, upload.mimeType, upload.sha256, upload.maxBytes, identity.actorId, expiresAt, createdAt, upload.filename, upload.bytes, tokenHash, monthKey, upload.storageReservationBytes, jobId, JSON.stringify({ transcriptEquivalent: upload.transcriptEquivalent || null, poster: upload.poster || null, reviews: { reviewPackageId: reviewPackage.id, rightsReviewId: reviewPackage.rights_review_id, editorialReviewId: reviewPackage.editorial_review_id, accessibilityReviewId: reviewPackage.accessibility_review_id }, issuer: { actorType: identity.actorType, clientId: identity.clientId, runId: identity.runId, capabilityJti: identity.capabilityJti || null } }), reviewPackage.id),
       env.CONTENT_DB.prepare("INSERT INTO media_jobs (id, upload_ticket_id, state, created_by, created_at, updated_at) VALUES (?, ?, 'awaiting_upload', ?, ?, ?)").bind(jobId, ticketId, identity.actorId, createdAt, createdAt),
       idempotencyStatement(env, idem, body.idempotencyKey, 201, response, createdAt),
       await audit(env, identity, 'media.upload.requested', 'media_job', jobId, { ticketId, filename: upload.filename, mimeType: upload.mimeType, declaredBytes: upload.bytes, storageReservationBytes: upload.storageReservationBytes }, { idempotencyHash: idem.requestHash })
@@ -1608,18 +1608,21 @@ async function requestMediaUpload(request, env, identity) {
   return json(response, 201);
 }
 
-async function uploadMediaBytes(request, env, identity, ticketId) {
-  requireScope(identity, 'media:upload'); runIdentity(identity);
+async function uploadMediaBytes(request, env, suppliedIdentity, ticketId) {
   requireMediaBindings(env, ['CONTENT_DB', 'UPLOAD_QUARANTINE', 'CONTENT_MEDIA', 'MEDIA_JOB_ENVELOPES', 'MEDIA_JOBS']);
-  await enforceRateLimit(env, identity, 'upload');
   const ticket = await env.CONTENT_DB.prepare(`SELECT t.*, j.id AS media_job_id, j.state AS job_state FROM upload_tickets t
     JOIN media_jobs j ON j.upload_ticket_id = t.id WHERE t.id = ?`).bind(ticketId).first();
   if (!ticket) throw new ApiError(404, 'NOT_FOUND', 'Upload ticket was not found');
-  if (ticket.issued_by !== identity.actorId) throw new ApiError(403, 'FORBIDDEN', 'Upload ticket belongs to another actor');
   if (ticket.state !== 'issued' || ticket.job_state !== 'awaiting_upload') throw new ApiError(409, 'UPLOAD_TICKET_USED', 'Upload ticket is no longer available');
   if (Date.parse(ticket.expires_at) <= Date.now()) throw new ApiError(410, 'UPLOAD_TICKET_EXPIRED', 'Upload ticket has expired');
   const token = request.headers.get('x-upload-token');
   if (!token || await sha256(token) !== ticket.upload_token_hash) throw new ApiError(401, 'UPLOAD_TOKEN_INVALID', 'One-time upload token is invalid');
+  const uploadRequest = parseStoredJson(ticket.request_json, 'Upload request metadata');
+  const issuer = uploadRequest.issuer && typeof uploadRequest.issuer === 'object' ? uploadRequest.issuer : {};
+  const identity = suppliedIdentity || Object.freeze({ actorId: ticket.issued_by, actorType: issuer.actorType === 'human' ? 'human' : 'agent', clientId: typeof issuer.clientId === 'string' && issuer.clientId ? issuer.clientId : 'media-upload-ticket', runId: typeof issuer.runId === 'string' && issuer.runId ? issuer.runId : ticket.id, scopes: new Set(['media:upload']), allowedDocumentIds: Object.freeze([]), allowedOperations: Object.freeze(['upload_media']), capabilityJti: typeof issuer.capabilityJti === 'string' ? issuer.capabilityJti : null });
+  requireScope(identity, 'media:upload'); runIdentity(identity);
+  if (ticket.issued_by !== identity.actorId) throw new ApiError(403, 'FORBIDDEN', 'Upload ticket belongs to another actor');
+  await enforceRateLimit(env, identity, 'upload');
   if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== ticket.content_type) throw new ApiError(415, 'MIME_MISMATCH', 'Content-Type does not match the upload ticket');
   if (request.headers.get('x-content-sha256') !== ticket.content_hash) throw new ApiError(422, 'HASH_MISMATCH', 'Declared SHA-256 does not match the upload ticket');
   const declaredLength = Number(request.headers.get('content-length'));
@@ -1631,7 +1634,6 @@ async function uploadMediaBytes(request, env, identity, ticketId) {
   if (await env.UPLOAD_QUARANTINE.head(ticket.object_key)) throw new ApiError(409, 'QUARANTINE_OBJECT_EXISTS', 'Immutable quarantine key already exists');
   await env.UPLOAD_QUARANTINE.put(ticket.object_key, bytes, { httpMetadata: { contentType: ticket.content_type }, customMetadata: { sha256: actualHash, ticketId } });
   const uploadedAt = now();
-  const uploadRequest = parseStoredJson(ticket.request_json, 'Upload request metadata');
   const envelope = {
     schemaVersion: 1, jobId: ticket.media_job_id, basename: ticket.filename,
     quarantineObjectKey: ticket.object_key, expectedSource: { sha256: actualHash, bytes: bytes.byteLength, mimeType: ticket.content_type, storageReservationBytes: ticket.storage_reservation_bytes },
@@ -2144,6 +2146,12 @@ export default {
       if (request.method === 'GET' && url.pathname === '/health') return json({ ok: true, service: 'content-api', db_configured: Boolean(env.CONTENT_DB), media_configured: Boolean(env.CONTENT_MEDIA) });
       if (!url.pathname.startsWith('/v1/')) throw new ApiError(404, 'NOT_FOUND', 'Route was not found');
       if (request.method === 'POST' && url.pathname === '/v1/media:processorCallback') return await processorCallback(request, env);
+      const ticketUpload = url.pathname.match(/^\/v1\/media\/uploads\/([^/:]+)$/);
+      // A ticket is already bound to one actor, MIME type, byte count, SHA-256,
+      // expiry, and single use. Its random upload token is therefore sufficient
+      // for the raw-byte PUT and avoids exporting a standing OAuth bearer to a
+      // local helper process.
+      if (request.method === 'PUT' && ticketUpload && request.headers.get('x-upload-token')) return await uploadMediaBytes(request, env, null, validId(decodeURIComponent(ticketUpload[1]), 'ticketId'));
       const identity = await resolveIdentity(request, env);
       if (request.method === 'GET' && (url.pathname === '/v1/media' || url.pathname.startsWith('/v1/media/'))) {
         if (!identity.scopes.has('media:read') && !identity.scopes.has('content:read')) throw new ApiError(403, 'FORBIDDEN', 'Scope media:read or content:read is required');
