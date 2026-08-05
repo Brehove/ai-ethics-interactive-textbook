@@ -3,7 +3,7 @@ import { pkceChallenge } from "./oauth-state.mjs";
 import { HttpError } from "./policy.mjs";
 
 const CLIENT_ID = "codex-ai-ethics-textbook";
-const RESOURCE = "https://mcp.ethicsandai.your-digital-life.org";
+const RESOURCE = "https://mcp.ethicsandai.your-digital-life.org/mcp";
 const BASELINE_SCOPES = Object.freeze(["content:read", "content:write", "media:read", "media:upload"]);
 const ALLOWED_SCOPES = new Set(BASELINE_SCOPES);
 const DOCUMENTS = Object.freeze(Array.from({ length: 18 }, (_, index) => `chapter_ch${String(index + 1).padStart(2, "0")}`));
