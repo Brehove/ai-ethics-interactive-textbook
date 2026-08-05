@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DEMO_CHAPTER } from "../src/demo-chapter";
-import { addCheckpoint, addPersonFeature, assertUniqueEditorIdentities, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, normalizeEditorIdentities, removeCheckpoint, updateCheckpointDetails, upgradeEditorChapter } from "../src/editor-model";
+import { addCheckpoint, addPersonFeature, assertUniqueEditorIdentities, blockPassage, chapterReplaceOperation, checkpointAnchorBlock, checkpointExcerpt, cloneChapter, moveCheckpoint, nearestPassage, nextCheckpointOrder, normalizeEditorIdentities, removeCheckpoint, replaceProsePreservingManagedFlow, updateCheckpointDetails, upgradeEditorChapter } from "../src/editor-model";
 import { editorDocumentContent, managedNodeSequence, serializeBody } from "../src/tiptap-editor";
 
 const chapter4RecoveryFixture = JSON.parse(readFileSync(new URL("./fixtures/chapter-4-duplicate-ids.json", import.meta.url), "utf8"));
@@ -39,6 +39,15 @@ test("schema-v3 editor operations preserve one record and one ordered reference"
   assert.equal(chapter.body.some((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId), false);
   const operation = chapterReplaceOperation(chapter);
   assert.equal(operation.type, "chapter.replaceDocumentV3");
+});
+
+test("local whole-chapter replacement preserves ordered managed references", () => {
+  const chapter = upgradeEditorChapter({ ...cloneChapter(DEMO_CHAPTER), schemaVersion: 2 });
+  const managedReferences = chapter.body.filter((node) => node.type === "checkpointRef" || node.type === "placementRef");
+  replaceProsePreservingManagedFlow(chapter, ["Replacement opening.", "Replacement conclusion."]);
+  assert.deepEqual(chapter.body.filter((node) => node.type === "checkpointRef" || node.type === "placementRef"), managedReferences);
+  assert.deepEqual(chapter.body.filter((node) => node.type === "paragraph").map((node) => node.text), ["Replacement opening.", "Replacement conclusion."]);
+  assert.doesNotThrow(() => editorDocumentContent(chapter));
 });
 
 test("new checkpoints require a real passage anchor and do not create prose blocks", () => {

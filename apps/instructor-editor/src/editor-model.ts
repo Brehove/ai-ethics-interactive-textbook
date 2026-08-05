@@ -92,6 +92,25 @@ export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, 
   }
   return checkpoint;
 }
+export function replaceProsePreservingManagedFlow(chapter: ChapterDocument, paragraphs: string[]) {
+  const isEditableProse = (node: ChapterFlowNode): node is ProseBlock => !isFlowReference(node) && ["paragraph", "heading", "blockquote", "list", "callout"].includes(node.type);
+  const editable = chapter.body.filter(isEditableProse);
+  const replacements = paragraphs.map((text, index): ProseBlock => ({
+    type: "paragraph",
+    blockId: editable[index]?.blockId ?? newId("block"),
+    passageId: blockPassage(editable[index] ?? { type: "paragraph", blockId: "" }) || newId("passage"),
+    text,
+  }));
+  let replacementIndex = 0;
+  chapter.body = chapter.body.flatMap((node) => {
+    if (!isEditableProse(node)) return [node];
+    const replacement = replacements[replacementIndex];
+    replacementIndex += 1;
+    return replacement ? [replacement] : [];
+  });
+  chapter.body.push(...replacements.slice(replacementIndex));
+  return chapter;
+}
 export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, passageId: string, displayOrder: number, passageExcerptHash?: string) {
   const checkpoint = chapter.checkpoints.find((item) => item.checkpointId === checkpointId);
   if (!checkpoint) throw new Error("The selected checkpoint is unavailable.");

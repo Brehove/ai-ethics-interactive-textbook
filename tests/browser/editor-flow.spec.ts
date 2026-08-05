@@ -78,6 +78,7 @@ test("failed save preserves the editor mount, visible order, undo history, and r
 test("verified save clears the exact recovery key without remounting the editor", async ({ page }) => {
   await installMockAuthoringApi(page);
   await page.goto(`${editor}?testApiOrigin=http://127.0.0.1:4173`);
+  await expect(page.getByText("Browser checkpoint", { exact: true })).toBeVisible();
   const document = page.locator("[data-document]");
   await document.evaluate((node) => { node.setAttribute("data-mount-proof", "verified"); });
   const second = page.locator('[data-document] p[data-passage-id="passage_browser_second"]');

@@ -17,6 +17,7 @@ import {
   nearestPassage,
   removeCheckpoint,
   removeManagedPlacement,
+  replaceProsePreservingManagedFlow,
   updateCheckpointDetails,
   upgradeEditorChapter,
   type ChapterDocument,
@@ -474,7 +475,7 @@ async function applyCheckpointInspector(formElement: HTMLFormElement, shift = 0)
   const excerptHash = requestedPassage === item.passageId ? undefined : await sha256Text(passageText);
   updateCheckpointDetails(item, { title: String(form.get("title") ?? ""), prompt: String(form.get("prompt") ?? ""), guidance: String(form.get("guidance") ?? ""), stage: String(form.get("stage") ?? ""), trigger: String(form.get("trigger") ?? ""), strategy: String(form.get("strategy") ?? ""), responseStructure: String(form.get("responseStructure") ?? "prose") as "prose" | "movement-plus-prose", minWords, maxWords, showInSidebar: form.get("showInSidebar") === "on", rationale: String(form.get("rationale") ?? "") });
   moveCheckpoint(chapter, item.checkpointId, requestedPassage, Number(form.get("displayOrder") ?? 0) + shift, excerptHash);
-  selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention");
+  selectedPassage = item.passageId; setState(item.title && item.prompt ? "dirty" : "attention"); render();
 }
 
 function bindInspectorEvents() {
@@ -482,7 +483,7 @@ function bindInspectorEvents() {
   app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-inspector-form]"); if (form) void applyCheckpointInspector(form, Number(button.dataset.shiftCheckpoint ?? 0)).catch((error) => { console.error("Unable to reorder checkpoint.", error); setAttention(error); }); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { removeCheckpoint(chapter, String(button.dataset.removeCheckpoint)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { removeManagedPlacement(chapter, String(button.dataset.removePlacement)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
-  app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); } });
+  app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); render(); } });
 }
 
 function renderInspector() {
@@ -567,7 +568,7 @@ function bindEvents() {
     if (!dataSource || !window.confirm("Restore this revision as a new draft? The live chapter will not change until you click Save.")) return;
     try {
       const result = await dataSource.restoreAsDraft(chapter.documentId, String(button.dataset.restoreRevision), { title: `Restore ${chapter.title}`, description: "Instructor history restore", idempotencyKey: crypto.randomUUID() });
-      chapter = chapterFromAuthoringView({ ...result, chapter: result.chapter ?? result.document }, chapter); historyOpen = false; setState("dirty");
+      chapter = chapterFromAuthoringView({ ...result, chapter: result.chapter ?? result.document }, chapter); historyOpen = false; setState("dirty"); render();
     } catch (error) { console.error(error); setState("attention"); }
   }));
   app.querySelectorAll<HTMLButtonElement>("[data-close]").forEach((button) => button.addEventListener("click", () => { activeDialog = null; render(); }));
@@ -595,7 +596,7 @@ function bindForms() {
       const passageText = checkpointExcerpt(anchor);
       await applyDraftOperations([{ type: "checkpoint.upsert", checkpoint: { passageId: selectedPassage, passageExcerptHash: await sha256Text(passageText), displayOrder: nextCheckpointOrder(chapter, selectedPassage), title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." } }]);
     } else addCheckpoint(chapter, { title, trigger: "Instructor inserted checkpoint", prompt, guidance: String(values.get("guidance") ?? "").trim() || "Pause and explain your reasoning.", stage, strategy: "self-explanation", responseStructure: "prose", minWords: 30, maxWords: 150, showInSidebar: true, rationale: "Instructor-authored checkpoint." }, selectedPassage);
-    activeDialog = null; setState("dirty");
+    activeDialog = null; setState("dirty"); render();
   };
   app.querySelector<HTMLButtonElement>("[data-add-checkpoint]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-checkpoint-form]"); if (form) void addCheckpointFromForm(form); });
   app.querySelector<HTMLFormElement>("[data-checkpoint-form]")?.addEventListener("submit", (event) => {
@@ -617,7 +618,7 @@ function bindForms() {
         chapter.managedPlacements = chapter.managedPlacements.filter((item) => item.placementId !== next.placement.placementId);
         await applyDraftOperations([{ type: "personFeature.upsert", feature: next.feature, placement: next.placement }]);
       }
-      activeDialog = null; setState("dirty");
+      activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error("Unable to add the person feature.", error); setState("attention"); }
   });
   app.querySelector<HTMLFormElement>("[data-media-upload-form]")?.addEventListener("submit", async (event) => {
@@ -706,7 +707,7 @@ function bindForms() {
     if (!item || !anchor || !dataSource) { setState("attention"); return; }
     const placement = { mediaId: String(item.id), mediaVersionId: String(item.media_version_id), rightsCaseId: String(item.rights_case_id), anchorPassageId: selectedPassage, decorative: false, alt: String(values.get("alt") ?? "").trim(), caption: String(values.get("caption") ?? "").trim(), teachingUse: String(values.get("teachingUse") ?? "").trim(), displayPreset: String(values.get("displayPreset") ?? "reading"), align: "center", animationPolicy: "clickToPlay", printPolicy: "poster", downloadable: false };
     if (!placement.alt || !placement.caption || !placement.teachingUse) { setState("attention"); return; }
-    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty");
+    await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty"); render();
   });
   app.querySelector<HTMLFormElement>("[data-embed-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault(); const values = new FormData(event.currentTarget); const url = String(values.get("url") ?? "").trim(); const title = String(values.get("title") ?? "").trim(); const teachingUse = String(values.get("teachingUse") ?? "").trim(); const anchor = selectedBlock();
@@ -714,19 +715,18 @@ function bindForms() {
     try {
       const resolved = await dataSource.resolveEmbed({ url }); const proposal = resolved.proposal as Record<string, unknown>; const accessedAt = new Date().toISOString().slice(0, 10);
       const embed = proposal.kind === "externalEmbed" ? { kind: "externalEmbed", identity: proposal.identity, canonicalUrl: proposal.canonicalUrl, caption: title, teachingUse, displayPreset: "reading", theme: "auto", fallback: { title, summary: teachingUse, linkLabel: "Open source", accessedAt }, adapterVersion: proposal.adapterVersion } : { kind: "richLink", canonicalUrl: proposal.canonicalUrl ?? url, title, summary: teachingUse, teachingUse, linkLabel: "Open source", accessedAt };
-      await applyDraftOperations([{ type: "embed.upsert", embed, position: { afterBlockId: anchor.blockId } }]); activeDialog = null; setState("dirty");
+      await applyDraftOperations([{ type: "embed.upsert", embed, position: { afterBlockId: anchor.blockId } }]); activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error(error); setState("attention"); }
   });
   const applyReplacement = async (form: HTMLFormElement) => {
     const paragraphs = String(new FormData(form).get("body") ?? "").split(/\n{2,}/).map((text) => text.trim()).filter(Boolean);
     if (!paragraphs.length) { setState("attention"); return; }
     if (dataSource) {
-      try { await applyDraftOperations([{ type: "chapter.importPlainText", paragraphs }]); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); }
+      try { await applyDraftOperations([{ type: "chapter.importPlainText", paragraphs }]); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); render(); }
       catch (error) { console.error("Unable to import the chapter.", error); setState("attention"); }
       return;
     }
-    const editable = chapter.body.filter((block) => ["paragraph", "heading", "blockquote", "list", "callout"].includes(block.type));
-    chapter.body = paragraphs.map((text, index) => ({ type: "paragraph", blockId: editable[index]?.blockId ?? newId("block"), passageId: blockPassage(editable[index] ?? { type: "paragraph", blockId: "" }) || newId("passage"), text })); selectedPassage = blockPassage(chapter.body[0]); activeDialog = null; setState("dirty");
+    replaceProsePreservingManagedFlow(chapter, paragraphs); selectedPassage = nearestPassage(chapter); activeDialog = null; setState("dirty"); render();
   };
   const applySource = async (form: HTMLFormElement) => {
     try {
@@ -735,7 +735,7 @@ function bindForms() {
       parsed.documentId = chapter.documentId; parsed.chapterId = chapter.chapterId; parsed.slug = chapter.slug; parsed.changeSetId = chapter.changeSetId; parsed.revisionId = chapter.revisionId; parsed.baseRevisionId = chapter.baseRevisionId; parsed.expectedVersion = chapter.expectedVersion;
       if (dataSource) await applyDraftOperations([chapterReplaceOperation(parsed)]);
       else chapter = parsed;
-      activeDialog = null; setState("dirty");
+      activeDialog = null; setState("dirty"); render();
     } catch (error) { console.error("Unable to apply structured source.", error); setState("attention"); }
   };
   app.querySelector<HTMLButtonElement>("[data-apply-replacement]")?.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-replace-form]"); if (form) void applyReplacement(form); });
@@ -758,7 +758,6 @@ async function applyDraftOperations(operations: Array<Record<string, unknown>>) 
   const result = await dataSource.applyOperationBatch(chapter.changeSetId, { documentId: chapter.documentId, baseRevisionId: chapter.baseRevisionId, expectedVersion: chapter.expectedVersion, idempotencyKey: crypto.randomUUID(), operations });
   chapter = hydrateManagedMediaPreviews(upgradeEditorChapter(chapterFromAuthoringView({ chapter: result.chapter, documentId: chapter.documentId, changeSetId: chapter.changeSetId, revisionId: chapter.revisionId, baseRevisionId: chapter.baseRevisionId, expectedVersion: result.version }, chapter)));
   selectedPassage = nearestPassage(chapter, selectedPassage);
-  render();
 }
 
 async function waitForDelivery(result: CommitLiveResult) {
