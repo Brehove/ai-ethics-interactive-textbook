@@ -82,7 +82,13 @@ button.danger, .danger { border-color: #e5bab6; color: var(--editor-danger); }
 .chapter-managed { margin: 2rem 0; }
 .chapter-checkpoint { border-left: 4px solid var(--reader-accent); background: var(--reader-panel); padding: 1rem 1.2rem; }
 .chapter-checkpoint p { margin-bottom: .35rem; }
-.chapter-person { display: grid; grid-template-columns: minmax(8rem, 28%) 1fr; gap: clamp(1rem, 3vw, 2rem); background: var(--reader-context); border-left: 4px solid var(--reader-accent); padding: clamp(1rem, 3vw, 2rem); }
+.chapter-person { container-type: inline-size; background: var(--reader-context); border-left: 4px solid var(--reader-accent); padding: clamp(1rem, 3vw, 2rem); }
+.chapter-person__content { display: grid; grid-template-columns: 1fr; gap: clamp(1rem, 3vw, 2rem); }
+.chapter-person__portrait { width: min(100%, 18rem); margin-inline: auto; }
+@container (min-width: 28rem) {
+  .chapter-person__content { grid-template-columns: minmax(8rem, 34%) 1fr; }
+  .chapter-person__portrait { width: auto; margin-inline: 0; }
+}
 .chapter-person__portrait img { display: block; width: 100%; height: auto; }
 .chapter-person__label { margin: 0; font: 700 .68rem/1.2 var(--sans); letter-spacing: .13em; text-transform: uppercase; }
 .chapter-person h3 { margin: .4rem 0; }
@@ -191,7 +197,7 @@ dialog footer { justify-content: flex-end; margin-top: 1.5rem; }
   .format-toolbar { top: 106px; }
   .editor-canvas { padding: 1rem 1rem 4rem; }
   .format-toolbar { top: 61px; margin-inline: -.15rem; }
-  .chapter-person { grid-template-columns: 1fr; }
+  .chapter-person__content { grid-template-columns: 1fr; }
   .chapter-person__portrait { max-width: 14rem; }
   .insert-handle { margin-left: 0; opacity: 1; }
   dialog header { margin: -1.25rem -1.25rem 1.25rem; padding: .9rem 1.25rem; }

@@ -111,14 +111,22 @@ const { artifacts } = Astro.props;
   .print-artifact-credit { display: none; }
 
   :global(.chapter-person) {
-    display: grid;
-    grid-template-columns: minmax(12rem, 34%) 1fr;
-    gap: clamp(1rem, 3vw, 2.5rem);
+    container-type: inline-size;
     margin: 2rem 0;
     border-left: 4px solid var(--rust);
     background: var(--wash-strong);
     padding: clamp(1rem, 3vw, 2rem);
     break-inside: avoid;
+  }
+  :global(.chapter-person__content) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1rem, 3vw, 2.5rem);
+  }
+  :global(.chapter-person__portrait) { width: min(100%, 18rem); margin-inline: auto; }
+  @container (min-width: 28rem) {
+    :global(.chapter-person__content) { grid-template-columns: minmax(8rem, 34%) 1fr; }
+    :global(.chapter-person__portrait) { width: auto; margin-inline: 0; }
   }
   :global(.chapter-person__portrait img) { display: block; width: 100%; height: auto; }
   :global(.chapter-person__label) {
@@ -167,6 +175,10 @@ const { artifacts } = Astro.props;
     padding: 0;
     box-shadow: none;
   }
+  :global(.inline-card-pair > .chapter-person .chapter-person__content) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
   :global(.inline-card-pair .chapter-person__portrait),
   :global(.inline-card-pair .inline-scholar-card__portrait) {
     min-width: 0;
@@ -200,7 +212,7 @@ const { artifacts } = Astro.props;
     .inline-artifact { grid-template-columns: 1fr; }
     .artifact-image-link { min-height: 0; border-right: 0; border-bottom: 1px solid var(--line); }
     .artifact-image-link img { max-height: 28rem; }
-    :global(.chapter-person) { grid-template-columns: 1fr; }
+    :global(.chapter-person__content) { grid-template-columns: 1fr; }
     :global(.inline-card-pair) { grid-template-columns: 1fr; }
     :global(.inline-card-pair > .inline-artifact .artifact-image-link) { min-height: 0; max-height: none; }
     :global(.inline-card-pair > .inline-artifact .artifact-image-link img) { max-height: 28rem; }
