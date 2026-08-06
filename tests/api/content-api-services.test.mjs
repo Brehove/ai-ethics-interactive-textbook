@@ -242,6 +242,11 @@ test('agent MCP tool grants authorize only their mapped semantic operations', as
 
   response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-2', operations: [{ type: 'chapter.replaceDocument', document: source }] }) }), allowed);
   assert.equal(response.status, 403); assert.equal((await response.json()).error.code, 'CAPABILITY_OPERATION_FORBIDDEN');
+
+  const replacementGrant = withAgentCapability({ CONTENT_DB }, { scopes: ['content:write'], allowedOperations: ['replace_chapter_document'] });
+  const ordered = migrateChapterV2ToV3(source);
+  response = await worker.fetch(new Request('https://content.example/v1/changesets/cs-agent/operations:batch', { method: 'POST', headers: agentHeaders(), body: JSON.stringify({ documentId: 'chapter_ch07', baseRevisionId: 'revision-agent', expectedVersion: 1, idempotencyKey: 'agent-semantic-map-3', operations: [{ type: 'chapter.replaceDocumentV3', document: ordered }] }) }), replacementGrant);
+  assert.equal(response.status, 200, await response.text());
 });
 
 test('multi-document diff returns one content-free result per working copy', async () => {

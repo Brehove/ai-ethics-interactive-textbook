@@ -52,6 +52,7 @@ const requireAgentTarget = (identity, { documentId, operation }) => {
 const SEMANTIC_OPERATION_CAPABILITIES = Object.freeze({
   'text.replace': ['replace_passage_text'],
   'chapter.replaceDocument': ['replace_chapter_document'],
+  'chapter.replaceDocumentV3': ['replace_chapter_document'],
   'checkpoint.upsert': ['upsert_checkpoint', 'reorder_checkpoint'],
   'checkpoint.replace': ['upsert_checkpoint', 'reorder_checkpoint'],
   'checkpoint.remove': ['remove_checkpoint'],
