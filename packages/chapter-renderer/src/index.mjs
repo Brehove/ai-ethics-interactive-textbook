@@ -18,7 +18,7 @@ export const CHAPTER_RENDERER_STYLES = `
 .chapter-person__portrait img{width:100%;height:auto;display:block}
 .chapter-person__label{font:700 .75rem/1.2 ui-sans-serif,system-ui;letter-spacing:.14em;text-transform:uppercase}
 .chapter-person__credit{font-size:.8em}
-.chapter-person__portrait{width:min(100%,18rem);margin-inline:auto}@container (min-width:28rem){.chapter-person__content{grid-template-columns:minmax(8rem,34%) 1fr}.chapter-person__portrait{width:auto;margin-inline:0}}
+.chapter-person__portrait{width:min(100%,18rem);margin-inline:auto}@container (min-width:26rem){.chapter-person__content{grid-template-columns:minmax(8rem,34%) 1fr}.chapter-person__portrait{width:auto;margin-inline:0}}
 @media(max-width:720px){.chapter-layout--wrap>.chapter-card{float:none!important;width:auto;margin:1.5rem auto!important}.chapter-layout--card-text-split,.chapter-layout--card-grid{display:block}.chapter-layout--card-text-split .chapter-layout__cards,.chapter-layout--card-text-split .chapter-layout__text{margin-bottom:1.5rem}.chapter-person__content{grid-template-columns:1fr}.chapter-person__portrait{width:min(100%,18rem);margin-inline:auto}}
 @media print{.chapter-embed__activation{display:none}.chapter-managed{break-inside:avoid}.chapter-layout{display:contents!important}.chapter-layout__cards,.chapter-layout__text{display:contents!important}.chapter-layout .chapter-card{float:none!important;width:auto!important;max-width:none!important;margin:1rem 0!important}.chapter-layout [data-featured]{grid-column:auto!important}}
 `.trim();

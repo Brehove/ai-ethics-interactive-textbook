@@ -29,7 +29,7 @@ test("adjacent visual and thinker cards share a compact responsive row", async (
   assert.match(inlineArtifacts, /object-position: center 28%/);
   assert.match(inlineArtifacts, /chapter-flow\[data-layout-catalog-version\]/);
   assert.match(inlineArtifacts, /\.chapter-person\) \{\s*container-type: inline-size/);
-  assert.match(inlineArtifacts, /@container \(min-width: 28rem\)[\s\S]*\.chapter-person__content\) \{ grid-template-columns: minmax\(8rem, 34%\) 1fr; \}/);
+  assert.match(inlineArtifacts, /@container \(min-width: 26rem\)[\s\S]*\.chapter-person__content\) \{ grid-template-columns: minmax\(8rem, 34%\) 1fr; \}/);
   assert.doesNotMatch(inlineArtifacts, /\.chapter-person\) \{\s*display: grid;\s*grid-template-columns/);
 });
 
