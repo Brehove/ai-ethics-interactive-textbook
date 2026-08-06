@@ -680,7 +680,7 @@ const normalizeEmbed = async (chapter, input) => {
     const embedId = existing?.embedId || await deterministicId('embed', { chapterId: chapter.chapterId, identity: input.identity, canonicalUrl });
     const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, embedId });
     if (input.adapterVersion !== PROVIDER_REGISTRY[input.identity.provider].adapterVersion) throw new ApiError(422, 'ADAPTER_VERSION_INVALID', 'Embed adapterVersion must match the server provider registry');
-    const block = { type: 'externalEmbed', embedId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), identity: { provider: input.identity.provider, resourceType: input.identity.resourceType, resourceId, ...(input.identity.unlistedHash ? { unlistedHash: requireString(input.identity.unlistedHash, 'embed.identity.unlistedHash', 200) } : {}) }, canonicalUrl, caption: safeText(input.caption, 'embed.caption', 2000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : { displayPreset: ['compact', 'reading', 'wide'].includes(input.displayPreset) ? input.displayPreset : (() => { throw new ApiError(422, 'DISPLAY_PRESET_INVALID', 'Embed displayPreset is invalid'); })() }), theme: ['light', 'dark', 'auto'].includes(input.theme) ? input.theme : (() => { throw new ApiError(422, 'THEME_INVALID', 'Embed theme is invalid'); })(), options: PROVIDER_SAFE_OPTIONS[input.identity.provider], fallback: authoredFallback(input.fallback), adapterVersion: input.adapterVersion };
+    const block = { type: 'externalEmbed', embedId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), identity: { provider: input.identity.provider, resourceType: input.identity.resourceType, resourceId, ...(input.identity.unlistedHash ? { unlistedHash: requireString(input.identity.unlistedHash, 'embed.identity.unlistedHash', 200) } : {}) }, canonicalUrl, caption: safeText(input.caption, 'embed.caption', 2000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation, 'externalEmbed') } : { displayPreset: ['compact', 'reading', 'wide'].includes(input.displayPreset) ? input.displayPreset : (() => { throw new ApiError(422, 'DISPLAY_PRESET_INVALID', 'Embed displayPreset is invalid'); })() }), theme: ['light', 'dark', 'auto'].includes(input.theme) ? input.theme : (() => { throw new ApiError(422, 'THEME_INVALID', 'Embed theme is invalid'); })(), options: PROVIDER_SAFE_OPTIONS[input.identity.provider], fallback: authoredFallback(input.fallback), adapterVersion: input.adapterVersion };
     if (!existing) assertUniqueBodyIds(chapter, block);
     return { block, existing };
   }
@@ -693,7 +693,7 @@ const normalizeEmbed = async (chapter, input) => {
     if (anchorPassageId && !passageIds(chapter).has(anchorPassageId)) throw new ApiError(422, 'EMBED_ANCHOR_MISSING', 'Link anchor passage does not exist');
     const linkId = existing?.linkId || await deterministicId('link', { chapterId: chapter.chapterId, canonicalUrl });
     const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, linkId });
-    const block = { type: 'richLink', linkId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), canonicalUrl, title: safeText(input.title, 'embed.title', 300), summary: safeText(input.summary, 'embed.summary', 4000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), linkLabel: safeText(input.linkLabel, 'embed.linkLabel', 120), ...(input.posterMediaVersionId ? { posterMediaVersionId: requireString(input.posterMediaVersionId, 'embed.posterMediaVersionId', 200) } : {}), accessedAt: requireString(input.accessedAt, 'embed.accessedAt', 40), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : {}) };
+    const block = { type: 'richLink', linkId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), canonicalUrl, title: safeText(input.title, 'embed.title', 300), summary: safeText(input.summary, 'embed.summary', 4000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), linkLabel: safeText(input.linkLabel, 'embed.linkLabel', 120), ...(input.posterMediaVersionId ? { posterMediaVersionId: requireString(input.posterMediaVersionId, 'embed.posterMediaVersionId', 200) } : {}), accessedAt: requireString(input.accessedAt, 'embed.accessedAt', 40), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation, 'richLink') } : {}) };
     if (!existing) assertUniqueBodyIds(chapter, block);
     return { block, existing };
   }
@@ -709,14 +709,14 @@ const normalizeMediaPlacement = async (chapter, input) => {
   if (!input.decorative && !input.alt) throw new ApiError(422, 'MEDIA_ALT_REQUIRED', 'Non-decorative media requires alt text');
   if (input.caption && input.captionOmissionReason) throw new ApiError(422, 'MEDIA_CAPTION_CONFLICT', 'Provide caption or captionOmissionReason, not both');
   if (!input.caption && !input.captionOmissionReason) throw new ApiError(422, 'MEDIA_CAPTION_REQUIRED', 'Provide caption or an omission reason');
-  if ((chapter.schemaVersion === 4 ? !validPresentation(input.presentation) || input.displayPreset !== undefined || input.align !== undefined : !['narrow', 'reading', 'wide', 'bleed'].includes(input.displayPreset) || !['start', 'center', 'end'].includes(input.align)) || !['poster', 'firstFrame', 'omit'].includes(input.printPolicy)) throw new ApiError(422, 'MEDIA_PRESENTATION_INVALID', 'Media presentation or print policy is invalid');
+  if ((chapter.schemaVersion === 4 ? !validPresentation(input.presentation, 'mediaFigure') || input.displayPreset !== undefined || input.align !== undefined : !['narrow', 'reading', 'wide', 'bleed'].includes(input.displayPreset) || !['start', 'center', 'end'].includes(input.align)) || !['poster', 'firstFrame', 'omit'].includes(input.printPolicy)) throw new ApiError(422, 'MEDIA_PRESENTATION_INVALID', 'Media presentation or print policy is invalid');
   if (input.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(input.animationPolicy)) throw new ApiError(422, 'MEDIA_ANIMATION_INVALID', 'Media animation policy is invalid');
   const anchorPassageId = input.anchorPassageId ? requireString(input.anchorPassageId, 'placement.anchorPassageId', 200) : undefined;
   if (anchorPassageId && !passageIds(chapter).has(anchorPassageId)) throw new ApiError(422, 'MEDIA_ANCHOR_MISSING', 'Media anchor passage does not exist');
   const identitySeed = { chapterId: chapter.chapterId, mediaId: input.mediaId, mediaVersionId: input.mediaVersionId, rightsCaseId: input.rightsCaseId, anchorPassageId };
   const figureId = existing?.figureId || await deterministicId('figure', identitySeed);
   const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, figureId });
-  const block = { type: 'mediaFigure', figureId, blockId, mediaId: requireString(input.mediaId, 'placement.mediaId', 200), mediaVersionId: requireString(input.mediaVersionId, 'placement.mediaVersionId', 200), rightsCaseId: requireString(input.rightsCaseId, 'placement.rightsCaseId', 200), ...(anchorPassageId ? { anchorPassageId } : {}), decorative: input.decorative, ...(!input.decorative ? { alt: safeText(input.alt, 'placement.alt', 1000) } : {}), ...(input.caption ? { caption: safeText(input.caption, 'placement.caption', 4000) } : { captionOmissionReason: safeText(input.captionOmissionReason, 'placement.captionOmissionReason', 1000) }), teachingUse: safeText(input.teachingUse, 'placement.teachingUse', 2000), ...(input.creditOverride ? { creditOverride: safeText(input.creditOverride, 'placement.creditOverride', 1000) } : {}), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : { displayPreset: input.displayPreset, align: input.align }), ...(input.animationPolicy ? { animationPolicy: input.animationPolicy } : {}), printPolicy: input.printPolicy, downloadable: input.downloadable };
+  const block = { type: 'mediaFigure', figureId, blockId, mediaId: requireString(input.mediaId, 'placement.mediaId', 200), mediaVersionId: requireString(input.mediaVersionId, 'placement.mediaVersionId', 200), rightsCaseId: requireString(input.rightsCaseId, 'placement.rightsCaseId', 200), ...(anchorPassageId ? { anchorPassageId } : {}), decorative: input.decorative, ...(!input.decorative ? { alt: safeText(input.alt, 'placement.alt', 1000) } : {}), ...(input.caption ? { caption: safeText(input.caption, 'placement.caption', 4000) } : { captionOmissionReason: safeText(input.captionOmissionReason, 'placement.captionOmissionReason', 1000) }), teachingUse: safeText(input.teachingUse, 'placement.teachingUse', 2000), ...(input.creditOverride ? { creditOverride: safeText(input.creditOverride, 'placement.creditOverride', 1000) } : {}), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation, 'mediaFigure') } : { displayPreset: input.displayPreset, align: input.align }), ...(input.animationPolicy ? { animationPolicy: input.animationPolicy } : {}), printPolicy: input.printPolicy, downloadable: input.downloadable };
   if (!existing) assertUniqueBodyIds(chapter, block);
   return { block, existing };
 };
@@ -724,7 +724,7 @@ const normalizeMediaPlacement = async (chapter, input) => {
 const assertLayoutCatalog = (chapter, expected) => {
   if (chapter.schemaVersion !== 4) throw new ApiError(409, 'SCHEMA_V4_REQUIRED', 'Card layout operations require schema-v4 ordered flow');
   if (expected !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'Refresh the layout catalog before changing presentation', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
-  if (chapter.layoutCatalogVersion === '2026-08-05') chapter.layoutCatalogVersion = LAYOUT_CATALOG_VERSION;
+  if (['2026-08-05', '2026-08-06'].includes(chapter.layoutCatalogVersion)) chapter.layoutCatalogVersion = LAYOUT_CATALOG_VERSION;
   else if (chapter.layoutCatalogVersion !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'This chapter layout catalog cannot be migrated automatically', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
 };
 
@@ -751,11 +751,12 @@ const assertNotLayoutMember = (chapter, nodeId) => {
   }
 };
 
-const parsePresentation = (value) => {
+const parsePresentation = (value, cardType) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ApiError(422, 'CARD_PRESENTATION_INVALID', 'Card presentation must be an object');
-  rejectUnknown(value, ['width', 'align', 'density', 'frame']);
+  rejectUnknown(value, ['width', 'align', 'density', 'surface', 'frame']);
   if (!Object.keys(LAYOUT_CATALOG.widths).includes(value.width) || !['start', 'center', 'end'].includes(value.align) || !['compact', 'standard', 'expanded'].includes(value.density)) throw new ApiError(422, 'CARD_PRESENTATION_INVALID', 'Card width, alignment, or density is invalid');
-  return { width: value.width, align: value.align, density: value.density, ...(value.frame ? { frame: parseFrame(value.frame) } : {}) };
+  if (value.surface !== undefined && (cardType !== 'mediaFigure' || !Object.keys(LAYOUT_CATALOG.surfaces).includes(value.surface))) throw new ApiError(422, 'CARD_SURFACE_INVALID', 'Media surfaces are valid only for mediaFigure cards and must use a catalog value');
+  return { width: value.width, align: value.align, density: value.density, ...(value.surface ? { surface: value.surface } : {}), ...(value.frame ? { frame: parseFrame(value.frame) } : {}) };
 };
 
 const parseFrame = (value) => {
@@ -767,7 +768,7 @@ const parseFrame = (value) => {
   if (value.focalPoint && (value.mode !== 'crop' || typeof value.focalPoint !== 'object' || !Number.isFinite(value.focalPoint.x) || !Number.isFinite(value.focalPoint.y) || value.focalPoint.x < 0 || value.focalPoint.x > 1 || value.focalPoint.y < 0 || value.focalPoint.y > 1)) throw new ApiError(422, 'CARD_FRAME_INVALID', 'Focal point is valid only for crop and must use normalized coordinates');
   return { mode: value.mode, aspect, ...(value.focalPoint ? { focalPoint: { x: value.focalPoint.x, y: value.focalPoint.y } } : {}), ...(value.approvalId ? { approvalId: requireString(value.approvalId, 'frame.approvalId', 200) } : {}) };
 };
-const validPresentation = (value) => { try { parsePresentation(value); return true; } catch { return false; } };
+const validPresentation = (value, cardType) => { try { parsePresentation(value, cardType); return true; } catch { return false; } };
 
 const parseLayoutRegion = (region) => {
   if (!region || typeof region !== 'object' || Array.isArray(region)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Layout region must be an object');
@@ -952,7 +953,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (placement.kind !== 'personFeature' || placement.contentId !== feature.personFeatureId || placement.placementId !== feature.placementId) throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Person feature and placement identities must match');
     if (chapter.schemaVersion === 4) {
       if (feature.displayPreset !== undefined || placement.displayPreset !== undefined) throw new ApiError(422, 'LEGACY_PRESENTATION_FORBIDDEN', 'Schema-v4 person cards store presentation only on the placement');
-      placement.presentation = parsePresentation(placement.presentation);
+      placement.presentation = parsePresentation(placement.presentation, placement.kind);
     } else if (placement.displayPreset !== 'thinker-card') throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Legacy person features require the thinker-card preset');
     if (!passageIds(chapter).has(placement.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Person feature anchor does not exist');
     if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement.position) || !Number.isInteger(placement.orderAtAnchor) || placement.orderAtAnchor < 0)) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Person feature position is invalid');
@@ -1007,12 +1008,12 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
   } else if (operation.type === 'cardPresentation.set' || operation.type === 'cardPresentation.reset') {
     assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
     const target = findLayoutCard(chapter, requireString(operation.cardId, 'cardId', 200));
-    const presentation = operation.type === 'cardPresentation.set' ? parsePresentation(operation.presentation) : defaultPresentation(target.value);
+    const presentation = operation.type === 'cardPresentation.set' ? parsePresentation(operation.presentation, target.value.type || target.value.kind) : defaultPresentation(target.value);
     target.collection[target.index] = { ...target.value, presentation };
   } else if (operation.type === 'cardFrame.set' || operation.type === 'cardFrame.reset') {
     assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
     const target = findLayoutCard(chapter, requireString(operation.cardId, 'cardId', 200));
-    const current = parsePresentation(target.value.presentation || defaultPresentation(target.value));
+    const current = parsePresentation(target.value.presentation || defaultPresentation(target.value), target.value.type || target.value.kind);
     if (operation.type === 'cardFrame.set') target.collection[target.index] = { ...target.value, presentation: { ...current, frame: parseFrame(operation.frame) } };
     else { const { frame: _frame, ...withoutFrame } = current; target.collection[target.index] = { ...target.value, presentation: withoutFrame }; }
   } else if (operation.type === 'layoutRegion.create') {
@@ -1092,10 +1093,10 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
       if (!block.mediaId || !block.mediaVersionId || !block.rightsCaseId) errors.push({ code: 'MEDIA_PLACEMENT_INVALID', path: `body.${index}` });
       if (typeof block.decorative !== 'boolean' || (!block.decorative && !block.alt)) errors.push({ code: 'MEDIA_ALT_REQUIRED', path: `body.${index}.alt` });
       if (Boolean(block.caption) === Boolean(block.captionOmissionReason)) errors.push({ code: 'MEDIA_CAPTION_INVALID', path: `body.${index}` });
-      const presentationValid = chapter.schemaVersion === 4 ? validPresentation(block.presentation) && block.displayPreset === undefined && block.align === undefined : ['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) && ['start', 'center', 'end'].includes(block.align);
+      const presentationValid = chapter.schemaVersion === 4 ? validPresentation(block.presentation, block.type) && block.displayPreset === undefined && block.align === undefined : ['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) && ['start', 'center', 'end'].includes(block.align);
       if (!block.teachingUse || !presentationValid || !['poster', 'firstFrame', 'omit'].includes(block.printPolicy) || (block.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(block.animationPolicy))) errors.push({ code: 'MEDIA_PRESENTATION_INVALID', path: `body.${index}` });
     }
-    if (chapter.schemaVersion === 4 && ['externalEmbed', 'richLink', 'diagram', 'artifactCard', 'sourceCard'].includes(block?.type) && !validPresentation(block.presentation)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `body.${index}.presentation` });
+    if (chapter.schemaVersion === 4 && ['externalEmbed', 'richLink', 'diagram', 'artifactCard', 'sourceCard'].includes(block?.type) && !validPresentation(block.presentation, block.type)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `body.${index}.presentation` });
     if (publishable && chapter.schemaVersion === 4 && block?.presentation?.frame?.mode === 'crop') errors.push({ code: 'CARD_FRAME_APPROVAL_REQUIRED', path: `body.${index}.presentation.frame`, message: 'Crop framing remains draft-only until its exact rendered frame receives human approval' });
   });
   const placementIds = new Set(); const placementPositions = new Set();
@@ -1110,7 +1111,7 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
     if (!anchors.has(placement?.anchorPassageId)) errors.push({ code: 'MANAGED_ANCHOR_MISSING', path: `managedPlacements.${index}.anchorPassageId` });
     if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement?.position) || !Number.isInteger(placement?.orderAtAnchor) || placement.orderAtAnchor < 0)) errors.push({ code: 'MANAGED_POSITION_INVALID', path: `managedPlacements.${index}` });
     if (chapter.schemaVersion >= 3 && (placement?.position !== undefined || placement?.orderAtAnchor !== undefined)) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `managedPlacements.${index}`, message: 'Ordered placement position comes from chapter flow' });
-    if (chapter.schemaVersion === 4 && (!validPresentation(placement?.presentation) || placement?.displayPreset !== undefined)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `managedPlacements.${index}.presentation` });
+    if (chapter.schemaVersion === 4 && (!validPresentation(placement?.presentation, placement?.kind) || placement?.displayPreset !== undefined)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `managedPlacements.${index}.presentation` });
     if (publishable && chapter.schemaVersion === 4 && placement?.presentation?.frame?.mode === 'crop') errors.push({ code: 'CARD_FRAME_APPROVAL_REQUIRED', path: `managedPlacements.${index}.presentation.frame`, message: 'Crop framing remains draft-only until its exact rendered frame receives human approval' });
   });
   if (chapter.schemaVersion >= 3) {

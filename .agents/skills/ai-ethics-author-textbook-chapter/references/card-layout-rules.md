@@ -5,6 +5,7 @@ Card layout is canonical chapter content only in schema v4. Before changing it, 
 Choose the least complex arrangement that expresses the teaching relationship:
 
 - Use `set_card_layout` for one independent card. `reading`, centered, standard density is the default. Use `compact` or `narrow` for brief supporting cards; `wide`, `full`, and especially `bleed` require content that benefits from the added visual field.
+- For a `mediaFigure`, keep the `plain` surface when the image stands on its own and the caption remains secondary. Use the `panel` surface when the image, caption, and credit form one bounded contextual artifact. A panel is not a substitute for grouping unrelated cards or for changing media rights, identity, or framing.
 - Use `create_card_group` for two to six related cards readers should scan or compare together. Use `equal` for peers. With exactly two cards, use `start-narrow` or `end-narrow` only when the named source-order card is a brief supporting artifact and the other card needs the larger reading field. Do not infer start/end from visual left/right; source order controls both semantics and mobile collapse.
 - Use `create_card_wrap` only for one compact, narrow, or medium card beside sustained prose. Do not wrap around headings, checkpoints, tables, code, or short fragments.
 - Use `create_card_text_split` when card and prose form one deliberate explanatory or comparative unit. It is not a generic two-column page tool.

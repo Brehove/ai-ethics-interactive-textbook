@@ -148,7 +148,7 @@ test('authoring view is revision-bound and status polling promotes only a pendin
   });
   const view = await worker.fetch(new Request(`https://content.example/v1/chapters/${source.chapterId}/authoring-view`, { headers: gatewayHeaders() }), { CONTENT_DB: db });
   assert.equal(view.status, 200); const body = await view.json();
-  assert.equal(body.revisionId, 'revision-base'); assert.equal(body.renderer.rendererVersion, 'chapter-renderer-v4-card-ratios');
+  assert.equal(body.revisionId, 'revision-base'); assert.equal(body.renderer.rendererVersion, 'chapter-renderer-v4-media-surfaces');
   let bindingDocumentId = null;
   const status = await worker.fetch(new Request('https://content.example/v1/live-commits/commit_1', { headers: gatewayHeaders() }), {
     CONTENT_DB: db,
