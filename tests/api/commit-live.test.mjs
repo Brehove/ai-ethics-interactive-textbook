@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import worker from '../../workers/content-api/src/index.mjs';
+import worker, { classifyUnhandledError } from '../../workers/content-api/src/index.mjs';
 import { sha256 } from '../../workers/content-api/src/services.mjs';
 
 const gatewayHeaders = (scopes = 'content:read content:write') => ({
@@ -33,6 +33,14 @@ const fakeDb = (resolve) => ({
     this.statements.push(statement); return statement;
   },
   async batch(items) { this.batches.push(items); return items.map(() => ({ meta: { changes: 1 }, results: [{ request_count: 1 }] })); }
+});
+
+test('unexpected API diagnostics classify failures without retaining request-derived values', () => {
+  const filename = 'student-private-upload-name.webp';
+  const error = new Error(`R2 put failed for media/uploads/${filename}`);
+  const diagnostic = JSON.stringify({ kind: classifyUnhandledError(error) });
+  assert.equal(diagnostic, '{"kind":"r2"}');
+  assert.doesNotMatch(diagnostic, /student|upload-name|media\//);
 });
 
 test('commitLive writes its guarded receipt first, then one revision and one public projection, and verifies delivery', async () => {
@@ -88,6 +96,45 @@ test('commitLive publishes an already-edited working draft even when the final r
   const batch = db.batches.find((items) => items.some((statement) => statement.sql.includes('INSERT INTO live_commit_commands')));
   assert.ok(batch?.some((statement) => statement.sql.includes('INSERT INTO document_revisions')));
   assert.equal(batch?.some((statement) => statement.sql.includes("state = 'unchanged'")), false);
+});
+
+test('commitLive binds normalized media projection fields into the public asset allowlist', async () => {
+  const source = chapter();
+  source.body.push({
+    type: 'mediaFigure', figureId: 'figure_one', blockId: 'block_media', anchorPassageId: 'passage_one',
+    mediaId: 'media_one', mediaVersionId: 'media_version_one', rightsCaseId: 'rights_one', decorative: false,
+    alt: 'An illuminated manuscript.', caption: 'A manuscript.', teachingUse: 'Shows textual transmission.',
+    displayPreset: 'reading', align: 'center', printPolicy: 'poster', downloadable: false
+  });
+  const sourceHash = await sha256(source);
+  const working = { id: 'working_media', document_id: source.chapterId, base_revision_id: 'revision-base', content_hash: sourceHash, content_text: JSON.stringify(source), version: 2, state: 'open', purpose: 'authoring', current_revision_id: 'revision-base', current_content_hash: sourceHash };
+  const derivativeHash = 'd'.repeat(64);
+  const derivativeKey = 'media/job/sha256/source/display.webp';
+  const db = fakeDb((sql) => {
+    if (sql.includes('FROM live_commit_commands')) return null;
+    if (sql.includes('INSERT INTO api_rate_limits')) return { results: [{ request_count: 1 }] };
+    if (sql.includes('SELECT w.*, c.state')) return { results: [working] };
+    if (sql.includes('SELECT id, authority, source_revision')) return { id: 'authority_1', authority: 'd1', source_revision: 'revision-base', normalized_snapshot_hash: sourceHash };
+    if (sql.includes('FROM media_assets a JOIN media_asset_versions')) return {
+      media_id: 'media_one', title: 'Manuscript', media_state: 'ready', media_version_id: 'media_version_one',
+      source_sha256: 'a'.repeat(64), source_bytes: 100, detected_mime: 'image/webp', immutable_address: `sha256:${'a'.repeat(64)}`,
+      technical_json: '{"width":720,"height":879,"animated":false,"poster":null}', rights_case_id: 'rights_one', review_id: 'review_one',
+      rights_status: 'cleared', review_package_id: 'review_package_one', rights_json: '{"attribution":"Creator. CC BY-SA 4.0."}',
+      declaration_hash: 'b'.repeat(64), review_package_state: 'cleared'
+    };
+    if (sql.includes('FROM media_version_objects')) return { results: [{ id: 'object_one', role: 'derivative', object_key: derivativeKey, object_sha256: derivativeHash, object_bytes: 91, content_type: 'image/webp' }] };
+    return null;
+  });
+  const response = await worker.fetch(new Request('https://content.example/v1/changesets/cs_media:commitLive', {
+    method: 'POST', headers: gatewayHeaders(), body: JSON.stringify({
+      documentId: source.chapterId, baseRevisionId: 'revision-base', expectedVersion: 2,
+      idempotencyKey: 'commit-media-key-123', operations: [{ type: 'text.replace', blockId: 'block_one', text: 'Committed prose.' }]
+    })
+  }), { CONTENT_DB: db, PUBLIC_READER_ORIGIN: 'https://reader.example' });
+  assert.equal(response.status, 202, await response.text());
+  const batch = db.batches.find((items) => items.some((statement) => statement.sql.includes('INSERT INTO live_commit_commands')));
+  const asset = batch?.find((statement) => statement.sql.includes('INSERT INTO public_media_assets'));
+  assert.deepEqual(asset?.args.slice(0, 4), [derivativeHash, derivativeKey, 91, 'image/webp']);
 });
 
 test('authoring view is revision-bound and status polling promotes only a pending receipt', async () => {

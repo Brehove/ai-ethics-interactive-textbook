@@ -16,6 +16,16 @@ const validId = (value, label = 'id') => {
 const parseStoredJson = (value, label) => {
   try { return JSON.parse(value); } catch { throw new ApiError(500, 'CORRUPT_CONTENT', `${label} contains invalid canonical JSON`); }
 };
+export const classifyUnhandledError = (error) => {
+  const message = String(error?.message || '');
+  if (/D1_TYPE_ERROR/i.test(message)) return 'd1_type';
+  if (/\bD1(?:_|\b)/i.test(message)) return 'd1';
+  if (/\bR2(?:_|\b)|bucket/i.test(message)) return 'r2';
+  if (/\bqueue\b/i.test(message)) return 'queue';
+  if (/service[- ]binding/i.test(message)) return 'service_binding';
+  if (/\bfetch\b|network|upstream/i.test(message)) return 'upstream';
+  return 'internal';
+};
 const runIdentity = (identity) => {
   if (!identity.runId || identity.runId.length > 200) throw new ApiError(401, 'UNAUTHENTICATED', 'Gateway run identity is required for mutations');
 };
@@ -911,7 +921,7 @@ async function commitChangesetLive(request, env, identity, changesetId) {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(projectionId, body.documentId, finalized.content.slug, finalized.revisionId, finalized.content.chapterVersion, CHAPTER_RENDERER_STYLE_VERSION, CHAPTER_RENDERER_STYLE_VERSION, stylesheetHash, projectionHash, rendered.title, finalized.content.subtitle || null, finalized.content.description, rendered.html, stableStringify(rendered.prompts), stableStringify(mediaProjection.projection), rendered.schemaVersion, savedAt, identity.actorId, savedAt),
     ...mediaProjection.assetRows.map((asset) => env.CONTENT_DB.prepare(`INSERT INTO public_media_assets (sha256, object_key, bytes, mime_type, created_at)
-      VALUES (?, ?, ?, ?, ?) ON CONFLICT(sha256) DO NOTHING`).bind(asset.object_sha256, asset.object_key, asset.object_bytes, asset.content_type, savedAt)),
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT(sha256) DO NOTHING`).bind(asset.sha256, asset.objectKey, asset.bytes, asset.mimeType, savedAt)),
     env.CONTENT_DB.prepare(`UPDATE documents SET current_revision_id = ?, current_content_hash = ?, updated_at = ? WHERE id = ? AND current_revision_id = ?`)
       .bind(finalized.revisionId, finalized.contentHash, savedAt, body.documentId, body.baseRevisionId),
     // Keep the active D1 authority pinned to the newly advanced immutable head,
@@ -2373,6 +2383,13 @@ export default {
       if (/release_deployment_one_staged_book|release_deployment_transactions\.book_key/.test(error?.message || '')) return errorJson(409, 'RELEASE_BUSY', 'Another protected release or rollback transaction is already staged');
       if (/authority_d1_active_release_required/.test(error?.message || '')) return errorJson(409, 'ACTIVE_RELEASE_CONFLICT', 'D1 authority requires an exact matching active published release');
       if (/constraint failed|UNIQUE constraint/i.test(error?.message || '')) return errorJson(409, 'REVISION_CONFLICT', 'A concurrent or duplicate mutation was rejected');
+      console.error(JSON.stringify({
+        event: 'content_api_unhandled_error',
+        method: request.method,
+        path: url.pathname,
+        name: error?.name || 'Error',
+        kind: classifyUnhandledError(error)
+      }));
       return errorJson(500, 'INTERNAL_ERROR', 'Internal server error');
     }
   }
