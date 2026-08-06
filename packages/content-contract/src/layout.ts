@@ -5,6 +5,7 @@ export { LAYOUT_CATALOG, LAYOUT_CATALOG_VERSION, cardNodeId, validateLayoutRegio
 export const CardWidthSchema = z.enum(["compact", "narrow", "medium", "reading", "wide", "full", "bleed"]);
 export const CardAlignSchema = z.enum(["start", "center", "end"]);
 export const CardDensitySchema = z.enum(["compact", "standard", "expanded"]);
+export const CardSurfaceSchema = z.enum(["plain", "panel"]);
 export const CardFrameModeSchema = z.enum(["intrinsic", "contain", "crop"]);
 export const CardFrameAspectSchema = z.enum(["auto", "1:1", "4:3", "3:2", "16:9", "2:3"]);
 
@@ -23,6 +24,10 @@ export const CardPresentationSchema = z.object({
   align: CardAlignSchema,
   density: CardDensitySchema,
   frame: CardFrameSchema.optional(),
+}).strict();
+
+export const MediaCardPresentationSchema = CardPresentationSchema.extend({
+  surface: CardSurfaceSchema.optional(),
 }).strict();
 
 const id = (kind: string) => z.string().regex(new RegExp(`^${kind}_[A-Za-z0-9][A-Za-z0-9_-]*$`));
@@ -76,4 +81,5 @@ export const NewLayoutRegionSchema = z.union([
   }),
 ]);
 export type CardPresentation = z.infer<typeof CardPresentationSchema>;
+export type MediaCardPresentation = z.infer<typeof MediaCardPresentationSchema>;
 export type LayoutRegion = z.infer<typeof LayoutRegionSchema>;

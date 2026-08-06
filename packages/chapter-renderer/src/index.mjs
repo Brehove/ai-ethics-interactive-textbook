@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 
-export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v4-card-ratios";
+export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v4-media-surfaces";
 export const CHAPTER_RENDERER_STYLES = `
 .chapter-flow{--reader-lane:44rem;--wide-lane:60rem;--full-lane:76rem}
 .chapter-managed{margin:2rem auto;box-sizing:border-box}
@@ -13,6 +13,8 @@ export const CHAPTER_RENDERER_STYLES = `
 .chapter-checkpoint{border-left:4px solid var(--reader-accent,#8b341f);padding:1rem 1.2rem;background:var(--reader-panel,#f5f0e6)}
 .chapter-media img{display:block;max-width:100%;height:auto;margin-inline:auto}
 .chapter-media figcaption{margin-top:.65rem;color:var(--reader-muted,#596575)}
+.chapter-media[data-card-surface="panel"]{padding:var(--card-pad,1.25rem);background:var(--reader-context,#e7f0f3);border-left:4px solid var(--reader-accent,#8b341f)}
+.chapter-media[data-card-surface="panel"] figcaption{color:inherit}.chapter-media[data-card-surface="panel"] .chapter-media__credit{color:var(--reader-muted,#596575)}
 .chapter-embed__activation{font:inherit}
 .chapter-person{container-type:inline-size;padding:var(--card-pad,clamp(1rem,3vw,2rem));background:var(--reader-context,#e7f0f3);border-left:4px solid var(--reader-accent,#8b341f)}.chapter-person__content{display:grid;grid-template-columns:1fr;gap:clamp(1rem,3vw,2.5rem)}
 .chapter-person__portrait img{width:100%;height:auto;display:block}
@@ -261,7 +263,7 @@ export function migrateChapterV3ToV4(chapter) {
   projectV3OrderedChapter(chapter);
   const migrated = structuredClone(chapter);
   migrated.schemaVersion = 4;
-  migrated.layoutCatalogVersion = "2026-08-06";
+  migrated.layoutCatalogVersion = "2026-08-06.1";
   migrated.layoutRegions = [];
   migrated.body = migrated.body.map((block) => {
     if (!["mediaFigure", "externalEmbed", "richLink", "diagram"].includes(block.type)) return block;
@@ -338,7 +340,7 @@ const decodeLegacy = (block) => {
 const presentationOf = (value = {}) => value.presentation || legacyPresentation(value);
 const cardAttributes = (value = {}) => {
   const presentation = presentationOf(value);
-  return ` data-card-width="${escapeHtml(presentation.width)}" data-card-align="${escapeHtml(presentation.align)}" data-card-density="${escapeHtml(presentation.density)}"`;
+  return ` data-card-width="${escapeHtml(presentation.width)}" data-card-align="${escapeHtml(presentation.align)}" data-card-density="${escapeHtml(presentation.density)}"${presentation.surface ? ` data-card-surface="${escapeHtml(presentation.surface)}"` : ""}`;
 };
 const frameStyle = (frame = {}) => {
   const aspects = { "1:1": "1/1", "4:3": "4/3", "3:2": "3/2", "16:9": "16/9", "2:3": "2/3" };

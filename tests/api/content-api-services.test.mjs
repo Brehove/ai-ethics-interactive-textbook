@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
+import { ApiError, ConflictError, LAYOUT_CATALOG, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
 import worker, { LAYOUT_CATALOG_VERSION, rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 import { migrateChapterV2ToV3 } from '../../packages/chapter-renderer/src/index.mjs';
 
@@ -12,7 +12,8 @@ test('health endpoint is dependency-free and reports binding presence', async ()
 });
 
 test('card-layout reads expose the active catalog version from the imported catalog', () => {
-  assert.equal(LAYOUT_CATALOG_VERSION, '2026-08-06');
+  assert.equal(LAYOUT_CATALOG_VERSION, '2026-08-06.1');
+  assert.deepEqual(Object.keys(LAYOUT_CATALOG.surfaces), ['plain', 'panel']);
 });
 
 test('authenticated managed-media preview streams only the exact cleared immutable image derivative', async () => {
@@ -841,29 +842,33 @@ test('schema-v4 card layout operations are catalog-bound, typed, and server-iden
       { type: 'paragraph', blockId: 'block_intro', passageId: 'passage_intro', text: 'Compare the cards.' },
       { type: 'paragraph', blockId: 'block_context', passageId: 'passage_context', text: 'Use the nearby context.' },
       { type: 'artifactCard', blockId: 'block_card_one', artifactId: 'artifact_one', title: 'One', summary: 'First.', teachingUse: 'Compare.', presentation: { width: 'reading', align: 'center', density: 'standard' } },
-      { type: 'artifactCard', blockId: 'block_card_two', artifactId: 'artifact_two', title: 'Two', summary: 'Second.', teachingUse: 'Compare.', presentation: { width: 'reading', align: 'center', density: 'standard' } }
+      { type: 'artifactCard', blockId: 'block_card_two', artifactId: 'artifact_two', title: 'Two', summary: 'Second.', teachingUse: 'Compare.', presentation: { width: 'reading', align: 'center', density: 'standard' } },
+      { type: 'mediaFigure', blockId: 'block_media', figureId: 'figure_media', mediaId: 'media_media', mediaVersionId: 'mediaversion_media', rightsCaseId: 'rightscase_media', decorative: false, alt: 'An illuminated manuscript page.', caption: 'A Renaissance manuscript.', teachingUse: 'Read as a transmitted artifact.', presentation: { width: 'medium', align: 'center', density: 'standard' }, printPolicy: 'poster', downloadable: false }
     ]
   };
-  const resized = await applySemanticOperation(chapter, { type: 'cardPresentation.set', cardId: 'block_card_one', presentation: { width: 'narrow', align: 'start', density: 'compact' }, expectedLayoutCatalogVersion: '2026-08-06' });
-  assert.equal(resized.chapter.layoutCatalogVersion, '2026-08-06');
+  const resized = await applySemanticOperation(chapter, { type: 'cardPresentation.set', cardId: 'block_card_one', presentation: { width: 'narrow', align: 'start', density: 'compact' }, expectedLayoutCatalogVersion: '2026-08-06.1' });
+  assert.equal(resized.chapter.layoutCatalogVersion, '2026-08-06.1');
   assert.deepEqual(resized.chapter.body[2].presentation, { width: 'narrow', align: 'start', density: 'compact' });
   await assert.rejects(applySemanticOperation(chapter, { type: 'cardPresentation.reset', cardId: 'block_card_one', expectedLayoutCatalogVersion: 'stale' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_CATALOG_VERSION_MISMATCH');
-  const framed = await applySemanticOperation(resized.chapter, { type: 'cardFrame.set', cardId: 'block_card_one', frame: { mode: 'crop', aspect: '4:3', focalPoint: { x: 0.5, y: 0.25 } }, expectedLayoutCatalogVersion: '2026-08-06' });
+  const surfaced = await applySemanticOperation(resized.chapter, { type: 'cardPresentation.set', cardId: 'block_media', presentation: { width: 'medium', align: 'center', density: 'standard', surface: 'panel' }, expectedLayoutCatalogVersion: '2026-08-06.1' });
+  assert.equal(surfaced.chapter.body[4].presentation.surface, 'panel');
+  await assert.rejects(applySemanticOperation(surfaced.chapter, { type: 'cardPresentation.set', cardId: 'block_card_one', presentation: { width: 'narrow', align: 'start', density: 'compact', surface: 'panel' }, expectedLayoutCatalogVersion: '2026-08-06.1' }), (error) => error instanceof ApiError && error.code === 'CARD_SURFACE_INVALID');
+  const framed = await applySemanticOperation(surfaced.chapter, { type: 'cardFrame.set', cardId: 'block_card_one', frame: { mode: 'crop', aspect: '4:3', focalPoint: { x: 0.5, y: 0.25 } }, expectedLayoutCatalogVersion: '2026-08-06.1' });
   assert.equal(framed.chapter.body[2].presentation.frame.aspect, '4:3');
   assert.equal(validateChapter(framed.chapter, { publishable: false }).valid, true);
   assert.equal(validateChapter(framed.chapter, { publishable: true }).errors.some((error) => error.code === 'CARD_FRAME_APPROVAL_REQUIRED'), true);
-  const wrapped = await applySemanticOperation(framed.chapter, { type: 'layoutRegion.create', region: { type: 'wrap', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeId: 'block_card_one', side: 'end', width: 'narrow' }, expectedLayoutCatalogVersion: '2026-08-06' });
+  const wrapped = await applySemanticOperation(framed.chapter, { type: 'layoutRegion.create', region: { type: 'wrap', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeId: 'block_card_one', side: 'end', width: 'narrow' }, expectedLayoutCatalogVersion: '2026-08-06.1' });
   assert.equal(wrapped.chapter.layoutRegions[0].type, 'wrap');
-  const unwrapped = await applySemanticOperation(wrapped.chapter, { type: 'layoutRegion.remove', layoutId: wrapped.created.layoutId, expectedLayoutCatalogVersion: '2026-08-06' });
-  const split = await applySemanticOperation(unwrapped.chapter, { type: 'layoutRegion.create', region: { type: 'card-text-split', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeIds: ['block_card_one'], textNodeIds: ['block_intro', 'block_context'], cardSide: 'start', ratio: 'card-narrow' }, expectedLayoutCatalogVersion: '2026-08-06' });
+  const unwrapped = await applySemanticOperation(wrapped.chapter, { type: 'layoutRegion.remove', layoutId: wrapped.created.layoutId, expectedLayoutCatalogVersion: '2026-08-06.1' });
+  const split = await applySemanticOperation(unwrapped.chapter, { type: 'layoutRegion.create', region: { type: 'card-text-split', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeIds: ['block_card_one'], textNodeIds: ['block_intro', 'block_context'], cardSide: 'start', ratio: 'card-narrow' }, expectedLayoutCatalogVersion: '2026-08-06.1' });
   assert.equal(split.chapter.layoutRegions[0].type, 'card-text-split');
-  const unsplit = await applySemanticOperation(split.chapter, { type: 'layoutRegion.remove', layoutId: split.created.layoutId, expectedLayoutCatalogVersion: '2026-08-06' });
-  const grouped = await applySemanticOperation(unsplit.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal', ratio: 'start-narrow' }, expectedLayoutCatalogVersion: '2026-08-06' });
+  const unsplit = await applySemanticOperation(split.chapter, { type: 'layoutRegion.remove', layoutId: split.created.layoutId, expectedLayoutCatalogVersion: '2026-08-06.1' });
+  const grouped = await applySemanticOperation(unsplit.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal', ratio: 'start-narrow' }, expectedLayoutCatalogVersion: '2026-08-06.1' });
   assert.match(grouped.created.layoutId, /^layout_/);
   assert.equal(grouped.chapter.layoutRegions[0].layoutId, grouped.created.layoutId);
   assert.equal(grouped.chapter.layoutRegions[0].ratio, 'start-narrow');
-  await assert.rejects(applySemanticOperation(grouped.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal' }, expectedLayoutCatalogVersion: '2026-08-06' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_REGION_INVALID');
-  await assert.rejects(applySemanticOperation(unsplit.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'featured', featuredNodeId: 'block_card_two', ratio: 'start-narrow' }, expectedLayoutCatalogVersion: '2026-08-06' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_REGION_INVALID');
+  await assert.rejects(applySemanticOperation(grouped.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal' }, expectedLayoutCatalogVersion: '2026-08-06.1' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_REGION_INVALID');
+  await assert.rejects(applySemanticOperation(unsplit.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'featured', featuredNodeId: 'block_card_two', ratio: 'start-narrow' }, expectedLayoutCatalogVersion: '2026-08-06.1' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_REGION_INVALID');
 });
 
 test('semantic diff is deterministic and reports structure, anchors, embeds, and pinned media impact without copying prose', () => {

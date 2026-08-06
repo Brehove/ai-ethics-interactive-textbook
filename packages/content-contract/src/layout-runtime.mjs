@@ -1,9 +1,13 @@
-export const LAYOUT_CATALOG_VERSION = "2026-08-06";
+export const LAYOUT_CATALOG_VERSION = "2026-08-06.1";
 
 export const LAYOUT_CATALOG = Object.freeze({
   version: LAYOUT_CATALOG_VERSION,
   widths: {
     compact: { maxRem: 16, use: "small supporting card" }, narrow: { maxRem: 22, use: "portrait or brief contextual card" }, medium: { maxRem: 30, use: "substantial supporting card" }, reading: { maxRem: 44, use: "default reading-column card" }, wide: { maxRem: 60, use: "detailed card or landscape media" }, full: { maxRem: 76, use: "full reader canvas" }, bleed: { maxRem: null, use: "edge-to-edge visual; use sparingly" }
+  },
+  surfaces: {
+    plain: { use: "unadorned media whose caption and credit remain secondary" },
+    panel: { use: "bounded contextual media whose image, caption, and credit should read as one artifact" }
   },
   regions: {
     wrap: { cardCount: [1, 1], textRequired: true, guidance: "Use for a compact or narrow card beside prose of at least two paragraphs." },

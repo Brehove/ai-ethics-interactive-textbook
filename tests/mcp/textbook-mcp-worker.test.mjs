@@ -42,6 +42,8 @@ test('MCP exposes the Unified authoring contract rather than raw or legacy write
   assert.equal(names.includes('commit_live'), true);
   const groupTool = (await client.listTools()).tools.find((tool) => tool.name === 'create_card_group');
   assert.deepEqual(groupTool.inputSchema.properties.operation.properties.region.properties.ratio.enum, ['equal', 'start-narrow', 'end-narrow']);
+  const layoutTool = (await client.listTools()).tools.find((tool) => tool.name === 'set_card_layout');
+  assert.deepEqual(layoutTool.inputSchema.properties.operation.properties.presentation.properties.surface.enum, ['plain', 'panel']);
   await client.close(); await server.close();
 });
 
@@ -58,10 +60,19 @@ test('MCP rejects public slugs where canonical chapter document IDs are required
 test('MCP sends semantic unequal two-card ratios without reordering source IDs', async () => {
   let body;
   const { client, server } = await connected(makeEnv({ api: async (request) => { body = await request.json(); return { ok: true }; } }));
-  const response = await client.callTool({ name: 'create_card_group', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'layoutRegion.create', expectedLayoutCatalogVersion: '2026-08-06', region: { type: 'card-grid', startNodeId: 'block_manuscript', endNodeId: 'placement_aristotle', cardNodeIds: ['block_manuscript', 'placement_aristotle'], columns: 2, emphasis: 'equal', ratio: 'start-narrow' } } } });
+  const response = await client.callTool({ name: 'create_card_group', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'layoutRegion.create', expectedLayoutCatalogVersion: '2026-08-06.1', region: { type: 'card-grid', startNodeId: 'block_manuscript', endNodeId: 'placement_aristotle', cardNodeIds: ['block_manuscript', 'placement_aristotle'], columns: 2, emphasis: 'equal', ratio: 'start-narrow' } } } });
   assert.equal(response.isError, undefined);
   assert.equal(body.operations[0].region.ratio, 'start-narrow');
   assert.deepEqual(body.operations[0].region.cardNodeIds, ['block_manuscript', 'placement_aristotle']);
+  await client.close(); await server.close();
+});
+
+test('MCP sends an approved media panel through the typed card presentation', async () => {
+  let body;
+  const { client, server } = await connected(makeEnv({ api: async (request) => { body = await request.json(); return { ok: true }; } }));
+  const response = await client.callTool({ name: 'set_card_layout', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'cardPresentation.set', cardId: 'block_manuscript', expectedLayoutCatalogVersion: '2026-08-06.1', presentation: { width: 'medium', align: 'center', density: 'standard', surface: 'panel', frame: { mode: 'intrinsic', aspect: 'auto' } } } } });
+  assert.equal(response.isError, undefined);
+  assert.equal(body.operations[0].presentation.surface, 'panel');
   await client.close(); await server.close();
 });
 

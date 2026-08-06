@@ -104,7 +104,20 @@ test("schema-v4 renders semantic card grids and preserves ordered source in prin
   assert.match(rendered.html, /data-ratio="start-narrow"/);
   assert.match(CHAPTER_RENDERER_STYLES, /data-ratio="start-narrow"\]\{grid-template-columns:minmax\(14rem,.7fr\) minmax\(0,1.3fr\)/);
   assert.ok(rendered.html.indexOf("Practice") < rendered.html.indexOf("Judgment"));
-  assert.match(rendered.html, /data-layout-catalog-version="2026-08-06"/);
+  assert.match(rendered.html, /data-layout-catalog-version="2026-08-06\.1"/);
+});
+
+test("schema-v4 media panels bind image, caption, and credit without changing plain figures", () => {
+  const v4 = migrateChapterV3ToV4(migrateChapterV2ToV3({ ...chapter, checkpoints: [], managedPlacements: [], personFeatures: [] }));
+  const media = { type: "mediaFigure", blockId: "block_manuscript", figureId: "figure_manuscript", mediaId: "media_manuscript", mediaVersionId: "mediaversion_manuscript", rightsCaseId: "rightscase_manuscript", decorative: false, alt: "An illuminated manuscript page.", caption: "A Renaissance manuscript of Aristotle's Ethics.", teachingUse: "Read the image as a transmitted artifact.", credit: "Public domain.", src: "/media/manuscript.webp", printPolicy: "poster", downloadable: false, presentation: { width: "medium", align: "center", density: "standard", surface: "panel", frame: { mode: "intrinsic", aspect: "auto" } } };
+  v4.body.push(media);
+  const rendered = renderChapterProjection(v4);
+  assert.match(rendered.html, /class="chapter-managed chapter-card chapter-media"[^>]*data-card-surface="panel"/);
+  assert.ok(rendered.html.indexOf("chapter-card__frame") < rendered.html.indexOf("<figcaption>"));
+  assert.ok(rendered.html.indexOf("<figcaption>") < rendered.html.indexOf("chapter-media__credit"));
+  assert.match(CHAPTER_RENDERER_STYLES, /chapter-media\[data-card-surface="panel"\]\{padding:var\(--card-pad,1\.25rem\);background:/);
+  const plain = renderChapterProjection({ ...v4, body: v4.body.map((block) => block.blockId === media.blockId ? { ...block, presentation: { ...block.presentation, surface: undefined } } : block) });
+  assert.doesNotMatch(plain.html, /data-card-surface=/);
 });
 
 test("schema-v4 split layouts preserve source order while assigning either visual side", () => {
