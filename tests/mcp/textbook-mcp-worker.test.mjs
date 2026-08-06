@@ -65,6 +65,15 @@ test('media and provider tools expose the complete Skill workflow and exact API 
   await client.close(); await server.close();
 });
 
+test('media upload tickets return the bounded direct-upload route rather than an MCP-session subpath', async () => {
+  const env = makeEnv({ api: async () => ({ ticketId: 'upload_7', jobId: 'mediajob_7', state: 'issued', upload: { token: 'u'.repeat(64) } }) });
+  const { client, server } = await connected(env);
+  const response = await client.callTool({ name: 'upload_media', arguments: { filename: 'aristotle.webp', mimeType: 'image/webp', bytes: 65300, sha256: 'a'.repeat(64), reviewPackageId: 'reviewpkg_7', idempotencyKey: key } });
+  assert.equal(response.isError, undefined);
+  assert.equal(response.structuredContent.upload.url, 'https://mcp.ethicsandai.your-digital-life.org/media-upload/upload_7');
+  await client.close(); await server.close();
+});
+
 test('tools use current Unified routes, batch semantic operations, and preserve the original bearer', async () => {
   const calls = [];
   const env = makeEnv({ api: async (request) => {
