@@ -66,6 +66,7 @@ jobs:
           MEDIA_EXPECTED_JOB_ID="$JOB_ID" node scripts/media/prepare-job.mjs .media-job/envelope.json
       - name: Update and verify ClamAV-signed definitions
         run: |
+          sudo systemctl stop clamav-freshclam.service
           sudo freshclam --stdout
           test -f /var/lib/clamav/main.cvd -o -f /var/lib/clamav/main.cld
       - name: Download only the requested quarantine object
