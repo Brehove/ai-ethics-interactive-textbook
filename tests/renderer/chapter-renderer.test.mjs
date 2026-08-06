@@ -15,7 +15,7 @@ import {
 
 test("person cards respond to their actual card container width", () => {
   assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-person\{container-type:inline-size/);
-  assert.match(CHAPTER_RENDERER_STYLES, /@container \(min-width:28rem\)\{\.chapter-person__content\{grid-template-columns:minmax\(8rem,34%\) 1fr\}/);
+  assert.match(CHAPTER_RENDERER_STYLES, /@container \(min-width:26rem\)\{\.chapter-person__content\{grid-template-columns:minmax\(8rem,34%\) 1fr\}/);
   assert.match(CHAPTER_RENDERER_STYLES, /@media\(max-width:720px\)[^}]*[\s\S]*\.chapter-person__content\{grid-template-columns:1fr\}/);
   assert.doesNotMatch(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person/);
 });

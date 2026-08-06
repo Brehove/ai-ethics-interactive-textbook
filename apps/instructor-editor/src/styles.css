@@ -85,7 +85,7 @@ button.danger, .danger { border-color: #e5bab6; color: var(--editor-danger); }
 .chapter-person { container-type: inline-size; background: var(--reader-context); border-left: 4px solid var(--reader-accent); padding: clamp(1rem, 3vw, 2rem); }
 .chapter-person__content { display: grid; grid-template-columns: 1fr; gap: clamp(1rem, 3vw, 2rem); }
 .chapter-person__portrait { width: min(100%, 18rem); margin-inline: auto; }
-@container (min-width: 28rem) {
+@container (min-width: 26rem) {
   .chapter-person__content { grid-template-columns: minmax(8rem, 34%) 1fr; }
   .chapter-person__portrait { width: auto; margin-inline: 0; }
 }
