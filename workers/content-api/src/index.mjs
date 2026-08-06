@@ -276,14 +276,14 @@ async function getCardLayout(env, chapterId, cardId) {
   const { row, chapter } = await loadCanonicalChapter(env, chapterId);
   const card = layoutCardRecord(chapter, cardId);
   const regions = (chapter.layoutRegions || []).filter((region) => region.cardNodeId === cardId || region.cardNodeIds?.includes(cardId));
-  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: chapter.schemaVersion, layoutCatalogVersion: chapter.layoutCatalogVersion || null, ...card, regions });
+  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: chapter.schemaVersion, layoutCatalogVersion: LAYOUT_CATALOG_VERSION, storedLayoutCatalogVersion: chapter.layoutCatalogVersion || null, ...card, regions });
 }
 
 async function getValidLayoutOptions(env, chapterId, cardId) {
   const { row, chapter } = await loadCanonicalChapter(env, chapterId);
   const card = layoutCardRecord(chapter, cardId);
   if (chapter.schemaVersion !== 4) return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: chapter.schemaVersion, migrationRequired: true, targetSchemaVersion: 4, catalog: LAYOUT_CATALOG });
-  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: 4, layoutCatalogVersion: chapter.layoutCatalogVersion, cardId, cardType: card.cardType, presentation: { widths: Object.keys(LAYOUT_CATALOG.widths), aligns: ['start', 'center', 'end'], densities: ['compact', 'standard', 'expanded'], frames: ['intrinsic', 'contain', 'crop'] }, regions: LAYOUT_CATALOG.regions, guidance: { wrap: 'Use only when adjacent prose is long enough to clear the card.', grid: 'Use for two to six peer cards.', split: 'Use when card and prose form a single deliberate unit.' } });
+  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: 4, layoutCatalogVersion: LAYOUT_CATALOG_VERSION, storedLayoutCatalogVersion: chapter.layoutCatalogVersion, cardId, cardType: card.cardType, presentation: { widths: Object.keys(LAYOUT_CATALOG.widths), aligns: ['start', 'center', 'end'], densities: ['compact', 'standard', 'expanded'], frames: ['intrinsic', 'contain', 'crop'] }, regions: LAYOUT_CATALOG.regions, guidance: { wrap: 'Use only when adjacent prose is long enough to clear the card.', grid: 'Use equal for peers. For exactly two cards, use start-narrow or end-narrow when the source-order start or end card is a brief supporting artifact.', split: 'Use when card and prose form a single deliberate unit.' } });
 }
 
 async function validateLayoutProposal(request, env, chapterId) {
@@ -293,6 +293,7 @@ async function validateLayoutProposal(request, env, chapterId) {
   if (!body.presentation && !body.layoutRegions) throw new ApiError(422, 'LAYOUT_PROPOSAL_INVALID', 'Provide a card presentation and/or complete layout region set');
   if (chapter.schemaVersion !== 4) return json({ valid: false, chapterId, revisionId: row.current_revision_id, errors: [{ code: 'SCHEMA_V4_REQUIRED', message: 'Migrate the chapter to schema v4 before proposing layouts' }] });
   const proposal = structuredClone(chapter);
+  proposal.layoutCatalogVersion = LAYOUT_CATALOG_VERSION;
   if (body.cardId && body.presentation) {
     const target = layoutCardRecord(proposal, body.cardId);
     if (target.source === 'body') proposal.body[proposal.body.findIndex((item) => item.blockId === body.cardId)].presentation = body.presentation;
@@ -300,7 +301,7 @@ async function validateLayoutProposal(request, env, chapterId) {
   }
   if (body.layoutRegions) proposal.layoutRegions = body.layoutRegions;
   const result = validateChapter(proposal);
-  return json({ valid: result.valid, chapterId, revisionId: row.current_revision_id, layoutCatalogVersion: chapter.layoutCatalogVersion, errors: result.errors });
+  return json({ valid: result.valid, chapterId, revisionId: row.current_revision_id, layoutCatalogVersion: LAYOUT_CATALOG_VERSION, storedLayoutCatalogVersion: chapter.layoutCatalogVersion, errors: result.errors });
 }
 
 async function listChapterRevisions(env, id, url) {

@@ -723,7 +723,9 @@ const normalizeMediaPlacement = async (chapter, input) => {
 
 const assertLayoutCatalog = (chapter, expected) => {
   if (chapter.schemaVersion !== 4) throw new ApiError(409, 'SCHEMA_V4_REQUIRED', 'Card layout operations require schema-v4 ordered flow');
-  if (chapter.layoutCatalogVersion !== LAYOUT_CATALOG_VERSION || expected !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'Refresh the layout catalog before changing presentation', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
+  if (expected !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'Refresh the layout catalog before changing presentation', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
+  if (chapter.layoutCatalogVersion === '2026-08-05') chapter.layoutCatalogVersion = LAYOUT_CATALOG_VERSION;
+  else if (chapter.layoutCatalogVersion !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'This chapter layout catalog cannot be migrated automatically', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
 };
 
 const defaultPresentation = (card) => ({
@@ -770,14 +772,15 @@ const validPresentation = (value) => { try { parsePresentation(value); return tr
 const parseLayoutRegion = (region) => {
   if (!region || typeof region !== 'object' || Array.isArray(region)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Layout region must be an object');
   const base = ['layoutId', 'type', 'startNodeId', 'endNodeId'];
-  const extra = region.type === 'wrap' ? ['cardNodeId', 'side', 'width'] : region.type === 'card-grid' ? ['cardNodeIds', 'columns', 'emphasis', 'featuredNodeId'] : region.type === 'card-text-split' ? ['cardNodeIds', 'textNodeIds', 'cardSide', 'ratio'] : [];
+  const extra = region.type === 'wrap' ? ['cardNodeId', 'side', 'width'] : region.type === 'card-grid' ? ['cardNodeIds', 'columns', 'emphasis', 'ratio', 'featuredNodeId'] : region.type === 'card-text-split' ? ['cardNodeIds', 'textNodeIds', 'cardSide', 'ratio'] : [];
   if (!extra.length) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Layout region type is invalid');
   rejectUnknown(region, [...base, ...extra]);
   for (const field of ['layoutId', 'startNodeId', 'endNodeId']) requireString(region[field], `region.${field}`, 200);
   if (region.type === 'wrap' && (!['start', 'end'].includes(region.side) || !['compact', 'narrow', 'medium'].includes(region.width) || !region.cardNodeId)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Wrap region is invalid');
-  if (region.type === 'card-grid' && (!Array.isArray(region.cardNodeIds) || region.cardNodeIds.length < 2 || region.cardNodeIds.length > 6 || !Number.isInteger(region.columns) || region.columns < 2 || region.columns > 4 || region.columns > region.cardNodeIds.length || !['equal', 'featured'].includes(region.emphasis) || (region.emphasis === 'featured' && !region.cardNodeIds.includes(region.featuredNodeId)) || (region.emphasis === 'equal' && region.featuredNodeId))) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Card grid is invalid');
+  const gridRatio = region.type === 'card-grid' ? (region.ratio || 'equal') : null;
+  if (region.type === 'card-grid' && (!Array.isArray(region.cardNodeIds) || region.cardNodeIds.length < 2 || region.cardNodeIds.length > 6 || !Number.isInteger(region.columns) || region.columns < 2 || region.columns > 4 || region.columns > region.cardNodeIds.length || !['equal', 'featured'].includes(region.emphasis) || !['equal', 'start-narrow', 'end-narrow'].includes(gridRatio) || (gridRatio !== 'equal' && (region.cardNodeIds.length !== 2 || region.columns !== 2 || region.emphasis !== 'equal')) || (region.emphasis === 'featured' && !region.cardNodeIds.includes(region.featuredNodeId)) || (region.emphasis === 'equal' && region.featuredNodeId))) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Card grid is invalid');
   if (region.type === 'card-text-split' && (!Array.isArray(region.cardNodeIds) || region.cardNodeIds.length < 1 || region.cardNodeIds.length > 3 || !Array.isArray(region.textNodeIds) || region.textNodeIds.length < 1 || region.textNodeIds.length > 20 || !['start', 'end'].includes(region.cardSide) || !['card-narrow', 'balanced', 'card-wide'].includes(region.ratio))) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Card-text split is invalid');
-  return structuredClone(region);
+  return region.type === 'card-grid' ? { ...structuredClone(region), ratio: gridRatio } : structuredClone(region);
 };
 
 const validateRegionSet = (chapter, regions) => {

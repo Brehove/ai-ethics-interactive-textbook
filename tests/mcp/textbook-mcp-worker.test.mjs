@@ -40,6 +40,28 @@ test('MCP exposes the Unified authoring contract rather than raw or legacy write
   for (const name of ['save_live_revision', 'create_changeset', 'replace_text', 'approve_changeset', 'publish_changeset']) assert.equal(names.includes(name), false, name);
   assert.equal(names.includes('request_live_save_authorization'), true);
   assert.equal(names.includes('commit_live'), true);
+  const groupTool = (await client.listTools()).tools.find((tool) => tool.name === 'create_card_group');
+  assert.deepEqual(groupTool.inputSchema.properties.operation.properties.region.properties.ratio.enum, ['equal', 'start-narrow', 'end-narrow']);
+  await client.close(); await server.close();
+});
+
+test('MCP rejects public slugs where canonical chapter document IDs are required', async () => {
+  let called = false;
+  const { client, server } = await connected(makeEnv({ api: async () => { called = true; return { ok: true }; } }));
+  const response = await client.callTool({ name: 'get_authoring_view', arguments: { chapterId: 'aristotle-character-and-ai-assisted-life' } });
+  assert.equal(response.isError, true);
+  assert.match(response.content[0].text, /chapter_ch07|canonical document ID/i);
+  assert.equal(called, false);
+  await client.close(); await server.close();
+});
+
+test('MCP sends semantic unequal two-card ratios without reordering source IDs', async () => {
+  let body;
+  const { client, server } = await connected(makeEnv({ api: async (request) => { body = await request.json(); return { ok: true }; } }));
+  const response = await client.callTool({ name: 'create_card_group', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'layoutRegion.create', expectedLayoutCatalogVersion: '2026-08-06', region: { type: 'card-grid', startNodeId: 'block_manuscript', endNodeId: 'placement_aristotle', cardNodeIds: ['block_manuscript', 'placement_aristotle'], columns: 2, emphasis: 'equal', ratio: 'start-narrow' } } } });
+  assert.equal(response.isError, undefined);
+  assert.equal(body.operations[0].region.ratio, 'start-narrow');
+  assert.deepEqual(body.operations[0].region.cardNodeIds, ['block_manuscript', 'placement_aristotle']);
   await client.close(); await server.close();
 });
 

@@ -348,6 +348,7 @@ type LayoutRegion =
       span: FlowSpan;
       columns: 2 | 3 | 4;
       template: "equal" | "start-wide" | "center-wide" | "end-wide";
+      ratio: "equal" | "start-narrow" | "end-narrow";
       width: "reading" | "wide" | "full" | "bleed";
       spacing: "tight" | "normal" | "relaxed";
       verticalAlign: "start" | "center" | "stretch";
@@ -369,6 +370,7 @@ Region sizing has two levels. `width` sizes the whole arrangement on the reader 
 | `card-wide` | Card is primary evidence; approximately a 3:2 relationship |
 | `equal` | Peer cards receive equal tracks |
 | `start-wide` / `center-wide` / `end-wide` | Named card receives a strong featured track; companions remain equal |
+| `start-narrow` / `end-narrow` | In an exact two-card group, the named source-order card is a brief supporting artifact and its companion receives the larger reading field |
 
 These are semantic relationships, not author-controlled CSS ratios. The renderer owns exact min/max behavior and may reduce emphasis to preserve legibility at narrower containers.
 
@@ -383,6 +385,7 @@ Validation rules:
 - wrap cards use `compact`, `narrow`, or `medium` presentation and may not be interactive players, audio, video, documents, or expanded-density cards;
 - `card-text-split` contains exactly one card plus one to eight eligible prose blocks; the card is first for `start` and last for `end`;
 - `card-grid` contains two to six card-capable nodes in source row-major order and no prose;
+- unequal `start-narrow` and `end-narrow` ratios require exactly two cards, two columns, equal emphasis, and source-ordered `cardNodeIds`;
 - four columns require `wide`, `full`, or `bleed`; three columns require at least `wide` when any member uses standard or expanded density;
 - `center-wide` requires exactly three cards in one row;
 - `start-wide` and `end-wide` require a single row of two or three cards;
@@ -445,6 +448,8 @@ Initial recipes:
 | `full-surface-feature` | block, full, center, expanded | Major visual/interactive feature |
 | `safe-bleed-feature` | block, bleed, center, expanded | Exceptional visual that benefits from breakout |
 | `pair-equal` | two-column equal card grid | Direct comparison between peers |
+| `pair-support-start` | two-column start-narrow card grid | First source-order card is a brief supporting artifact; second is substantial |
+| `pair-support-end` | two-column end-narrow card grid | Second source-order card is a brief supporting artifact; first is substantial |
 | `pair-feature-start` | two-column start-wide card grid | First card is primary; second supports it |
 | `pair-feature-end` | two-column end-wide card grid | Second card is primary |
 | `trio-equal` | three-column equal card grid | Three comparable, compact items |
@@ -574,6 +579,7 @@ Agents must distinguish wrap from split: a wrap is for a short ancillary card th
 |---|---|
 | “Put Aristotle in a small card to the right of this paragraph.” | For true wrap, place Aristotle immediately before the bounded prose in source order, then apply `narrow-aside-end`; if prose must read first on mobile, use an end-side split instead |
 | “Make the manuscript and Aristotle the same size, side by side.” | Make nodes contiguous, create `pair-equal`, use evidence-safe framing |
+| “Keep the short manuscript card beside the fuller Aristotle card.” | Keep source order and create `pair-support-start`; do not feature-span either card onto a separate row |
 | “Make the manuscript larger than Aristotle.” | Create `pair-feature-start` or `pair-feature-end` according to source order |
 | “Put these three source cards together.” | Create `trio-equal` if all are peers and compact enough |
 | “Put the thinker on the left and the explanation on the right.” | Create the appropriate `card-text-*-start` split over one card and a bounded prose range; choose narrow, balanced, or wide according to emphasis |

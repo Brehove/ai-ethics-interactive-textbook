@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 
-export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v3-layouts";
+export const CHAPTER_RENDERER_STYLE_VERSION = "chapter-renderer-v4-card-ratios";
 export const CHAPTER_RENDERER_STYLES = `
 .chapter-flow{--reader-lane:44rem;--wide-lane:60rem;--full-lane:76rem}
 .chapter-managed{margin:2rem auto;box-sizing:border-box}
@@ -9,17 +9,17 @@ export const CHAPTER_RENDERER_STYLES = `
 .chapter-card[data-card-density="compact"]{--card-pad:.75rem}.chapter-card[data-card-density="standard"]{--card-pad:1.25rem}.chapter-card[data-card-density="expanded"]{--card-pad:2rem}
 .chapter-card__frame{overflow:hidden}.chapter-card__frame img{width:100%;height:100%;display:block}.chapter-card__frame[data-frame-mode="contain"] img{object-fit:contain}.chapter-card__frame[data-frame-mode="crop"] img{object-fit:cover;aspect-ratio:var(--card-aspect);object-position:var(--card-focus,50% 50%)}
 .chapter-layout{max-width:var(--full-lane);margin:2rem auto}.chapter-layout--wrap{display:flow-root}.chapter-layout--wrap>.chapter-card{width:min(var(--card-region-width,22rem),45%);margin-block:0 1rem}.chapter-layout--wrap[data-card-side="start"]>.chapter-card{float:left;margin-inline:0 1.5rem}.chapter-layout--wrap[data-card-side="end"]>.chapter-card{float:right;margin-inline:1.5rem 0}
-.chapter-layout--card-text-split{display:grid;grid-template-columns:var(--split-columns,1fr 1fr);gap:clamp(1rem,3vw,2.5rem);align-items:start}.chapter-layout--card-text-split[data-card-side="start"] .chapter-layout__cards{grid-column:1}.chapter-layout--card-text-split[data-card-side="start"] .chapter-layout__text{grid-column:2}.chapter-layout--card-text-split[data-card-side="end"] .chapter-layout__cards{grid-column:2}.chapter-layout--card-text-split[data-card-side="end"] .chapter-layout__text{grid-column:1}.chapter-layout__cards,.chapter-layout__text{grid-row:1}.chapter-layout__cards{display:grid;gap:1rem}.chapter-layout--card-grid{display:grid;grid-template-columns:repeat(var(--grid-columns,2),minmax(0,1fr));gap:clamp(.85rem,2vw,1.5rem);align-items:start}.chapter-layout--card-grid>.chapter-card{margin:0;max-width:none}.chapter-layout--card-grid[data-emphasis="featured"]>.chapter-card[data-featured="true"]{grid-column:span 2}
+.chapter-layout--card-text-split{display:grid;grid-template-columns:var(--split-columns,1fr 1fr);gap:clamp(1rem,3vw,2.5rem);align-items:start}.chapter-layout--card-text-split[data-card-side="start"] .chapter-layout__cards{grid-column:1}.chapter-layout--card-text-split[data-card-side="start"] .chapter-layout__text{grid-column:2}.chapter-layout--card-text-split[data-card-side="end"] .chapter-layout__cards{grid-column:2}.chapter-layout--card-text-split[data-card-side="end"] .chapter-layout__text{grid-column:1}.chapter-layout__cards,.chapter-layout__text{grid-row:1}.chapter-layout__cards{display:grid;gap:1rem}.chapter-layout--card-grid{display:grid;grid-template-columns:repeat(var(--grid-columns,2),minmax(0,1fr));gap:clamp(.85rem,2vw,1.5rem);align-items:start}.chapter-layout--card-grid[data-ratio="start-narrow"]{grid-template-columns:minmax(14rem,.7fr) minmax(0,1.3fr)}.chapter-layout--card-grid[data-ratio="end-narrow"]{grid-template-columns:minmax(0,1.3fr) minmax(14rem,.7fr)}.chapter-layout--card-grid>.chapter-card{margin:0;max-width:none}.chapter-layout--card-grid[data-emphasis="featured"]>.chapter-card[data-featured="true"]{grid-column:span 2}
 .chapter-checkpoint{border-left:4px solid var(--reader-accent,#8b341f);padding:1rem 1.2rem;background:var(--reader-panel,#f5f0e6)}
 .chapter-media img{display:block;max-width:100%;height:auto;margin-inline:auto}
 .chapter-media figcaption{margin-top:.65rem;color:var(--reader-muted,#596575)}
 .chapter-embed__activation{font:inherit}
-.chapter-person{display:grid;grid-template-columns:minmax(8rem,34%) 1fr;gap:clamp(1rem,3vw,2.5rem);padding:var(--card-pad,clamp(1rem,3vw,2rem));background:var(--reader-context,#e7f0f3);border-left:4px solid var(--reader-accent,#8b341f)}
+.chapter-person{container-type:inline-size;padding:var(--card-pad,clamp(1rem,3vw,2rem));background:var(--reader-context,#e7f0f3);border-left:4px solid var(--reader-accent,#8b341f)}.chapter-person__content{display:grid;grid-template-columns:1fr;gap:clamp(1rem,3vw,2.5rem)}
 .chapter-person__portrait img{width:100%;height:auto;display:block}
 .chapter-person__label{font:700 .75rem/1.2 ui-sans-serif,system-ui;letter-spacing:.14em;text-transform:uppercase}
 .chapter-person__credit{font-size:.8em}
-.chapter-layout--card-grid>.chapter-person{grid-template-columns:1fr}.chapter-layout--card-grid>.chapter-person>.chapter-person__portrait{width:min(100%,18rem);margin-inline:auto}
-@media(max-width:720px){.chapter-layout--wrap>.chapter-card{float:none!important;width:auto;margin:1.5rem auto!important}.chapter-layout--card-text-split,.chapter-layout--card-grid{display:block}.chapter-layout--card-text-split .chapter-layout__cards,.chapter-layout--card-text-split .chapter-layout__text{margin-bottom:1.5rem}.chapter-person{grid-template-columns:1fr}.chapter-person__portrait{max-width:18rem}}
+.chapter-person__portrait{width:min(100%,18rem);margin-inline:auto}@container (min-width:36rem){.chapter-person__content{grid-template-columns:minmax(8rem,34%) 1fr}.chapter-person__portrait{width:auto;margin-inline:0}}
+@media(max-width:720px){.chapter-layout--wrap>.chapter-card{float:none!important;width:auto;margin:1.5rem auto!important}.chapter-layout--card-text-split,.chapter-layout--card-grid{display:block}.chapter-layout--card-text-split .chapter-layout__cards,.chapter-layout--card-text-split .chapter-layout__text{margin-bottom:1.5rem}}
 @media print{.chapter-embed__activation{display:none}.chapter-managed{break-inside:avoid}.chapter-layout{display:contents!important}.chapter-layout__cards,.chapter-layout__text{display:contents!important}.chapter-layout .chapter-card{float:none!important;width:auto!important;max-width:none!important;margin:1rem 0!important}.chapter-layout [data-featured]{grid-column:auto!important}}
 `.trim();
 
@@ -261,7 +261,7 @@ export function migrateChapterV3ToV4(chapter) {
   projectV3OrderedChapter(chapter);
   const migrated = structuredClone(chapter);
   migrated.schemaVersion = 4;
-  migrated.layoutCatalogVersion = "2026-08-05";
+  migrated.layoutCatalogVersion = "2026-08-06";
   migrated.layoutRegions = [];
   migrated.body = migrated.body.map((block) => {
     if (!["mediaFigure", "externalEmbed", "richLink", "diagram"].includes(block.type)) return block;
@@ -403,7 +403,7 @@ const renderPerson = (person, options) => {
   const primary = person.primarySource?.title || person.primaryTextTitle || primarySources[0]?.title;
   const credit = person.credit || person.portrait?.credit;
   const portraitAlt = person.portraitAlt || person.portrait?.alt || `Portrait of ${name}`;
-  return `<aside class="chapter-managed chapter-card chapter-person"${cardAttributes(person)} data-person-feature-id="${escapeHtml(person.personFeatureId || person.placementId || "")}" data-person-id="${escapeHtml(person.personId || person.entityId || "")}"><div class="chapter-person__portrait">${framedImage(portrait, portraitAlt, false, presentationOf(person)) || ""}${credit ? `<p class="chapter-person__credit">${inline(credit)}</p>` : ""}</div><div class="chapter-person__body"><p class="chapter-person__label">${escapeHtml(person.label || "Thinker in the text")}</p><h3>${href ? `<a href="${escapeHtml(href)}">${escapeHtml(name)}</a>` : escapeHtml(name)}</h3>${person.dates ? `<p>${escapeHtml(person.dates)}</p>` : ""}${person.role ? `<p><em>${escapeHtml(person.role)}</em></p>` : ""}${biography ? `<p>${inline(biography)}</p>` : ""}${primary ? `<p><strong>Primary text:</strong> ${escapeHtml(primary)}</p>` : ""}</div></aside>`;
+  return `<aside class="chapter-managed chapter-card chapter-person"${cardAttributes(person)} data-person-feature-id="${escapeHtml(person.personFeatureId || person.placementId || "")}" data-person-id="${escapeHtml(person.personId || person.entityId || "")}"><div class="chapter-person__content"><div class="chapter-person__portrait">${framedImage(portrait, portraitAlt, false, presentationOf(person)) || ""}${credit ? `<p class="chapter-person__credit">${inline(credit)}</p>` : ""}</div><div class="chapter-person__body"><p class="chapter-person__label">${escapeHtml(person.label || "Thinker in the text")}</p><h3>${href ? `<a href="${escapeHtml(href)}">${escapeHtml(name)}</a>` : escapeHtml(name)}</h3>${person.dates ? `<p>${escapeHtml(person.dates)}</p>` : ""}${person.role ? `<p><em>${escapeHtml(person.role)}</em></p>` : ""}${biography ? `<p>${inline(biography)}</p>` : ""}${primary ? `<p><strong>Primary text:</strong> ${escapeHtml(primary)}</p>` : ""}</div></div></aside>`;
 };
 
 export function renderOrderedNode(node, options = {}) {
@@ -425,7 +425,7 @@ const renderLayoutRegion = (region, nodes, options) => {
   }
   if (region.type === "card-grid") {
     const cards = new Set(region.cardNodeIds || []);
-    return `<section class="chapter-layout chapter-layout--card-grid"${attributes} data-emphasis="${escapeHtml(region.emphasis)}" style="--grid-columns:${Number(region.columns) || 2}">${nodes.map((node) => {
+    return `<section class="chapter-layout chapter-layout--card-grid"${attributes} data-emphasis="${escapeHtml(region.emphasis)}" data-ratio="${escapeHtml(region.ratio || "equal")}" style="--grid-columns:${Number(region.columns) || 2}">${nodes.map((node) => {
       const nodeId = orderedNodeId(node); const html = renderOrderedNode(node, options);
       return region.featuredNodeId === nodeId ? html.replace(" class=\"chapter-managed chapter-card", " data-featured=\"true\" class=\"chapter-managed chapter-card") : cards.has(nodeId) ? html : html;
     }).join("\n")}</section>`;

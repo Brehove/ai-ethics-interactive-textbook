@@ -1,4 +1,4 @@
-export const LAYOUT_CATALOG_VERSION = "2026-08-05";
+export const LAYOUT_CATALOG_VERSION = "2026-08-06";
 
 export const LAYOUT_CATALOG = Object.freeze({
   version: LAYOUT_CATALOG_VERSION,
@@ -8,7 +8,11 @@ export const LAYOUT_CATALOG = Object.freeze({
   regions: {
     wrap: { cardCount: [1, 1], textRequired: true, guidance: "Use for a compact or narrow card beside prose of at least two paragraphs." },
     "card-text-split": { cardCount: [1, 3], textRequired: true, guidance: "Use when card and text form one deliberate comparison or explanation." },
-    "card-grid": { cardCount: [2, 6], textRequired: false, guidance: "Use for peer cards that readers should scan or compare together." }
+    "card-grid": {
+      cardCount: [2, 6], textRequired: false,
+      ratios: ["equal", "start-narrow", "end-narrow"],
+      guidance: "Use equal for peer cards. For exactly two related cards, use start-narrow or end-narrow when one is a brief supporting artifact and the other needs the larger reading field; ratio names follow source order."
+    }
   },
   responsive: { collapseBelowPx: 720, sourceOrderPreserved: true }, print: { regionLayoutsFlatten: true, sourceOrderPreserved: true }
 });
