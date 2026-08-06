@@ -389,6 +389,12 @@ async function renderPreview(request, env, identity, changesetId) {
   const chapter = parseStoredJson(working.content_text, 'Working document');
   const validation = validateChapter(chapter, { publishable: false });
   if (!validation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Draft preview contains structurally invalid content', validation);
+  try { renderChapterProjection(chapter, { context: 'editor', publicOrigin: env.PUBLIC_READER_ORIGIN }); }
+  catch (error) {
+    throw new ApiError(422, 'PREVIEW_RENDER_INVALID', 'Draft preview cannot be rendered safely', {
+      code: error?.code || 'RENDER_FAILED', path: error?.path || 'body', message: error instanceof Error ? error.message : 'Renderer validation failed'
+    });
+  }
   const snapshot = { schemaVersion: 1, kind: 'draftPreview', changesetId, documentId: working.document_id, baseRevisionId: working.base_revision_id, workingVersion: working.version, contentHash: working.content_hash, surface: body.surface || 'web', chapter };
   const snapshotJson = stableStringify(snapshot);
   const snapshotHash = await sha256(snapshotJson);
