@@ -67,6 +67,16 @@ Use only the `ai-ethics-textbook` MCP connection for agent-native textbook work.
 - repository/local chapter edits presented as current D1 state
 - raw HTML, CSS, SQL, iframe markup, or generic patch payloads
 
+### Unsupported MCP requests
+
+Before changing cards, card placement, layouts, media, checkpoints, or other chapter structures, inspect the live MCP catalog and valid options for the exact document. If the requested result is not supported by the current typed MCP tools and live catalog, stop and tell the instructor plainly:
+
+- which requested behavior is unsupported
+- which currently supported options are closest
+- whether fulfilling the request would require application code, contract/schema changes, a migration, deployment, or another platform-level change
+
+An unsupported chapter-authoring request does **not** authorize platform development. Do not edit repository code, create a branch or pull request, add a migration, or deploy services merely to make the request possible. Proceed with that work only after the instructor separately and explicitly authorizes the proposed platform change. Routine chapter card and layout changes should otherwise remain MCP-only and should not produce a GitHub pull request.
+
 Codex discovers MCP tools when a task/conversation starts. Registering or authenticating an MCP does not hot-refresh the tool list of a task that is already running; begin a new task after first-time registration or authentication.
 
 For an MCP-only Codex registration:
