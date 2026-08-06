@@ -1588,6 +1588,33 @@ async function createMediaReviewPackage(request, env, identity) {
   return json(response, 201);
 }
 
+async function getMediaReviewPackage(env, identity, packageId) {
+  requireScope(identity, 'content:approve'); requireHumanIdentity(identity, 'Media review package');
+  const reviewPackage = await env.CONTENT_DB.prepare('SELECT * FROM media_review_packages WHERE id = ?').bind(packageId).first();
+  if (!reviewPackage) throw new ApiError(404, 'NOT_FOUND', 'Media review package was not found');
+  return json({
+    id: reviewPackage.id,
+    state: reviewPackage.state,
+    declarationHash: reviewPackage.declaration_hash,
+    rightsReviewId: reviewPackage.rights_review_id,
+    editorialReviewId: reviewPackage.editorial_review_id,
+    accessibilityReviewId: reviewPackage.accessibility_review_id,
+    declarations: {
+      rights: parseStoredJson(reviewPackage.rights_json, 'Rights declaration'),
+      editorial: parseStoredJson(reviewPackage.editorial_json, 'Editorial declaration'),
+      accessibility: parseStoredJson(reviewPackage.accessibility_json, 'Accessibility declaration')
+    },
+    createdBy: reviewPackage.created_by,
+    createdActorType: reviewPackage.created_actor_type,
+    createdClientId: reviewPackage.created_client_id,
+    createdRunId: reviewPackage.created_run_id,
+    createdAt: reviewPackage.created_at,
+    decidedBy: reviewPackage.decided_by || null,
+    decisionComment: reviewPackage.decision_comment || null,
+    decidedAt: reviewPackage.decided_at || null
+  });
+}
+
 async function decideMediaReviewPackage(request, env, identity, packageId) {
   requireScope(identity, 'content:approve'); runIdentity(identity); requireHumanIdentity(identity, 'Media review decision');
   const body = await readJsonBody(request, { allowedFields: ['declarationHash', 'decision', 'comment', 'idempotencyKey'] });
@@ -2247,7 +2274,7 @@ export default {
           snapshot: { route: 'GET /v1/release-snapshots/{snapshotHash}', scope: 'content:releaseSnapshot', integrity: 'exact SHA-256 bytes', requiresExactReleaseApproval: true },
           asset: { route: 'GET /v1/release-assets/{sha256}', scope: 'content:releaseSnapshot', integrity: 'DB-referenced exact SHA-256 bytes', requiresExactReleaseApproval: true }
         },
-        media: { search: { route: 'GET /v1/media', query: { q: 'max 100 characters', kind: ['image', 'audio', 'video', 'document'], rightsStatus: ['reviewRequired', 'cleared', 'blocked'], sha256: 'exact lowercase SHA-256', limit: '1-50', cursor: '0-10000' } }, preview: { route: 'GET /v1/media/{mediaId}/versions/{mediaVersionId}/rights/{rightsCaseId}:preview', auth: 'media:read or content:read', requires: ['exact ready asset', 'exact cleared rights case', 'cleared review package', 'immutable image derivative or poster'], cache: 'private, no-store', canonicalStorage: 'never' }, reviewPackage: { create: { route: 'POST /v1/media-review-packages', required: ['rights', 'editorial', 'accessibility', 'idempotencyKey'], resultState: 'pending' }, decide: { route: 'POST /v1/media-review-packages/{reviewPackageId}:decide', required: ['declarationHash', 'decision', 'comment', 'idempotencyKey'], decisions: ['cleared', 'blocked'], scope: 'content:approve', humanActorRequired: true } }, requestUpload: { route: 'POST /v1/media:requestUpload', required: ['filename', 'mimeType', 'bytes', 'sha256', 'idempotencyKey', 'reviewPackageId'], optional: ['transcriptEquivalent', 'poster'], transcriptEquivalent: { requiredFor: ['audio/*', 'video/*'], required: ['provided', 'language', 'text'], maxTextCharacters: 50000, timedCaptionTrackClaimed: false }, policy: MEDIA_UPLOAD_POLICY }, upload: { route: 'PUT /v1/media/uploads/{ticketId}', body: 'raw bytes', requiredHeaders: ['content-type', 'content-length', 'x-content-sha256', 'x-upload-token'] }, jobStatus: { route: 'GET /v1/media/jobs/{jobId}' }, mediaStatus: { route: 'GET /v1/media/{mediaId}' }, processorCallback: { route: 'POST /v1/media:processorCallback', auth: 'HMAC-SHA-256 raw body', required: ['schemaVersion', 'jobId', 'idempotencyKey', 'quarantineObjectKey', 'outputPrefix', 'immutableAddress', 'manifestKey', 'reviews', 'publication'], requiredHeaders: ['idempotency-key', 'x-media-signature'] } },
+        media: { search: { route: 'GET /v1/media', query: { q: 'max 100 characters', kind: ['image', 'audio', 'video', 'document'], rightsStatus: ['reviewRequired', 'cleared', 'blocked'], sha256: 'exact lowercase SHA-256', limit: '1-50', cursor: '0-10000' } }, preview: { route: 'GET /v1/media/{mediaId}/versions/{mediaVersionId}/rights/{rightsCaseId}:preview', auth: 'media:read or content:read', requires: ['exact ready asset', 'exact cleared rights case', 'cleared review package', 'immutable image derivative or poster'], cache: 'private, no-store', canonicalStorage: 'never' }, reviewPackage: { create: { route: 'POST /v1/media-review-packages', required: ['rights', 'editorial', 'accessibility', 'idempotencyKey'], resultState: 'pending' }, read: { route: 'GET /v1/media-review-packages/{reviewPackageId}', scopes: ['content:read', 'content:approve'], humanActorRequired: true }, decide: { route: 'POST /v1/media-review-packages/{reviewPackageId}:decide', required: ['declarationHash', 'decision', 'comment', 'idempotencyKey'], decisions: ['cleared', 'blocked'], scope: 'content:approve', humanActorRequired: true } }, requestUpload: { route: 'POST /v1/media:requestUpload', required: ['filename', 'mimeType', 'bytes', 'sha256', 'idempotencyKey', 'reviewPackageId'], optional: ['transcriptEquivalent', 'poster'], transcriptEquivalent: { requiredFor: ['audio/*', 'video/*'], required: ['provided', 'language', 'text'], maxTextCharacters: 50000, timedCaptionTrackClaimed: false }, policy: MEDIA_UPLOAD_POLICY }, upload: { route: 'PUT /v1/media/uploads/{ticketId}', body: 'raw bytes', requiredHeaders: ['content-type', 'content-length', 'x-content-sha256', 'x-upload-token'] }, jobStatus: { route: 'GET /v1/media/jobs/{jobId}' }, mediaStatus: { route: 'GET /v1/media/{mediaId}' }, processorCallback: { route: 'POST /v1/media:processorCallback', auth: 'HMAC-SHA-256 raw body', required: ['schemaVersion', 'jobId', 'idempotencyKey', 'quarantineObjectKey', 'outputPrefix', 'immutableAddress', 'manifestKey', 'reviews', 'publication'], requiredHeaders: ['idempotency-key', 'x-media-signature'] } },
         persons: { search: { route: 'GET /v1/persons', query: { q: 'max 100 characters', limit: '1-50', cursor: '0-10000' } }, get: { route: 'GET /v1/persons/{personId}', frozenProjection: true } },
         providers: { registry: PROVIDER_REGISTRY, resolve: { route: 'POST /v1/embeds:resolve', required: ['url'], optional: ['expectedProvider'], scope: 'content:write', networkAccess: false } },
         rateLimits: { windowSeconds: RATE_WINDOW_SECONDS, mutation: RATE_LIMITS.mutation, upload: RATE_LIMITS.upload, key: 'trusted actor + client', persistence: 'D1 fail-closed' },
@@ -2284,6 +2311,8 @@ export default {
       if (request.method === 'POST' && url.pathname === '/v1/embeds:resolve') return await resolveEmbed(request, identity);
       if (request.method === 'POST' && url.pathname === '/v1/authority:activateD1') return await activateD1Authorities(request, env, identity);
       if (request.method === 'POST' && url.pathname === '/v1/authority/chapter_ch07:activateD1') return await activateD1Authorities(request, env, identity, 'chapter_ch07');
+      let reviewPackageReadMatch = url.pathname.match(/^\/v1\/media-review-packages\/([^/:]+)$/);
+      if (request.method === 'GET' && reviewPackageReadMatch) return await getMediaReviewPackage(env, identity, validId(decodeURIComponent(reviewPackageReadMatch[1]), 'reviewPackageId'));
       let reviewPackageMatch = url.pathname.match(/^\/v1\/media-review-packages\/([^/:]+):decide$/);
       if (request.method === 'POST' && reviewPackageMatch) return await decideMediaReviewPackage(request, env, identity, validId(decodeURIComponent(reviewPackageMatch[1]), 'reviewPackageId'));
       let match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/passages\/([^/:]+)$/);

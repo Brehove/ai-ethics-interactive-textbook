@@ -85,6 +85,7 @@ test("browser client exposes the complete reviewed media upload workflow without
     },
   });
   await client.createMediaReviewPackage({ rights: {}, editorial: {}, accessibility: {}, idempotencyKey: "review-key" });
+  await client.getMediaReviewPackage("reviewpkg_123");
   await client.decideMediaReviewPackage("reviewpkg_123", { declarationHash: "a".repeat(64), decision: "cleared", comment: "Reviewed.", idempotencyKey: "decision-key" });
   await client.requestMediaUpload({ filename: "diagram.png", mimeType: "image/png", bytes: 3, sha256: "b".repeat(64), reviewPackageId: "reviewpkg_123", idempotencyKey: "upload-key" });
   await client.uploadMediaBytes("ticket_123", new Uint8Array([1, 2, 3]), { mimeType: "image/png", sha256: "b".repeat(64), uploadToken: "one-time-token" });
@@ -92,18 +93,19 @@ test("browser client exposes the complete reviewed media upload workflow without
   await client.getMediaAsset("media_123");
   assert.deepEqual(calls.map((call) => call.url), [
     "https://content.example/v1/media-review-packages",
+    "https://content.example/v1/media-review-packages/reviewpkg_123",
     "https://content.example/v1/media-review-packages/reviewpkg_123:decide",
     "https://content.example/v1/media:requestUpload",
     "https://content.example/v1/media/uploads/ticket_123",
     "https://content.example/v1/media/jobs/job_123",
     "https://content.example/v1/media/media_123",
   ]);
-  assert.equal(calls.slice(0, 4).every((call) => call.init.headers["x-editor-csrf"] === "csrf-media"), true);
-  assert.equal(calls[3].init.headers["content-type"], "image/png");
-  assert.equal(calls[3].init.headers["x-content-sha256"], "b".repeat(64));
-  assert.equal(calls[3].init.headers["x-upload-token"], "one-time-token");
-  assert.ok(calls[3].init.body instanceof Uint8Array);
-  assert.equal(calls[4].init.headers["x-editor-csrf"], undefined);
+  assert.equal([calls[0], calls[2], calls[3], calls[4]].every((call) => call.init.headers["x-editor-csrf"] === "csrf-media"), true);
+  assert.equal(calls[4].init.headers["content-type"], "image/png");
+  assert.equal(calls[4].init.headers["x-content-sha256"], "b".repeat(64));
+  assert.equal(calls[4].init.headers["x-upload-token"], "one-time-token");
+  assert.ok(calls[4].init.body instanceof Uint8Array);
+  assert.equal(calls[5].init.headers["x-editor-csrf"], undefined);
 });
 
 test("typed API errors retain status, code, and details", async () => {
