@@ -51,11 +51,13 @@ export const CardGridLayoutRegionSchema = z.object({
   cardNodeIds: z.array(z.string().min(1)).min(2).max(6),
   columns: z.number().int().min(2).max(4),
   emphasis: z.enum(["equal", "featured"]),
+  ratio: z.enum(["equal", "start-narrow", "end-narrow"]).default("equal"),
   featuredNodeId: z.string().min(1).optional(),
 }).strict().superRefine((value, ctx) => {
   if (value.columns > value.cardNodeIds.length) ctx.addIssue({ code: "custom", path: ["columns"], message: "Columns cannot exceed the number of cards" });
   if (value.emphasis === "featured" && (!value.featuredNodeId || !value.cardNodeIds.includes(value.featuredNodeId))) ctx.addIssue({ code: "custom", path: ["featuredNodeId"], message: "Featured grids require one featured card from the region" });
   if (value.emphasis === "equal" && value.featuredNodeId) ctx.addIssue({ code: "custom", path: ["featuredNodeId"], message: "Equal grids cannot select a featured card" });
+  if (value.ratio !== "equal" && (value.cardNodeIds.length !== 2 || value.columns !== 2 || value.emphasis !== "equal")) ctx.addIssue({ code: "custom", path: ["ratio"], message: "Unequal ratios require exactly two cards, two columns, and equal emphasis" });
 });
 
 export const LayoutRegionSchema = z.union([WrapLayoutRegionSchema, CardTextSplitLayoutRegionSchema, CardGridLayoutRegionSchema]);
@@ -65,11 +67,12 @@ export const NewLayoutRegionSchema = z.union([
   z.object({
     type: z.literal("card-grid"), startNodeId: z.string().min(1), endNodeId: z.string().min(1),
     cardNodeIds: z.array(z.string().min(1)).min(2).max(6), columns: z.number().int().min(2).max(4),
-    emphasis: z.enum(["equal", "featured"]), featuredNodeId: z.string().min(1).optional(),
+    emphasis: z.enum(["equal", "featured"]), ratio: z.enum(["equal", "start-narrow", "end-narrow"]).default("equal"), featuredNodeId: z.string().min(1).optional(),
   }).strict().superRefine((value, ctx) => {
     if (value.columns > value.cardNodeIds.length) ctx.addIssue({ code: "custom", path: ["columns"], message: "Columns cannot exceed the number of cards" });
     if (value.emphasis === "featured" && (!value.featuredNodeId || !value.cardNodeIds.includes(value.featuredNodeId))) ctx.addIssue({ code: "custom", path: ["featuredNodeId"], message: "Featured grids require one featured card from the region" });
     if (value.emphasis === "equal" && value.featuredNodeId) ctx.addIssue({ code: "custom", path: ["featuredNodeId"], message: "Equal grids cannot select a featured card" });
+    if (value.ratio !== "equal" && (value.cardNodeIds.length !== 2 || value.columns !== 2 || value.emphasis !== "equal")) ctx.addIssue({ code: "custom", path: ["ratio"], message: "Unequal ratios require exactly two cards, two columns, and equal emphasis" });
   }),
 ]);
 export type CardPresentation = z.infer<typeof CardPresentationSchema>;

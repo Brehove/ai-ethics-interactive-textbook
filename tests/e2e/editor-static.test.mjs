@@ -70,6 +70,9 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.match(editorMain, /Enable flexible card layouts/);
   assert.match(editorMain, /Card left, text wraps right/);
   assert.match(editorMain, /Place side by side/);
+  assert.match(editorMain, /First card supporting \(narrow\)/);
+  assert.match(editorMain, /sourceOrderedCardIds/);
+  assert.match(editorMain, /LAYOUT_CATALOG_VERSION/);
   assert.match(tiptapEditor, /window\.setTimeout\(\(\) => onManagedSelect\(placementId\), 0\)/);
   assert.doesNotMatch(tiptapEditor, /=> onManagedSelect\(event\.detail\.placementId\)/);
   assert.doesNotMatch(tiptapEditor, /setNodeSelection/);

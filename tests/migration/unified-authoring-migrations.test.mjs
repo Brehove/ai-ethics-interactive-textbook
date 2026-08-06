@@ -69,7 +69,9 @@ test("card-layout flag migration executes and reaches the public flag mirror", a
   database.exec(await migration("0019_runtime_feature_flags.sql"));
   database.exec(await migration("0020_public_runtime_feature_flags.sql"));
   database.exec(await migration("0022_card_layout_feature_flag.sql"));
-  assert.deepEqual({ ...database.prepare("SELECT name, enabled, document_ids_json FROM public_runtime_feature_flags WHERE name = ?").get("card_layouts_v1") }, { name: "card_layouts_v1", enabled: 0, document_ids_json: '["chapter_ch07"]' });
+  database.exec(await migration("0024_card_grid_ratios.sql"));
+  assert.deepEqual({ ...database.prepare("SELECT name, enabled, document_ids_json, version FROM public_runtime_feature_flags WHERE name = ?").get("card_layouts_v1") }, { name: "card_layouts_v1", enabled: 0, document_ids_json: '["chapter_ch07"]', version: 2 });
+  assert.match(database.prepare("SELECT config_json FROM runtime_feature_flags WHERE name = ?").get("card_layouts_v1").config_json, /"layoutCatalogVersion":"2026-08-06"/);
   database.close();
 });
 

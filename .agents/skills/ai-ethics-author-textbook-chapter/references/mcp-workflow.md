@@ -2,6 +2,8 @@
 
 Use only the plugin-provided `ai-ethics-textbook` MCP connection. Missing tools or an authentication prompt means the MCP must be connected or reauthenticated; it never authorizes a direct API, environment-token, repository, or local-source fallback.
 
+Use the canonical MCP document ID in every `chapterId` and `documentId` field—for example, `chapter_ch07`. A public route slug such as `aristotle-character-and-ai-assisted-life` is not a document ID and can produce a misleading OAuth allowlist error. Read `documentId` and `slug` from `get_authoring_view`; use the slug only for the public URL.
+
 1. `get_authoring_view`, then `get_passage` for each passage that will change.
 2. Call `create_or_resume_changeset` for the exact chapter.
 3. Use a named semantic mutation with `changeSetId`, `documentId`, `baseRevisionId`, `expectedVersion`, and a UUID `idempotencyKey`. Use `replace_chapter_document` only for a deliberate whole-document replacement.

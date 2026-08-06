@@ -13,9 +13,10 @@ import {
   stripAuthorDecorations,
 } from "../../packages/chapter-renderer/src/index.mjs";
 
-test("person cards use a vertical internal layout inside peer-card grids", () => {
-  assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person\{grid-template-columns:1fr\}/);
-  assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person>\.chapter-person__portrait\{width:min\(100%,18rem\);margin-inline:auto\}/);
+test("person cards respond to their actual card container width", () => {
+  assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-person\{container-type:inline-size/);
+  assert.match(CHAPTER_RENDERER_STYLES, /@container \(min-width:36rem\)\{\.chapter-person__content\{grid-template-columns:minmax\(8rem,34%\) 1fr\}/);
+  assert.doesNotMatch(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person/);
 });
 
 const chapter = {
@@ -94,13 +95,15 @@ test("schema-v4 renders semantic card grids and preserves ordered source in prin
   const first = { type: "artifactCard", blockId: "block_artifact_one", artifactId: "artifact_one", title: "Practice", summary: "A practice artifact.", teachingUse: "Compare it.", presentation: { width: "medium", align: "center", density: "compact" } };
   const second = { type: "artifactCard", blockId: "block_artifact_two", artifactId: "artifact_two", title: "Judgment", summary: "A judgment artifact.", teachingUse: "Compare it.", presentation: { width: "medium", align: "center", density: "compact" } };
   v4.body.push(first, second);
-  v4.layoutRegions = [{ layoutId: "layout_pair", type: "card-grid", startNodeId: first.blockId, endNodeId: second.blockId, cardNodeIds: [first.blockId, second.blockId], columns: 2, emphasis: "equal" }];
+  v4.layoutRegions = [{ layoutId: "layout_pair", type: "card-grid", startNodeId: first.blockId, endNodeId: second.blockId, cardNodeIds: [first.blockId, second.blockId], columns: 2, emphasis: "equal", ratio: "start-narrow" }];
   const rendered = renderChapterProjection(v4);
   assert.equal(rendered.projectionProvenance, "v4-layout-flow");
   assert.match(rendered.html, /chapter-layout--card-grid/);
   assert.match(rendered.html, /--grid-columns:2/);
+  assert.match(rendered.html, /data-ratio="start-narrow"/);
+  assert.match(CHAPTER_RENDERER_STYLES, /data-ratio="start-narrow"\]\{grid-template-columns:minmax\(14rem,.7fr\) minmax\(0,1.3fr\)/);
   assert.ok(rendered.html.indexOf("Practice") < rendered.html.indexOf("Judgment"));
-  assert.match(rendered.html, /data-layout-catalog-version="2026-08-05"/);
+  assert.match(rendered.html, /data-layout-catalog-version="2026-08-06"/);
 });
 
 test("schema-v4 split layouts preserve source order while assigning either visual side", () => {

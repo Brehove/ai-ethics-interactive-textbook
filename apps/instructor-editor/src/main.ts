@@ -1,4 +1,5 @@
 import { AuthoringApiError, createAuthoringClient, type CommitLiveResult } from "@ai-ethics/authoring-client";
+import { LAYOUT_CATALOG_VERSION } from "@ai-ethics/content-contract/layout-runtime";
 import { DEMO_CHAPTER } from "./demo-chapter";
 import {
   addCheckpoint,
@@ -500,7 +501,7 @@ function inspectorHtml() {
   const presentation = (card.presentation ?? { width: "reading", align: "center", density: "standard" }) as { width: string; align: string; density: string };
   const peerCards = chapter.body.map((node) => ({ node, id: flowNodeId(node) })).filter(({ node, id }) => id !== cardId && (node.type === "placementRef" || (!["checkpointRef"].includes(node.type) && ["mediaFigure", "externalEmbed", "richLink", "diagram", "artifactCard", "sourceCard"].includes(node.type))));
   const proseSpan = adjacentLayoutProse(cardId);
-  return `<form data-layout-inspector="${escapeAttribute(cardId)}" class="inspector-form"><p class="eyebrow">${type}</p><h2>${escapeText(String(feature?.name ?? placement?.contentId ?? bodyCard?.title ?? type))}</h2><label>Size<select name="width">${["compact", "narrow", "medium", "reading", "wide", "full", "bleed"].map((value) => `<option ${presentation.width === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Alignment<select name="align">${["start", "center", "end"].map((value) => `<option ${presentation.align === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Density<select name="density">${["compact", "standard", "expanded"].map((value) => `<option ${presentation.density === value ? "selected" : ""}>${value}</option>`).join("")}</select><button type="submit">Apply card size</button><hr><p class="eyebrow">Beside nearby text</p><div class="inspector-actions"><button type="button" data-create-card-wrap="start" ${proseSpan ? "" : "disabled"}>Card left, text wraps right</button><button type="button" data-create-card-wrap="end" ${proseSpan ? "" : "disabled"}>Card right, text wraps left</button><button type="button" data-create-card-split="start" ${proseSpan ? "" : "disabled"}>Card left column</button><button type="button" data-create-card-split="end" ${proseSpan ? "" : "disabled"}>Card right column</button></div>${proseSpan ? `<p class="inspector-note">Uses the adjacent prose blocks without changing source order.</p>` : `<p class="inspector-note">Move this card directly before or after at least two prose blocks to enable text layouts.</p>`}${peerCards.length ? `<hr><label>Pair with<select name="peerCardId">${peerCards.map(({ id }) => `<option value="${escapeAttribute(id)}">${escapeText(id)}</option>`).join("")}</select></label><button type="button" data-create-card-group="${escapeAttribute(cardId)}">Place side by side</button>` : ""}<div class="inspector-actions">${placement ? `<button class="danger" type="button" data-remove-placement="${placement.placementId}">Remove</button>` : ""}</div><p class="inspector-note">Layouts collapse to source order on narrow screens and in print.</p></form>`;
+  return `<form data-layout-inspector="${escapeAttribute(cardId)}" class="inspector-form"><p class="eyebrow">${type}</p><h2>${escapeText(String(feature?.name ?? placement?.contentId ?? bodyCard?.title ?? type))}</h2><label>Size<select name="width">${["compact", "narrow", "medium", "reading", "wide", "full", "bleed"].map((value) => `<option ${presentation.width === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Alignment<select name="align">${["start", "center", "end"].map((value) => `<option ${presentation.align === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Density<select name="density">${["compact", "standard", "expanded"].map((value) => `<option ${presentation.density === value ? "selected" : ""}>${value}</option>`).join("")}</select><button type="submit">Apply card size</button><hr><p class="eyebrow">Beside nearby text</p><div class="inspector-actions"><button type="button" data-create-card-wrap="start" ${proseSpan ? "" : "disabled"}>Card left, text wraps right</button><button type="button" data-create-card-wrap="end" ${proseSpan ? "" : "disabled"}>Card right, text wraps left</button><button type="button" data-create-card-split="start" ${proseSpan ? "" : "disabled"}>Card left column</button><button type="button" data-create-card-split="end" ${proseSpan ? "" : "disabled"}>Card right column</button></div>${proseSpan ? `<p class="inspector-note">Uses the adjacent prose blocks without changing source order.</p>` : `<p class="inspector-note">Move this card directly before or after at least two prose blocks to enable text layouts.</p>`}${peerCards.length ? `<hr><label>Pair with<select name="peerCardId">${peerCards.map(({ id }) => `<option value="${escapeAttribute(id)}">${escapeText(id)}</option>`).join("")}</select></label><label>Pair proportions<select name="gridRatio"><option value="equal">Equal peers</option><option value="start-narrow">First card supporting (narrow)</option><option value="end-narrow">Second card supporting (narrow)</option></select></label><p class="inspector-note">Unequal proportions are for one brief supporting artifact beside one substantial card. First and second follow chapter source order.</p><button type="button" data-create-card-group="${escapeAttribute(cardId)}">Place side by side</button>` : ""}<div class="inspector-actions">${placement ? `<button class="danger" type="button" data-remove-placement="${placement.placementId}">Remove</button>` : ""}</div><p class="inspector-note">Layouts collapse to source order on narrow screens and in print.</p></form>`;
 }
 
 function adjacentLayoutProse(cardId: string) {
@@ -568,7 +569,7 @@ function bindInspectorEvents() {
     const target = chapter.managedPlacements.find((item) => item.placementId === cardId) ?? chapter.body.find((item) => !["checkpointRef", "placementRef"].includes(item.type) && "blockId" in item && item.blockId === cardId);
     try {
       if (!target) throw new Error("The selected card is no longer present in chapter flow.");
-      if (dataSource) await applyDraftOperations([{ type: "cardPresentation.set", cardId, presentation, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      if (dataSource) await applyDraftOperations([{ type: "cardPresentation.set", cardId, presentation, expectedLayoutCatalogVersion: LAYOUT_CATALOG_VERSION }]);
       else target.presentation = presentation as never;
       setState("dirty"); render();
     } catch (error) { setAttention(error, "The card size could not be updated."); }
@@ -583,18 +584,19 @@ function bindInspectorEvents() {
       : { type: "card-text-split", ...span, cardNodeIds: [cardId], cardSide, ratio: ["compact", "narrow"].includes(presentationWidth) ? "card-narrow" : ["wide", "full", "bleed"].includes(presentationWidth) ? "card-wide" : "balanced" };
     try {
       if (!dataSource) throw new Error("The Content API is required to create a stable text layout.");
-      await applyDraftOperations([{ type: "layoutRegion.create", region, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      await applyDraftOperations([{ type: "layoutRegion.create", region, expectedLayoutCatalogVersion: LAYOUT_CATALOG_VERSION }]);
       setState("dirty"); render();
     } catch (error) { setAttention(error, "The card-and-text layout could not be created."); }
   }));
   app.querySelector<HTMLButtonElement>("[data-create-card-group]")?.addEventListener("click", async (event) => {
-    const button = event.currentTarget; const form = button.closest<HTMLFormElement>("form"); const first = String(button.dataset.createCardGroup); const second = String(new FormData(form!).get("peerCardId"));
+    const button = event.currentTarget; const form = button.closest<HTMLFormElement>("form"); const values = new FormData(form!); const first = String(button.dataset.createCardGroup); const second = String(values.get("peerCardId")); const ratio = String(values.get("gridRatio") ?? "equal");
     const indexes = [first, second].map((id) => chapter.body.findIndex((node) => flowNodeId(node) === id));
     if (indexes.some((index) => index < 0)) { setAttention(new Error("Both cards must be present in chapter flow.")); return; }
     const [start, end] = [...indexes].sort((a, b) => a - b);
     try {
       if (!dataSource) throw new Error("The Content API is required to create a stable card group.");
-      await applyDraftOperations([{ type: "layoutRegion.create", region: { type: "card-grid", startNodeId: flowNodeId(chapter.body[start]), endNodeId: flowNodeId(chapter.body[end]), cardNodeIds: [first, second], columns: 2, emphasis: "equal" }, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      const sourceOrderedCardIds = [start, end].map((index) => flowNodeId(chapter.body[index]));
+      await applyDraftOperations([{ type: "layoutRegion.create", region: { type: "card-grid", startNodeId: sourceOrderedCardIds[0], endNodeId: sourceOrderedCardIds[1], cardNodeIds: sourceOrderedCardIds, columns: 2, emphasis: "equal", ratio }, expectedLayoutCatalogVersion: LAYOUT_CATALOG_VERSION }]);
       setState("dirty"); render();
     } catch (error) { setAttention(error, "The card group could not be created."); }
   });
