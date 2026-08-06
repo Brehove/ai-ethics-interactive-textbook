@@ -2,13 +2,17 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertCas, assertMediaBudget, checkpointDraft, checkpointExcerpt, deterministicId, finalizeChapterRevision, hmacSha256, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity, validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature } from '../../workers/content-api/src/services.mjs';
-import worker, { rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
+import worker, { LAYOUT_CATALOG_VERSION, rebindProjectedMediaCheckpointHashes, releaseMediaKind } from '../../workers/content-api/src/index.mjs';
 import { migrateChapterV2ToV3 } from '../../packages/chapter-renderer/src/index.mjs';
 
 test('health endpoint is dependency-free and reports binding presence', async () => {
   const response = await worker.fetch(new Request('https://content.example/health'), {});
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true, service: 'content-api', db_configured: false, media_configured: false });
+});
+
+test('card-layout reads expose the active catalog version from the imported catalog', () => {
+  assert.equal(LAYOUT_CATALOG_VERSION, '2026-08-06');
 });
 
 test('authenticated managed-media preview streams only the exact cleared immutable image derivative', async () => {

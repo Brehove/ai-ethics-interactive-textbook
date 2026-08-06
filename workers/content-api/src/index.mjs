@@ -5,6 +5,7 @@ import {
 } from './services.mjs';
 import { CHAPTER_RENDERER_STYLES, CHAPTER_RENDERER_STYLE_VERSION, projectionIdentity, renderChapterProjection } from '@ai-ethics/chapter-renderer';
 
+export const LAYOUT_CATALOG_VERSION = LAYOUT_CATALOG.version;
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
 const errorJson = (status, code, message, details) => json({ error: { code, message, ...(details === undefined ? {} : { details }) } }, status);
