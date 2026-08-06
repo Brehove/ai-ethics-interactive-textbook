@@ -72,3 +72,33 @@ test("card-layout flag migration executes and reaches the public flag mirror", a
   assert.deepEqual({ ...database.prepare("SELECT name, enabled, document_ids_json FROM public_runtime_feature_flags WHERE name = ?").get("card_layouts_v1") }, { name: "card_layouts_v1", enabled: 0, document_ids_json: '["chapter_ch07"]' });
   database.close();
 });
+
+test("preview grants accept every responsive verification surface", async () => {
+  const database = new DatabaseSync(":memory:");
+  database.exec("CREATE TABLE changesets (id TEXT PRIMARY KEY)");
+  database.exec("INSERT INTO changesets (id) VALUES ('changeset_preview')");
+  database.exec(await migration("0006_protected_previews.sql"));
+  database.prepare(`INSERT INTO preview_grants (
+    id, token_hash, changeset_id, snapshot_hash, r2_object_key, surface, created_by, created_at, expires_at
+  ) VALUES (?, ?, 'changeset_preview', ?, ?, 'web', 'actor_test', '2026-08-05T00:00:00.000Z', '2026-08-05T00:05:00.000Z')`).run(
+    "preview_existing",
+    "token_existing",
+    "snapshot_existing",
+    "previews/snapshot_existing.json"
+  );
+
+  database.exec(await migration("0023_expand_preview_surfaces.sql"));
+
+  const insert = database.prepare(`INSERT INTO preview_grants (
+    id, token_hash, changeset_id, snapshot_hash, r2_object_key, surface, created_by, created_at, expires_at
+  ) VALUES (?, ?, 'changeset_preview', ?, ?, ?, 'actor_test', '2026-08-05T00:00:00.000Z', '2026-08-05T00:05:00.000Z')`);
+  for (const surface of ["webWide", "webNarrow", "mobile", "print", "offline", "noJs"]) {
+    insert.run(`preview_${surface}`, `token_${surface}`, `snapshot_${surface}`, `previews/snapshot_${surface}.json`, surface);
+  }
+
+  assert.deepEqual(
+    database.prepare("SELECT surface FROM preview_grants ORDER BY surface").all().map(({ surface }) => surface),
+    ["mobile", "noJs", "offline", "print", "web", "webNarrow", "webWide"]
+  );
+  database.close();
+});
