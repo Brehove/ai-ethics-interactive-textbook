@@ -29,16 +29,16 @@ test("noncontiguous duplicate stable IDs fail closed for repair review", () => {
   assert.equal(result.errors.some((error) => error.code === "STABLE_ID_DUPLICATE_NONCONTIGUOUS"), true);
 });
 
-test("schema-v3 editor operations preserve one record and one ordered reference", () => {
+test("schema-v4 editor operations preserve one record and one ordered reference", () => {
   const chapter = upgradeEditorChapter({ ...cloneChapter(DEMO_CHAPTER), schemaVersion: 2 });
-  assert.equal(chapter.schemaVersion, 3);
+  assert.equal(chapter.schemaVersion, 4);
   const firstCheckpoint = chapter.checkpoints[0];
   assert.equal(chapter.body.filter((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId).length, 1);
   removeCheckpoint(chapter, firstCheckpoint.checkpointId);
   assert.equal(chapter.checkpoints.some((item) => item.checkpointId === firstCheckpoint.checkpointId), false);
   assert.equal(chapter.body.some((node) => node.type === "checkpointRef" && node.checkpointId === firstCheckpoint.checkpointId), false);
   const operation = chapterReplaceOperation(chapter);
-  assert.equal(operation.type, "chapter.replaceDocumentV3");
+  assert.equal(operation.type, "chapter.replaceDocumentV4");
 });
 
 test("schema-specific create operations separate legacy order from v3 flow position", () => {
@@ -49,9 +49,9 @@ test("schema-specific create operations separate legacy order from v3 flow posit
   const placement = { placementId: "placement_new", kind: "personFeature", contentId: "personfeature_new", anchorPassageId: "passage_habituation", position: "after", orderAtAnchor: 1, displayPreset: "thinker-card" };
   assert.deepEqual(personFeatureCreateOperation(v2, feature, placement, "block_habituation"), { type: "personFeature.upsert", feature, placement });
 
-  const v3 = upgradeEditorChapter(v2);
-  assert.deepEqual(checkpointCreateOperation(v3, checkpoint, "block_habituation"), { type: "checkpoint.upsert", checkpoint: { passageId: "passage_habituation", title: "New" }, position: { afterNodeId: "block_habituation" } });
-  assert.deepEqual(personFeatureCreateOperation(v3, feature, placement, "block_habituation"), { type: "personFeature.upsert", feature, placement: { placementId: "placement_new", kind: "personFeature", contentId: "personfeature_new", anchorPassageId: "passage_habituation", displayPreset: "thinker-card" }, position: { afterNodeId: "block_habituation" } });
+  const v4 = upgradeEditorChapter(v2);
+  assert.deepEqual(checkpointCreateOperation(v4, checkpoint, "block_habituation"), { type: "checkpoint.upsert", checkpoint: { passageId: "passage_habituation", title: "New" }, position: { afterNodeId: "block_habituation" } });
+  assert.deepEqual(personFeatureCreateOperation(v4, feature, placement, "block_habituation"), { type: "personFeature.upsert", feature, placement: { placementId: "placement_new", kind: "personFeature", contentId: "personfeature_new", anchorPassageId: "passage_habituation", presentation: { width: "reading", align: "center", density: "standard" } }, position: { afterNodeId: "block_habituation" } });
 });
 
 test("local whole-chapter replacement preserves ordered managed references", () => {

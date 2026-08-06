@@ -5,7 +5,7 @@ description: Draft, revise, save, or publish a PHIL 123 textbook chapter through
 
 # Author a chapter
 
-Read `references/mcp-workflow.md` before mutation. Call `get_authoring_view`, then `get_passage` for every passage you will alter. Preserve stable passage IDs and treat managed placements as typed records, never chapter HTML.
+Read `references/mcp-workflow.md` before mutation. For any card size, placement, grouping, wrap, split, or frame change, also read `references/card-layout-rules.md`. Call `get_authoring_view`, then `get_passage` for every passage you will alter. Preserve stable passage IDs and treat managed placements as typed records, never chapter HTML.
 
 Use the `ai-ethics-textbook` MCP connection supplied by the plugin. If its tools are unavailable or Codex reports that authentication is required, stop and ask the user to authenticate or reconnect that MCP server. Never substitute direct HTTP calls, an environment bearer, repository edits, or a local content fallback for this workflow.
 

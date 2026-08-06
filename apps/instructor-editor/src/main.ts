@@ -10,6 +10,7 @@ import {
   chapterFromAuthoringView,
   chapterReplaceOperation,
   cloneChapter,
+  flowNodeId,
   assertUniqueEditorIdentities,
   moveCheckpoint,
   newId,
@@ -21,6 +22,7 @@ import {
   replaceProsePreservingManagedFlow,
   personFeatureCreateOperation,
   updateCheckpointDetails,
+  upgradeEditorChapter,
   type ChapterDocument,
 } from "./editor-model";
 import { managedNodeSequence, mountTiptap, serializeBody } from "./tiptap-editor";
@@ -431,7 +433,7 @@ async function loadChapter() {
 
 function inspectorHtml() {
   if (!inspector || inspector.kind === "chapter") {
-    return `<section class="inspector__empty"><p class="eyebrow">Chapter metadata</p><h2>${safeTitle(chapter.title)}</h2><p>Select prose to anchor an insertion, or select a checkpoint, scholar card, or media node to inspect it.</p><dl><div><dt>Revision</dt><dd>${chapter.revisionId}</dd></div><div><dt>Anchor</dt><dd>${selectedPassage || "Choose a passage"}</dd></div></dl></section>`;
+    return `<section class="inspector__empty"><p class="eyebrow">Chapter metadata</p><h2>${safeTitle(chapter.title)}</h2><p>Select prose to anchor an insertion, or select a checkpoint, scholar card, or media node to inspect it.</p><dl><div><dt>Revision</dt><dd>${chapter.revisionId}</dd></div><div><dt>Schema</dt><dd>${chapter.schemaVersion}</dd></div><div><dt>Anchor</dt><dd>${selectedPassage || "Choose a passage"}</dd></div></dl>${chapter.schemaVersion < 4 ? `<button type="button" data-enable-layouts>Enable flexible card layouts</button><p class="inspector-note">Creates a schema-v4 draft; prior revisions remain unchanged.</p>` : ""}</section>`;
   }
   if (inspector.kind === "checkpoint") {
     const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === inspector.id);
@@ -441,10 +443,32 @@ function inspectorHtml() {
     return `<form data-inspector-form class="inspector-form"><p class="eyebrow">Prompt checkpoint</p><h2>${item.title}</h2><label>Title<input name="title" value="${escapeAttribute(item.title)}" required></label><label>Prompt<textarea name="prompt" rows="5" required>${escapeText(item.prompt)}</textarea></label><label>Guidance<textarea name="guidance" rows="3">${escapeText(item.guidance)}</textarea></label><label>When should this appear?<input name="trigger" value="${escapeAttribute(String(item.trigger ?? ""))}" required></label><label>Strategy<select name="strategy" required>${checkpointStrategyOptions(String(item.strategy ?? "self-explanation"))}</select></label><label>Response format<select name="responseStructure"><option value="prose" ${item.responseStructure === "prose" ? "selected" : ""}>Written response</option><option value="movement-plus-prose" ${item.responseStructure === "movement-plus-prose" ? "selected" : ""}>Movement plus written response</option></select></label><div class="inspector-grid"><label>Minimum words<input name="minWords" type="number" min="1" max="1000" value="${Number(item.minWords ?? 1)}" required></label><label>Maximum words<input name="maxWords" type="number" min="1" max="1000" value="${Number(item.maxWords ?? 150)}" required></label></div><label class="checkbox-row"><input name="showInSidebar" type="checkbox" ${item.showInSidebar !== false ? "checked" : ""}> Show in the reading side panel</label><label>Teaching rationale<textarea name="rationale" rows="3" required>${escapeText(String(item.rationale ?? ""))}</textarea></label><label>Stage or label<input name="stage" list="checkpoint-stages" maxlength="120" value="${escapeAttribute(item.stage ?? "")}" placeholder="Commit, Work, Reconcile, or another label"><datalist id="checkpoint-stages"><option value="Commit"><option value="Work"><option value="Reconcile"></datalist></label><label>Context passage<select name="passageId">${checkpointAnchorOptions(item.passageId)}</select></label><label>Position in chapter flow<input name="displayOrder" type="number" min="0" max="${Math.max(0, chapter.checkpoints.length + chapter.managedPlacements.length - 1)}" value="${itemPosition}" required></label><p class="inspector-note">The document flow controls visible position. The context passage keeps deep links, excerpt drift checks, and agent references stable.</p><div class="inspector-actions"><button type="submit">Update checkpoint</button><button type="button" data-shift-checkpoint="-1" ${itemPosition <= 0 ? "disabled" : ""}>Move earlier</button><button type="button" data-shift-checkpoint="1" ${itemPosition >= anchorSequence.length - 1 ? "disabled" : ""}>Move later</button><button class="danger" type="button" data-remove-checkpoint="${item.checkpointId}">Remove</button></div></form>`;
   }
   const placement = chapter.managedPlacements.find((item) => item.placementId === inspector.id);
-  if (!placement) return "";
-  const type = placement.kind === "personFeature" ? "Person feature" : placement.kind === "media" ? "Image / media" : "External embed";
-  const feature = chapter.personFeatures.find((item) => item.personFeatureId === placement.contentId);
-  return `<section class="inspector-form"><p class="eyebrow">${type}</p><h2>${escapeText(String(feature?.name ?? placement.contentId))}</h2><p>This is a typed placement. Its shared reader rendering remains visible on the chapter canvas.</p><label>Display preset<select data-placement-preset="${placement.placementId}"><option ${placement.displayPreset === "thinker-card" ? "selected" : ""}>thinker-card</option><option ${placement.displayPreset === "reading" ? "selected" : ""}>reading</option><option ${placement.displayPreset === "wide" ? "selected" : ""}>wide</option></select></label><p class="inspector-note">${placement.position} <strong>${placement.anchorPassageId}</strong></p><div class="inspector-actions"><button type="button" data-move-placement="before">Move before passage</button><button type="button" data-move-placement="after">Move after passage</button><button class="danger" type="button" data-remove-placement="${placement.placementId}">Remove</button></div></section>`;
+  const bodyCard = chapter.body.find((item) => !["checkpointRef", "placementRef"].includes(item.type) && "blockId" in item && item.blockId === inspector.id && ["mediaFigure", "externalEmbed", "richLink", "diagram", "artifactCard", "sourceCard"].includes(item.type));
+  if (!placement && !bodyCard) return "";
+  const card = placement ?? bodyCard!;
+  const cardId = placement?.placementId ?? (bodyCard && "blockId" in bodyCard ? bodyCard.blockId : "");
+  const type = placement?.kind === "personFeature" ? "Person feature" : String(bodyCard?.type ?? placement?.kind ?? "Card");
+  const feature = placement ? chapter.personFeatures.find((item) => item.personFeatureId === placement.contentId) : null;
+  if (chapter.schemaVersion < 4) return `<section class="inspector-form"><p class="eyebrow">${type}</p><h2>${escapeText(String(feature?.name ?? placement?.contentId ?? bodyCard?.title ?? type))}</h2><p>Enable flexible layouts from Chapter metadata to resize, align, wrap, split, or group this card.</p></section>`;
+  const presentation = (card.presentation ?? { width: "reading", align: "center", density: "standard" }) as { width: string; align: string; density: string };
+  const peerCards = chapter.body.map((node) => ({ node, id: flowNodeId(node) })).filter(({ node, id }) => id !== cardId && (node.type === "placementRef" || (!["checkpointRef"].includes(node.type) && ["mediaFigure", "externalEmbed", "richLink", "diagram", "artifactCard", "sourceCard"].includes(node.type))));
+  const proseSpan = adjacentLayoutProse(cardId);
+  return `<form data-layout-inspector="${escapeAttribute(cardId)}" class="inspector-form"><p class="eyebrow">${type}</p><h2>${escapeText(String(feature?.name ?? placement?.contentId ?? bodyCard?.title ?? type))}</h2><label>Size<select name="width">${["compact", "narrow", "medium", "reading", "wide", "full", "bleed"].map((value) => `<option ${presentation.width === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Alignment<select name="align">${["start", "center", "end"].map((value) => `<option ${presentation.align === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Density<select name="density">${["compact", "standard", "expanded"].map((value) => `<option ${presentation.density === value ? "selected" : ""}>${value}</option>`).join("")}</select><button type="submit">Apply card size</button><hr><p class="eyebrow">Beside nearby text</p><div class="inspector-actions"><button type="button" data-create-card-wrap="start" ${proseSpan ? "" : "disabled"}>Card left, text wraps right</button><button type="button" data-create-card-wrap="end" ${proseSpan ? "" : "disabled"}>Card right, text wraps left</button><button type="button" data-create-card-split="start" ${proseSpan ? "" : "disabled"}>Card left column</button><button type="button" data-create-card-split="end" ${proseSpan ? "" : "disabled"}>Card right column</button></div>${proseSpan ? `<p class="inspector-note">Uses the adjacent prose blocks without changing source order.</p>` : `<p class="inspector-note">Move this card directly before or after at least two prose blocks to enable text layouts.</p>`}${peerCards.length ? `<hr><label>Pair with<select name="peerCardId">${peerCards.map(({ id }) => `<option value="${escapeAttribute(id)}">${escapeText(id)}</option>`).join("")}</select></label><button type="button" data-create-card-group="${escapeAttribute(cardId)}">Place side by side</button>` : ""}<div class="inspector-actions">${placement ? `<button class="danger" type="button" data-remove-placement="${placement.placementId}">Remove</button>` : ""}</div><p class="inspector-note">Layouts collapse to source order on narrow screens and in print.</p></form>`;
+}
+
+function adjacentLayoutProse(cardId: string) {
+  const cardIndex = chapter.body.findIndex((node) => flowNodeId(node) === cardId);
+  if (cardIndex < 0) return null;
+  const supported = (node: ChapterDocument["body"][number]) => ["paragraph", "list", "blockquote", "callout"].includes(node.type);
+  const collect = (direction: -1 | 1) => {
+    const indexes: number[] = [];
+    for (let index = cardIndex + direction; index >= 0 && index < chapter.body.length && supported(chapter.body[index]); index += direction) indexes.push(index);
+    return indexes.slice(0, 4).sort((left, right) => left - right);
+  };
+  const after = collect(1); const before = collect(-1); const textIndexes = after.length >= 2 ? after : before.length >= 2 ? before : [];
+  if (textIndexes.length < 2) return null;
+  const spanIndexes = [cardIndex, ...textIndexes].sort((left, right) => left - right);
+  return { startNodeId: flowNodeId(chapter.body[spanIndexes[0]]), endNodeId: flowNodeId(chapter.body[spanIndexes.at(-1)!]), textNodeIds: textIndexes.map((index) => flowNodeId(chapter.body[index])) };
 }
 
 function dialogHtml() {
@@ -480,11 +504,53 @@ async function applyCheckpointInspector(formElement: HTMLFormElement, shift = 0)
 }
 
 function bindInspectorEvents() {
+  app.querySelector<HTMLButtonElement>("[data-enable-layouts]")?.addEventListener("click", async () => {
+    try {
+      chapter = upgradeEditorChapter(chapter);
+      if (dataSource) await applyDraftOperations([chapterReplaceOperation(chapter)]);
+      setState("dirty"); render();
+    } catch (error) { setAttention(error, "Flexible layouts could not be enabled for this draft."); }
+  });
   app.querySelector<HTMLFormElement>("[data-inspector-form]")?.addEventListener("submit", (event) => { event.preventDefault(); void applyCheckpointInspector(event.currentTarget).catch((error) => { console.error("Unable to update checkpoint.", error); setAttention(error); }); });
   app.querySelectorAll<HTMLButtonElement>("[data-shift-checkpoint]").forEach((button) => button.addEventListener("click", () => { const form = app.querySelector<HTMLFormElement>("[data-inspector-form]"); if (form) void applyCheckpointInspector(form, Number(button.dataset.shiftCheckpoint ?? 0)).catch((error) => { console.error("Unable to reorder checkpoint.", error); setAttention(error); }); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-checkpoint]").forEach((button) => button.addEventListener("click", () => { removeCheckpoint(chapter, String(button.dataset.removeCheckpoint)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
   app.querySelectorAll<HTMLButtonElement>("[data-remove-placement]").forEach((button) => button.addEventListener("click", () => { removeManagedPlacement(chapter, String(button.dataset.removePlacement)); inspector = { kind: "chapter" }; setState("dirty"); render(); }));
   app.querySelector<HTMLSelectElement>("[data-placement-preset]")?.addEventListener("change", (event) => { const select = event.currentTarget; const placement = chapter.managedPlacements.find((item) => item.placementId === select.dataset.placementPreset); if (placement) { placement.displayPreset = select.value as typeof placement.displayPreset; setState("dirty"); render(); } });
+  app.querySelector<HTMLFormElement>("[data-layout-inspector]")?.addEventListener("submit", async (event) => {
+    event.preventDefault(); const form = event.currentTarget; const cardId = String(form.dataset.layoutInspector); const values = new FormData(form); const presentation = { width: String(values.get("width")), align: String(values.get("align")), density: String(values.get("density")) };
+    const target = chapter.managedPlacements.find((item) => item.placementId === cardId) ?? chapter.body.find((item) => !["checkpointRef", "placementRef"].includes(item.type) && "blockId" in item && item.blockId === cardId);
+    try {
+      if (!target) throw new Error("The selected card is no longer present in chapter flow.");
+      if (dataSource) await applyDraftOperations([{ type: "cardPresentation.set", cardId, presentation, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      else target.presentation = presentation as never;
+      setState("dirty"); render();
+    } catch (error) { setAttention(error, "The card size could not be updated."); }
+  });
+  app.querySelectorAll<HTMLButtonElement>("[data-create-card-wrap], [data-create-card-split]").forEach((button) => button.addEventListener("click", async () => {
+    const form = button.closest<HTMLFormElement>("form"); const cardId = String(form?.dataset.layoutInspector); const span = adjacentLayoutProse(cardId);
+    if (!span) { setAttention(new Error("Place the card directly beside at least two supported prose blocks first.")); return; }
+    const cardSide = String(button.dataset.createCardWrap ?? button.dataset.createCardSplit) as "start" | "end";
+    const presentationWidth = String(new FormData(form!).get("width") ?? "narrow");
+    const region = button.dataset.createCardWrap
+      ? { type: "wrap", startNodeId: span.startNodeId, endNodeId: span.endNodeId, cardNodeId: cardId, side: cardSide, width: ["compact", "narrow", "medium"].includes(presentationWidth) ? presentationWidth : "narrow" }
+      : { type: "card-text-split", ...span, cardNodeIds: [cardId], cardSide, ratio: ["compact", "narrow"].includes(presentationWidth) ? "card-narrow" : ["wide", "full", "bleed"].includes(presentationWidth) ? "card-wide" : "balanced" };
+    try {
+      if (!dataSource) throw new Error("The Content API is required to create a stable text layout.");
+      await applyDraftOperations([{ type: "layoutRegion.create", region, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      setState("dirty"); render();
+    } catch (error) { setAttention(error, "The card-and-text layout could not be created."); }
+  }));
+  app.querySelector<HTMLButtonElement>("[data-create-card-group]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget; const form = button.closest<HTMLFormElement>("form"); const first = String(button.dataset.createCardGroup); const second = String(new FormData(form!).get("peerCardId"));
+    const indexes = [first, second].map((id) => chapter.body.findIndex((node) => flowNodeId(node) === id));
+    if (indexes.some((index) => index < 0)) { setAttention(new Error("Both cards must be present in chapter flow.")); return; }
+    const [start, end] = [...indexes].sort((a, b) => a - b);
+    try {
+      if (!dataSource) throw new Error("The Content API is required to create a stable card group.");
+      await applyDraftOperations([{ type: "layoutRegion.create", region: { type: "card-grid", startNodeId: flowNodeId(chapter.body[start]), endNodeId: flowNodeId(chapter.body[end]), cardNodeIds: [first, second], columns: 2, emphasis: "equal" }, expectedLayoutCatalogVersion: String(chapter.layoutCatalogVersion) }]);
+      setState("dirty"); render();
+    } catch (error) { setAttention(error, "The card group could not be created."); }
+  });
 }
 
 function renderInspector() {
@@ -612,7 +678,8 @@ function bindForms() {
       if (curated) {
         const placementId = newId("placement"); const personFeatureId = newId("personfeature");
         const feature = { ...structuredClone(curated), entityRevision: undefined, sourceDocumentId: undefined, personFeatureId, placementId } as ChapterDocument["personFeatures"][number];
-        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length } : {}), displayPreset: "thinker-card" as const };
+        const placement = { placementId, kind: "personFeature" as const, contentId: personFeatureId, anchorPassageId: selectedPassage, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === selectedPassage && item.position === "after").length, displayPreset: "thinker-card" as const } : chapter.schemaVersion === 4 ? { presentation: { width: "reading" as const, align: "center" as const, density: "standard" as const } } : { displayPreset: "thinker-card" as const }) };
+        if (chapter.schemaVersion === 4) delete feature.displayPreset;
         next = { feature, placement };
       } else next = addPersonFeature(chapter, String(source.personFeatureId), selectedPassage);
       if (dataSource) {
@@ -709,7 +776,7 @@ function bindForms() {
   app.querySelector<HTMLFormElement>("[data-media-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault(); const values = new FormData(event.currentTarget); const item = mediaItems[Number(values.get("mediaIndex"))]; const anchor = selectedBlock();
     if (!item || !anchor || !dataSource) { setState("attention"); return; }
-    const placement = { mediaId: String(item.id), mediaVersionId: String(item.media_version_id), rightsCaseId: String(item.rights_case_id), anchorPassageId: selectedPassage, decorative: false, alt: String(values.get("alt") ?? "").trim(), caption: String(values.get("caption") ?? "").trim(), teachingUse: String(values.get("teachingUse") ?? "").trim(), displayPreset: String(values.get("displayPreset") ?? "reading"), align: "center", animationPolicy: "clickToPlay", printPolicy: "poster", downloadable: false };
+    const placement = { mediaId: String(item.id), mediaVersionId: String(item.media_version_id), rightsCaseId: String(item.rights_case_id), anchorPassageId: selectedPassage, decorative: false, alt: String(values.get("alt") ?? "").trim(), caption: String(values.get("caption") ?? "").trim(), teachingUse: String(values.get("teachingUse") ?? "").trim(), ...(chapter.schemaVersion === 4 ? { presentation: { width: String(values.get("displayPreset") ?? "reading"), align: "center", density: "standard" } } : { displayPreset: String(values.get("displayPreset") ?? "reading"), align: "center" }), animationPolicy: "clickToPlay", printPolicy: "poster", downloadable: false };
     if (!placement.alt || !placement.caption || !placement.teachingUse) { setState("attention"); return; }
     await applyDraftOperations([{ type: "media.place", placement, position: { afterBlockId: anchor.blockId } }]); mediaPlacementDefaults = { alt: "", caption: "", teachingUse: "" }; activeDialog = null; setState("dirty"); render();
   });

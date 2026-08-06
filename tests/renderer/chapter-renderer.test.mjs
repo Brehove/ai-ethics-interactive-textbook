@@ -4,6 +4,7 @@ import {
   ChapterFlowError,
   exportChapterV3AsV2,
   migrateChapterV2ToV3,
+  migrateChapterV3ToV4,
   normalizeRenderedHtml,
   projectOrderedChapter,
   projectionIdentity,
@@ -80,6 +81,32 @@ test("schema-v3 flow rejects duplicate, orphaned, and unresolved references", ()
     () => projectOrderedChapter({ ...chapter, schemaVersion: 3 }),
     (error) => error instanceof ChapterFlowError && error.code === "CHECKPOINT_REFERENCE_ORPHAN",
   );
+});
+
+test("schema-v4 renders semantic card grids and preserves ordered source in print", () => {
+  const v4 = migrateChapterV3ToV4(migrateChapterV2ToV3(chapter));
+  const first = { type: "artifactCard", blockId: "block_artifact_one", artifactId: "artifact_one", title: "Practice", summary: "A practice artifact.", teachingUse: "Compare it.", presentation: { width: "medium", align: "center", density: "compact" } };
+  const second = { type: "artifactCard", blockId: "block_artifact_two", artifactId: "artifact_two", title: "Judgment", summary: "A judgment artifact.", teachingUse: "Compare it.", presentation: { width: "medium", align: "center", density: "compact" } };
+  v4.body.push(first, second);
+  v4.layoutRegions = [{ layoutId: "layout_pair", type: "card-grid", startNodeId: first.blockId, endNodeId: second.blockId, cardNodeIds: [first.blockId, second.blockId], columns: 2, emphasis: "equal" }];
+  const rendered = renderChapterProjection(v4);
+  assert.equal(rendered.projectionProvenance, "v4-layout-flow");
+  assert.match(rendered.html, /chapter-layout--card-grid/);
+  assert.match(rendered.html, /--grid-columns:2/);
+  assert.ok(rendered.html.indexOf("Practice") < rendered.html.indexOf("Judgment"));
+  assert.match(rendered.html, /data-layout-catalog-version="2026-08-05"/);
+});
+
+test("schema-v4 split layouts preserve source order while assigning either visual side", () => {
+  const v4 = migrateChapterV3ToV4(migrateChapterV2ToV3({ ...chapter, checkpoints: [], managedPlacements: [], personFeatures: [] }));
+  const card = { type: "artifactCard", blockId: "block_split_card", artifactId: "artifact_split", title: "Aristotle", summary: "A thinker card.", teachingUse: "Read beside the argument.", presentation: { width: "narrow", align: "center", density: "compact" } };
+  v4.body.push(card);
+  v4.layoutRegions = [{ layoutId: "layout_split", type: "card-text-split", startNodeId: "block_b", endNodeId: card.blockId, cardNodeIds: [card.blockId], textNodeIds: ["block_b"], cardSide: "start", ratio: "card-narrow" }];
+  const rendered = renderChapterProjection(v4);
+  assert.match(rendered.html, /chapter-layout--card-text-split/);
+  assert.match(rendered.html, /data-card-side="start"/);
+  assert.ok(rendered.html.indexOf("chapter-layout__text") < rendered.html.indexOf("chapter-layout__cards"));
+  assert.match(rendered.html, /--split-columns:minmax\(14rem,.7fr\) 1.3fr/);
 });
 
 test("legacy export derives anchor positions without introducing a second v3 ordering source", () => {

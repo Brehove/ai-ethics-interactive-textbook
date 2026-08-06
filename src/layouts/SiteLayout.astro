@@ -1,5 +1,6 @@
 ---
 import SiteHeader from "../components/SiteHeader.astro";
+import { CHAPTER_RENDERER_STYLES } from "@ai-ethics/chapter-renderer";
 import "../styles/global.css";
 
 interface Props {
@@ -38,6 +39,7 @@ const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <link rel="canonical" href={canonical} />
     <title>{title} · AI &amp; Ethics</title>
+    <style is:inline set:html={CHAPTER_RENDERER_STYLES}></style>
   </head>
   <body class={pageClass}>
     <a class="skip-link" href="#main-content">Skip to main content</a>

@@ -5,7 +5,7 @@ description: Add or review accessible PHIL 123 textbook media through the conten
 
 # Publish textbook media
 
-Read `references/media-workflow.md`. Inspect `get_authoring_view` and its passage anchors, then create or resume a changeset.
+Read `references/media-workflow.md` and `../ai-ethics-author-textbook-chapter/references/card-layout-rules.md` when media size, alignment, grouping, wrap, split, or framing is in scope. Inspect `get_authoring_view` and its passage anchors, then create or resume a changeset.
 
 Use the plugin-provided `ai-ethics-textbook` MCP connection. If its tools are absent or authentication is required, ask the user to authenticate or reconnect it. Never replace MCP with direct API calls, a standing environment bearer, repository edits, or a local content fallback.
 

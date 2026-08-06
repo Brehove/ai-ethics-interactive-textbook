@@ -27,6 +27,7 @@ test("adjacent visual and thinker cards share a compact responsive row", async (
   assert.match(inlineArtifacts, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(inlineArtifacts, /@media \(max-width: 700px\)[\s\S]*grid-template-columns: 1fr/);
   assert.match(inlineArtifacts, /object-position: center 28%/);
+  assert.match(inlineArtifacts, /chapter-flow\[data-layout-catalog-version\]/);
 });
 
 test("the public admin route is redirect-only and the dedicated editor is the sole writer", async () => {
@@ -62,7 +63,10 @@ test("the public admin route is redirect-only and the dedicated editor is the so
   assert.doesNotMatch(editorMain, /instructor-changeset-key/);
   assert.doesNotMatch(editorMain, /Legacy admin|future editor-engine adapter/);
   assert.match(editorModel, /chapter\.replaceDocument/);
-  assert.doesNotMatch(editorMain, /upgradeEditorChapter/);
+  assert.match(editorMain, /upgradeEditorChapter/);
+  assert.match(editorMain, /Enable flexible card layouts/);
+  assert.match(editorMain, /Card left, text wraps right/);
+  assert.match(editorMain, /Place side by side/);
   assert.match(tiptapEditor, /window\.setTimeout\(\(\) => onManagedSelect\(placementId\), 0\)/);
   assert.doesNotMatch(tiptapEditor, /=> onManagedSelect\(event\.detail\.placementId\)/);
   assert.doesNotMatch(tiptapEditor, /setNodeSelection/);

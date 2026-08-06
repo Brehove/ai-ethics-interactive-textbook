@@ -1,15 +1,17 @@
-import { migrateChapterV2ToV3 } from "@ai-ethics/chapter-renderer";
+import { migrateChapterV2ToV3, migrateChapterV3ToV4 } from "@ai-ethics/chapter-renderer";
 
 export type ProseBlock = Record<string, unknown> & { type: "paragraph" | "heading" | "blockquote" | "list" | "callout"; blockId: string; passageId?: string; anchorPassageId?: string; sectionId?: string; text?: string; level?: number; items?: string[]; ordered?: boolean; tone?: string };
-export type ManagedBodyBlock = Record<string, unknown> & { type: "mediaFigure" | "externalEmbed" | "richLink" | "diagram" | "artifact" | "legacyMarkup"; blockId: string; anchorPassageId?: string };
+export type CardPresentation = { width: "compact" | "narrow" | "medium" | "reading" | "wide" | "full" | "bleed"; align: "start" | "center" | "end"; density: "compact" | "standard" | "expanded"; frame?: { mode: "intrinsic" | "contain" | "crop"; aspect?: "auto" | "1:1" | "4:3" | "3:2" | "16:9" | "2:3"; focalPoint?: { x: number; y: number }; approvalId?: string } };
+export type ManagedBodyBlock = Record<string, unknown> & { type: "mediaFigure" | "externalEmbed" | "richLink" | "diagram" | "artifactCard" | "sourceCard" | "legacyMarkup"; blockId: string; anchorPassageId?: string; presentation?: CardPresentation };
 export type ChapterBlock = ProseBlock | ManagedBodyBlock;
 export type CheckpointReferenceNode = { type: "checkpointRef"; checkpointId: string };
 export type PlacementReferenceNode = { type: "placementRef"; placementId: string };
 export type ChapterFlowNode = ChapterBlock | CheckpointReferenceNode | PlacementReferenceNode;
 export type Checkpoint = Record<string, unknown> & { checkpointId: string; passageId: string; displayOrder?: number; passageExcerptHash?: string; title: string; trigger: string; prompt: string; guidance: string; stage?: string; strategy: string; responseStructure: "prose" | "movement-plus-prose"; minWords: number; maxWords: number; showInSidebar: boolean; rationale: string };
-export type ManagedPlacement = { placementId: string; kind: "personFeature" | "media" | "embed" | "diagram" | "artifact"; contentId: string; anchorPassageId: string; position?: "before" | "after"; orderAtAnchor?: number; displayPreset: "thinker-card" | "narrow" | "reading" | "wide" | "bleed" | "compact" };
-export type PersonFeature = Record<string, unknown> & { personFeatureId: string; placementId: string; personId: string; name: string; displayPreset: "thinker-card" };
-export type ChapterDocument = Record<string, unknown> & { schemaVersion: 2 | 3; documentId: string; chapterId: string; changeSetId: string; slug: string; title: string; revisionId: string; baseRevisionId: string; expectedVersion: number; body: ChapterFlowNode[]; checkpoints: Checkpoint[]; personFeatures: PersonFeature[]; managedPlacements: ManagedPlacement[] };
+export type ManagedPlacement = { placementId: string; kind: "personFeature" | "media" | "embed" | "diagram" | "artifact"; contentId: string; anchorPassageId: string; position?: "before" | "after"; orderAtAnchor?: number; displayPreset?: "thinker-card" | "narrow" | "reading" | "wide" | "bleed" | "compact"; presentation?: CardPresentation };
+export type PersonFeature = Record<string, unknown> & { personFeatureId: string; placementId: string; personId: string; name: string; displayPreset?: "thinker-card" };
+export type LayoutRegion = Record<string, unknown> & { layoutId: string; type: "wrap" | "card-text-split" | "card-grid"; startNodeId: string; endNodeId: string };
+export type ChapterDocument = Record<string, unknown> & { schemaVersion: 2 | 3 | 4; layoutCatalogVersion?: string; layoutRegions?: LayoutRegion[]; documentId: string; chapterId: string; changeSetId: string; slug: string; title: string; revisionId: string; baseRevisionId: string; expectedVersion: number; body: ChapterFlowNode[]; checkpoints: Checkpoint[]; personFeatures: PersonFeature[]; managedPlacements: ManagedPlacement[] };
 
 export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 export const cloneChapter = (chapter: ChapterDocument): ChapterDocument => structuredClone(chapter);
@@ -86,7 +88,7 @@ export function nearestPassage(chapter: ChapterDocument, passageId?: string) {
 }
 export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, "checkpointId" | "displayOrder" | "passageId">, passageId: string) {
   const anchor = nearestPassage(chapter, passageId); const checkpoint: Checkpoint = { checkpointId: newId("checkpoint"), passageId: anchor, ...(chapter.schemaVersion === 2 ? { displayOrder: nextCheckpointOrder(chapter, anchor) } : {}), ...draft }; chapter.checkpoints.push(checkpoint);
-  if (chapter.schemaVersion === 3) {
+  if (chapter.schemaVersion >= 3) {
     const owner = chapter.body.findLastIndex((node) => blockPassage(node) === anchor);
     chapter.body.splice(owner >= 0 ? owner + 1 : chapter.body.length, 0, { type: "checkpointRef", checkpointId: checkpoint.checkpointId });
   }
@@ -94,7 +96,7 @@ export function addCheckpoint(chapter: ChapterDocument, draft: Omit<Checkpoint, 
 }
 export function checkpointCreateOperation(chapter: ChapterDocument, checkpoint: Record<string, unknown>, afterNodeId: string) {
   const payload = structuredClone(checkpoint);
-  if (chapter.schemaVersion === 3) {
+  if (chapter.schemaVersion >= 3) {
     delete payload.displayOrder;
     return { type: "checkpoint.upsert", checkpoint: payload, position: { afterNodeId } };
   }
@@ -102,12 +104,18 @@ export function checkpointCreateOperation(chapter: ChapterDocument, checkpoint: 
 }
 export function personFeatureCreateOperation(chapter: ChapterDocument, feature: Record<string, unknown>, placement: Record<string, unknown>, afterNodeId: string) {
   const canonicalPlacement = structuredClone(placement);
-  if (chapter.schemaVersion === 3) {
+  const canonicalFeature = structuredClone(feature);
+  if (chapter.schemaVersion >= 3) {
     delete canonicalPlacement.position;
     delete canonicalPlacement.orderAtAnchor;
-    return { type: "personFeature.upsert", feature, placement: canonicalPlacement, position: { afterNodeId } };
+    if (chapter.schemaVersion === 4) {
+      delete canonicalPlacement.displayPreset;
+      canonicalPlacement.presentation ??= { width: "reading", align: "center", density: "standard" };
+      delete canonicalFeature.displayPreset;
+    }
+    return { type: "personFeature.upsert", feature: canonicalFeature, placement: canonicalPlacement, position: { afterNodeId } };
   }
-  return { type: "personFeature.upsert", feature, placement: canonicalPlacement };
+  return { type: "personFeature.upsert", feature: canonicalFeature, placement: canonicalPlacement };
 }
 export function replaceProsePreservingManagedFlow(chapter: ChapterDocument, paragraphs: string[]) {
   const isEditableProse = (node: ChapterFlowNode): node is ProseBlock => !isFlowReference(node) && ["paragraph", "heading", "blockquote", "list", "callout"].includes(node.type);
@@ -134,7 +142,7 @@ export function moveCheckpoint(chapter: ChapterDocument, checkpointId: string, p
   const previousAnchor = checkpoint.passageId;
   const nextAnchor = nearestPassage(chapter, passageId);
   if (previousAnchor !== nextAnchor && !/^[a-f0-9]{64}$/.test(passageExcerptHash ?? "")) throw new Error("Moving a checkpoint requires the destination passage excerpt hash.");
-  if (chapter.schemaVersion === 3) {
+  if (chapter.schemaVersion >= 3) {
     const referenceIndex = chapter.body.findIndex((node) => node.type === "checkpointRef" && node.checkpointId === checkpointId);
     if (referenceIndex < 0) throw new Error("The selected checkpoint reference is unavailable.");
     const [reference] = chapter.body.splice(referenceIndex, 1);
@@ -170,9 +178,10 @@ export function addPersonFeature(chapter: ChapterDocument, personFeatureId: stri
   const source = chapter.personFeatures.find((item) => item.personFeatureId === personFeatureId); if (!source) throw new Error("The selected frozen person feature is unavailable.");
   const anchor = nearestPassage(chapter, passageId); const placementId = newId("placement"); const nextFeatureId = newId("personfeature");
   const feature: PersonFeature = { ...structuredClone(source), personFeatureId: nextFeatureId, placementId };
-  const placement: ManagedPlacement = { placementId, kind: "personFeature", contentId: nextFeatureId, anchorPassageId: anchor, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === anchor && item.position === "after").length } : {}), displayPreset: "thinker-card" };
+  const placement: ManagedPlacement = { placementId, kind: "personFeature", contentId: nextFeatureId, anchorPassageId: anchor, ...(chapter.schemaVersion === 2 ? { position: "after" as const, orderAtAnchor: chapter.managedPlacements.filter((item) => item.anchorPassageId === anchor && item.position === "after").length, displayPreset: "thinker-card" as const } : chapter.schemaVersion === 4 ? { presentation: { width: "reading", align: "center", density: "standard" } as CardPresentation } : { displayPreset: "thinker-card" as const }) };
+  if (chapter.schemaVersion === 4) delete feature.displayPreset;
   chapter.personFeatures.push(feature); chapter.managedPlacements.push(placement);
-  if (chapter.schemaVersion === 3) {
+  if (chapter.schemaVersion >= 3) {
     const owner = chapter.body.findLastIndex((node) => blockPassage(node) === anchor);
     chapter.body.splice(owner >= 0 ? owner + 1 : chapter.body.length, 0, { type: "placementRef", placementId });
   }
@@ -256,12 +265,14 @@ export function assertUniqueEditorIdentities(chapter: ChapterDocument) {
 }
 
 export function upgradeEditorChapter(input: ChapterDocument): ChapterDocument {
-  return input.schemaVersion === 3 ? cloneChapter(input) : migrateChapterV2ToV3(input) as ChapterDocument;
+  if (input.schemaVersion === 4) return cloneChapter(input);
+  const ordered = input.schemaVersion === 3 ? input : migrateChapterV2ToV3(input);
+  return migrateChapterV3ToV4(ordered) as ChapterDocument;
 }
 
 export function removeCheckpoint(chapter: ChapterDocument, checkpointId: string) {
   chapter.checkpoints = chapter.checkpoints.filter((item) => item.checkpointId !== checkpointId);
-  if (chapter.schemaVersion === 3) chapter.body = chapter.body.filter((node) => node.type !== "checkpointRef" || node.checkpointId !== checkpointId);
+  if (chapter.schemaVersion >= 3) chapter.body = chapter.body.filter((node) => node.type !== "checkpointRef" || node.checkpointId !== checkpointId);
 }
 
 export function removeManagedPlacement(chapter: ChapterDocument, placementId: string) {
@@ -282,10 +293,10 @@ export const chapterReplaceOperation = (chapter: ChapterDocument): Record<string
     const { src: _src, posterUrl: _posterUrl, derivativeUrl: _derivativeUrl, editorPreviewUrl: _editorPreviewUrl, previewUrl: _previewUrl, previewPath: _previewPath, credit: _projectedCredit, ...canonical } = block;
     return canonical;
   });
-  return { type: chapter.schemaVersion === 3 ? "chapter.replaceDocumentV3" : "chapter.replaceDocument", document: { ...document, body } };
+  return { type: chapter.schemaVersion === 4 ? "chapter.replaceDocumentV4" : chapter.schemaVersion === 3 ? "chapter.replaceDocumentV3" : "chapter.replaceDocument", document: { ...document, body } };
 };
 export function chapterFromAuthoringView(view: Record<string, unknown>, fallback: ChapterDocument): ChapterDocument {
   const candidate = (view.chapter ?? view.document ?? view) as Partial<ChapterDocument>; if (!Array.isArray(candidate.body)) return fallback;
   const outer = view as Partial<ChapterDocument>;
-  return { ...fallback, ...candidate, schemaVersion: Number(candidate.schemaVersion ?? fallback.schemaVersion) as 2 | 3, documentId: String(outer.documentId ?? candidate.documentId ?? candidate.chapterId ?? fallback.documentId), chapterId: String(candidate.chapterId ?? outer.documentId ?? fallback.chapterId), changeSetId: String(outer.changeSetId ?? candidate.changeSetId ?? fallback.changeSetId), revisionId: String(outer.revisionId ?? candidate.revisionId ?? fallback.revisionId), baseRevisionId: String(outer.baseRevisionId ?? candidate.baseRevisionId ?? outer.revisionId ?? candidate.revisionId ?? fallback.baseRevisionId), expectedVersion: Number(outer.expectedVersion ?? outer.workingVersion ?? outer.version ?? candidate.expectedVersion ?? candidate.workingVersion ?? candidate.version ?? fallback.expectedVersion), body: candidate.body as ChapterFlowNode[], checkpoints: Array.isArray(candidate.checkpoints) ? candidate.checkpoints as Checkpoint[] : [], personFeatures: Array.isArray(candidate.personFeatures) ? candidate.personFeatures as PersonFeature[] : [], managedPlacements: Array.isArray(candidate.managedPlacements) ? candidate.managedPlacements as ManagedPlacement[] : [] };
+  return { ...fallback, ...candidate, schemaVersion: Number(candidate.schemaVersion ?? fallback.schemaVersion) as 2 | 3 | 4, documentId: String(outer.documentId ?? candidate.documentId ?? candidate.chapterId ?? fallback.documentId), chapterId: String(candidate.chapterId ?? outer.documentId ?? fallback.chapterId), changeSetId: String(outer.changeSetId ?? candidate.changeSetId ?? fallback.changeSetId), revisionId: String(outer.revisionId ?? candidate.revisionId ?? fallback.revisionId), baseRevisionId: String(outer.baseRevisionId ?? candidate.baseRevisionId ?? outer.revisionId ?? candidate.revisionId ?? fallback.baseRevisionId), expectedVersion: Number(outer.expectedVersion ?? outer.workingVersion ?? outer.version ?? candidate.expectedVersion ?? candidate.workingVersion ?? candidate.version ?? fallback.expectedVersion), body: candidate.body as ChapterFlowNode[], checkpoints: Array.isArray(candidate.checkpoints) ? candidate.checkpoints as Checkpoint[] : [], personFeatures: Array.isArray(candidate.personFeatures) ? candidate.personFeatures as PersonFeature[] : [], managedPlacements: Array.isArray(candidate.managedPlacements) ? candidate.managedPlacements as ManagedPlacement[] : [], layoutRegions: Array.isArray(candidate.layoutRegions) ? candidate.layoutRegions as LayoutRegion[] : [] };
 }

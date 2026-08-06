@@ -89,6 +89,8 @@ short-lived, hash-, MIME-, size-, actor-, and single-use-bound capability. The
 bundled media helper streams the local file with that one-time token and never
 receives the standing OAuth bearer.
 
+Flexible card layouts require content migration `0022_card_layout_feature_flag.sql`, Content API, auth, textbook MCP, preview, and reader code from the same reviewed release. The migration creates a disabled `card_layouts_v1` Chapter 7 canary and mirrors it to the public flag table; it does not rewrite a chapter revision. Before enabling the canary, authenticate a fresh MCP grant, run the live conformance script, verify the v4 catalog version, and inspect wide, narrow, mobile, print, offline, and no-JavaScript projections. Do not enable crop publication until the human-only frame-approval slice is deployed and release validation can verify its exact subject hash.
+
 ## Publication boundary
 
 A successful reader deployment modifies only the public website. Canvas remains a separate, explicitly authorized course workflow. Git remains canonical for code and for chapters whose authority registry entry is `git`; routine browser/API editing begins only for a chapter whose exact D1 revision and normalized hash have been explicitly activated. Production promotion uses the protected release workflow and its recorded deployment receipt, never the direct Content API publish endpoint.

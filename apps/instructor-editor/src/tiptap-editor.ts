@@ -158,7 +158,7 @@ function proseNode(block: ProseBlock) {
 }
 
 export function managedNodeSequence(chapter: ChapterDocument, passageId: string, position: "before" | "after" = "after") {
-  if (chapter.schemaVersion === 3) return chapter.body.flatMap((node, index) => {
+  if (chapter.schemaVersion >= 3) return chapter.body.flatMap((node, index) => {
     if (node.type === "checkpointRef") {
       const item = chapter.checkpoints.find((checkpoint) => checkpoint.checkpointId === node.checkpointId);
       return item ? [{ kind: "checkpoint" as const, item, order: index, index, sequence: 0 }] : [];
@@ -194,7 +194,7 @@ function managedNodes(chapter: ChapterDocument, passageId: string, position: "be
 }
 
 export function editorDocumentContent(chapter: ChapterDocument, legacyArtifacts: readonly LegacyCuratedArtifact[] = [], publicOrigin = "https://ethicsandai.your-digital-life.org") {
-  if (chapter.schemaVersion === 3) return chapter.body.map((node) => {
+  if (chapter.schemaVersion >= 3) return chapter.body.map((node) => {
     if (node.type === "checkpointRef") {
       const checkpoint = chapter.checkpoints.find((item) => item.checkpointId === node.checkpointId);
       if (!checkpoint) throw new Error(`Checkpoint reference ${node.checkpointId} is unresolved.`);
