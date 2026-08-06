@@ -5,7 +5,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import worker, { createMcp, verifyCapability } from '../../workers/textbook-mcp/src/index.mjs';
 
 const key = '019fc57c-899f-7c32-b1bb-4ca8fc34b886';
-const editOperations = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person', 'request_live_save_authorization'];
+const editOperations = ['get_authoring_view', 'get_passage', 'get_layout_catalog', 'get_card_layout', 'get_valid_layout_options', 'validate_layout_proposal', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'set_card_layout', 'reset_card_layout', 'set_card_frame', 'clear_card_frame', 'create_card_wrap', 'create_card_group', 'create_card_text_split', 'update_layout_region', 'remove_layout_region', 'reconcile_layout_region', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person', 'request_live_save_authorization'];
 const claims = (overrides = {}) => ({ actorId: 'actor_agent_test', actorType: 'agent', clientId: 'codex-test', runId: 'run_agent_test', jti: 'grant_test_123', scopes: ['content:read', 'content:write', 'media:read', 'media:upload'], allowedDocumentIds: ['chapter_ch07'], allowedOperations: editOperations, expiresAt: '2026-08-03T20:00:00.000Z', ...overrides });
 function makeEnv({ verified = claims(), api = async () => ({ ok: true }), requestLiveSave = async (_token, target) => ({ requestId: 'capreq_live_7', verificationUrl: 'https://auth.example/approve', userCode: 'ABC12345', target }), consumeLiveSave = async () => ({ pending: true }) } = {}) {
   return {
@@ -36,7 +36,7 @@ test('central private verifier is required and validates bounded claims', async 
 test('MCP exposes the Unified authoring contract rather than raw or legacy write tools', async () => {
   const env = makeEnv(); const { client, server } = await connected(env);
   const names = (await client.listTools()).tools.map((tool) => tool.name).sort();
-  for (const name of ['get_authoring_view', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
+  for (const name of ['get_authoring_view', 'get_layout_catalog', 'get_card_layout', 'get_valid_layout_options', 'validate_layout_proposal', 'create_or_resume_changeset', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'set_card_layout', 'reset_card_layout', 'set_card_frame', 'clear_card_frame', 'create_card_wrap', 'create_card_group', 'create_card_text_split', 'update_layout_region', 'remove_layout_region', 'reconcile_layout_region', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_version_history', 'restore_revision_as_draft']) assert.ok(names.includes(name), name);
   for (const name of ['save_live_revision', 'create_changeset', 'replace_text', 'approve_changeset', 'publish_changeset']) assert.equal(names.includes(name), false, name);
   assert.equal(names.includes('request_live_save_authorization'), true);
   assert.equal(names.includes('commit_live'), true);
@@ -55,11 +55,13 @@ test('media and provider tools expose the complete Skill workflow and exact API 
   await client.callTool({ name: 'get_media_job', arguments: { jobId: 'mediajob_7' } });
   await client.callTool({ name: 'get_media_asset', arguments: { mediaId: 'media_7' } });
   await client.callTool({ name: 'resolve_provider_url', arguments: { url: 'https://www.youtube.com/watch?v=abc123', expectedProvider: 'youtube' } });
+  await client.callTool({ name: 'upsert_embed', arguments: { changeSetId: 'changeset_7', documentId: 'chapter_ch07', baseRevisionId: 'revision_7', expectedVersion: 1, idempotencyKey: key, operation: { type: 'embed.upsert', embed: { kind: 'externalEmbed', identity: { provider: 'youtube', resourceType: 'video', resourceId: 'abc123' }, canonicalUrl: 'https://www.youtube.com/watch?v=abc123', caption: 'A video argument.', teachingUse: 'Compare its premises.', presentation: { width: 'reading', align: 'center', density: 'standard' }, theme: 'auto', fallback: { title: 'Video argument', summary: 'A fallback summary.', linkLabel: 'Watch video', accessedAt: '2026-08-05T12:00:00.000Z' }, adapterVersion: 'youtube-v1' }, position: { afterNodeId: 'block_7' } } } });
   assert.equal(calls[0].path, '/v1/media?limit=10&cursor=0&q=Aristotle&kind=image&rightsStatus=cleared');
   assert.equal(calls[1].path, '/v1/media-review-packages'); assert.equal(calls[1].body.accessibility.decorative, false);
   assert.equal(calls[2].path, '/v1/media/jobs/mediajob_7');
   assert.equal(calls[3].path, '/v1/media/media_7');
   assert.equal(calls[4].path, '/v1/embeds:resolve'); assert.equal(calls[4].body.expectedProvider, 'youtube');
+  assert.equal(calls[5].path, '/v1/changesets/changeset_7/operations:batch'); assert.equal(calls[5].body.operations[0].embed.identity.provider, 'youtube');
   await client.close(); await server.close();
 });
 

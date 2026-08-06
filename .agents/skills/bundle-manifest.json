@@ -4,11 +4,15 @@
   "files": [
     {
       "path": "ai-ethics-author-textbook-chapter/SKILL.md",
-      "sha256": "6f5d0aa479fb6078c28af0014fb4c1499fe6cf732d6a09d825428d15bc02eea6"
+      "sha256": "0aee9d7ee10ae32fc93062c03062d7210daa14b626a38589a4418fe1dbeca39b"
     },
     {
       "path": "ai-ethics-author-textbook-chapter/agents/openai.yaml",
       "sha256": "dfe06bd64b9558c92ccb81f04b699e04e7aeab128ef18e095e12c4f26ba776f1"
+    },
+    {
+      "path": "ai-ethics-author-textbook-chapter/references/card-layout-rules.md",
+      "sha256": "b021b5b7f92d323fa4c00f19d9439cc791026fc11a4ae8939b0b4cc1757dff4f"
     },
     {
       "path": "ai-ethics-author-textbook-chapter/references/mcp-workflow.md",
@@ -28,7 +32,7 @@
     },
     {
       "path": "ai-ethics-publish-textbook-media/SKILL.md",
-      "sha256": "78db4c6160cf0af344ff3b3325b03216f0b667e19a54de575046a0ffe8e5c0b5"
+      "sha256": "b2fd0b543ecc96d50c89f1acac46b9c27d4e50ebfa3c70e284ad93ec8b1a7b5a"
     },
     {
       "path": "ai-ethics-publish-textbook-media/agents/openai.yaml",
@@ -36,7 +40,7 @@
     },
     {
       "path": "ai-ethics-publish-textbook-media/references/media-workflow.md",
-      "sha256": "417bfdf8faa96c9375bc523e083dd160f93084639ff0a4ed4bd7295edca85795"
+      "sha256": "34166a9e7a593580e37c75da88af9fafd21b29d8708cd3f0dece324c497da4a2"
     },
     {
       "path": "ai-ethics-publish-textbook-media/scripts/upload-media.mjs",

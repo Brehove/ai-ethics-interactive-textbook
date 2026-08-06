@@ -57,6 +57,14 @@ const { artifacts } = Astro.props;
     document.querySelectorAll<HTMLElement>("[data-inline-artifact-gallery]").forEach((gallery) => {
       const prose = gallery.closest<HTMLElement>(".chapter-prose");
       if (!prose) return;
+      // Schema-v4 projections own card membership and layout explicitly. The
+      // legacy gallery remains only as a pre-cutover fallback; allowing it to
+      // move figures into a v4 flow would duplicate cards and override the
+      // server-rendered reading order.
+      if (prose.querySelector(".chapter-flow[data-layout-catalog-version]")) {
+        gallery.remove();
+        return;
+      }
       const figures = [...gallery.querySelectorAll<HTMLElement>("[data-inline-artifact]")];
       figures.forEach((figure) => {
         const target = figure.dataset.passageIds?.split(",").map((id) => id.trim()).filter(Boolean)

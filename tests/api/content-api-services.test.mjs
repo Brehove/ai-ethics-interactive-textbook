@@ -813,6 +813,38 @@ const checkpoint = (slot, passageId) => ({
   showInSidebar: true
 });
 
+test('schema-v4 card layout operations are catalog-bound, typed, and server-identify regions', async () => {
+  const chapter = {
+    ...migrateChapterV2ToV3(baseChapter()),
+    schemaVersion: 4,
+    layoutCatalogVersion: '2026-08-05',
+    layoutRegions: [],
+    body: [
+      { type: 'paragraph', blockId: 'block_intro', passageId: 'passage_intro', text: 'Compare the cards.' },
+      { type: 'paragraph', blockId: 'block_context', passageId: 'passage_context', text: 'Use the nearby context.' },
+      { type: 'artifactCard', blockId: 'block_card_one', artifactId: 'artifact_one', title: 'One', summary: 'First.', teachingUse: 'Compare.', presentation: { width: 'reading', align: 'center', density: 'standard' } },
+      { type: 'artifactCard', blockId: 'block_card_two', artifactId: 'artifact_two', title: 'Two', summary: 'Second.', teachingUse: 'Compare.', presentation: { width: 'reading', align: 'center', density: 'standard' } }
+    ]
+  };
+  const resized = await applySemanticOperation(chapter, { type: 'cardPresentation.set', cardId: 'block_card_one', presentation: { width: 'narrow', align: 'start', density: 'compact' }, expectedLayoutCatalogVersion: '2026-08-05' });
+  assert.deepEqual(resized.chapter.body[2].presentation, { width: 'narrow', align: 'start', density: 'compact' });
+  await assert.rejects(applySemanticOperation(chapter, { type: 'cardPresentation.reset', cardId: 'block_card_one', expectedLayoutCatalogVersion: 'stale' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_CATALOG_VERSION_MISMATCH');
+  const framed = await applySemanticOperation(resized.chapter, { type: 'cardFrame.set', cardId: 'block_card_one', frame: { mode: 'crop', aspect: '4:3', focalPoint: { x: 0.5, y: 0.25 } }, expectedLayoutCatalogVersion: '2026-08-05' });
+  assert.equal(framed.chapter.body[2].presentation.frame.aspect, '4:3');
+  assert.equal(validateChapter(framed.chapter, { publishable: false }).valid, true);
+  assert.equal(validateChapter(framed.chapter, { publishable: true }).errors.some((error) => error.code === 'CARD_FRAME_APPROVAL_REQUIRED'), true);
+  const wrapped = await applySemanticOperation(framed.chapter, { type: 'layoutRegion.create', region: { type: 'wrap', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeId: 'block_card_one', side: 'end', width: 'narrow' }, expectedLayoutCatalogVersion: '2026-08-05' });
+  assert.equal(wrapped.chapter.layoutRegions[0].type, 'wrap');
+  const unwrapped = await applySemanticOperation(wrapped.chapter, { type: 'layoutRegion.remove', layoutId: wrapped.created.layoutId, expectedLayoutCatalogVersion: '2026-08-05' });
+  const split = await applySemanticOperation(unwrapped.chapter, { type: 'layoutRegion.create', region: { type: 'card-text-split', startNodeId: 'block_intro', endNodeId: 'block_card_one', cardNodeIds: ['block_card_one'], textNodeIds: ['block_intro', 'block_context'], cardSide: 'start', ratio: 'card-narrow' }, expectedLayoutCatalogVersion: '2026-08-05' });
+  assert.equal(split.chapter.layoutRegions[0].type, 'card-text-split');
+  const unsplit = await applySemanticOperation(split.chapter, { type: 'layoutRegion.remove', layoutId: split.created.layoutId, expectedLayoutCatalogVersion: '2026-08-05' });
+  const grouped = await applySemanticOperation(unsplit.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal' }, expectedLayoutCatalogVersion: '2026-08-05' });
+  assert.match(grouped.created.layoutId, /^layout_/);
+  assert.equal(grouped.chapter.layoutRegions[0].layoutId, grouped.created.layoutId);
+  await assert.rejects(applySemanticOperation(grouped.chapter, { type: 'layoutRegion.create', region: { type: 'card-grid', startNodeId: 'block_card_one', endNodeId: 'block_card_two', cardNodeIds: ['block_card_one', 'block_card_two'], columns: 2, emphasis: 'equal' }, expectedLayoutCatalogVersion: '2026-08-05' }), (error) => error instanceof ApiError && error.code === 'LAYOUT_REGION_INVALID');
+});
+
 test('semantic diff is deterministic and reports structure, anchors, embeds, and pinned media impact without copying prose', () => {
   const base = baseChapter();
   base.title = 'Original title';

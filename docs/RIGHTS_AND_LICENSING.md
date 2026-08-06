@@ -43,3 +43,7 @@ Before adding a primary document, portrait, diagram, or Wikimedia asset:
 Wikipedia API biographical facts and Wikimedia Commons media are separate rights questions. A biography assembled from factual metadata may be original CC0 metadata; a specific Wikipedia extract remains CC BY-SA, and each Commons image keeps the license shown on its file page.
 
 Run `node scripts/validate-rights.mjs` after changing licenses, attribution, adaptations, or third-party assets.
+
+## Card framing
+
+Resizing, aligning, grouping, containing, or intrinsically displaying a cleared item does not change its source identity, rights case, required credit, alt text, or accessibility equivalent. A crop can change editorial meaning even when the underlying license permits modification. Schema-v4 crop framing is therefore draft-only in the initial code baseline: agents may propose and preview an aspect and focal point, but publishable validation fails closed until a human-only, exact-frame approval record is available. The textbook MCP cannot attach or claim that approval.

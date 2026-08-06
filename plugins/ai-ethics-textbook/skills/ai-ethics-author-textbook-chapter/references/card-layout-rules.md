@@ -1,0 +1,15 @@
+# Card layout rules
+
+Card layout is canonical chapter content only in schema v4. Before changing it, call `get_authoring_view`, `get_layout_catalog`, `get_card_layout`, and `get_valid_layout_options`. Use the returned `layoutCatalogVersion` as `expectedLayoutCatalogVersion`; never guess a remembered version, CSS class, pixel width, or raw markup.
+
+Choose the least complex arrangement that expresses the teaching relationship:
+
+- Use `set_card_layout` for one independent card. `reading`, centered, standard density is the default. Use `compact` or `narrow` for brief supporting cards; `wide`, `full`, and especially `bleed` require content that benefits from the added visual field.
+- Use `create_card_group` for two to six peer cards readers should scan or compare together. Use equal emphasis unless the prose explicitly establishes one featured item.
+- Use `create_card_wrap` only for one compact, narrow, or medium card beside sustained prose. Do not wrap around headings, checkpoints, tables, code, or short fragments.
+- Use `create_card_text_split` when card and prose form one deliberate explanatory or comparative unit. It is not a generic two-column page tool.
+- Use `set_card_frame` only for the media itself. `contain` preserves the whole image; `crop` needs an explicit aspect and focal point and does not grant human crop approval.
+
+Layout regions decorate a contiguous span but never reorder it. Removing a region does not remove content. Use `reconcile_layout_region` for a coordinated final region set; otherwise use the narrow create/update/remove tool. Validate with `validate_layout_proposal`, preview wide, mobile, print, offline, and no-JavaScript behavior, and confirm that collapse and print preserve source order.
+
+Do not place checkpoints or prose callouts in free-form card regions. Do not use a featured layout merely for visual variety. Never change prose, rights, media identity, or source order unless the user separately requested that change.

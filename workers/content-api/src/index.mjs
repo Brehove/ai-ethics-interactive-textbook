@@ -1,5 +1,5 @@
 import {
-  ApiError, ConflictError, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, bindCheckpointExcerptHashes, deterministicId, readJsonBody,
+  ApiError, ConflictError, LAYOUT_CATALOG, MEDIA_UPLOAD_POLICY, OPERATION_PAYLOAD_SCHEMAS, PROVIDER_REGISTRY, applySemanticOperation, assertMediaBudget, bindCheckpointExcerptHashes, deterministicId, readJsonBody,
   deploymentReceiptHash, finalizeChapterRevision, hmacSha256, requireScope, resolveIdempotency, resolveProviderUrl, semanticDiffChapter, sha256, sha256Bytes, stableStringify, trustedIdentity,
   validateChapter, validateMediaReviewPackage, validatePrivateOriginal, validateUploadRequest, verifyHmacSignature
 } from './services.mjs';
@@ -53,6 +53,7 @@ const SEMANTIC_OPERATION_CAPABILITIES = Object.freeze({
   'text.replace': ['replace_passage_text'],
   'chapter.replaceDocument': ['replace_chapter_document'],
   'chapter.replaceDocumentV3': ['replace_chapter_document'],
+  'chapter.replaceDocumentV4': ['replace_chapter_document'],
   'checkpoint.upsert': ['upsert_checkpoint', 'reorder_checkpoint'],
   'checkpoint.replace': ['upsert_checkpoint', 'reorder_checkpoint'],
   'checkpoint.remove': ['remove_checkpoint'],
@@ -61,7 +62,15 @@ const SEMANTIC_OPERATION_CAPABILITIES = Object.freeze({
   'embed.upsert': ['upsert_embed'],
   'personFeature.upsert': ['upsert_person_feature'],
   'managedPlacement.move': ['move_managed_placement'],
-  'managedPlacement.remove': ['remove_managed_placement']
+  'managedPlacement.remove': ['remove_managed_placement'],
+  'cardPresentation.set': ['set_card_layout'],
+  'cardPresentation.reset': ['reset_card_layout'],
+  'cardFrame.set': ['set_card_frame'],
+  'cardFrame.reset': ['clear_card_frame'],
+  'layoutRegion.create': ['create_card_wrap', 'create_card_group', 'create_card_text_split'],
+  'layoutRegion.update': ['update_layout_region'],
+  'layoutRegion.remove': ['remove_layout_region'],
+  'layoutRegion.reconcile': ['reconcile_layout_region']
 });
 const requireAgentSemanticOperation = (identity, documentId, operationType) => {
   if (identity.actorType !== 'agent') return;
@@ -245,6 +254,45 @@ async function getAuthoringView(env, id) {
   });
 }
 
+const layoutCardRecord = (chapter, cardId) => {
+  const body = chapter.body.find((item) => item?.blockId === cardId);
+  if (body && ['mediaFigure', 'externalEmbed', 'richLink', 'diagram', 'artifactCard', 'sourceCard'].includes(body.type)) return { cardId, source: 'body', cardType: body.type, presentation: body.presentation || null, card: body };
+  const placement = (chapter.managedPlacements || []).find((item) => item?.placementId === cardId);
+  if (placement) return { cardId, source: 'managedPlacement', cardType: placement.kind, presentation: placement.presentation || null, card: placement };
+  throw new ApiError(404, 'LAYOUT_CARD_NOT_FOUND', 'Card was not found');
+};
+
+async function getCardLayout(env, chapterId, cardId) {
+  const { row, chapter } = await loadCanonicalChapter(env, chapterId);
+  const card = layoutCardRecord(chapter, cardId);
+  const regions = (chapter.layoutRegions || []).filter((region) => region.cardNodeId === cardId || region.cardNodeIds?.includes(cardId));
+  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: chapter.schemaVersion, layoutCatalogVersion: chapter.layoutCatalogVersion || null, ...card, regions });
+}
+
+async function getValidLayoutOptions(env, chapterId, cardId) {
+  const { row, chapter } = await loadCanonicalChapter(env, chapterId);
+  const card = layoutCardRecord(chapter, cardId);
+  if (chapter.schemaVersion !== 4) return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: chapter.schemaVersion, migrationRequired: true, targetSchemaVersion: 4, catalog: LAYOUT_CATALOG });
+  return json({ chapterId, revisionId: row.current_revision_id, schemaVersion: 4, layoutCatalogVersion: chapter.layoutCatalogVersion, cardId, cardType: card.cardType, presentation: { widths: Object.keys(LAYOUT_CATALOG.widths), aligns: ['start', 'center', 'end'], densities: ['compact', 'standard', 'expanded'], frames: ['intrinsic', 'contain', 'crop'] }, regions: LAYOUT_CATALOG.regions, guidance: { wrap: 'Use only when adjacent prose is long enough to clear the card.', grid: 'Use for two to six peer cards.', split: 'Use when card and prose form a single deliberate unit.' } });
+}
+
+async function validateLayoutProposal(request, env, chapterId) {
+  const { row, chapter } = await loadCanonicalChapter(env, chapterId);
+  const body = await readJsonBody(request, { maxBytes: 262144, allowedFields: ['cardId', 'presentation', 'layoutRegions'] });
+  if (Boolean(body.cardId) !== Boolean(body.presentation)) throw new ApiError(422, 'LAYOUT_PROPOSAL_INVALID', 'cardId and presentation must be supplied together');
+  if (!body.presentation && !body.layoutRegions) throw new ApiError(422, 'LAYOUT_PROPOSAL_INVALID', 'Provide a card presentation and/or complete layout region set');
+  if (chapter.schemaVersion !== 4) return json({ valid: false, chapterId, revisionId: row.current_revision_id, errors: [{ code: 'SCHEMA_V4_REQUIRED', message: 'Migrate the chapter to schema v4 before proposing layouts' }] });
+  const proposal = structuredClone(chapter);
+  if (body.cardId && body.presentation) {
+    const target = layoutCardRecord(proposal, body.cardId);
+    if (target.source === 'body') proposal.body[proposal.body.findIndex((item) => item.blockId === body.cardId)].presentation = body.presentation;
+    else proposal.managedPlacements[proposal.managedPlacements.findIndex((item) => item.placementId === body.cardId)].presentation = body.presentation;
+  }
+  if (body.layoutRegions) proposal.layoutRegions = body.layoutRegions;
+  const result = validateChapter(proposal);
+  return json({ valid: result.valid, chapterId, revisionId: row.current_revision_id, layoutCatalogVersion: chapter.layoutCatalogVersion, errors: result.errors });
+}
+
 async function listChapterRevisions(env, id, url) {
   const { limit, cursor } = pageParams(url, { defaultLimit: 20, maxLimit: 50 });
   const document = await env.CONTENT_DB.prepare("SELECT current_revision_id FROM documents WHERE id = ? AND media_kind = 'text' AND state = 'active'").bind(id).first();
@@ -378,7 +426,7 @@ async function renderPreview(request, env, identity, changesetId) {
   const body = await readJsonBody(request, { allowedFields: ['documentId', 'baseRevisionId', 'expectedVersion', 'idempotencyKey', 'surface'] });
   validId(body.baseRevisionId, 'baseRevisionId');
   if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) throw new ApiError(428, 'PRECONDITION_REQUIRED', 'expectedVersion is required');
-  if (body.surface !== undefined && !['web', 'mobile', 'print', 'offline'].includes(body.surface)) throw new ApiError(422, 'PREVIEW_SURFACE_INVALID', 'surface must be web, mobile, print, or offline');
+  if (body.surface !== undefined && !['web', 'webWide', 'webNarrow', 'mobile', 'print', 'offline', 'noJs'].includes(body.surface)) throw new ApiError(422, 'PREVIEW_SURFACE_INVALID', 'surface must be web, webWide, webNarrow, mobile, print, offline, or noJs');
   if (!env.CONTENT_SNAPSHOTS || !env.CONTENT_DB || typeof env.PREVIEW_TOKEN_SECRET !== 'string' || env.PREVIEW_TOKEN_SECRET.length < 32 || typeof env.PREVIEW_ORIGIN !== 'string') throw new ApiError(503, 'PREVIEW_UNAVAILABLE', 'Protected preview storage or signing configuration is unavailable');
   await enforceRateLimit(env, identity, 'mutation');
   const idem = await beginIdempotency(env, identity, `changeset:${changesetId}:preview`, body.idempotencyKey, body);
@@ -1790,8 +1838,10 @@ async function getPerson(env, personId) {
 }
 
 async function applyTrustedSemanticOperation(env, sourceChapter, operation) {
-  const writesV3 = sourceChapter?.schemaVersion === 3 || operation?.type === 'chapter.replaceDocumentV3';
+  const writesV3 = sourceChapter?.schemaVersion >= 3 || operation?.type === 'chapter.replaceDocumentV3' || operation?.type === 'chapter.replaceDocumentV4';
   if (writesV3) await enforceRuntimeFlag(env, 'ordered_managed_references_v3', sourceChapter.chapterId || sourceChapter.documentId);
+  const writesLayouts = sourceChapter?.schemaVersion === 4 || operation?.type === 'chapter.replaceDocumentV4' || String(operation?.type || '').startsWith('card') || String(operation?.type || '').startsWith('layoutRegion.');
+  if (writesLayouts) await enforceRuntimeFlag(env, 'card_layouts_v1', sourceChapter.chapterId || sourceChapter.documentId);
   if (operation?.type !== 'personFeature.upsert') {
     const result = await applySemanticOperation(stripTransientMediaPreviewFields(sourceChapter), operation);
     const chapter = await rebindProjectedMediaCheckpointHashes(env, result.chapter);
@@ -2183,7 +2233,7 @@ export default {
           reject: { route: 'POST /v1/changesets/{changesetId}:reject', required: ['snapshotHash', 'snapshotRevision', 'decisionKind', 'comment', 'idempotencyKey'], scope: 'content:approve', humanActorRequired: true },
           restoreAsDraft: { route: 'POST /v1/chapters/{chapterId}/revisions/{revisionId}:restoreAsDraft', required: ['title', 'idempotencyKey'], optional: ['description'], scope: 'content:write' }
         },
-        preview: { route: 'POST /v1/changesets/{changesetId}:renderPreview', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], optional: ['documentId', 'surface'], surfaces: ['web', 'mobile', 'print', 'offline'], ttlSeconds: 300, oneTime: true, immutableSnapshot: true, scope: 'content:write' },
+        preview: { route: 'POST /v1/changesets/{changesetId}:renderPreview', required: ['baseRevisionId', 'expectedVersion', 'idempotencyKey'], optional: ['documentId', 'surface'], surfaces: ['web', 'webWide', 'webNarrow', 'mobile', 'print', 'offline', 'noJs'], ttlSeconds: 300, oneTime: true, immutableSnapshot: true, scope: 'content:write' },
         release: {
           metadata: { route: 'GET /v1/releases/{releaseId}', scope: 'content:read', includes: ['snapshot', 'authority', 'approvals', 'activePointer', 'deploymentReceipts', 'pointerHistory', 'deploymentTransactions'] },
           publish: { route: 'POST /v1/changesets/{changesetId}:publish', scope: 'content:publish', humanActorRequired: true, enabled: false, requires: 'deployment attestation + receipt + expected-active CAS' },
@@ -2203,6 +2253,7 @@ export default {
         rateLimits: { windowSeconds: RATE_WINDOW_SECONDS, mutation: RATE_LIMITS.mutation, upload: RATE_LIMITS.upload, key: 'trusted actor + client', persistence: 'D1 fail-closed' },
         authority: { prepareCutover: { route: 'POST /v1/authority:prepareCutover', required: ['title', 'targets', 'idempotencyKey'], serviceOnly: true, readOnlyProposal: true, currentAuthority: 'git' }, activateBatch: { route: 'POST /v1/authority:activateD1', required: ['releaseId', 'documents', 'idempotencyKey'], serviceOnly: true, exactActiveReleaseBinding: true, databaseGuarded: true }, canaryCompatibility: { route: 'POST /v1/authority/chapter_ch07:activateD1', required: ['releaseId', 'normalizedSnapshotHash', 'sourceRevision', 'idempotencyKey'], fixedDocumentId: 'chapter_ch07' } }
       });
+      if (request.method === 'GET' && url.pathname === '/v1/layout-catalog') { requireAgentTarget(identity, { operation: 'get_layout_catalog' }); return json(LAYOUT_CATALOG); }
       if (request.method === 'GET' && url.pathname === '/v1/chapters') return await listChapters(env);
       if (request.method === 'GET' && url.pathname === '/v1/media') return await searchMedia(env, url);
       if (request.method === 'GET' && url.pathname === '/v1/persons') return await searchPersons(env, url);
@@ -2245,6 +2296,12 @@ export default {
       if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_version_history' }); return await listChapterRevisions(env, chapterId, url); }
       match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/authoring-view$/);
       if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_authoring_view' }); return await getAuthoringView(env, chapterId); }
+      match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/cards\/([^/:]+)\/layout$/);
+      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_card_layout' }); return await getCardLayout(env, chapterId, validId(decodeURIComponent(match[2]), 'cardId')); }
+      match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/cards\/([^/:]+)\/layout-options$/);
+      if (request.method === 'GET' && match) { const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'get_valid_layout_options' }); return await getValidLayoutOptions(env, chapterId, validId(decodeURIComponent(match[2]), 'cardId')); }
+      match = url.pathname.match(/^\/v1\/chapters\/([^/:]+)\/layout:validate$/);
+      if (request.method === 'POST' && match) { requireScope(identity, 'content:read'); const chapterId = validId(decodeURIComponent(match[1]), 'chapterId'); requireAgentTarget(identity, { documentId: chapterId, operation: 'validate_layout_proposal' }); return await validateLayoutProposal(request, env, chapterId); }
       match = url.pathname.match(/^\/v1\/live-commits\/([^/:]+)$/);
       if (request.method === 'GET' && match) return await getLiveCommitStatus(env, identity, validId(decodeURIComponent(match[1]), 'commitReceiptId'));
       match = url.pathname.match(/^\/v1\/(?:chapters|documents)\/([^/:]+)$/);

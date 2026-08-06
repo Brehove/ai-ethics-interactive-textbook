@@ -1,6 +1,7 @@
 /** Workflow rules shared by the Worker and tests. */
-import { migrateChapterV2ToV3 } from '@ai-ethics/chapter-renderer';
-export { migrateChapterV2ToV3 };
+import { migrateChapterV2ToV3, migrateChapterV3ToV4 } from '@ai-ethics/chapter-renderer';
+import { LAYOUT_CATALOG, LAYOUT_CATALOG_VERSION, validateLayoutRegions } from '@ai-ethics/content-contract/layout-runtime';
+export { migrateChapterV2ToV3, migrateChapterV3ToV4, LAYOUT_CATALOG };
 
 export const stableStringify = (value) => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -98,6 +99,7 @@ export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'text.replace': { required: ['type', 'blockId', 'text'], optional: [] },
   'chapter.replaceDocument': { required: ['type', 'document'], optional: [] },
   'chapter.replaceDocumentV3': { required: ['type', 'document'], optional: [] },
+  'chapter.replaceDocumentV4': { required: ['type', 'document'], optional: [] },
   'chapter.replaceBody': { required: ['type', 'body'], optional: [] },
   'chapter.importPlainText': { required: ['type', 'paragraphs'], optional: [] },
   'block.insert': { required: ['type', 'block', 'position'], optional: [] },
@@ -114,7 +116,15 @@ export const OPERATION_PAYLOAD_SCHEMAS = Object.freeze({
   'media.remove': { required: ['type', 'figureId'], optional: [] },
   'personFeature.upsert': { required: ['type', 'feature', 'placement'], optional: ['position'] },
   'managedPlacement.move': { required: ['type', 'placementId', 'position'], optional: ['anchorPassageId', 'orderAtAnchor', 'displayPreset'] },
-  'managedPlacement.remove': { required: ['type', 'placementId'], optional: [] }
+  'managedPlacement.remove': { required: ['type', 'placementId'], optional: [] },
+  'cardPresentation.set': { required: ['type', 'cardId', 'presentation', 'expectedLayoutCatalogVersion'], optional: [] },
+  'cardPresentation.reset': { required: ['type', 'cardId', 'expectedLayoutCatalogVersion'], optional: [] },
+  'cardFrame.set': { required: ['type', 'cardId', 'frame', 'expectedLayoutCatalogVersion'], optional: [] },
+  'cardFrame.reset': { required: ['type', 'cardId', 'expectedLayoutCatalogVersion'], optional: [] },
+  'layoutRegion.create': { required: ['type', 'region', 'expectedLayoutCatalogVersion'], optional: [] },
+  'layoutRegion.update': { required: ['type', 'layoutId', 'patch', 'expectedLayoutCatalogVersion'], optional: [] },
+  'layoutRegion.remove': { required: ['type', 'layoutId', 'expectedLayoutCatalogVersion'], optional: [] },
+  'layoutRegion.reconcile': { required: ['type', 'regions', 'expectedLayoutCatalogVersion'], optional: [] }
 });
 
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -281,7 +291,7 @@ const normalizeCheckpoint = async (chapter, input, existing = null) => {
   if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) throw new ApiError(422, 'CHECKPOINT_SLOT_INVALID', 'Checkpoint slotLabel must be a lowercase stable key of at most 80 characters');
   const displayOrder = input.displayOrder ?? existing?.displayOrder ?? chapter.checkpoints?.length ?? 0;
   if (chapter.schemaVersion === 2 && (!Number.isInteger(displayOrder) || displayOrder < 0)) throw new ApiError(422, 'CHECKPOINT_ORDER_INVALID', 'Checkpoint displayOrder must be a nonnegative integer');
-  if (chapter.schemaVersion === 3 && input.displayOrder !== undefined) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'schema-v3 checkpoints use chapter flow for position; displayOrder is not accepted');
+  if (chapter.schemaVersion >= 3 && input.displayOrder !== undefined) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'Ordered checkpoints use chapter flow for position; displayOrder is not accepted');
   if (!CHECKPOINT_STRATEGIES.includes(input.strategy)) throw new ApiError(422, 'CHECKPOINT_STRATEGY_INVALID', 'Checkpoint strategy is unsupported');
   const passageId = requireString(input.passageId, 'checkpoint.passageId', 200);
   if (!passageIds(chapter).has(passageId)) throw new ApiError(422, 'CHECKPOINT_ANCHOR_MISSING', 'Checkpoint passage anchor does not exist', { passageId });
@@ -654,7 +664,7 @@ const authoredFallback = (value, name = 'embed.fallback') => {
 const normalizeEmbed = async (chapter, input) => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ApiError(400, 'INVALID_OPERATION', 'embed payload is required');
   if (input.kind === 'externalEmbed') {
-    rejectUnknown(input, ['kind', 'embedId', 'anchorPassageId', 'identity', 'canonicalUrl', 'caption', 'teachingUse', 'displayPreset', 'theme', 'fallback', 'adapterVersion']);
+    rejectUnknown(input, ['kind', 'embedId', 'anchorPassageId', 'identity', 'canonicalUrl', 'caption', 'teachingUse', 'displayPreset', 'presentation', 'theme', 'fallback', 'adapterVersion']);
     if (!input.identity || typeof input.identity !== 'object') throw new ApiError(422, 'PROVIDER_IDENTITY_REQUIRED', 'Provider identity is required');
     rejectUnknown(input.identity, ['provider', 'resourceType', 'resourceId', 'unlistedHash']);
     if (!PUBLIC_EMBED_HOSTS[input.identity.provider]) throw new ApiError(422, 'PROVIDER_NOT_SUPPORTED', 'Provider is unsupported');
@@ -670,12 +680,12 @@ const normalizeEmbed = async (chapter, input) => {
     const embedId = existing?.embedId || await deterministicId('embed', { chapterId: chapter.chapterId, identity: input.identity, canonicalUrl });
     const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, embedId });
     if (input.adapterVersion !== PROVIDER_REGISTRY[input.identity.provider].adapterVersion) throw new ApiError(422, 'ADAPTER_VERSION_INVALID', 'Embed adapterVersion must match the server provider registry');
-    const block = { type: 'externalEmbed', embedId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), identity: { provider: input.identity.provider, resourceType: input.identity.resourceType, resourceId, ...(input.identity.unlistedHash ? { unlistedHash: requireString(input.identity.unlistedHash, 'embed.identity.unlistedHash', 200) } : {}) }, canonicalUrl, caption: safeText(input.caption, 'embed.caption', 2000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), displayPreset: ['compact', 'reading', 'wide'].includes(input.displayPreset) ? input.displayPreset : (() => { throw new ApiError(422, 'DISPLAY_PRESET_INVALID', 'Embed displayPreset is invalid'); })(), theme: ['light', 'dark', 'auto'].includes(input.theme) ? input.theme : (() => { throw new ApiError(422, 'THEME_INVALID', 'Embed theme is invalid'); })(), options: PROVIDER_SAFE_OPTIONS[input.identity.provider], fallback: authoredFallback(input.fallback), adapterVersion: input.adapterVersion };
+    const block = { type: 'externalEmbed', embedId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), identity: { provider: input.identity.provider, resourceType: input.identity.resourceType, resourceId, ...(input.identity.unlistedHash ? { unlistedHash: requireString(input.identity.unlistedHash, 'embed.identity.unlistedHash', 200) } : {}) }, canonicalUrl, caption: safeText(input.caption, 'embed.caption', 2000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : { displayPreset: ['compact', 'reading', 'wide'].includes(input.displayPreset) ? input.displayPreset : (() => { throw new ApiError(422, 'DISPLAY_PRESET_INVALID', 'Embed displayPreset is invalid'); })() }), theme: ['light', 'dark', 'auto'].includes(input.theme) ? input.theme : (() => { throw new ApiError(422, 'THEME_INVALID', 'Embed theme is invalid'); })(), options: PROVIDER_SAFE_OPTIONS[input.identity.provider], fallback: authoredFallback(input.fallback), adapterVersion: input.adapterVersion };
     if (!existing) assertUniqueBodyIds(chapter, block);
     return { block, existing };
   }
   if (input.kind === 'richLink') {
-    rejectUnknown(input, ['kind', 'linkId', 'anchorPassageId', 'canonicalUrl', 'title', 'summary', 'teachingUse', 'linkLabel', 'posterMediaVersionId', 'accessedAt']);
+    rejectUnknown(input, ['kind', 'linkId', 'anchorPassageId', 'canonicalUrl', 'title', 'summary', 'teachingUse', 'linkLabel', 'posterMediaVersionId', 'accessedAt', 'presentation']);
     const existing = input.linkId ? bodyBlocks(chapter).find((item) => item.type === 'richLink' && item.linkId === input.linkId) : null;
     if (input.linkId && !existing) throw new ApiError(404, 'EMBED_NOT_FOUND', 'Rich link does not exist');
     const canonicalUrl = publicHttpsUrl(input.canonicalUrl, 'embed.canonicalUrl');
@@ -683,7 +693,7 @@ const normalizeEmbed = async (chapter, input) => {
     if (anchorPassageId && !passageIds(chapter).has(anchorPassageId)) throw new ApiError(422, 'EMBED_ANCHOR_MISSING', 'Link anchor passage does not exist');
     const linkId = existing?.linkId || await deterministicId('link', { chapterId: chapter.chapterId, canonicalUrl });
     const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, linkId });
-    const block = { type: 'richLink', linkId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), canonicalUrl, title: safeText(input.title, 'embed.title', 300), summary: safeText(input.summary, 'embed.summary', 4000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), linkLabel: safeText(input.linkLabel, 'embed.linkLabel', 120), ...(input.posterMediaVersionId ? { posterMediaVersionId: requireString(input.posterMediaVersionId, 'embed.posterMediaVersionId', 200) } : {}), accessedAt: requireString(input.accessedAt, 'embed.accessedAt', 40) };
+    const block = { type: 'richLink', linkId, blockId, ...(anchorPassageId ? { anchorPassageId } : {}), canonicalUrl, title: safeText(input.title, 'embed.title', 300), summary: safeText(input.summary, 'embed.summary', 4000), teachingUse: safeText(input.teachingUse, 'embed.teachingUse', 2000), linkLabel: safeText(input.linkLabel, 'embed.linkLabel', 120), ...(input.posterMediaVersionId ? { posterMediaVersionId: requireString(input.posterMediaVersionId, 'embed.posterMediaVersionId', 200) } : {}), accessedAt: requireString(input.accessedAt, 'embed.accessedAt', 40), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : {}) };
     if (!existing) assertUniqueBodyIds(chapter, block);
     return { block, existing };
   }
@@ -692,23 +702,89 @@ const normalizeEmbed = async (chapter, input) => {
 
 const normalizeMediaPlacement = async (chapter, input) => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new ApiError(400, 'INVALID_OPERATION', 'placement payload is required');
-  rejectUnknown(input, ['figureId', 'mediaId', 'mediaVersionId', 'rightsCaseId', 'anchorPassageId', 'decorative', 'alt', 'caption', 'captionOmissionReason', 'teachingUse', 'creditOverride', 'displayPreset', 'align', 'animationPolicy', 'printPolicy', 'downloadable']);
+  rejectUnknown(input, ['figureId', 'mediaId', 'mediaVersionId', 'rightsCaseId', 'anchorPassageId', 'decorative', 'alt', 'caption', 'captionOmissionReason', 'teachingUse', 'creditOverride', 'displayPreset', 'align', 'presentation', 'animationPolicy', 'printPolicy', 'downloadable']);
   const existing = input.figureId ? bodyBlocks(chapter).find((item) => item.type === 'mediaFigure' && item.figureId === input.figureId) : null;
   if (input.figureId && !existing) throw new ApiError(404, 'MEDIA_PLACEMENT_NOT_FOUND', 'Media placement does not exist');
   if (typeof input.decorative !== 'boolean' || typeof input.downloadable !== 'boolean') throw new ApiError(422, 'MEDIA_SEMANTICS_INVALID', 'decorative and downloadable must be boolean');
   if (!input.decorative && !input.alt) throw new ApiError(422, 'MEDIA_ALT_REQUIRED', 'Non-decorative media requires alt text');
   if (input.caption && input.captionOmissionReason) throw new ApiError(422, 'MEDIA_CAPTION_CONFLICT', 'Provide caption or captionOmissionReason, not both');
   if (!input.caption && !input.captionOmissionReason) throw new ApiError(422, 'MEDIA_CAPTION_REQUIRED', 'Provide caption or an omission reason');
-  if (!['narrow', 'reading', 'wide', 'bleed'].includes(input.displayPreset) || !['start', 'center', 'end'].includes(input.align) || !['poster', 'firstFrame', 'omit'].includes(input.printPolicy)) throw new ApiError(422, 'MEDIA_PRESENTATION_INVALID', 'Media display, alignment, or print policy is invalid');
+  if ((chapter.schemaVersion === 4 ? !validPresentation(input.presentation) || input.displayPreset !== undefined || input.align !== undefined : !['narrow', 'reading', 'wide', 'bleed'].includes(input.displayPreset) || !['start', 'center', 'end'].includes(input.align)) || !['poster', 'firstFrame', 'omit'].includes(input.printPolicy)) throw new ApiError(422, 'MEDIA_PRESENTATION_INVALID', 'Media presentation or print policy is invalid');
   if (input.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(input.animationPolicy)) throw new ApiError(422, 'MEDIA_ANIMATION_INVALID', 'Media animation policy is invalid');
   const anchorPassageId = input.anchorPassageId ? requireString(input.anchorPassageId, 'placement.anchorPassageId', 200) : undefined;
   if (anchorPassageId && !passageIds(chapter).has(anchorPassageId)) throw new ApiError(422, 'MEDIA_ANCHOR_MISSING', 'Media anchor passage does not exist');
   const identitySeed = { chapterId: chapter.chapterId, mediaId: input.mediaId, mediaVersionId: input.mediaVersionId, rightsCaseId: input.rightsCaseId, anchorPassageId };
   const figureId = existing?.figureId || await deterministicId('figure', identitySeed);
   const blockId = existing?.blockId || await deterministicId('block', { chapterId: chapter.chapterId, figureId });
-  const block = { type: 'mediaFigure', figureId, blockId, mediaId: requireString(input.mediaId, 'placement.mediaId', 200), mediaVersionId: requireString(input.mediaVersionId, 'placement.mediaVersionId', 200), rightsCaseId: requireString(input.rightsCaseId, 'placement.rightsCaseId', 200), ...(anchorPassageId ? { anchorPassageId } : {}), decorative: input.decorative, ...(!input.decorative ? { alt: safeText(input.alt, 'placement.alt', 1000) } : {}), ...(input.caption ? { caption: safeText(input.caption, 'placement.caption', 4000) } : { captionOmissionReason: safeText(input.captionOmissionReason, 'placement.captionOmissionReason', 1000) }), teachingUse: safeText(input.teachingUse, 'placement.teachingUse', 2000), ...(input.creditOverride ? { creditOverride: safeText(input.creditOverride, 'placement.creditOverride', 1000) } : {}), displayPreset: input.displayPreset, align: input.align, ...(input.animationPolicy ? { animationPolicy: input.animationPolicy } : {}), printPolicy: input.printPolicy, downloadable: input.downloadable };
+  const block = { type: 'mediaFigure', figureId, blockId, mediaId: requireString(input.mediaId, 'placement.mediaId', 200), mediaVersionId: requireString(input.mediaVersionId, 'placement.mediaVersionId', 200), rightsCaseId: requireString(input.rightsCaseId, 'placement.rightsCaseId', 200), ...(anchorPassageId ? { anchorPassageId } : {}), decorative: input.decorative, ...(!input.decorative ? { alt: safeText(input.alt, 'placement.alt', 1000) } : {}), ...(input.caption ? { caption: safeText(input.caption, 'placement.caption', 4000) } : { captionOmissionReason: safeText(input.captionOmissionReason, 'placement.captionOmissionReason', 1000) }), teachingUse: safeText(input.teachingUse, 'placement.teachingUse', 2000), ...(input.creditOverride ? { creditOverride: safeText(input.creditOverride, 'placement.creditOverride', 1000) } : {}), ...(chapter.schemaVersion === 4 ? { presentation: parsePresentation(input.presentation) } : { displayPreset: input.displayPreset, align: input.align }), ...(input.animationPolicy ? { animationPolicy: input.animationPolicy } : {}), printPolicy: input.printPolicy, downloadable: input.downloadable };
   if (!existing) assertUniqueBodyIds(chapter, block);
   return { block, existing };
+};
+
+const assertLayoutCatalog = (chapter, expected) => {
+  if (chapter.schemaVersion !== 4) throw new ApiError(409, 'SCHEMA_V4_REQUIRED', 'Card layout operations require schema-v4 ordered flow');
+  if (chapter.layoutCatalogVersion !== LAYOUT_CATALOG_VERSION || expected !== LAYOUT_CATALOG_VERSION) throw new ApiError(409, 'LAYOUT_CATALOG_VERSION_MISMATCH', 'Refresh the layout catalog before changing presentation', { expected: LAYOUT_CATALOG_VERSION, chapter: chapter.layoutCatalogVersion, received: expected });
+};
+
+const defaultPresentation = (card) => ({
+  width: card?.type === 'mediaFigure' ? 'reading' : card?.kind === 'personFeature' ? 'reading' : card?.type === 'diagram' ? 'wide' : 'medium',
+  align: 'center',
+  density: 'standard'
+});
+
+const findLayoutCard = (chapter, cardId) => {
+  const bodyIndex = chapter.body.findIndex((item) => item?.blockId === cardId);
+  if (bodyIndex >= 0 && ['mediaFigure', 'externalEmbed', 'richLink', 'diagram', 'artifactCard', 'sourceCard'].includes(chapter.body[bodyIndex].type)) return { collection: chapter.body, index: bodyIndex, value: chapter.body[bodyIndex] };
+  const placementIndex = chapter.managedPlacements.findIndex((item) => item?.placementId === cardId);
+  if (placementIndex >= 0) return { collection: chapter.managedPlacements, index: placementIndex, value: chapter.managedPlacements[placementIndex] };
+  throw new ApiError(404, 'LAYOUT_CARD_NOT_FOUND', 'Card ID does not identify a layout-capable body card or person placement');
+};
+
+const assertNotLayoutMember = (chapter, nodeId) => {
+  if (chapter.schemaVersion !== 4 || !chapter.layoutRegions?.length) return;
+  const ids = chapter.body.map((node) => node?.type === 'checkpointRef' ? node.checkpointId : node?.type === 'placementRef' ? node.placementId : node?.blockId).filter(Boolean);
+  for (const region of chapter.layoutRegions) {
+    const start = ids.indexOf(region.startNodeId); const end = ids.indexOf(region.endNodeId);
+    if (start >= 0 && end >= start && ids.slice(start, end + 1).includes(nodeId)) throw new ApiError(409, 'LAYOUT_DEPENDENCY_CONFLICT', 'This flow node belongs to a layout region; reconcile or remove the region before moving or deleting it', { nodeId, layoutId: region.layoutId });
+  }
+};
+
+const parsePresentation = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ApiError(422, 'CARD_PRESENTATION_INVALID', 'Card presentation must be an object');
+  rejectUnknown(value, ['width', 'align', 'density', 'frame']);
+  if (!Object.keys(LAYOUT_CATALOG.widths).includes(value.width) || !['start', 'center', 'end'].includes(value.align) || !['compact', 'standard', 'expanded'].includes(value.density)) throw new ApiError(422, 'CARD_PRESENTATION_INVALID', 'Card width, alignment, or density is invalid');
+  return { width: value.width, align: value.align, density: value.density, ...(value.frame ? { frame: parseFrame(value.frame) } : {}) };
+};
+
+const parseFrame = (value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ApiError(422, 'CARD_FRAME_INVALID', 'Card frame must be an object');
+  rejectUnknown(value, ['mode', 'aspect', 'focalPoint', 'approvalId']);
+  const aspect = value.aspect || 'auto';
+  if (!['intrinsic', 'contain', 'crop'].includes(value.mode) || !['auto', '1:1', '4:3', '3:2', '16:9', '2:3'].includes(aspect)) throw new ApiError(422, 'CARD_FRAME_INVALID', 'Frame mode or aspect is invalid');
+  if (value.mode === 'crop' && aspect === 'auto') throw new ApiError(422, 'CARD_FRAME_INVALID', 'Crop frames require an explicit aspect');
+  if (value.focalPoint && (value.mode !== 'crop' || typeof value.focalPoint !== 'object' || !Number.isFinite(value.focalPoint.x) || !Number.isFinite(value.focalPoint.y) || value.focalPoint.x < 0 || value.focalPoint.x > 1 || value.focalPoint.y < 0 || value.focalPoint.y > 1)) throw new ApiError(422, 'CARD_FRAME_INVALID', 'Focal point is valid only for crop and must use normalized coordinates');
+  return { mode: value.mode, aspect, ...(value.focalPoint ? { focalPoint: { x: value.focalPoint.x, y: value.focalPoint.y } } : {}), ...(value.approvalId ? { approvalId: requireString(value.approvalId, 'frame.approvalId', 200) } : {}) };
+};
+const validPresentation = (value) => { try { parsePresentation(value); return true; } catch { return false; } };
+
+const parseLayoutRegion = (region) => {
+  if (!region || typeof region !== 'object' || Array.isArray(region)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Layout region must be an object');
+  const base = ['layoutId', 'type', 'startNodeId', 'endNodeId'];
+  const extra = region.type === 'wrap' ? ['cardNodeId', 'side', 'width'] : region.type === 'card-grid' ? ['cardNodeIds', 'columns', 'emphasis', 'featuredNodeId'] : region.type === 'card-text-split' ? ['cardNodeIds', 'textNodeIds', 'cardSide', 'ratio'] : [];
+  if (!extra.length) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Layout region type is invalid');
+  rejectUnknown(region, [...base, ...extra]);
+  for (const field of ['layoutId', 'startNodeId', 'endNodeId']) requireString(region[field], `region.${field}`, 200);
+  if (region.type === 'wrap' && (!['start', 'end'].includes(region.side) || !['compact', 'narrow', 'medium'].includes(region.width) || !region.cardNodeId)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Wrap region is invalid');
+  if (region.type === 'card-grid' && (!Array.isArray(region.cardNodeIds) || region.cardNodeIds.length < 2 || region.cardNodeIds.length > 6 || !Number.isInteger(region.columns) || region.columns < 2 || region.columns > 4 || region.columns > region.cardNodeIds.length || !['equal', 'featured'].includes(region.emphasis) || (region.emphasis === 'featured' && !region.cardNodeIds.includes(region.featuredNodeId)) || (region.emphasis === 'equal' && region.featuredNodeId))) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Card grid is invalid');
+  if (region.type === 'card-text-split' && (!Array.isArray(region.cardNodeIds) || region.cardNodeIds.length < 1 || region.cardNodeIds.length > 3 || !Array.isArray(region.textNodeIds) || region.textNodeIds.length < 1 || region.textNodeIds.length > 20 || !['start', 'end'].includes(region.cardSide) || !['card-narrow', 'balanced', 'card-wide'].includes(region.ratio))) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'Card-text split is invalid');
+  return structuredClone(region);
+};
+
+const validateRegionSet = (chapter, regions) => {
+  const parsed = regions.map(parseLayoutRegion);
+  const errors = validateLayoutRegions(chapter.body, parsed);
+  if (errors.length) throw new ApiError(422, 'LAYOUT_REGION_INVALID', errors[0].message, { errors });
+  return parsed;
 };
 
 export const applySemanticOperation = async (sourceChapter, operation) => {
@@ -721,17 +797,18 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
   chapter.checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
   chapter.managedPlacements = Array.isArray(chapter.managedPlacements) ? chapter.managedPlacements : [];
   chapter.personFeatures = Array.isArray(chapter.personFeatures) ? chapter.personFeatures : [];
+  chapter.layoutRegions = Array.isArray(chapter.layoutRegions) ? chapter.layoutRegions : [];
 
   if (operation.type === 'text.replace') {
     const { block } = findUniqueBlock(chapter, operation.blockId);
     if (block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be edited');
     if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type)) throw new ApiError(422, 'BLOCK_NOT_TEXT_EDITABLE', 'Block type does not support text.replace');
     block.text = safeText(operation.text, 'text', block.type === 'heading' ? 1000 : 50000);
-  } else if (operation.type === 'chapter.replaceDocument' || operation.type === 'chapter.replaceDocumentV3') {
+  } else if (operation.type === 'chapter.replaceDocument' || operation.type === 'chapter.replaceDocumentV3' || operation.type === 'chapter.replaceDocumentV4') {
     if (!operation.document || typeof operation.document !== 'object' || Array.isArray(operation.document)) throw new ApiError(400, 'INVALID_OPERATION', `${operation.type} requires a structured document`);
     if (operation.document.chapterId !== sourceChapter.chapterId) throw new ApiError(422, 'DOCUMENT_ID_MISMATCH', 'Replacement document must retain the chapter identity');
     const replacement = structuredClone(operation.document);
-    const expectedSchemaVersion = operation.type === 'chapter.replaceDocumentV3' ? 3 : 2;
+    const expectedSchemaVersion = operation.type === 'chapter.replaceDocumentV4' ? 4 : operation.type === 'chapter.replaceDocumentV3' ? 3 : 2;
     if (replacement.schemaVersion !== expectedSchemaVersion) throw new ApiError(422, 'CONTENT_SCHEMA_VERSION_MISMATCH', `${operation.type} requires schemaVersion ${expectedSchemaVersion}`, { path: 'schemaVersion' });
     const shapeValidation = validateChapter(replacement);
     if (!shapeValidation.valid) throw new ApiError(422, 'VALIDATION_FAILED', 'Replacement chapter is structurally invalid', shapeValidation);
@@ -748,7 +825,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const block = await normalizeInsertedBlock(chapter, operation.block, operation.position);
     chapter.body.splice(index, 0, block);
   } else if (operation.type === 'block.split') {
-    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'block.split requires schema-v3 ordered flow');
+    if (chapter.schemaVersion < 3) throw new ApiError(409, 'ORDERED_SCHEMA_REQUIRED', 'block.split requires ordered chapter flow');
     const { block, index } = findUniqueBlock(chapter, operation.blockId);
     if (!['paragraph', 'heading', 'blockquote', 'callout'].includes(block.type) || typeof block.text !== 'string') throw new ApiError(422, 'BLOCK_SPLIT_UNSUPPORTED', 'Only textual prose blocks can be split');
     if (!Number.isInteger(operation.offset) || operation.offset < 1 || operation.offset >= block.text.length) throw new ApiError(422, 'BLOCK_SPLIT_OFFSET_INVALID', 'Split offset must be inside the block text');
@@ -768,7 +845,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     await bindCheckpointExcerptHashes(chapter);
     return { chapter, contentHash: await sha256(chapter), created: { blockId: rightBlockId, passageId: rightPassageId } };
   } else if (operation.type === 'block.join') {
-    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'block.join requires schema-v3 ordered flow');
+    if (chapter.schemaVersion < 3) throw new ApiError(409, 'ORDERED_SCHEMA_REQUIRED', 'block.join requires ordered chapter flow');
     const first = findUniqueBlock(chapter, operation.firstBlockId);
     const second = findUniqueBlock(chapter, operation.secondBlockId);
     if (second.index !== first.index + 1) throw new ApiError(409, 'BLOCK_JOIN_CROSSES_FLOW_NODE', 'Blocks can be joined only when no checkpoint or placement reference lies between them');
@@ -779,6 +856,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (retiredPassageId) chapter.tombstones = [...(chapter.tombstones || []), { id: retiredPassageId, reason: 'Joined into adjacent passage', retiredAt: chapter.updatedAt || '1970-01-01T00:00:00.000Z', replacementId: first.block.passageId }];
     chapter.checkpoints = chapter.checkpoints.map((item) => item.passageId === retiredPassageId ? { ...item, passageId: first.block.passageId } : item);
   } else if (operation.type === 'block.move') {
+    assertNotLayoutMember(chapter, operation.blockId);
     const moving = findUniqueBlock(chapter, operation.blockId);
     const anchorId = operation.position?.beforeBlockId || operation.position?.afterBlockId;
     if (anchorId === operation.blockId) throw new ApiError(422, 'POSITION_INVALID', 'A block cannot be positioned relative to itself');
@@ -786,6 +864,7 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const index = placementIndex(chapter, operation.position);
     chapter.body.splice(index, 0, block);
   } else if (operation.type === 'block.remove') {
+    assertNotLayoutMember(chapter, operation.blockId);
     const removing = findUniqueBlock(chapter, operation.blockId);
     if (removing.block.type === 'legacyMarkup') throw new ApiError(422, 'LEGACY_MARKUP_LOCKED', 'legacyMarkup blocks cannot be removed');
     if (removing.block.type === 'mediaFigure') throw new ApiError(422, 'MEDIA_REMOVE_REQUIRED', 'Use media.remove so the immutable media asset remains explicit');
@@ -817,13 +896,13 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (index >= 0) chapter.checkpoints[index] = normalized;
     else {
       chapter.checkpoints.push(normalized);
-      if (chapter.schemaVersion === 3) {
-        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating a schema-v3 checkpoint requires an explicit flow position');
+      if (chapter.schemaVersion >= 3) {
+        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating a checkpoint in ordered flow requires an explicit flow position');
         chapter.body.splice(placementIndex(chapter, operation.position), 0, { type: 'checkpointRef', checkpointId: normalized.checkpointId });
       }
     }
   } else if (operation.type === 'checkpoint.move') {
-    if (chapter.schemaVersion !== 3) throw new ApiError(409, 'SCHEMA_V3_REQUIRED', 'checkpoint.move requires schema-v3 ordered flow');
+    if (chapter.schemaVersion < 3) throw new ApiError(409, 'ORDERED_SCHEMA_REQUIRED', 'checkpoint.move requires ordered chapter flow');
     const checkpointIndex = chapter.checkpoints.findIndex((item) => item.checkpointId === operation.checkpointId);
     if (checkpointIndex < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
     const reference = findUniqueFlowNode(chapter, operation.checkpointId);
@@ -845,19 +924,20 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (index < 0) throw new ApiError(404, 'CHECKPOINT_NOT_FOUND', 'Checkpoint does not exist');
     if (slotTarget !== undefined && slotTarget !== (chapter.checkpoints[index].slotLabel ?? chapter.checkpoints[index].slot)) throw new ApiError(409, 'CHECKPOINT_SLOT_CONFLICT', 'Checkpoint slot label does not match the selected checkpoint ID');
     const [removedCheckpoint] = chapter.checkpoints.splice(index, 1);
-    if (chapter.schemaVersion === 3) chapter.body = chapter.body.filter((node) => node.type !== 'checkpointRef' || node.checkpointId !== removedCheckpoint.checkpointId);
+    if (chapter.schemaVersion >= 3) chapter.body = chapter.body.filter((node) => node.type !== 'checkpointRef' || node.checkpointId !== removedCheckpoint.checkpointId);
   } else if (operation.type === 'embed.upsert') {
     const normalized = await normalizeEmbed(chapter, operation.embed);
     if (normalized.existing) chapter.body[chapter.body.indexOf(normalized.existing)] = normalized.block;
-    else chapter.body.splice(placementIndex(chapter, operation.position), 0, normalized.block);
+    else { if (chapter.schemaVersion >= 3 && !operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating an embed in ordered flow requires an explicit position'); chapter.body.splice(placementIndex(chapter, operation.position), 0, normalized.block); }
   } else if (operation.type === 'media.place') {
     const normalized = await normalizeMediaPlacement(chapter, operation.placement);
     if (normalized.existing) chapter.body[chapter.body.indexOf(normalized.existing)] = normalized.block;
-    else chapter.body.splice(placementIndex(chapter, operation.position), 0, normalized.block);
+    else { if (chapter.schemaVersion >= 3 && !operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating media in ordered flow requires an explicit position'); chapter.body.splice(placementIndex(chapter, operation.position), 0, normalized.block); }
   } else if (operation.type === 'media.remove') {
     const figureId = requireString(operation.figureId, 'figureId', 200);
     const index = chapter.body.findIndex((item) => item.type === 'mediaFigure' && item.figureId === figureId);
     if (index < 0) throw new ApiError(404, 'MEDIA_PLACEMENT_NOT_FOUND', 'Media placement does not exist');
+    assertNotLayoutMember(chapter, chapter.body[index].blockId);
     chapter.body.splice(index, 1);
   } else if (operation.type === 'personFeature.upsert') {
     const feature = operation.feature;
@@ -866,10 +946,14 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const requiredFeature = ['personFeatureId', 'placementId', 'personId', 'entityRevisionId', 'name', 'dates', 'role', 'teachingNote', 'biography', 'portrait'];
     for (const field of requiredFeature) if (!feature[field] || (typeof feature[field] === 'string' && !feature[field].trim())) throw new ApiError(422, 'PERSON_FEATURE_INVALID', `feature.${field} is required`);
     if (!Array.isArray(feature.primarySources)) throw new ApiError(422, 'PERSON_FEATURE_INVALID', 'feature.primarySources must be an array');
-    if (placement.kind !== 'personFeature' || placement.contentId !== feature.personFeatureId || placement.placementId !== feature.placementId || placement.displayPreset !== 'thinker-card') throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Person feature and placement identities must match');
+    if (placement.kind !== 'personFeature' || placement.contentId !== feature.personFeatureId || placement.placementId !== feature.placementId) throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Person feature and placement identities must match');
+    if (chapter.schemaVersion === 4) {
+      if (feature.displayPreset !== undefined || placement.displayPreset !== undefined) throw new ApiError(422, 'LEGACY_PRESENTATION_FORBIDDEN', 'Schema-v4 person cards store presentation only on the placement');
+      placement.presentation = parsePresentation(placement.presentation);
+    } else if (placement.displayPreset !== 'thinker-card') throw new ApiError(422, 'PERSON_FEATURE_PLACEMENT_INVALID', 'Legacy person features require the thinker-card preset');
     if (!passageIds(chapter).has(placement.anchorPassageId)) throw new ApiError(422, 'MANAGED_ANCHOR_MISSING', 'Person feature anchor does not exist');
     if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement.position) || !Number.isInteger(placement.orderAtAnchor) || placement.orderAtAnchor < 0)) throw new ApiError(422, 'MANAGED_POSITION_INVALID', 'Person feature position is invalid');
-    if (chapter.schemaVersion === 3 && (placement.position !== undefined || placement.orderAtAnchor !== undefined)) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'schema-v3 managed placements use chapter flow for position');
+    if (chapter.schemaVersion >= 3 && (placement.position !== undefined || placement.orderAtAnchor !== undefined)) throw new ApiError(422, 'LEGACY_POSITION_FORBIDDEN', 'Ordered managed placements use chapter flow for position');
     if (!chapter.people?.some((relation) => relation.personId === feature.personId)) throw new ApiError(422, 'PERSON_RELATION_MISSING', 'Person feature requires an existing chapter-person relation');
     if (!chapter.entityRevisions?.some((revision) => revision.entityRevisionId === feature.entityRevisionId && revision.personId === feature.personId)) throw new ApiError(422, 'ENTITY_REVISION_MISSING', 'Person feature requires a frozen entity revision for the same person');
     const conflictingOrder = chapter.schemaVersion === 2 ? chapter.managedPlacements.find((item) => item.placementId !== placement.placementId && item.anchorPassageId === placement.anchorPassageId && item.position === placement.position && item.orderAtAnchor === placement.orderAtAnchor) : null;
@@ -880,15 +964,16 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     if (placementIndexValue >= 0) chapter.managedPlacements[placementIndexValue] = structuredClone(placement);
     else {
       chapter.managedPlacements.push(structuredClone(placement));
-      if (chapter.schemaVersion === 3) {
-        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating a schema-v3 managed placement requires an explicit flow position');
+      if (chapter.schemaVersion >= 3) {
+        if (!operation.position) throw new ApiError(422, 'POSITION_REQUIRED', 'Creating an ordered managed placement requires an explicit flow position');
         chapter.body.splice(placementIndex(chapter, operation.position), 0, { type: 'placementRef', placementId: placement.placementId });
       }
     }
   } else if (operation.type === 'managedPlacement.move') {
+    assertNotLayoutMember(chapter, operation.placementId);
     const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
     if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
-    if (chapter.schemaVersion === 3) {
+    if (chapter.schemaVersion >= 3) {
       const reference = findUniqueFlowNode(chapter, operation.placementId);
       if (reference.node.type !== 'placementRef') throw new ApiError(409, 'FLOW_NODE_TYPE_MISMATCH', 'managedPlacement.move target is not a placement reference');
       const targetId = operation.position?.beforeNodeId || operation.position?.afterNodeId || operation.position?.beforeBlockId || operation.position?.afterBlockId;
@@ -910,11 +995,46 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
     const displayPreset = operation.displayPreset ?? chapter.managedPlacements[index].displayPreset;
     chapter.managedPlacements[index] = { ...chapter.managedPlacements[index], anchorPassageId: operation.anchorPassageId, position: operation.position, orderAtAnchor, displayPreset };
   } else if (operation.type === 'managedPlacement.remove') {
+    assertNotLayoutMember(chapter, operation.placementId);
     const index = chapter.managedPlacements.findIndex((item) => item.placementId === operation.placementId);
     if (index < 0) throw new ApiError(404, 'MANAGED_PLACEMENT_NOT_FOUND', 'Managed placement does not exist');
     const [removed] = chapter.managedPlacements.splice(index, 1);
-    if (chapter.schemaVersion === 3) chapter.body = chapter.body.filter((node) => node.type !== 'placementRef' || node.placementId !== removed.placementId);
+    if (chapter.schemaVersion >= 3) chapter.body = chapter.body.filter((node) => node.type !== 'placementRef' || node.placementId !== removed.placementId);
     if (removed.kind === 'personFeature') chapter.personFeatures = chapter.personFeatures.filter((item) => item.personFeatureId !== removed.contentId && item.placementId !== removed.placementId);
+  } else if (operation.type === 'cardPresentation.set' || operation.type === 'cardPresentation.reset') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    const target = findLayoutCard(chapter, requireString(operation.cardId, 'cardId', 200));
+    const presentation = operation.type === 'cardPresentation.set' ? parsePresentation(operation.presentation) : defaultPresentation(target.value);
+    target.collection[target.index] = { ...target.value, presentation };
+  } else if (operation.type === 'cardFrame.set' || operation.type === 'cardFrame.reset') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    const target = findLayoutCard(chapter, requireString(operation.cardId, 'cardId', 200));
+    const current = parsePresentation(target.value.presentation || defaultPresentation(target.value));
+    if (operation.type === 'cardFrame.set') target.collection[target.index] = { ...target.value, presentation: { ...current, frame: parseFrame(operation.frame) } };
+    else { const { frame: _frame, ...withoutFrame } = current; target.collection[target.index] = { ...target.value, presentation: withoutFrame }; }
+  } else if (operation.type === 'layoutRegion.create') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    if (!operation.region || typeof operation.region !== 'object' || Array.isArray(operation.region) || operation.region.layoutId !== undefined) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'region must be an object without a client-supplied layoutId');
+    const layoutId = await deterministicId('layout', { chapterId: chapter.chapterId, revisionId: chapter.revisionId, region: operation.region, existing: chapter.layoutRegions.map((item) => item.layoutId) });
+    chapter.layoutRegions = validateRegionSet(chapter, [...chapter.layoutRegions, { ...structuredClone(operation.region), layoutId }]);
+    await bindCheckpointExcerptHashes(chapter);
+    return { chapter, contentHash: await sha256(chapter), created: { layoutId } };
+  } else if (operation.type === 'layoutRegion.update') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    const index = chapter.layoutRegions.findIndex((item) => item.layoutId === operation.layoutId);
+    if (index < 0) throw new ApiError(404, 'LAYOUT_REGION_NOT_FOUND', 'Layout region does not exist');
+    if (!operation.patch || typeof operation.patch !== 'object' || Array.isArray(operation.patch) || operation.patch.layoutId !== undefined) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'patch must be an object without layoutId');
+    const next = chapter.layoutRegions.map((item, itemIndex) => itemIndex === index ? { ...item, ...structuredClone(operation.patch), layoutId: item.layoutId } : item);
+    chapter.layoutRegions = validateRegionSet(chapter, next);
+  } else if (operation.type === 'layoutRegion.remove') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    const index = chapter.layoutRegions.findIndex((item) => item.layoutId === operation.layoutId);
+    if (index < 0) throw new ApiError(404, 'LAYOUT_REGION_NOT_FOUND', 'Layout region does not exist');
+    chapter.layoutRegions.splice(index, 1);
+  } else if (operation.type === 'layoutRegion.reconcile') {
+    assertLayoutCatalog(chapter, operation.expectedLayoutCatalogVersion);
+    if (!Array.isArray(operation.regions)) throw new ApiError(422, 'LAYOUT_REGION_INVALID', 'regions must be an array');
+    chapter.layoutRegions = validateRegionSet(chapter, structuredClone(operation.regions));
   }
   await bindCheckpointExcerptHashes(chapter);
   return { chapter, contentHash: await sha256(chapter) };
@@ -922,7 +1042,8 @@ export const applySemanticOperation = async (sourceChapter, operation) => {
 
 export const validateChapter = (chapter, { publishable = false } = {}) => {
   const errors = [];
-  if (![2, 3].includes(chapter?.schemaVersion)) errors.push({ code: 'CONTENT_SCHEMA_VERSION_UNSUPPORTED', path: 'schemaVersion', message: 'schemaVersion must be 2 or 3' });
+  if (![2, 3, 4].includes(chapter?.schemaVersion)) errors.push({ code: 'CONTENT_SCHEMA_VERSION_UNSUPPORTED', path: 'schemaVersion', message: 'schemaVersion must be 2, 3, or 4' });
+  if (chapter?.schemaVersion === 4 && chapter.layoutCatalogVersion !== LAYOUT_CATALOG_VERSION) errors.push({ code: 'LAYOUT_CATALOG_VERSION_MISMATCH', path: 'layoutCatalogVersion', message: `layoutCatalogVersion must be ${LAYOUT_CATALOG_VERSION}` });
   if (!Array.isArray(chapter.checkpoints)) errors.push({ code: 'CHECKPOINT_COLLECTION_INVALID', path: 'checkpoints' });
   const checkpoints = Array.isArray(chapter.checkpoints) ? chapter.checkpoints : [];
   const checkpointIds = checkpoints.map((item) => item.checkpointId);
@@ -933,7 +1054,7 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
     if (slotLabel !== undefined && (typeof slotLabel !== 'string' || !CHECKPOINT_SLOT_PATTERN.test(slotLabel))) errors.push({ code: 'CHECKPOINT_SLOT_INVALID', path: `checkpoints.${index}.slotLabel` });
     if (item.stage !== undefined && (typeof item.stage !== 'string' || item.stage.trim().length < 1 || item.stage.trim().length > 120)) errors.push({ code: 'CHECKPOINT_STAGE_INVALID', path: `checkpoints.${index}.stage` });
     if (chapter.schemaVersion === 2 && (!Number.isInteger(item.displayOrder) || item.displayOrder < 0)) errors.push({ code: 'CHECKPOINT_ORDER_INVALID', path: `checkpoints.${index}.displayOrder`, message: 'schema-v2 checkpoints require a nonnegative displayOrder' });
-    if (chapter.schemaVersion === 3 && item.displayOrder !== undefined) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `checkpoints.${index}.displayOrder`, message: 'schema-v3 checkpoint position comes from chapter flow' });
+    if (chapter.schemaVersion >= 3 && item.displayOrder !== undefined) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `checkpoints.${index}.displayOrder`, message: 'Ordered checkpoint position comes from chapter flow' });
     if (!anchors.has(item.passageId)) errors.push({ code: 'CHECKPOINT_ANCHOR_MISSING', path: `checkpoints.${index}.passageId` });
     if (!/^[a-f0-9]{64}$/.test(item.passageExcerptHash || '')) errors.push({ code: 'CHECKPOINT_EXCERPT_HASH_INVALID', path: `checkpoints.${index}.passageExcerptHash` });
     if (typeof item.showInSidebar !== 'boolean') errors.push({ code: 'CHECKPOINT_SIDEBAR_INVALID', path: `checkpoints.${index}.showInSidebar` });
@@ -946,13 +1067,13 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
   const placementReferenceCounts = new Map(placements.map((item) => [item.placementId, 0]));
   bodyBlocks(chapter).forEach((block, index) => {
     if (block?.type === 'checkpointRef') {
-      if (chapter.schemaVersion !== 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
+      if (chapter.schemaVersion < 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
       if (!checkpointReferenceCounts.has(block.checkpointId)) errors.push({ code: 'CHECKPOINT_REFERENCE_MISSING', path: `body.${index}.checkpointId`, message: 'Checkpoint reference has no target record' });
       else checkpointReferenceCounts.set(block.checkpointId, checkpointReferenceCounts.get(block.checkpointId) + 1);
       return;
     }
     if (block?.type === 'placementRef') {
-      if (chapter.schemaVersion !== 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
+      if (chapter.schemaVersion < 3) errors.push({ code: 'SCHEMA_V2_REFERENCE_FORBIDDEN', path: `body.${index}`, message: 'schema-v2 body cannot contain reference nodes' });
       if (!placementReferenceCounts.has(block.placementId)) errors.push({ code: 'PLACEMENT_REFERENCE_MISSING', path: `body.${index}.placementId`, message: 'Placement reference has no target record' });
       else placementReferenceCounts.set(block.placementId, placementReferenceCounts.get(block.placementId) + 1);
       return;
@@ -968,8 +1089,11 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
       if (!block.mediaId || !block.mediaVersionId || !block.rightsCaseId) errors.push({ code: 'MEDIA_PLACEMENT_INVALID', path: `body.${index}` });
       if (typeof block.decorative !== 'boolean' || (!block.decorative && !block.alt)) errors.push({ code: 'MEDIA_ALT_REQUIRED', path: `body.${index}.alt` });
       if (Boolean(block.caption) === Boolean(block.captionOmissionReason)) errors.push({ code: 'MEDIA_CAPTION_INVALID', path: `body.${index}` });
-      if (!block.teachingUse || !['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) || !['start', 'center', 'end'].includes(block.align) || !['poster', 'firstFrame', 'omit'].includes(block.printPolicy) || (block.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(block.animationPolicy))) errors.push({ code: 'MEDIA_PRESENTATION_INVALID', path: `body.${index}` });
+      const presentationValid = chapter.schemaVersion === 4 ? validPresentation(block.presentation) && block.displayPreset === undefined && block.align === undefined : ['narrow', 'reading', 'wide', 'bleed'].includes(block.displayPreset) && ['start', 'center', 'end'].includes(block.align);
+      if (!block.teachingUse || !presentationValid || !['poster', 'firstFrame', 'omit'].includes(block.printPolicy) || (block.animationPolicy !== undefined && !['clickToPlay', 'playOnce', 'loopWithControls'].includes(block.animationPolicy))) errors.push({ code: 'MEDIA_PRESENTATION_INVALID', path: `body.${index}` });
     }
+    if (chapter.schemaVersion === 4 && ['externalEmbed', 'richLink', 'diagram', 'artifactCard', 'sourceCard'].includes(block?.type) && !validPresentation(block.presentation)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `body.${index}.presentation` });
+    if (publishable && chapter.schemaVersion === 4 && block?.presentation?.frame?.mode === 'crop') errors.push({ code: 'CARD_FRAME_APPROVAL_REQUIRED', path: `body.${index}.presentation.frame`, message: 'Crop framing remains draft-only until its exact rendered frame receives human approval' });
   });
   const placementIds = new Set(); const placementPositions = new Set();
   placements.forEach((placement, index) => {
@@ -982,9 +1106,11 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
     }
     if (!anchors.has(placement?.anchorPassageId)) errors.push({ code: 'MANAGED_ANCHOR_MISSING', path: `managedPlacements.${index}.anchorPassageId` });
     if (chapter.schemaVersion === 2 && (!['before', 'after'].includes(placement?.position) || !Number.isInteger(placement?.orderAtAnchor) || placement.orderAtAnchor < 0)) errors.push({ code: 'MANAGED_POSITION_INVALID', path: `managedPlacements.${index}` });
-    if (chapter.schemaVersion === 3 && (placement?.position !== undefined || placement?.orderAtAnchor !== undefined)) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `managedPlacements.${index}`, message: 'schema-v3 placement position comes from chapter flow' });
+    if (chapter.schemaVersion >= 3 && (placement?.position !== undefined || placement?.orderAtAnchor !== undefined)) errors.push({ code: 'LEGACY_POSITION_FORBIDDEN', path: `managedPlacements.${index}`, message: 'Ordered placement position comes from chapter flow' });
+    if (chapter.schemaVersion === 4 && (!validPresentation(placement?.presentation) || placement?.displayPreset !== undefined)) errors.push({ code: 'CARD_PRESENTATION_INVALID', path: `managedPlacements.${index}.presentation` });
+    if (publishable && chapter.schemaVersion === 4 && placement?.presentation?.frame?.mode === 'crop') errors.push({ code: 'CARD_FRAME_APPROVAL_REQUIRED', path: `managedPlacements.${index}.presentation.frame`, message: 'Crop framing remains draft-only until its exact rendered frame receives human approval' });
   });
-  if (chapter.schemaVersion === 3) {
+  if (chapter.schemaVersion >= 3) {
     for (const [checkpointId, count] of checkpointReferenceCounts) {
       if (count === 0) errors.push({ code: 'CHECKPOINT_REFERENCE_ORPHAN', path: 'body', message: `Checkpoint ${checkpointId} is missing from chapter flow` });
       if (count > 1) errors.push({ code: 'CHECKPOINT_REFERENCE_DUPLICATE', path: 'body', message: `Checkpoint ${checkpointId} appears more than once in chapter flow` });
@@ -994,6 +1120,7 @@ export const validateChapter = (chapter, { publishable = false } = {}) => {
       if (count > 1) errors.push({ code: 'PLACEMENT_REFERENCE_DUPLICATE', path: 'body', message: `Placement ${placementId} appears more than once in chapter flow` });
     }
   }
+  if (chapter.schemaVersion === 4) errors.push(...validateLayoutRegions(chapter.body, Array.isArray(chapter.layoutRegions) ? chapter.layoutRegions : []));
   return { valid: errors.length === 0, errors };
 };
 

@@ -23,9 +23,10 @@ const decode = (result) => {
 await client.connect(transport);
 try {
   const tools = (await client.listTools()).tools.map((tool) => tool.name).sort();
-  const required = ["get_authoring_view", "get_version_history", "search_media", "resolve_provider_url"];
+  const required = ["get_authoring_view", "get_layout_catalog", "get_version_history", "search_media", "resolve_provider_url"];
   for (const name of required) if (!tools.includes(name)) throw new Error(`Missing production MCP tool: ${name}`);
   const view = decode(await client.callTool({ name: "get_authoring_view", arguments: { chapterId } }));
+  const layoutCatalog = decode(await client.callTool({ name: "get_layout_catalog", arguments: {} }));
   const history = decode(await client.callTool({ name: "get_version_history", arguments: { chapterId, limit: 20, cursor: 0 } }));
   const media = decode(await client.callTool({ name: "search_media", arguments: { query: "Aristotle", kind: "image", limit: 10, cursor: 0 } }));
   const provider = decode(await client.callTool({ name: "resolve_provider_url", arguments: { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", expectedProvider: "youtube" } }));
@@ -33,6 +34,7 @@ try {
     serverTools: tools.length,
     chapterId,
     revisionId: view.revisionId || view.chapter?.revisionId,
+    layoutCatalogVersion: layoutCatalog.version,
     historyCount: history.revisions?.length ?? history.items?.length ?? 0,
     mediaMatches: media.media?.length ?? media.items?.length ?? 0,
     resolvedProvider: provider.proposal?.identity?.provider ?? provider.identity?.provider ?? null,

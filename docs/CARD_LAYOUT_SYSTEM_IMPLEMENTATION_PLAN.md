@@ -1,6 +1,6 @@
 # Flexible Card Layout System Implementation Plan
 
-Status: proposed implementation plan
+Status: baseline implemented in code; protected production rollout and human crop-approval slice pending
 
 Updated: August 5, 2026
 

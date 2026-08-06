@@ -28,3 +28,5 @@ node scripts/audit-public-boundary.mjs
 ```
 
 The audit walks the repository outside build and dependency caches, rejects symlinks and private production sidecars, and scans text for workstation paths and probable secret material. It deliberately distinguishes source code that recognizes key formats from an actual multiline private-key payload.
+
+Schema-v4 public pages consume only immutable, validated projection HTML and the renderer stylesheet compiled into the deployed reader. They do not query the authoring Content API at view time. Semantic layout values contain no CSS, credentials, student responses, or private paths; the public Site Worker receives only the frozen projection through its bounded service binding. Legacy browser artifact relocation is disabled whenever an explicit v4 layout projection is present.

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { waitForCapability } from './device-flow.mjs';
 
-const EDIT_OPERATIONS = ['get_authoring_view', 'get_passage', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
+const EDIT_OPERATIONS = ['get_authoring_view', 'get_passage', 'get_layout_catalog', 'get_card_layout', 'get_valid_layout_options', 'validate_layout_proposal', 'create_or_resume_changeset', 'replace_passage_text', 'replace_chapter_document', 'upsert_checkpoint', 'remove_checkpoint', 'reorder_checkpoint', 'place_media', 'upsert_embed', 'resolve_provider_url', 'upsert_person_feature', 'move_managed_placement', 'remove_managed_placement', 'set_card_layout', 'reset_card_layout', 'set_card_frame', 'clear_card_frame', 'create_card_wrap', 'create_card_group', 'create_card_text_split', 'update_layout_region', 'remove_layout_region', 'reconcile_layout_region', 'search_media', 'create_media_review_package', 'upload_media', 'get_media_job', 'get_media_asset', 'preview_changes', 'get_live_commit_status', 'get_version_history', 'restore_revision_as_draft', 'search_persons', 'get_person'];
 const args = process.argv.slice(2);
 const separator = args.indexOf('--');
 const optionArgs = separator === -1 ? args : args.slice(0, separator);
