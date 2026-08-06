@@ -583,6 +583,20 @@ test('review packages issue server IDs and only humans can decide the exact decl
   assert.match(created.id, /^reviewpkg_[a-f0-9]{24}$/);
   assert.match(created.declarationHash, /^[a-f0-9]{64}$/);
   assert.match(created.rightsReviewId, /^rightsreview_/);
+  const readDb = fakeDb((sql) => sql.includes('FROM media_review_packages') ? {
+    id: created.id, state: 'pending', declaration_hash: created.declarationHash,
+    rights_review_id: created.rightsReviewId, editorial_review_id: created.editorialReviewId, accessibility_review_id: created.accessibilityReviewId,
+    rights_json: JSON.stringify(created.declarations.rights), editorial_json: JSON.stringify(created.declarations.editorial), accessibility_json: JSON.stringify(created.declarations.accessibility),
+    created_by: 'actor_reviewer_1', created_actor_type: 'human', created_client_id: 'editor-ui', created_run_id: 'run-1', created_at: '2026-08-03T00:00:00Z'
+  } : null);
+  response = await worker.fetch(new Request(`https://content.example/v1/media-review-packages/${created.id}`, { headers: gatewayHeaders('content:read content:approve') }), { CONTENT_DB: readDb });
+  assert.equal(response.status, 200);
+  const persisted = await response.json();
+  assert.equal(persisted.declarationHash, created.declarationHash);
+  assert.deepEqual(persisted.declarations, created.declarations);
+  response = await worker.fetch(new Request(`https://content.example/v1/media-review-packages/${created.id}`, { headers: agentHeaders() }), withAgentCapability({ CONTENT_DB: readDb }, { actorId: 'actor_review_agent', scopes: ['content:read', 'content:approve'] }));
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).error.code, 'HUMAN_ACTOR_REQUIRED');
   const decisionDb = fakeDb((sql) => {
     if (sql.includes('FROM idempotency_records')) return null;
     if (sql.includes('FROM media_review_packages')) return { id: created.id, state: 'pending', declaration_hash: created.declarationHash };

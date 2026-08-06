@@ -85,6 +85,7 @@ export interface AuthoringClient {
   applyOperationBatch(changeSetId: string, request: OperationBatchRequest, signal?: AbortSignal): Promise<OperationBatchResult>;
   searchMedia(query?: { q?: string; kind?: "image" | "audio" | "video" | "document"; rightsStatus?: "reviewRequired" | "cleared" | "blocked"; sha256?: string; limit?: number; cursor?: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
   createMediaReviewPackage(request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
+  getMediaReviewPackage(reviewPackageId: string, signal?: AbortSignal): Promise<Record<string, unknown>>;
   decideMediaReviewPackage(reviewPackageId: string, request: { declarationHash: string; decision: "cleared" | "blocked"; comment: string; idempotencyKey: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;
   requestMediaUpload(request: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>>;
   uploadMediaBytes(ticketId: string, bytes: ArrayBuffer | ArrayBufferView | Blob, upload: { mimeType: string; sha256: string; uploadToken: string }, signal?: AbortSignal): Promise<Record<string, unknown>>;

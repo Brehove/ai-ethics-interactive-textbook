@@ -41,6 +41,7 @@ if (!app) throw new Error("Instructor editor mount is missing.");
 const params = new URLSearchParams(window.location.search);
 const agentAccessRequestId = /^\/agent-access\/?$/.test(window.location.pathname) ? params.get("request") : null;
 const reviewChangeSetId = params.get("review");
+const mediaReviewPackageId = params.get("mediaReview");
 const requestedSlug = window.location.pathname.match(/^\/chapter\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/)?.[1] ?? params.get("chapter") ?? DEMO_CHAPTER.slug;
 const requestedRoute = CHAPTER_ROUTE_BY_SLUG.get(requestedSlug);
 const requestedDocument = requestedRoute?.documentId ?? params.get("document") ?? DEMO_CHAPTER.documentId;
@@ -216,6 +217,52 @@ async function loadCutoverReview(changeSetId: string) {
       return;
     }
     app.innerHTML = `<main class="cutover-review"><h1>Cutover review could not be loaded</h1><p role="alert">${escapeText(error instanceof Error ? error.message : "Unknown error")}</p></main>`;
+  }
+}
+
+function reviewField(label: string, value: unknown, { link = false } = {}) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const rendered = link && /^https:\/\//.test(text)
+    ? `<a href="${escapeAttribute(text)}" target="_blank" rel="noreferrer">${escapeText(text)}</a>`
+    : escapeText(text);
+  return `<div><dt>${escapeText(label)}</dt><dd>${rendered}</dd></div>`;
+}
+
+async function loadMediaReview(reviewPackageId: string) {
+  if (!dataSource || !/^reviewpkg_[a-f0-9]{24}$/.test(reviewPackageId)) {
+    app.innerHTML = `<main class="cutover-review"><p class="eyebrow">Media review</p><h1>This review link is invalid</h1></main>`;
+    return;
+  }
+  try {
+    const session = await dataSource.getSession();
+    csrfToken = session.csrf_token;
+    const reviewPackage = await dataSource.getMediaReviewPackage(reviewPackageId);
+    const declarations = reviewPackage.declarations as Record<string, Record<string, unknown>>;
+    const rights = declarations.rights ?? {};
+    const editorial = declarations.editorial ?? {};
+    const accessibility = declarations.accessibility ?? {};
+    const pending = reviewPackage.state === "pending";
+    app.innerHTML = `<main class="cutover-review"><p class="eyebrow">Media review</p><h1>Review exact media declarations</h1><p>Approve or block only after checking this persisted rights, teaching-use, and accessibility record. The decision is bound to the exact declaration hash below.</p><dl class="review-summary"><div><dt>Package</dt><dd><code>${escapeText(reviewPackageId)}</code></dd></div><div><dt>State</dt><dd data-media-review-state>${escapeText(String(reviewPackage.state ?? "unknown"))}</dd></div><div><dt>Declaration hash</dt><dd><code>${escapeText(String(reviewPackage.declarationHash ?? ""))}</code></dd></div></dl><section><h2>Rights</h2><dl>${reviewField("Basis", rights.basis)}${reviewField("Creator", rights.creator)}${reviewField("License", rights.license)}${reviewField("Attribution", rights.attribution)}${reviewField("Source", rights.sourceUrl, { link: true })}${reviewField("Notes", rights.notes)}</dl></section><section><h2>Editorial use</h2><dl>${reviewField("Teaching use", editorial.teachingUse)}${reviewField("Placement intent", editorial.placementIntent)}${reviewField("Notes", editorial.notes)}</dl></section><section><h2>Accessibility</h2><dl>${reviewField("Decorative", accessibility.decorative === true ? "Yes" : "No")}${reviewField("Alt text", accessibility.altText)}${reviewField("Motion review", accessibility.motionReview)}${reviewField("Notes", accessibility.notes)}</dl></section>${pending ? `<form data-media-review-decision><label class="review-confirm"><input type="checkbox" name="confirmed" required> I reviewed these exact declarations and the source item.</label><label>Decision note<textarea name="comment" rows="3" required>Rights, teaching use, attribution, and accessibility declarations verified against the source item.</textarea></label><div class="media-review-actions"><button class="primary" type="submit" name="decision" value="cleared">Clear this exact package</button><button type="submit" name="decision" value="blocked">Block this package</button></div><p class="review-status" role="status" data-media-review-status></p></form>` : `<p class="review-success" role="status">This package is ${escapeText(String(reviewPackage.state))}${reviewPackage.decidedBy ? ` by ${escapeText(String(reviewPackage.decidedBy))}` : ""}.</p>`}<p><a href="${escapeAttribute(returnUrl)}">Return to the textbook</a></p></main>`;
+    const form = app.querySelector<HTMLFormElement>("[data-media-review-decision]");
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
+      const decision = submitter?.value === "blocked" ? "blocked" : "cleared";
+      const values = new FormData(form);
+      const status = app.querySelector<HTMLElement>("[data-media-review-status]");
+      form.querySelectorAll<HTMLButtonElement>("button").forEach((button) => { button.disabled = true; });
+      if (status) status.textContent = `Recording the exact ${decision} decision…`;
+      try {
+        await dataSource.decideMediaReviewPackage(reviewPackageId, { declarationHash: String(reviewPackage.declarationHash), decision, comment: String(values.get("comment") ?? "").trim(), idempotencyKey: crypto.randomUUID() });
+        await loadMediaReview(reviewPackageId);
+      } catch (error) {
+        form.querySelectorAll<HTMLButtonElement>("button").forEach((button) => { button.disabled = false; });
+        if (status) status.textContent = error instanceof Error ? error.message : "The review decision failed.";
+      }
+    });
+  } catch (error) {
+    app.innerHTML = `<main class="cutover-review"><p class="eyebrow">Media review</p><h1>The package could not be loaded</h1><p role="alert">${escapeText(error instanceof Error ? error.message : "Unknown error")}</p><p>Sign in to the instructor editor, then reopen this exact review link.</p></main>`;
   }
 }
 
@@ -895,6 +942,7 @@ function escapeAttribute(value: string) { return escapeText(value).replaceAll('"
 if (agentAccessRequestId) void loadAgentAccess(agentAccessRequestId);
 else {
   render();
-  if (reviewChangeSetId) void loadCutoverReview(reviewChangeSetId);
+  if (mediaReviewPackageId) void loadMediaReview(mediaReviewPackageId);
+  else if (reviewChangeSetId) void loadCutoverReview(reviewChangeSetId);
   else void loadChapter();
 }

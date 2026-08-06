@@ -88,6 +88,7 @@ test("frozen OpenAPI is valid JSON and exposes the complete agent and human boun
   assert.equal(spec.openapi, "3.1.0");
   assert.equal(Object.keys(spec.paths).length >= 29, true);
   assert.equal(spec.paths["/v1/media-review-packages"].post["x-agent-safe"], true);
+  assert.equal(spec.paths["/v1/media-review-packages/{reviewPackageId}"].get["x-human-only"], true);
   assert.equal(spec.paths["/v1/media-review-packages/{reviewPackageId}:decide"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:approve"].post["x-human-only"], true);
   assert.equal(spec.paths["/v1/changesets/{changesetId}:publish"].post["x-human-only"], true);

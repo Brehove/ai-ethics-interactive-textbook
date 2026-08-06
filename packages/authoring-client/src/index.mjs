@@ -56,6 +56,7 @@ export function createAuthoringClient(options) {
       return request(`/v1/media${params.size ? `?${params}` : ""}`, { method: "GET" }, signal);
     },
     createMediaReviewPackage: (body, signal) => request(`/v1/media-review-packages`, { method: "POST", body: JSON.stringify(body) }, signal),
+    getMediaReviewPackage: (reviewPackageId, signal) => request(`/v1/media-review-packages/${boundedSegment(reviewPackageId, "reviewPackageId")}`, { method: "GET" }, signal),
     decideMediaReviewPackage: (reviewPackageId, body, signal) => request(`/v1/media-review-packages/${boundedSegment(reviewPackageId, "reviewPackageId")}:decide`, { method: "POST", body: JSON.stringify(body) }, signal),
     requestMediaUpload: (body, signal) => request(`/v1/media:requestUpload`, { method: "POST", body: JSON.stringify(body) }, signal),
     uploadMediaBytes: (ticketId, bytes, upload, signal) => {
