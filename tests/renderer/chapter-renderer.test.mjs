@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  CHAPTER_RENDERER_STYLES,
   ChapterFlowError,
   exportChapterV3AsV2,
   migrateChapterV2ToV3,
@@ -11,6 +12,11 @@ import {
   renderChapterProjection,
   stripAuthorDecorations,
 } from "../../packages/chapter-renderer/src/index.mjs";
+
+test("person cards use a vertical internal layout inside peer-card grids", () => {
+  assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person\{grid-template-columns:1fr\}/);
+  assert.match(CHAPTER_RENDERER_STYLES, /\.chapter-layout--card-grid>\.chapter-person>\.chapter-person__portrait\{width:min\(100%,18rem\);margin-inline:auto\}/);
+});
 
 const chapter = {
   schemaVersion: 2,
