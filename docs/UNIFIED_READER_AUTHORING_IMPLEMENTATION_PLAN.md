@@ -163,6 +163,8 @@ Save live does not deploy code, change chapter authority, change schemas, approv
 
 ### 2.1 The reader and editor are different applications
 
+The public first-read route uses a content-first shell state: the readable chapter column is centered and the checkpoint/notes panel reserves no horizontal track while closed. Inline checkpoint cards remain in chapter flow. Opening a checkpoint or notes control reveals the existing secondary panel, and closing it restores the centered chapter without changing canonical checkpoint data or page-memory responses. Editor parity still includes both inline and side-panel presentations; parity does not require the public panel to be open by default.
+
 The public chapter routes use [ReaderShell.astro](../src/components/ReaderShell.astro), while [/admin/](../src/pages/admin/index.astro) mounts [EditorShell.astro](../src/components/editor/EditorShell.astro). The editor:
 
 - defaults to Chapter 7;

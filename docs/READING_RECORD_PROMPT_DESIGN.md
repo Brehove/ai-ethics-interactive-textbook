@@ -35,6 +35,12 @@ The downloaded record is submitted through Canvas as evidence of engaged reading
 9. **Student writing stays ephemeral.** No response database, account, analytics event, browser storage, or network transmission is permitted.
 10. **The prompt set tracks development.** When a chapter uses multiple checkpoints, the responses should form an intelligible sequence rather than unrelated journal entries.
 
+### Public reader presentation
+
+The public first-read route is content-first. The chapter occupies the default reading surface, while the reading-record response and notes panel remains closed until the reader explicitly opens it from an inline checkpoint or header control. A closed panel must not reserve horizontal space or leave the prose aligned as though the panel were present. Opening the panel may temporarily create a two-surface workspace; closing it returns the reader to the centered chapter without clearing page-memory responses.
+
+This presentation rule does not remove or duplicate checkpoint data. Inline checkpoint cards and the response panel continue to render from the same checkpoint record, and the editor continues to preview both forms. Required chapter content must never depend on opening the optional panel.
+
 ## Recommended Commit–Work–Reconcile Pattern
 
 This is the recommended default, not a publication constraint. The specific reasoning strategy and checkpoint count may vary with the chapter. An instructor may omit a stage, repeat a stage with a descriptive `slotLabel`, or add a checkpoint for another genuine reasoning hinge.
