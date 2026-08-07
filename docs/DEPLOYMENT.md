@@ -18,16 +18,16 @@ The forward release, explicit rollback, and scheduled recovery workflows share t
 
 ## Reader deployment
 
-Use Node 22, validate, and build before deploying:
+Use Node 22, validate, build, and perform a local Worker packaging check:
 
 ```bash
 npm ci
 npm run validate
 npm run build
-npx wrangler deploy
+npm run deploy:reader:dry-run
 ```
 
-`wrangler.jsonc` creates or updates the reader's Cloudflare custom domain. The site is static: no student data store, account system, analytics beacon, or server-rendered student route is deployed.
+Do not run a direct reader deployment. Production reader changes go through the **Immutable content release** GitHub Actions workflow, its `content-production` approval, exact-version verification, deployment receipt, authority activation, and release-state audit. The `deploy:reader` package command fails intentionally. `wrangler.jsonc` defines the reader's Cloudflare custom domain, while the protected workflow controls production traffic. The site is static: no student data store, account system, analytics beacon, or server-rendered student route is deployed.
 
 ## Editor auth deployment
 

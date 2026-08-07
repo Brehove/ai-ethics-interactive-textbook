@@ -34,6 +34,11 @@ on:
         description: Exact currently active Cloudflare version for automatic emergency rollback
         required: true
         type: string
+      observed_unrecorded_version_id:
+        description: Exact currently active but unrecorded Worker version for one protected drift repair, or none
+        required: true
+        type: string
+        default: none
 
 permissions:
   contents: read
@@ -163,19 +168,70 @@ jobs:
         with:
           name: release-deployment-${{ inputs.snapshot_hash }}
           path: release-artifacts
-      - name: Verify production is entirely on the declared recovery version
+      - name: Observe and classify the production recovery baseline
+        id: recovery
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          RECORDED_RECOVERY_VERSION: ${{ inputs.rollback_version_id }}
+          DECLARED_UNRECORDED_VERSION: ${{ inputs.observed_unrecorded_version_id }}
         run: |
           npx wrangler deployments status --name ethicsandai --json > release-artifacts/pre-promotion-cloudflare-status.json
           node scripts/release/cloudflare-active-version.mjs --in release-artifacts/pre-promotion-cloudflare-status.json --out release-artifacts/pre-promotion-version.json
-          observed="$(node -e "console.log(require('./release-artifacts/pre-promotion-version.json').cloudflareVersionId)")"
-          test "$observed" = '${{ inputs.rollback_version_id }}'
+          node scripts/release/recovery-baseline.mjs plan \
+            --observed release-artifacts/pre-promotion-version.json \
+            --recorded "$RECORDED_RECOVERY_VERSION" \
+            --declared-unrecorded "$DECLARED_UNRECORDED_VERSION" \
+            --out release-artifacts/recovery-baseline-plan.json
+          repair="$(node -e "console.log(require('./release-artifacts/recovery-baseline-plan.json').repairRequired?'true':'false')")"
+          echo "repair=$repair" >> "$GITHUB_OUTPUT"
+      - name: Restore the exact receipt-backed baseline before staging
+        id: repair_baseline
+        if: ${{ steps.recovery.outputs.repair == 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          ROLLBACK_VERSION_ID: ${{ inputs.rollback_version_id }}
+        run: |
+          npx wrangler versions deploy "$ROLLBACK_VERSION_ID@100" --name ethicsandai --yes
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/repaired-baseline-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/repaired-baseline-cloudflare-status.json --out release-artifacts/repaired-baseline-version.json
+          node scripts/release/recovery-baseline.mjs verify \
+            --observed release-artifacts/repaired-baseline-version.json \
+            --expected "$ROLLBACK_VERSION_ID" \
+            --out release-artifacts/repaired-baseline-verification.json
+          node scripts/release/smoke.mjs --base-url https://ethicsandai.your-digital-life.org --out release-artifacts/repaired-baseline-smoke.json
+      - name: Restore the previously live version if baseline repair fails
+        if: ${{ failure() && steps.recovery.outputs.repair == 'true' && steps.repair_baseline.outcome == 'failure' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          UNRECORDED_VERSION_ID: ${{ inputs.observed_unrecorded_version_id }}
+        run: |
+          npx wrangler versions deploy "$UNRECORDED_VERSION_ID@100" --name ethicsandai --yes
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/restored-after-repair-failure-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/restored-after-repair-failure-cloudflare-status.json --out release-artifacts/restored-after-repair-failure-version.json
+          node scripts/release/recovery-baseline.mjs verify \
+            --observed release-artifacts/restored-after-repair-failure-version.json \
+            --expected "$UNRECORDED_VERSION_ID" \
+            --out release-artifacts/restored-after-repair-failure-verification.json
       - name: Stage the exact deployment against the active release
         id: stage
         env:
           RELEASE_DEPLOY_RECEIPT_TOKEN: ${{ secrets.RELEASE_DEPLOY_RECEIPT_TOKEN }}
-        run: node scripts/release/control-plane.mjs stage --candidate release-artifacts/candidate.json --state 'release-artifacts/state.json.${{ needs.candidate.outputs.candidate_id }}.json' --build-attestation release-artifacts/build.json --expected-active '${{ inputs.expected_active_release_id }}' --fallback-rollback-version '${{ inputs.rollback_version_id }}' --out release-artifacts/deployment-transaction.json
+          EXPECTED_ACTIVE_RELEASE_ID: ${{ inputs.expected_active_release_id }}
+          ROLLBACK_VERSION_ID: ${{ inputs.rollback_version_id }}
+        run: node scripts/release/control-plane.mjs stage --candidate release-artifacts/candidate.json --state 'release-artifacts/state.json.${{ needs.candidate.outputs.candidate_id }}.json' --build-attestation release-artifacts/build.json --expected-active "$EXPECTED_ACTIVE_RELEASE_ID" --fallback-rollback-version "$ROLLBACK_VERSION_ID" --out release-artifacts/deployment-transaction.json
+      - name: Restore the previously live version if staging rejects the repair
+        if: ${{ failure() && steps.repair_baseline.outcome == 'success' && steps.stage.outcome != 'success' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
+          UNRECORDED_VERSION_ID: ${{ inputs.observed_unrecorded_version_id }}
+        run: |
+          npx wrangler versions deploy "$UNRECORDED_VERSION_ID@100" --name ethicsandai --yes
+          npx wrangler deployments status --name ethicsandai --json > release-artifacts/restored-unrecorded-cloudflare-status.json
+          node scripts/release/cloudflare-active-version.mjs --in release-artifacts/restored-unrecorded-cloudflare-status.json --out release-artifacts/restored-unrecorded-version.json
+          node scripts/release/recovery-baseline.mjs verify \
+            --observed release-artifacts/restored-unrecorded-version.json \
+            --expected "$UNRECORDED_VERSION_ID" \
+            --out release-artifacts/restored-unrecorded-verification.json
       - name: Atomically promote the smoke-tested version
         id: promote
         env:
@@ -212,6 +268,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_TOKEN }}
         run: node scripts/release/control-plane.mjs emergency-rollback --transaction release-artifacts/deployment-transaction.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ always() }}
         with:
           name: release-provenance-${{ inputs.snapshot_hash }}
           path: |
@@ -223,6 +280,17 @@ jobs:
             release-artifacts/release-state-audit.json
             release-artifacts/pre-promotion-cloudflare-status.json
             release-artifacts/pre-promotion-version.json
+            release-artifacts/recovery-baseline-plan.json
+            release-artifacts/repaired-baseline-cloudflare-status.json
+            release-artifacts/repaired-baseline-version.json
+            release-artifacts/repaired-baseline-verification.json
+            release-artifacts/repaired-baseline-smoke.json
+            release-artifacts/restored-after-repair-failure-cloudflare-status.json
+            release-artifacts/restored-after-repair-failure-version.json
+            release-artifacts/restored-after-repair-failure-verification.json
+            release-artifacts/restored-unrecorded-cloudflare-status.json
+            release-artifacts/restored-unrecorded-version.json
+            release-artifacts/restored-unrecorded-verification.json
             release-artifacts/post-promotion-cloudflare-status.json
             release-artifacts/post-promotion-version.json
           retention-days: 90
