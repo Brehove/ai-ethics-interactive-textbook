@@ -26,6 +26,20 @@ All production-changing workflows share the non-canceling `content-production-re
 
 The release workflow has one non-canceling concurrency lock. Do not run `wrangler deploy` directly for this service. Local commands are dry-run unless `RELEASE_EXECUTE=1`; tests use adapters and cannot call Cloudflare.
 
+## Receipt-baseline drift repair
+
+If the exact 100%-active Reader Worker version differs from the active release receipt and no staged transaction exists, stop ordinary promotion. This indicates an out-of-band reader deployment. Do not rewrite D1 release rows, invent a receipt, or treat a successful public smoke test as release evidence.
+
+The **Immutable content release** workflow has one human-gated repair mode for this condition. Supply the receipt-backed version as `rollback_version_id` and the exact currently 100%-active out-of-band version as `observed_unrecorded_version_id`. After candidate validation and `content-production` approval, the workflow:
+
+1. proves that Cloudflare is entirely on the explicitly declared out-of-band version;
+2. restores the exact receipt-backed version and verifies convergence plus public smoke;
+3. stages the new immutable candidate against the now-consistent release baseline;
+4. restores the formerly live version if baseline verification or staging fails before a transaction exists;
+5. otherwise promotes, records, activates, and audits through the ordinary protected path.
+
+Use `observed_unrecorded_version_id=none` for every normal release. The workflow rejects an undeclared mismatch, a stale declaration, split traffic, identical recorded/unrecorded versions, or a repair declaration when production already matches the receipt. Repair evidence is retained with the release artifacts. The package-level `deploy:reader` command deliberately fails; only `deploy:reader:dry-run` remains available locally.
+
 ## Complete rollback
 
 Use **Complete content release rollback**, never a standalone `wrangler rollback`, for an operational restore. Supply the exact prior `target_release_id` and current `expected_active_release_id`, then approve `content-production`. The workflow selects only a previously receipt-backed immutable Worker version, verifies production, and records a rollback receipt. In the same D1 transaction as the pointer command it restores the target release's complete 18-entry authority map and every D1 canonical head. `rollback-state-audit.json` must report `valid: true` before the rollback is complete.

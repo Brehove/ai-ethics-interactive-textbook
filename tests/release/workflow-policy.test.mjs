@@ -8,6 +8,7 @@ const reconcileWorkflowPath = new URL("../../.github/workflows/content-release-r
 const cutoverWorkflowPath = new URL("../../.github/workflows/prepare-authority-cutover.yml", import.meta.url);
 const ciWorkflowPath = new URL("../../.github/workflows/ci.yml", import.meta.url);
 const releaseCliPath = new URL("../../scripts/release/release-cli.mjs", import.meta.url);
+const packagePath = new URL("../../package.json", import.meta.url);
 
 test("release workflow derives an immutable snapshot route from the hash", async () => {
   const workflow = await readFile(workflowPath, "utf8");
@@ -47,6 +48,7 @@ test("rollback workflow restores Cloudflare and the full database release state 
 test("release workflow requires signed candidates and human-gated promotion", async () => {
   const workflow = await readFile(workflowPath, "utf8");
   const releaseCli = await readFile(releaseCliPath, "utf8");
+  const promoteJob = workflow.slice(workflow.indexOf("\n  promote:"));
   assert.match(workflow, /RELEASE_SIGNING_KEY: \$\{\{ secrets\.RELEASE_SIGNING_KEY \}\}/);
   assert.match(workflow, /environment: content-production/);
   assert.match(workflow, /if: \$\{\{ inputs\.promote \}\}/);
@@ -57,7 +59,22 @@ test("release workflow requires signed candidates and human-gated promotion", as
   assert.match(workflow, /control-plane\.mjs activate-authority/);
   assert.match(workflow, /control-plane\.mjs audit-state/);
   assert.match(workflow, /pre-promotion-cloudflare-status\.json/);
-  assert.match(workflow, /test "\$observed" = '\$\{\{ inputs\.rollback_version_id \}\}'/);
+  assert.match(workflow, /observed_unrecorded_version_id:/);
+  assert.match(workflow, /recovery-baseline\.mjs plan/);
+  assert.match(promoteJob, /RECORDED_RECOVERY_VERSION: \$\{\{ inputs\.rollback_version_id \}\}/);
+  assert.match(promoteJob, /DECLARED_UNRECORDED_VERSION: \$\{\{ inputs\.observed_unrecorded_version_id \}\}/);
+  assert.doesNotMatch(promoteJob, /--(?:recorded|declared-unrecorded|expected|fallback-rollback-version) [^\n]*\$\{\{ inputs\./);
+  assert.match(workflow, /steps\.recovery\.outputs\.repair == 'true'/);
+  assert.match(workflow, /ROLLBACK_VERSION_ID: \$\{\{ inputs\.rollback_version_id \}\}/);
+  assert.match(workflow, /wrangler versions deploy "\$ROLLBACK_VERSION_ID@100"/);
+  assert.match(workflow, /steps\.repair_baseline\.outcome == 'failure'/);
+  assert.match(workflow, /restored-after-repair-failure-verification\.json/);
+  assert.match(workflow, /steps\.repair_baseline\.outcome == 'success'/);
+  assert.match(workflow, /steps\.stage\.outcome != 'success'/);
+  assert.match(workflow, /UNRECORDED_VERSION_ID: \$\{\{ inputs\.observed_unrecorded_version_id \}\}/);
+  assert.match(workflow, /wrangler versions deploy "\$UNRECORDED_VERSION_ID@100"/);
+  assert.ok(promoteJob.indexOf("environment: content-production") < promoteJob.indexOf("recovery-baseline.mjs plan"));
+  assert.match(workflow, /if: \$\{\{ always\(\) \}\}[\s\S]*?release-artifacts\/recovery-baseline-plan\.json/);
   assert.match(workflow, /post-promotion-cloudflare-status\.json/);
   assert.match(workflow, /post-promotion-version\.json/);
   assert.match(workflow, /state\.json\.'\+c\.candidateId\+'\.json'/);
@@ -77,6 +94,12 @@ test("release workflow requires signed candidates and human-gated promotion", as
   const checkouts = [...workflow.matchAll(/uses: actions\/checkout@[^\n]+\n\s+with:\n([\s\S]*?)(?=\n\s+- (?:uses|name|run):)/g)];
   assert.equal(checkouts.length, 3);
   for (const checkout of checkouts) assert.match(checkout[1], /ref: \$\{\{ inputs\.commit_sha \}\}/);
+});
+
+test("direct reader deployment is disabled outside the protected workflow", async () => {
+  const pkg = JSON.parse(await readFile(packagePath, "utf8"));
+  assert.equal(pkg.scripts["deploy:reader"], "node scripts/release/reject-direct-reader-deploy.mjs");
+  assert.equal(pkg.scripts["deploy:reader:dry-run"], "wrangler deploy --dry-run");
 });
 
 test("authority cutover proposal is service-prepared but remains human-reviewed", async () => {
