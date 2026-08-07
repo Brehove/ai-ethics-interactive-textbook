@@ -98,24 +98,26 @@ const displayTitle = splitDisplayTitle(title);
   )}
 
   <article class="reader-main">
-    {active !== "first" && <a class="back-to-chapter" href={`/chapter/${slug}/`}>← Return to chapter</a>}
-    <header class="reader-context">
-      <p class="chapter-kicker">Chapter {chapterNumber}</p>
-      <p class="visually-hidden">{partTitle}</p>
-      <h1 class="reader-title">{displayTitle.heading}</h1>
-      {displayTitle.subtitle && <p class="reader-subtitle">{displayTitle.subtitle}</p>}
-      {active !== "first" && <p class="layer-title">{active === "deep" ? "Argument layer" : active === "sources" ? "Primary texts and evidence" : "People, traditions, and context"}</p>}
-    </header>
-    <slot />
+    <div class="reader-column">
+      {active !== "first" && <a class="back-to-chapter" href={`/chapter/${slug}/`}>← Return to chapter</a>}
+      <header class="reader-context">
+        <p class="chapter-kicker">Chapter {chapterNumber}</p>
+        <p class="visually-hidden">{partTitle}</p>
+        <h1 class="reader-title">{displayTitle.heading}</h1>
+        {displayTitle.subtitle && <p class="reader-subtitle">{displayTitle.subtitle}</p>}
+        {active !== "first" && <p class="layer-title">{active === "deep" ? "Argument layer" : active === "sources" ? "Primary texts and evidence" : "People, traditions, and context"}</p>}
+      </header>
+      <slot />
 
-    <footer class="chapter-footer">
-      <ChapterActions slug={slug} />
-      <p class="copy-note">Chapter {chapterNumber} · approximately {readingMinutes} minutes · canonical title: {title}</p>
-      <nav aria-label="Adjacent chapters">
-        {previous ? <a href={previous.path}>← {previous.title}</a> : <span></span>}
-        {next ? <a href={next.path}>{next.title} →</a> : <span></span>}
-      </nav>
-    </footer>
+      <footer class="chapter-footer">
+        <ChapterActions slug={slug} />
+        <p class="copy-note">Chapter {chapterNumber} · approximately {readingMinutes} minutes · canonical title: {title}</p>
+        <nav aria-label="Adjacent chapters">
+          {previous ? <a href={previous.path}>← {previous.title}</a> : <span></span>}
+          {next ? <a href={next.path}>{next.title} →</a> : <span></span>}
+        </nav>
+      </footer>
+    </div>
   </article>
 
   <div class="pane-gutter" aria-hidden="true"></div>
@@ -291,6 +293,7 @@ const displayTitle = splitDisplayTitle(title);
     padding: 0 clamp(1.6rem, 5vw, 4.8rem) 5rem;
     background: var(--paper-light);
   }
+  .reader-column { min-width: 0; }
   .pane-gutter { grid-column: 3; min-height: 100%; background: var(--frame); }
   .reader-context { max-width: var(--content-width); margin: 1.55rem 0 0.55rem; }
   .back-to-chapter { display: inline-block; margin-top: 1rem; color: var(--rust-dark); font: 700 0.64rem/1.3 var(--sans); letter-spacing: 0.08em; text-decoration: none; text-transform: uppercase; }
@@ -308,6 +311,10 @@ const displayTitle = splitDisplayTitle(title);
   .chapter-footer nav a { font: 700 0.72rem/1.35 var(--sans); }
   .chapter-footer nav a:last-child { text-align: right; }
   .reader-shell[data-context-closed] { grid-template-columns: var(--chapter-rail) minmax(0, 1fr) 0 0; }
+  .reader-shell[data-context-closed] .reader-column {
+    width: min(100%, var(--content-width));
+    margin-inline: auto;
+  }
   .reader-shell[data-context-closed] .pane-gutter,
   .reader-shell[data-context-closed] :global(#context-panel),
   .reader-shell[data-context-closed] :global(.scholarly-layer) { display: none; }

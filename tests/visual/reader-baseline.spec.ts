@@ -24,3 +24,14 @@ for (const baseline of baselines) {
     publicResponses.dispose();
   });
 }
+
+test("captures Chapter 7 with the reading record open @baseline", async ({ page, baseURL }, testInfo) => {
+  test.skip(!baseURL, "The visual harness requires a local reader base URL.");
+  await page.goto(readerRoutes.chapter07, { waitUntil: "networkidle" });
+  await page.locator("[data-reading-record-trigger]").first().getByRole("button", { name: /Respond to checkpoint 1/ }).click();
+  await expect(page.locator("#context-panel")).toBeVisible();
+  await testInfo.attach("chapter-07-reading-record-open.png", {
+    body: await page.screenshot({ fullPage: false }),
+    contentType: "image/png",
+  });
+});
