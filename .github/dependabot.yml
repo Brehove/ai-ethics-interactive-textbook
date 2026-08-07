@@ -9,6 +9,13 @@ updates:
       timezone: America/Boise
     open-pull-requests-limit: 5
     versioning-strategy: increase-if-necessary
+    ignore:
+      - dependency-name: zod
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
     groups:
       routine-development-updates:
         dependency-type: development
